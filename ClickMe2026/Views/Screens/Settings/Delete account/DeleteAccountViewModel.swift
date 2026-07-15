@@ -75,9 +75,11 @@ final class DeleteAccountViewModel: ObservableObject {
     ///    receive a single-use 15-min `deletion_token`.
     /// 2. `DELETE /user/account` with the token + reason + optional
     ///    write-in comments → account gone.
-    /// On success we call `UserManager.shared.logout()` before transitioning
-    /// to the farewell screen so the app-level router redirects to Login
-    /// once the user taps "Back to Login".
+    /// On success we transition to the farewell screen. Session teardown
+    /// (`UserManager.logout()`) is deferred to the farewell's "Back to
+    /// Login" button so the user actually gets to see it — logging out
+    /// immediately would trigger the app-level router to snap to Login and
+    /// bypass the farewell entirely.
     func confirmDeletion() async {
         deletionError = nil
         passwordError = nil
@@ -115,11 +117,6 @@ final class DeleteAccountViewModel: ObservableObject {
             handle(deleteError: error)
             return
         }
-
-        // Wipe local session so the app-level router (which watches
-        // `UserManager.isLoggedIn`) can send the user back to Login after
-        // they dismiss the farewell screen.
-        UserManager.shared.logout()
 
         withAnimation { step = .deleted }
     }

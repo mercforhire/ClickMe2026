@@ -29,6 +29,7 @@ final class UserManager: ObservableObject {
         accessibility: .whenUnlocked
     )
     private let tokenKey = "authToken"
+    private let onboardingShownKey = "hasSeenOnboarding"
 
     private var api: ClickMeAPI { ClickMeAPI.shared }
 
@@ -47,17 +48,33 @@ final class UserManager: ObservableObject {
     @discardableResult
     func login(email: String, password: String) async throws -> AuthUser {
         let response = try await api.login(email: email, password: password)
-        guard let data = response.data else {
-            throw URLError(.cannotParseResponse)
-        }
-        apply(loginData: data)
-        return data.user
+        apply(loginData: response.data)
+        return response.data.user
     }
 
     private func apply(loginData: LoginData) {
         api.bearerToken = loginData.token
         persist(token: loginData.token)
         authUser = loginData.user
+    }
+
+    // MARK: - Signup
+
+    /// Creates a new account and stashes the bearer token immediately so
+    /// subsequent onboarding calls (`uploadAvatar`, `setupExpertProfile`) are
+    /// authorized even before the verification email is opened.
+    @discardableResult
+    func signup(username: String, email: String, password: String, role: UserRole) async throws -> SignupResponse {
+        let request = SignupRequest(username: username, email: email, password: password, role: role.rawValue)
+        let response = try await api.signup(request)
+        apply(signupData: response.data)
+        return response.data
+    }
+
+    private func apply(signupData: SignupResponse) {
+        api.bearerToken = signupData.token
+        persist(token: signupData.token)
+        authUser = signupData.user
     }
 
     // MARK: - Auto-login
@@ -82,12 +99,33 @@ final class UserManager: ObservableObject {
     // MARK: - Logout
 
     /// Clears all in-memory state and the persisted token. Purely client-side.
+    /// Also clears the onboarding-shown flag so the next login re-shows the
+    /// welcome flow.
     func logout() {
         authUser = nil
         me = nil
         profile = nil
         api.bearerToken = nil
         persist(token: nil)
+        UserDefaults.standard.removeObject(forKey: onboardingShownKey)
+    }
+
+    // MARK: - Onboarding flag
+
+    /// Whether the client-home onboarding modal has been shown to this
+    /// account in this session. Reset by `logout()`.
+    var hasSeenOnboarding: Bool {
+        UserDefaults.standard.bool(forKey: onboardingShownKey)
+    }
+
+    func markOnboardingShown() {
+        UserDefaults.standard.set(true, forKey: onboardingShownKey)
+    }
+
+    /// Clears the flag without logging out. Wired to the hidden 5-tap gesture
+    /// on the version footer in profile settings.
+    func resetOnboardingShown() {
+        UserDefaults.standard.removeObject(forKey: onboardingShownKey)
     }
 
     // MARK: - Profile fetches

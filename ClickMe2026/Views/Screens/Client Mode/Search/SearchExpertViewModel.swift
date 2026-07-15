@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class SearchExpertViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: View state
     @Published var searchText: String = "" {
@@ -188,6 +182,7 @@ final class SearchExpertViewModel: ObservableObject {
 
     private static func map(_ item: ExpertSearchResultItem) -> ExpertSearchResult {
         ExpertSearchResult(
+            expertId: item.expertId,
             name: item.fullName ?? "Expert",
             title: item.headline ?? "",
             // `/experts/search` doesn't return a bio field per row.

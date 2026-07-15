@@ -35,41 +35,11 @@ struct CancellationPoliciesView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum CancellationPoliciesPreviewRoute: Hashable {
-    case policy
-}
-
-/// Wraps the cancellation-policy screen inside a NavigationStack with a
-/// dummy "Cancellation" parent already pushed, so the system back chevron
-/// renders in the canvas.
-private struct CancellationPoliciesPreviewHarness: View {
-    let route: CancellationPoliciesPreviewRoute
-    @State private var path: [CancellationPoliciesPreviewRoute]
-
-    init(route: CancellationPoliciesPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Help")
-                NavigationLink("Cancellation policy", value: route)
-            }
-            .navigationTitle("Cancellation")
-            .navigationDestination(for: CancellationPoliciesPreviewRoute.self) { _ in
-                CancellationPoliciesView()
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Cancellation Policy") {
-    CancellationPoliciesPreviewHarness(route: .policy)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Help", navTitle: "Cancellation", rowTitle: "Cancellation policy") {
+        CancellationPoliciesView()
+    }
+    .preferredColorScheme(.dark)
 }

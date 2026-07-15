@@ -170,60 +170,26 @@ struct SignupReviewView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum ReviewPreviewRoute: Hashable {
-    case defaultProfile
-    case manySkills
-}
-
-/// Wraps the review screen inside a NavigationStack with a dummy "Profile
-/// checklist" parent already pushed, so the system back chevron renders in
-/// the canvas.
-private struct ReviewPreviewHarness: View {
-    let route: ReviewPreviewRoute
-    @State private var path: [ReviewPreviewRoute]
-
-    init(route: ReviewPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Complete your profile")
-                NavigationLink("Review profile", value: route)
-            }
-            .navigationTitle("Profile setup")
-            .navigationDestination(for: ReviewPreviewRoute.self) { dest in
-                switch dest {
-                case .defaultProfile:
-                    SignupReviewView()
-                case .manySkills:
-                    SignupReviewView(profile: ProfileReviewData(
-                        firstName: "Lucas",
-                        location: "Berlin, Germany",
-                        spokenLanguages: "English, German, French",
-                        avatarURL: "https://i.pravatar.cc/240?img=12",
-                        hourlyRate: 120,
-                        hourlyRateCurrency: "EUR",
-                        skills: ["Swift", "iOS", "SwiftUI", "Combine", "Concurrency"]
-                    ))
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Default") {
-    ReviewPreviewHarness(route: .defaultProfile)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Complete your profile", navTitle: "Profile setup", rowTitle: "Review profile") {
+        SignupReviewView()
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Many skills") {
-    ReviewPreviewHarness(route: .manySkills)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Complete your profile", navTitle: "Profile setup", rowTitle: "Review profile") {
+        SignupReviewView(profile: ProfileReviewData(
+            firstName: "Lucas",
+            location: "Berlin, Germany",
+            spokenLanguages: "English, German, French",
+            avatarURL: "https://i.pravatar.cc/240?img=12",
+            hourlyRate: 120,
+            hourlyRateCurrency: "EUR",
+            skills: ["Swift", "iOS", "SwiftUI", "Combine", "Concurrency"]
+        ))
+    }
+    .preferredColorScheme(.dark)
 }

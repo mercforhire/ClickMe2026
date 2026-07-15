@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class UpcomingBookingViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Identity
 
@@ -35,6 +29,7 @@ final class UpcomingBookingViewModel: ObservableObject {
     @Published var timeRange: String
     @Published var expertTimezone: String?
     @Published var paymentStatus: String?
+    @Published var meetingType: MeetingType
     @Published var joinLink: String
     @Published var preparationNote: String
 
@@ -62,6 +57,7 @@ final class UpcomingBookingViewModel: ObservableObject {
         self.timeRange = ""
         self.expertTimezone = nil
         self.paymentStatus = nil
+        self.meetingType = .inAppVoice
         self.joinLink = ""
         self.preparationNote = ""
         self.state = .idle
@@ -82,7 +78,8 @@ final class UpcomingBookingViewModel: ObservableObject {
         timeRange: String = "10:00 AM - 11:00 AM",
         expertTimezone: String? = "America/Toronto",
         paymentStatus: String? = "held",
-        joinLink: String = "skype.com/j/clickme-sarah",
+        meetingType: MeetingType = .inAppVoice,
+        joinLink: String = "",
         preparationNote: String = "Please have your current product roadmap and user persona documents ready. We'll be diving deep into the Q4 objectives and identifying key friction points in the user journey."
     ) -> UpcomingBookingViewModel {
         let vm = UpcomingBookingViewModel(bookingId: bookingId)
@@ -96,6 +93,7 @@ final class UpcomingBookingViewModel: ObservableObject {
         vm.timeRange = timeRange
         vm.expertTimezone = expertTimezone
         vm.paymentStatus = paymentStatus
+        vm.meetingType = meetingType
         vm.joinLink = joinLink
         vm.preparationNote = preparationNote
         vm.state = .loaded
@@ -139,7 +137,10 @@ final class UpcomingBookingViewModel: ObservableObject {
         timeRange = Self.timeRangeString(from: data.startTime, to: data.endTime)
         expertTimezone = data.expertTimezone
         paymentStatus = data.paymentStatus
-        joinLink = data.joinLink ?? Self.fallbackJoinLabel(for: data.meetingType)
+        meetingType = data.meetingType
+        // In-app bookings have no link — the join card renders just a "JOIN
+        // CALL" button in that case, so an empty string here is fine.
+        joinLink = data.joinLink ?? ""
         preparationNote = data.clientNotes ?? ""
     }
 
@@ -151,13 +152,6 @@ final class UpcomingBookingViewModel: ObservableObject {
             return "\(currency) \(amount / 100)"
         }
         return "—"
-    }
-
-    private static func fallbackJoinLabel(for type: MeetingType) -> String {
-        switch type {
-        case .inAppVoice: return "In-app voice call"
-        case .skypeZoom:  return "Skype / Zoom"
-        }
     }
 
     private static func dateString(_ date: Date) -> String {

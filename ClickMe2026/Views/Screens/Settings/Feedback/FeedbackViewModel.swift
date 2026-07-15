@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class FeedbackViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Types fetch
 
@@ -110,9 +104,24 @@ final class FeedbackViewModel: ObservableObject {
             if selectedType == nil, let first = feedbackTypes.first {
                 selectedType = first
             }
+            prefillEmailFromUser()
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
+        }
+    }
+
+    /// Populates the email field with the signed-in user's address if the
+    /// user hasn't typed anything yet. `me` is the fastest source (from
+    /// `GET /me`); we fall back to the full profile snapshot when it isn't
+    /// cached yet. If neither is known (unauthenticated / stale), leave the
+    /// field empty so the user can type their own.
+    private func prefillEmailFromUser() {
+        guard email.isEmpty else { return }
+        if let meEmail = UserManager.shared.me?.email {
+            email = meEmail
+        } else if let profileEmail = UserManager.shared.profile?.personalDetails.email {
+            email = profileEmail
         }
     }
 
@@ -184,7 +193,7 @@ final class FeedbackViewModel: ObservableObject {
 
     private func handle(submitError error: Error) {
         guard case let NetworkError.httpError(statusCode, data) = error else {
-            apiError = Self.errorMessage(for: error)
+            apiError = error.userMessage
             return
         }
 
@@ -228,14 +237,6 @@ final class FeedbackViewModel: ObservableObject {
         (try? JSONDecoder().decode(StandardErrorResponse.self, from: data))?.message
     }
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: Previews
 

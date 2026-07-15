@@ -9,6 +9,7 @@
 import Foundation
 @testable import ClickMe2026
 
+@MainActor
 enum APITestFactory {
 
     /// The fixed base URL used across tests. Path assertions can compare
@@ -20,7 +21,7 @@ enum APITestFactory {
     ///   `(HTTPURLResponse, Data)` you want the client to receive.
     static func make(
         bearerToken: String? = nil,
-        respond: @escaping (URLRequest) throws -> (HTTPURLResponse, Data)
+        respond: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
     ) -> ClickMeAPI {
         MockURLProtocol.reset()
         MockURLProtocol.handler = respond

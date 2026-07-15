@@ -11,14 +11,18 @@
 			<key>BaseURL</key>
 			<string>https://clickme-backend-production.up.railway.app/api/v1</string>
 			<key>StripePublishableKey</key>
-			<string>pk_test_REPLACE_ME</string>
+			<string>pk_test_51Tha0rHGu8AnfRoUiTqYX1Kt1QJ5bvN25ONTnckKYOeT53y8FrVWbXcyNdZfIL2U5FsuLP35OVTmqqO1Vwy0SzJm00I3w6Mn51</string>
+			<key>AgoraAppId</key>
+			<string>483eaa4d11fb44b6acc91bf5ceae36c7</string>
 		</dict>
 		<key>Staging</key>
 		<dict>
 			<key>BaseURL</key>
 			<string>https://clickme-backend-production.up.railway.app/api/v1</string>
 			<key>StripePublishableKey</key>
-			<string>pk_test_REPLACE_ME</string>
+			<string>pk_test_51Tha0rHGu8AnfRoUiTqYX1Kt1QJ5bvN25ONTnckKYOeT53y8FrVWbXcyNdZfIL2U5FsuLP35OVTmqqO1Vwy0SzJm00I3w6Mn51</string>
+			<key>AgoraAppId</key>
+			<string>483eaa4d11fb44b6acc91bf5ceae36c7</string>
 		</dict>
 		<key>Production</key>
 		<dict>
@@ -26,6 +30,8 @@
 			<string>https://clickme-backend-production.up.railway.app/api/v1</string>
 			<key>StripePublishableKey</key>
 			<string>pk_live_REPLACE_ME</string>
+			<key>AgoraAppId</key>
+			<string>483eaa4d11fb44b6acc91bf5ceae36c7</string>
 		</dict>
 	</dict>
 </dict>

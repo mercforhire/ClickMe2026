@@ -82,10 +82,11 @@ struct IncomingRequestCard: View {
                             .stroke(IncomingRequestsTheme.irisBorder, lineWidth: 1.5)
                     )
             )
-            // Fully-past requests are visually dimmed and non-interactive.
+            // Fully-past requests are visually dimmed but still tappable
+            // — tap opens a read-only decision screen so the expert can
+            // review the client info and message them if they want to.
             .opacity(request.isExpired ? 0.55 : 1.0)
         }
         .buttonStyle(PressScaleButtonStyle())
-        .disabled(request.isExpired)
     }
 }

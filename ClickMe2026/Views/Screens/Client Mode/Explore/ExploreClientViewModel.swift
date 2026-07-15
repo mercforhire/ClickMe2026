@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class ExploreClientViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: View state
     @Published var showAllCategories: Bool = false
@@ -54,19 +48,33 @@ final class ExploreClientViewModel: ObservableObject {
     // MARK: - Load
 
     /// Fetches `/client/home` and populates both sections in one round trip.
+    /// When `selectedCategorySlugs` is non-empty, forwards them as the
+    /// `?category=` filter so the server narrows `recommended_experts`.
     func load() async {
         categoriesState = .loading
         expertsState = .loading
         do {
-            let response = try await api.getClientHome()
+            let response = try await api.getClientHome(
+                categorySlugs: selectedCategorySlugs.isEmpty ? nil : selectedCategorySlugs.sorted()
+            )
             categories = response.data.trendingCategories.map(Self.mapCategory)
             experts = response.data.recommendedExperts.map(Self.mapExpert)
+            syncCategorySelection()
             categoriesState = .loaded
             expertsState = .loaded
         } catch {
             let msg = Self.message(for: error)
             categoriesState = .failed(msg)
             expertsState = .failed(msg)
+        }
+    }
+
+    /// After a fresh load remaps categories (wiping their `isSelected` flags),
+    /// mirror the persistent `selectedCategorySlugs` set back onto each chip
+    /// so the visual highlight survives across refreshes.
+    private func syncCategorySelection() {
+        for i in categories.indices {
+            categories[i].isSelected = selectedCategorySlugs.contains(categories[i].slug)
         }
     }
 
@@ -77,12 +85,25 @@ final class ExploreClientViewModel: ObservableObject {
 
     // MARK: - Category selection
 
-    /// Single-select highlight only on the trending-categories row — no
-    /// network side-effect. The persistent multi-select filter is owned by
-    /// `selectedCategorySlugs` and driven by the categories modal.
+    /// Single-select toggle on the trending-categories row: tapping a chip
+    /// applies that slug as the server-side filter; tapping the currently
+    /// selected chip clears the filter. Mutates both the local `isSelected`
+    /// flag (drives the green highlight) and the persistent
+    /// `selectedCategorySlugs` set (drives `?category=` on the next load).
     func selectCategory(at index: Int) {
+        guard categories.indices.contains(index) else { return }
+        let tapped = categories[index]
+        let wasSelected = tapped.isSelected
+
         for i in categories.indices {
-            categories[i].isSelected = (i == index)
+            categories[i].isSelected = false
+        }
+
+        if wasSelected {
+            applySelectedCategories([])
+        } else {
+            categories[index].isSelected = true
+            applySelectedCategories([tapped.slug])
         }
     }
 
@@ -99,6 +120,7 @@ final class ExploreClientViewModel: ObservableObject {
 
     private static func mapCategory(_ tc: ClientHomeData.TrendingCategory) -> ExpertCategory {
         ExpertCategory(
+            slug: tc.id,
             icon: CategoryIconMap.sfSymbol(forSlug: tc.id),
             name: tc.name ?? "Category",
             isSelected: false
@@ -107,6 +129,7 @@ final class ExploreClientViewModel: ObservableObject {
 
     private static func mapExpert(_ re: ClientHomeData.RecommendedExpert) -> Expert {
         Expert(
+            expertId: re.expertId,
             name: re.fullName ?? "Expert",
             title: re.title ?? "",
             tags: re.expertiseTags ?? [],

@@ -26,12 +26,18 @@ extension ClickMeAPI {
         )
     }
 
-    func resetPassword(token: String, password: String, passwordConfirmation: String) async throws -> SuccessMessageResponse {
+    func resetPassword(
+        email: String,
+        code: String,
+        password: String,
+        passwordConfirmation: String
+    ) async throws -> SuccessMessageResponse {
         try await service.httpRequest(
             url: url(.resetPassword),
             method: .post,
             parameters: [
-                "token": token,
+                "email": email,
+                "code": code,
                 "password": password,
                 "password_confirmation": passwordConfirmation
             ]

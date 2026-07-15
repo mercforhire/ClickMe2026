@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class ClientProfileViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: State
 
@@ -92,7 +86,7 @@ final class ClientProfileViewModel: ObservableObject {
 
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -101,38 +95,27 @@ final class ClientProfileViewModel: ObservableObject {
     private static func mapBooking(from item: ExpertBookingItem) -> ClientBookingHistory {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM d, yyyy"
-        let status = mapStatus(from: item.status.value)
         return ClientBookingHistory(
             title: item.session.topic ?? "Session",
-            status: status,
+            status: mapStatus(from: item.status.code),
             date: dateFormatter.string(from: item.session.startTime),
             amount: 0 // ExpertBookingItem doesn't expose an amount; leave as 0.
         )
     }
 
-    private static func mapStatus(from raw: String) -> BookingHistoryStatus {
-        switch raw.lowercased() {
-        case "confirmed", "upcoming", "pending":
+    private static func mapStatus(from code: BookingStatus) -> BookingHistoryStatus {
+        switch code {
+        case .pendingApproval, .confirmed, .pendingReschedule, .inProgress:
             return .upcoming
-        case "completed":
+        case .completed:
             return .completed
-        case "cancelled", "canceled", "declined", "expired":
+        case .cancelled, .declined, .missed, .expired:
             return .cancelled
-        default:
-            return .upcoming
         }
     }
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: - Preview data
 

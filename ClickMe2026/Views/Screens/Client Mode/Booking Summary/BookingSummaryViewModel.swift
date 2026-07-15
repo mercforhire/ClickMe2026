@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class BookingSummaryViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Fetch identity
 
@@ -27,11 +21,19 @@ final class BookingSummaryViewModel: ObservableObject {
 
     // MARK: Session data (server-fed at runtime, seeded in previews)
 
+    /// Server UUID for the session's expert. Needed to push
+    /// `MakeABookingView` when the user taps "Book Again". `nil` before the
+    /// fetch settles or in the preview-seed path (previews don't need it).
+    @Published var expertId: UUID?
     @Published var expertName: String
     @Published var expertTitle: String
     @Published var expertImageURL: String
     @Published var topic: String
     @Published var dateTime: String
+    /// Formatted price the client paid for the session, e.g. `"$45.00"`.
+    /// `nil` when the session was free or the server didn't send amount /
+    /// currency for this booking.
+    @Published var pricePaid: String?
     @Published var feedbackStars: Int
     @Published var feedbackText: String?
 
@@ -53,11 +55,13 @@ final class BookingSummaryViewModel: ObservableObject {
         api: ClickMeAPI = .shared
     ) {
         self.bookingId = bookingId
+        self.expertId = nil
         self.expertName = ""
         self.expertTitle = ""
         self.expertImageURL = ""
         self.topic = ""
         self.dateTime = ""
+        self.pricePaid = nil
         self.feedbackStars = 0
         self.feedbackText = nil
         self.hasSubmittedReview = false
@@ -74,17 +78,20 @@ final class BookingSummaryViewModel: ObservableObject {
         expertImageURL: String = "https://lh3.googleusercontent.com/aida-public/AB6AXuBnTZGMesjV2RDjvDlTqiAhGQcKvp9VwRAGKeFBQjZ2Ne3kX7qgo1NEGGhlYpLGEM-O7oYGv4ngC22GSYW5O_7nNSrkzsKF21q6DvxVUAClnY1puOrcVVRfxo7a2Q8VsPQTLluTXbfFumBJAsA8IdqCPigzs8DbXKLxdIp29xbIBxU61gPcbgR5RkgqIyJ0vmmgN_pFjG77f1XqxGlAMxxuvd1iOf-mQ1Wzc-mmg94vsBrnZYSiSZuYJ-83ZQi8i5encZyL6jSAENg",
         topic: String = "Machine Learning Consultation",
         dateTime: String = "Oct 8, 2024 • 2:00 PM - 3:00 PM",
+        pricePaid: String? = "$45.00",
         feedbackStars: Int = 5,
         feedbackText: String? = "David is truly an expert in his field. The way he broke down complex GAN concepts was incredible. Already seeing performance improvements in our dev environment. Highly recommended!",
         hasSubmittedReview: Bool = true,
         loadState: LoadState = .loaded
     ) {
         self.bookingId = nil
+        self.expertId = nil
         self.expertName = expertName
         self.expertTitle = expertTitle
         self.expertImageURL = expertImageURL
         self.topic = topic
         self.dateTime = dateTime
+        self.pricePaid = pricePaid
         self.feedbackStars = feedbackStars
         self.feedbackText = feedbackText
         self.hasSubmittedReview = hasSubmittedReview
@@ -111,10 +118,10 @@ final class BookingSummaryViewModel: ObservableObject {
     private func forceLoad(bookingId: UUID) async {
         loadState = .loading
         do {
-            let detailResponse = try await api.getClientBookingDetail(bookingId: bookingId)
+            let detailResponse = try await api.getClientBookingDetail(id: bookingId)
             apply(detail: detailResponse.data)
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
             return
         }
 
@@ -131,11 +138,32 @@ final class BookingSummaryViewModel: ObservableObject {
     }
 
     private func apply(detail: ClientBookingDetail) {
+        expertId = detail.expert.id
         expertName = detail.expert.fullName ?? ""
         expertTitle = detail.expert.title ?? ""
         expertImageURL = detail.expert.avatarUrl ?? ""
         topic = detail.topic.title
         dateTime = Self.formatDateTime(start: detail.startTime, end: detail.endTime)
+        pricePaid = Self.formatPrice(topic: detail.topic)
+    }
+
+    /// Returns `nil` for free topics or when the server didn't send both an
+    /// amount and a currency — the UI hides the row in that case. Amounts
+    /// are in minor units (cents); we divide by 100 to a Double so cents
+    /// aren't dropped for prices like $45.50.
+    private static func formatPrice(topic: ClientBookingDetail.Topic) -> String? {
+        if topic.isFree { return nil }
+        guard let amount = topic.price?.amount,
+              let currency = topic.price?.currency
+        else { return nil }
+
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currency
+        let value = Double(amount) / 100.0
+        return formatter.string(from: NSNumber(value: value))
+            // Fallback if `currencyCode` is unrecognized by ICU.
+            ?? "\(currency) \(String(format: "%.2f", value))"
     }
 
     private func apply(reviewContext: ReviewContextData) {
@@ -163,12 +191,4 @@ final class BookingSummaryViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

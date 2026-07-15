@@ -17,13 +17,13 @@ struct ValidatedField: View {
 
     var body: some View {
         let hasError = error != nil
-        let borderColor = hasError ? LoginBrand.errorRed : LoginBrand.fieldBorder
+        let borderColor = hasError ? Brand.destructive : Brand.outlineVariant
         let borderWidth: CGFloat = hasError ? 1.8 : 1.2
 
         VStack(alignment: .leading, spacing: 6) {
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(LoginBrand.fieldBg)
+                    .fill(Brand.surfaceContainer)
                     .overlay(
                         RoundedRectangle(cornerRadius: 28, style: .continuous)
                             .stroke(borderColor, lineWidth: borderWidth)
@@ -34,7 +34,7 @@ struct ValidatedField: View {
                 HStack(spacing: 10) {
                     Image(systemName: icon)
                         .font(.system(size: 16, weight: .regular))
-                        .foregroundColor(hasError ? LoginBrand.errorRed : Color.white.opacity(0.40))
+                        .foregroundColor(hasError ? Brand.destructive : Color.white.opacity(0.40))
                         .frame(width: 20)
 
                     Group {
@@ -61,7 +61,7 @@ struct ValidatedField: View {
             if let msg = error {
                 Text(msg)
                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundColor(LoginBrand.errorRed)
+                    .foregroundColor(Brand.destructive)
                     .padding(.leading, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }

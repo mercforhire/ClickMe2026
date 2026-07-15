@@ -12,11 +12,14 @@ import SwiftUI
 
 struct ExpertSearchResult: Identifiable, Hashable {
     let id = UUID()
+    /// Server-issued expert UUID. Nil for preview/loading placeholders.
+    let expertId: UUID?
     let name: String
     let title: String
     let bio: String
     let rating: Double
     let imageURL: String
+    let tags: [String]
 }
 
 // MARK: - Expert Search View
@@ -26,27 +29,16 @@ struct SearchExpertView: View {
     @StateObject private var viewModel: SearchExpertViewModel
     @State private var path: [ExpertSearchResult] = []
 
-    var onBrowseAll: () -> Void
-
     // MARK: Init
 
-    init(
-        viewModel: SearchExpertViewModel = SearchExpertViewModel(),
-        onBrowseAll: @escaping () -> Void = {}
-    ) {
+    init(viewModel: SearchExpertViewModel = SearchExpertViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
-        self.onBrowseAll = onBrowseAll
     }
 
-    /// Convenience init for callers that just want to seed the experts list.
-    init(
-        experts: [ExpertSearchResult],
-        onBrowseAll: @escaping () -> Void = {}
-    ) {
-        self.init(
-            viewModel: SearchExpertViewModel(allExperts: experts),
-            onBrowseAll: onBrowseAll
-        )
+    /// Convenience init for callers that just want to seed the experts list
+    /// (used by previews to bypass the network).
+    init(experts: [ExpertSearchResult]) {
+        self.init(viewModel: SearchExpertViewModel(previewExperts: experts))
     }
 
     // MARK: Body
@@ -66,50 +58,30 @@ struct SearchExpertView: View {
             GreenGlowBlobLayer().ignoresSafeArea()
 
             VStack(spacing: 0) {
-                SearchExpertWordmark()
-                    .padding(.top, 52)
-                    .padding(.bottom, 16)
+                Spacer().frame(height: 20)
 
-                if viewModel.showEmpty {
-                    SearchExpertEmptyState(
-                        glowPulse: viewModel.glowPulse,
-                        onBrowseAll: onBrowseAll
+                VStack(spacing: 14) {
+                    SearchExpertSearchBar(text: $viewModel.searchText)
+                        .padding(.horizontal, 20)
+
+                    SearchExpertCategoryChips(
+                        categories: viewModel.categories,
+                        selectedCategorySlug: $viewModel.selectedCategorySlug
                     )
-                } else {
-                    VStack(spacing: 14) {
-                        SearchExpertSearchBar(text: $viewModel.searchText)
-                            .padding(.horizontal, 20)
 
-                        SearchExpertCategoryChips(
-                            categories: viewModel.categories,
-                            selectedCategory: $viewModel.selectedCategory
-                        )
-
-                        SearchExpertSortRow(
-                            sortOption: viewModel.sortOption,
-                            onTap: { viewModel.showSortPicker = true }
-                        )
-                        .padding(.horizontal, 20)
-                    }
-                    .padding(.bottom, 8)
-
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 12) {
-                            ForEach(viewModel.filteredExperts) { expert in
-                                SearchExpertCard(
-                                    expert: expert,
-                                    action: { path.append(expert) }
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 40)
-                    }
+                    SearchExpertSortRow(
+                        sortOption: viewModel.sortOption,
+                        onTap: { viewModel.showSortPicker = true }
+                    )
+                    .padding(.horizontal, 20)
                 }
+                .padding(.bottom, 8)
+
+                resultsContent
             }
-            .animation(.easeInOut(duration: 0.3), value: viewModel.showEmpty)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .task { await viewModel.load() }
         .confirmationDialog("Sort by", isPresented: $viewModel.showSortPicker, titleVisibility: .visible) {
             ForEach(viewModel.sortOptions, id: \.self) { opt in
                 Button(opt) { viewModel.sortOption = opt }
@@ -117,25 +89,139 @@ struct SearchExpertView: View {
         }
         .onAppear { viewModel.glowPulse = true }
     }
+
+    // MARK: Results content by load state
+
+    @ViewBuilder
+    private var resultsContent: some View {
+        ScrollView(showsIndicators: false) {
+            switch viewModel.state {
+            case .idle, .loading:
+                loadingList
+            case .loaded:
+                if viewModel.experts.isEmpty {
+                    emptyResultsView
+                } else {
+                    resultsList
+                }
+            case .failed(let message):
+                errorList(message: message)
+            }
+        }
+        .refreshable { await viewModel.reload() }
+    }
+
+    /// Inline "no results" view rendered inside the results area so the
+    /// search bar and category chips stay visible for the user to refine the
+    /// query. No action buttons — this is a status message, not a dead end.
+    private var emptyResultsView: some View {
+        VStack(spacing: 20) {
+            SearchExpertGlowingIllustration(glowPulse: viewModel.glowPulse)
+
+            VStack(spacing: 8) {
+                Text("No Experts Found")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(SearchExpertBrand.onSurface)
+
+                Text("Try adjusting your search or picking a different category.")
+                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .foregroundColor(SearchExpertBrand.onSurfaceVar)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .padding(.horizontal, 32)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 40)
+        .padding(.bottom, 40)
+    }
+
+    private var loadingList: some View {
+        VStack(spacing: 12) {
+            ForEach(0 ..< 3, id: \.self) { _ in
+                SearchExpertCard(
+                    expert: ExpertSearchResult(
+                        expertId: nil,
+                        name: "\u{2003}\u{2003}\u{2003}\u{2003}",
+                        title: "\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}",
+                        bio: "\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}",
+                        rating: 5.0,
+                        imageURL: "",
+                        tags: ["\u{2003}\u{2003}", "\u{2003}\u{2003}"]
+                    ),
+                    action: {}
+                )
+                .redacted(reason: .placeholder)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 40)
+    }
+
+    private var resultsList: some View {
+        VStack(spacing: 12) {
+            ForEach(viewModel.experts) { expert in
+                SearchExpertCard(
+                    expert: expert,
+                    action: { path.append(expert) }
+                )
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 40)
+    }
+
+    private func errorList(message: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 28, weight: .light))
+                .foregroundColor(SearchExpertBrand.onSurfaceVar)
+            Text("Couldn't load results")
+                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .foregroundColor(SearchExpertBrand.onSurface)
+            Text(message)
+                .font(.system(size: 13, design: .rounded))
+                .foregroundColor(SearchExpertBrand.onSurfaceVar)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            Button {
+                Task { await viewModel.reload() }
+            } label: {
+                Text("Retry")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(SearchExpertBrand.onPrimary)
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(SearchExpertBrand.brandGreen))
+            }
+            .padding(.top, 4)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 60)
+    }
 }
 
 // MARK: - ExpertSearchResult → PublicExpertProfile mapping
 
 private extension PublicExpertProfile {
     init(from result: ExpertSearchResult) {
+        // Seed only what the search card knows; `loadProfileDetails()` on
+        // view-appear fills in bio (if empty), stats, and topics from the
+        // server.
         self.init(
+            expertId: result.expertId,
             name: result.name,
             title: result.title,
             rating: result.rating,
-            reviewCount: PublicExpertProfile.sarahChen.reviewCount,
-            yearsExp: PublicExpertProfile.sarahChen.yearsExp,
-            bookings: PublicExpertProfile.sarahChen.bookings,
-            responseTime: PublicExpertProfile.sarahChen.responseTime,
+            reviewCount: 0,
+            yearsExp: "",
+            bookings: "",
             isOnline: true,
             bio: result.bio,
-            expertiseTags: PublicExpertProfile.sarahChen.expertiseTags,
-            topics: PublicExpertProfile.sarahChen.topics,
-            reviews: PublicExpertProfile.sarahChen.reviews,
+            expertiseTags: result.tags.map { PublicExpertTag(label: $0, isHighlighted: false) },
+            topics: [],
+            reviews: [],
             imageURL: result.imageURL
         )
     }
@@ -150,5 +236,14 @@ private extension PublicExpertProfile {
 
 #Preview("Empty State") {
     SearchExpertView(experts: [])
+        .preferredColorScheme(.dark)
+}
+
+/// Hits `/experts/search` on appear (empty `q` → default result set) and
+/// re-runs the query on every text change (300 ms debounce) or sort change.
+/// Bearer token comes from the gitignored `PreviewSecrets.swift`.
+#Preview("Live Fetch") {
+    ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
+    return SearchExpertView()
         .preferredColorScheme(.dark)
 }

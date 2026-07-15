@@ -45,4 +45,5 @@ enum ErrorCode: String, Decodable {
     case refundAmountMissing     = "REFUND_AMOUNT_MISSING"
     case tooManyRequests         = "TOO_MANY_REQUESTS"
     case expiredToken            = "EXPIRED_TOKEN"
+    case expertNotFound          = "EXPERT_NOT_FOUND"
 }

@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class ClientCancellationViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Identity
     let bookingId: UUID?
@@ -101,7 +95,7 @@ final class ClientCancellationViewModel: ObservableObject {
             booking = Self.map(detail: response.data)
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -111,11 +105,33 @@ final class ClientCancellationViewModel: ObservableObject {
             expertTitle: detail.expert.title ?? detail.topic.title,
             dateString: formatDateTime(start: detail.startTime, end: detail.endTime),
             imageURL: detail.expert.avatarUrl ?? "",
-            // Refund preview endpoint is a follow-up backend task — hide
-            // the copy until the server tells us the refund policy for
-            // this booking.
-            refundType: nil
+            refundAmount: refundAmount(from: detail)
         )
+    }
+
+    /// Client-side preview of the refund amount until a server-side refund
+    /// endpoint lands. Shows the paid amount when the money is still with
+    /// us (`held` / `captured`) — hides for free sessions, refunded
+    /// bookings, or when no payment was made. Actual refund amount is
+    /// resolved on the server when the cancel call fires.
+    private static func refundAmount(from detail: ClientBookingDetail) -> String? {
+        if detail.topic.isFree { return nil }
+        switch detail.paymentStatus {
+        case "held", "captured":
+            break
+        default:
+            return nil
+        }
+        guard let amount = detail.topic.price?.amount,
+              let currency = detail.topic.price?.currency
+        else { return nil }
+
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currency
+        let value = Double(amount) / 100.0
+        return formatter.string(from: NSNumber(value: value))
+            ?? "\(currency) \(String(format: "%.2f", value))"
     }
 
     // MARK: - Actions
@@ -144,7 +160,7 @@ final class ClientCancellationViewModel: ObservableObject {
         do {
             _ = try await api.cancelClientBooking(id: bookingId, reason: selectedReason)
         } catch {
-            cancelError = Self.errorMessage(for: error)
+            cancelError = error.userMessage
             return
         }
 
@@ -167,14 +183,6 @@ final class ClientCancellationViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: Sample data
 
@@ -194,7 +202,7 @@ final class ClientCancellationViewModel: ObservableObject {
         expertTitle: "",
         dateString: "",
         imageURL: "",
-        refundType: nil
+        refundAmount: nil
     )
 
     static let sampleBooking = CancellationBooking(
@@ -202,6 +210,6 @@ final class ClientCancellationViewModel: ObservableObject {
         expertTitle: "Career Coaching",
         dateString: "Wed, Jul 10 • 10:00 AM",
         imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuDOLbdN4ist5Yp2MU-iazD2ggqG2F42GhJKUDhi5omBTMQfsZ3aOtpJMI9x9l_BIc9uFxsR8Lm6fNjwJHuR85wD7jybmImSDCQBOeUITRzo8CARgZN-NnDwUZ5qrRhyWZQyQsu0uapd_3Xun_JTJNPp5yEWCYxukV7kO2-I-WVPLdAIRR18ZAhKbJ-EY4V6bi-sSR4ZWdwvqphktPI2BYaOKzT_05jLA25ati_Shxxg7npPn2mY05T4M16WVkyPp8szqHyPI3yoLBo",
-        refundType: nil
+        refundAmount: "$45.00"
     )
 }

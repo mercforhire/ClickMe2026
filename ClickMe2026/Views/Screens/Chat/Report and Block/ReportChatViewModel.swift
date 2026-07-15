@@ -122,7 +122,7 @@ final class ReportChatViewModel: ObservableObject {
                 onReport(reason, details)
             } catch {
                 withAnimation { self.isSubmitting = false }
-                self.apiError = Self.errorMessage(for: error)
+                self.apiError = error.userMessage
             }
         }
     }
@@ -150,21 +150,13 @@ final class ReportChatViewModel: ObservableObject {
                 _ = try await self.api.chatAction(id: threadId, action: "block")
                 onBlock(self.userName)
             } catch {
-                self.apiError = Self.errorMessage(for: error)
+                self.apiError = error.userMessage
             }
         }
     }
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: Defaults
 

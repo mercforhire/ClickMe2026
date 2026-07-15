@@ -21,22 +21,22 @@ final class OnboardingViewModel: ObservableObject {
 
     let pages: [OnboardingPage] = [
         OnboardingPage(
-            illustration: "bubble.left.and.text.bubble.right.fill",
+            illustration: .welcome,
             title: "Welcome to ClickMe",
             subtitle: "Connect with top experts in your field for personalized advice and guidance."
         ),
         OnboardingPage(
-            illustration: "magnifyingglass.circle.fill",
+            illustration: .discover,
             title: "Discover Top Experts",
             subtitle: "Find the right professionals for your needs across dozens of specialized categories."
         ),
         OnboardingPage(
-            illustration: "calendar.badge.checkmark",
+            illustration: .booking,
             title: "Book & Schedule Instantly",
             subtitle: "Secure your appointments and payments with ease through our integrated platform."
         ),
         OnboardingPage(
-            illustration: "bubble.left.and.bubble.right.fill",
+            illustration: .communication,
             title: "Seamless Communication",
             subtitle: "Connect via chat, voice, or video calls directly within the app to get the advice you need."
         ),

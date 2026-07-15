@@ -13,12 +13,21 @@ import SwiftUI
 final class SignupHourlyRateViewModel: ObservableObject {
 
     // MARK: Form state
+    /// User-facing string in **major units** (e.g. "80" = 80 dollars). The
+    /// accumulator stores minor units (cents) — conversion happens at the
+    /// boundary in `hydrate`/`commit`.
     @Published var rateString: String
     @Published var currency: String
 
     // MARK: Accumulator (optional — nil in previews)
 
     private let accumulator: SignupAccumulator?
+
+    /// Assumes 2 fractional digits (USD/EUR/GBP/…). Matches
+    /// `TopicEditorViewModel`'s `rateMajor * 100`. Currencies with 0
+    /// fractional digits (JPY, KRW) will need a per-currency lookup once
+    /// the picker exposes them — flagged, not fixed here.
+    private static let minorUnitsPerMajor = 100
 
     // MARK: Init
 
@@ -31,8 +40,8 @@ final class SignupHourlyRateViewModel: ObservableObject {
         // Hydrate from accumulator if present, else fall back to the
         // passed-in values (used by previews).
         if let accumulator {
-            if let amount = accumulator.hourlyRateAmount {
-                self.rateString = String(amount)
+            if let minor = accumulator.hourlyRateAmount {
+                self.rateString = String(minor / Self.minorUnitsPerMajor)
             } else {
                 self.rateString = rateString
             }
@@ -45,8 +54,15 @@ final class SignupHourlyRateViewModel: ObservableObject {
 
     // MARK: Derived
 
+    /// Major-unit integer typed by the user (e.g. `80` for `$80`).
     var rateValue: Int {
         Int(rateString) ?? 0
+    }
+
+    /// Minor-unit value shipped to the backend (`amount` field on
+    /// `SetupExpertProfileRequest.hourlyRate`).
+    private var minorUnitAmount: Int {
+        rateValue * Self.minorUnitsPerMajor
     }
 
     // MARK: Mutations
@@ -58,7 +74,7 @@ final class SignupHourlyRateViewModel: ObservableObject {
         let digits = rateString.filter(\.isNumber)
         let normalized = digits.isEmpty ? "0" : String(Int(digits) ?? 0)
         if normalized != rateString { rateString = normalized }
-        accumulator?.hourlyRateAmount = Int(rateString)
+        accumulator?.hourlyRateAmount = minorUnitAmount
     }
 
     func selectCurrency(_ code: String) {
@@ -70,7 +86,7 @@ final class SignupHourlyRateViewModel: ObservableObject {
     /// button so a user who never edits the sanitizer still writes their
     /// initial defaults through.
     func commitToAccumulator() {
-        accumulator?.hourlyRateAmount = Int(rateString)
+        accumulator?.hourlyRateAmount = minorUnitAmount
         accumulator?.hourlyRateCurrency = currency
     }
 }

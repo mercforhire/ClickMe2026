@@ -14,16 +14,19 @@ struct AllCategoriesView: View {
 
     @StateObject private var viewModel: CategoriesModalViewModel
     @Environment(\.dismiss) private var dismiss
-    var onSelectCategory: (Category) -> Void
+
+    /// Fires once when the sheet dismisses, delivering the final set of
+    /// selected category slug IDs (empty when the user picked "All").
+    var onSelectionChanged: (Set<String>) -> Void
 
     private let cols = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
 
     init(
         viewModel: CategoriesModalViewModel = CategoriesModalViewModel(),
-        onSelectCategory: @escaping (Category) -> Void
+        onSelectionChanged: @escaping (Set<String>) -> Void = { _ in }
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
-        self.onSelectCategory = onSelectCategory
+        self.onSelectionChanged = onSelectionChanged
     }
 
     // MARK: Body
@@ -39,6 +42,8 @@ struct AllCategoriesView: View {
 
                 AllCategoriesQuickChips(
                     categories: viewModel.categories,
+                    isAllSelected: viewModel.isAllSelected,
+                    onSelectAll: { viewModel.selectAll() },
                     isSelected: { viewModel.isSelected($0) },
                     onToggle: { viewModel.toggle($0) }
                 )
@@ -51,6 +56,9 @@ struct AllCategoriesView: View {
         }
         .background(AllCategoriesBrand.bg)
         .task { await viewModel.load() }
+        .onDisappear {
+            onSelectionChanged(viewModel.selectedIds)
+        }
     }
 
     // MARK: Content by load state
@@ -120,7 +128,6 @@ struct AllCategoriesView: View {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.72)) {
                             viewModel.toggle(cat)
                         }
-                        onSelectCategory(cat)
                     }
                 }
             }
@@ -149,7 +156,7 @@ struct AllCategoriesView: View {
             selectedIds: ["ai", "legal"],
             state: .loaded
         ),
-        onSelectCategory: { _ in }
+        onSelectionChanged: { _ in }
     )
     .preferredColorScheme(.dark)
 }
@@ -157,7 +164,7 @@ struct AllCategoriesView: View {
 #Preview("Loading") {
     AllCategoriesView(
         viewModel: CategoriesModalViewModel(state: .loading),
-        onSelectCategory: { _ in }
+        onSelectionChanged: { _ in }
     )
     .preferredColorScheme(.dark)
 }
@@ -167,7 +174,17 @@ struct AllCategoriesView: View {
         viewModel: CategoriesModalViewModel(
             state: .failed("The internet connection appears to be offline.")
         ),
-        onSelectCategory: { _ in }
+        onSelectionChanged: { _ in }
     )
     .preferredColorScheme(.dark)
+}
+
+/// Hits the real backend on the currently-configured environment via
+/// `CategoryStore.shared`. Requires the preview simulator to have a valid
+/// bearer token in the shared keychain (i.e., you've logged in previously
+/// on this simulator). Otherwise the request returns 401 and the error view
+/// renders instead.
+#Preview("Live Fetch") {
+    AllCategoriesView()
+        .preferredColorScheme(.dark)
 }

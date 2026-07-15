@@ -117,78 +117,32 @@ struct ReportChatView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum ReportChatPreviewRoute: Hashable {
-    case blockReport
-    case errorState
-}
-
-/// Wraps the block/report screen inside a NavigationStack with a dummy
-/// "Chat" parent already pushed, so the system back chevron renders in
-/// the canvas.
-private struct ReportChatPreviewHarness: View {
-    let route: ReportChatPreviewRoute
-    @State private var path: [ReportChatPreviewRoute]
-
-    init(route: ReportChatPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Chat details")
-                NavigationLink("Block or report", value: route)
-            }
-            .navigationTitle("Chat")
-            .navigationDestination(for: ReportChatPreviewRoute.self) { dest in
-                switch dest {
-                case .blockReport:
-                    ReportChatView()
-                case .errorState:
-                    ReportChatView(viewModel: ReportChatViewModel(userName: "Dr. Olivia Bennett"))
-                }
-            }
-        }
-    }
-}
+// MARK: - Live-fetch bootstrap
 
 /// Resolves a real `threadId` (and partner name) from `GET /chats`, then
-/// pushes `ReportChatView` with it — so tapping Block / Submit actually
+/// hands off to `ReportChatView` — so tapping Block / Submit actually
 /// POSTs `/chats/:id/actions` against the live server.
 ///
 /// Tapping Block for real WILL block the counterparty in the dev DB.
 /// Use with care.
-private struct LiveFetchReportChatHarness: View {
+private struct LiveFetchReportChatBootstrap: View {
     @State private var resolved: (id: UUID, name: String)?
     @State private var errorMessage: String?
-    @State private var path: [ReportChatPreviewRoute] = [.blockReport]
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Chat details")
-                NavigationLink("Block or report", value: ReportChatPreviewRoute.blockReport)
-            }
-            .navigationTitle("Chat")
-            .navigationDestination(for: ReportChatPreviewRoute.self) { _ in
-                if let r = resolved {
-                    ReportChatView(threadId: r.id, userName: r.name)
-                } else if let errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                } else {
-                    ProgressView("Resolving thread…")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                        .task { await resolveThread() }
-                }
-            }
+        if let r = resolved {
+            ReportChatView(threadId: r.id, userName: r.name)
+        } else if let errorMessage {
+            Text(errorMessage)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+        } else {
+            ProgressView("Resolving thread…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+                .task { await resolveThread() }
         }
     }
 
@@ -201,7 +155,7 @@ private struct LiveFetchReportChatHarness: View {
             }
             resolved = (first.threadId, first.partner.name ?? "Chat partner")
         } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 }
@@ -209,17 +163,23 @@ private struct LiveFetchReportChatHarness: View {
 // MARK: - Previews
 
 #Preview("Block & Report") {
-    ReportChatPreviewHarness(route: .blockReport)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Chat details", navTitle: "Chat", rowTitle: "Block or report") {
+        ReportChatView()
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Reason Error State") {
-    ReportChatPreviewHarness(route: .errorState)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Chat details", navTitle: "Chat", rowTitle: "Block or report") {
+        ReportChatView(viewModel: ReportChatViewModel(userName: "Dr. Olivia Bennett"))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    return LiveFetchReportChatHarness()
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Chat details", navTitle: "Chat", rowTitle: "Block or report") {
+        LiveFetchReportChatBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }

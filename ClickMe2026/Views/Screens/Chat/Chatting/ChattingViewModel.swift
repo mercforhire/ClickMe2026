@@ -12,22 +12,19 @@ import SwiftUI
 @MainActor
 final class ChattingViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Identity
     let threadId: UUID?
     let peerName: String
     let peerAvatarURL: String
-    let myAvatarURL: String
-    let myName: String
-    /// Auth-user id used to tag `.me` vs. `.them`. Read from
-    /// `UserManager.shared.authUser?.id` at init time.
-    private let myUserId: UUID?
+    /// My display fields — seeded from `UserManager.shared.authUser` at
+    /// init, hydrated from `/me` + `/user/profile` in `load()` when the
+    /// auth snapshot isn't populated (preview harness, cold launch race).
+    /// Published so the input-bar avatar re-renders after hydration.
+    @Published private(set) var myAvatarURL: String
+    @Published private(set) var myName: String
+    /// Auth-user id used to tag `.me` vs. `.them`. Nil until hydrated.
+    @Published private var myUserId: UUID?
 
     // MARK: View state
     @Published var items: [ChatItem]
@@ -132,6 +129,11 @@ final class ChattingViewModel: ObservableObject {
             return
         }
         loadState = .loading
+        // Hydrate our own identity first so message mapping can tag
+        // `.me` vs. `.them` correctly. Silent on failure — falls back
+        // to whatever seed values we already have.
+        await hydrateIdentityIfNeeded()
+
         do {
             let response = try await api.getChatMessages(id: threadId, page: 1, limit: pageSize)
             oldestLoadedPage = 1
@@ -141,7 +143,33 @@ final class ChattingViewModel: ObservableObject {
             items = ordered.map(mapToChatItem(_:))
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
+        }
+    }
+
+    /// Populates `myUserId`, `myAvatarURL`, and `myName` when the auth
+    /// snapshot isn't loaded yet. Called from `forceLoad()` before the
+    /// message fetch so the mine-vs-them mapping works even in preview
+    /// harnesses (where the login flow was skipped) or cold-launch races.
+    private func hydrateIdentityIfNeeded() async {
+        if myUserId == nil {
+            if let id = UserManager.shared.authUser?.id {
+                myUserId = id
+            } else if let me = try? await api.getMe().data {
+                myUserId = me.id
+            }
+        }
+
+        if myAvatarURL.isEmpty || myName.isEmpty || myName == "You" {
+            if let profile = try? await api.getUserProfile().data {
+                if myAvatarURL.isEmpty, let url = profile.personalDetails.avatarUrl {
+                    myAvatarURL = url
+                }
+                if myName.isEmpty || myName == "You",
+                   let first = profile.personalDetails.firstName, !first.isEmpty {
+                    myName = first
+                }
+            }
         }
     }
 
@@ -203,7 +231,7 @@ final class ChattingViewModel: ObservableObject {
             }
             messageText = ""
         } catch {
-            sendError = Self.errorMessage(for: error)
+            sendError = error.userMessage
         }
     }
 
@@ -214,11 +242,19 @@ final class ChattingViewModel: ObservableObject {
             return .systemEvent(bookingEvent(from: eventType, content: item.content))
         }
         let mine = (item.senderId != nil && item.senderId == myUserId)
+        // Prefer server-provided sender info for the peer; fall back to
+        // the caller-supplied peer identity for older payloads.
+        let displayName = mine
+            ? myName
+            : (item.sender?.name ?? peerName)
+        let displayAvatar = mine
+            ? myAvatarURL
+            : (item.sender?.avatarUrl ?? peerAvatarURL)
         return .message(ChatMessage(
             sender: mine ? .me : .them,
-            senderName: mine ? myName : peerName,
+            senderName: displayName,
             body: item.content ?? "",
-            avatarURL: mine ? myAvatarURL : peerAvatarURL
+            avatarURL: displayAvatar
         ))
     }
 
@@ -253,12 +289,4 @@ final class ChattingViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

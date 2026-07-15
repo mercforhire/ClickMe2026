@@ -12,18 +12,12 @@ import SwiftUI
 @MainActor
 final class LanguageSelectionViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: State
     @Published var searchText: String
-    /// Selected language IDs — tracked as a Set so toggle is O(1) and
-    /// we don't need to worry about duplicates.
-    @Published var selected: Set<UUID>
+    /// Selected language IDs (ISO 639-1 codes, e.g. `"en"`) — tracked as
+    /// a Set so toggle is O(1) and we don't need to worry about duplicates.
+    @Published var selected: Set<String>
     @Published var allLanguages: [LanguageItem] = []
     @Published var loadState: LoadState = .idle
 
@@ -76,7 +70,7 @@ final class LanguageSelectionViewModel: ObservableObject {
                 .sorted { $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending }
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -108,29 +102,21 @@ final class LanguageSelectionViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: - Preview data
 
     static let previewLanguages: [LanguageItem] = [
-        LanguageItem(id: UUID(), label: "Arabic"),
-        LanguageItem(id: UUID(), label: "English"),
-        LanguageItem(id: UUID(), label: "French"),
-        LanguageItem(id: UUID(), label: "German"),
-        LanguageItem(id: UUID(), label: "Hindi"),
-        LanguageItem(id: UUID(), label: "Italian"),
-        LanguageItem(id: UUID(), label: "Japanese"),
-        LanguageItem(id: UUID(), label: "Korean"),
-        LanguageItem(id: UUID(), label: "Mandarin"),
-        LanguageItem(id: UUID(), label: "Portuguese"),
-        LanguageItem(id: UUID(), label: "Russian"),
-        LanguageItem(id: UUID(), label: "Spanish"),
+        LanguageItem(id: "ar", label: "Arabic"),
+        LanguageItem(id: "en", label: "English"),
+        LanguageItem(id: "fr", label: "French"),
+        LanguageItem(id: "de", label: "German"),
+        LanguageItem(id: "hi", label: "Hindi"),
+        LanguageItem(id: "it", label: "Italian"),
+        LanguageItem(id: "ja", label: "Japanese"),
+        LanguageItem(id: "ko", label: "Korean"),
+        LanguageItem(id: "zh", label: "Mandarin"),
+        LanguageItem(id: "pt", label: "Portuguese"),
+        LanguageItem(id: "ru", label: "Russian"),
+        LanguageItem(id: "es", label: "Spanish"),
     ]
 }

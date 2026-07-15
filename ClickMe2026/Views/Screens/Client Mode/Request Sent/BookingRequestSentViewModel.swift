@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class BookingRequestSentViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Identity
 

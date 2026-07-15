@@ -8,55 +8,27 @@
 
 import SwiftUI
 
-// MARK: - Models
-
-enum PastBookingStatus {
-    case completed, cancelled, missed
-
-    var label: String {
-        switch self {
-        case .completed: return "Completed"
-        case .cancelled: return "Cancelled"
-        case .missed: return "Missed"
-        }
-    }
-
-    var color: Color {
-        switch self {
-        case .completed: return Color(red: 0.267, green: 0.965, blue: 0.592)
-        case .cancelled: return Color(red: 1.000, green: 0.420, blue: 0.420)
-        case .missed: return Color(red: 1.000, green: 0.720, blue: 0.300)
-        }
-    }
-}
-
-struct UpcomingBooking: Identifiable, Hashable {
-    /// Server booking UUID from `ClientBookingItem.bookingId`. Needed for
-    /// future API mutations (reschedule/cancel).
-    let id: UUID
-    let expertName: String
-    let topic: String
-    let date: String
-    let timeRange: String
-    let imageURL: String
-}
-
-struct PastBooking: Identifiable, Hashable {
-    let id: UUID
-    let expertName: String
-    let topic: String
-    let date: String
-    let timeRange: String
-    let status: PastBookingStatus
-}
-
-extension PastBookingStatus: Hashable {}
-
 // MARK: - Navigation routes
 
 private enum BookingRoute: Hashable {
     case upcoming(UpcomingBooking)
     case past(PastBooking)
+    /// Pushed from the "Leave a Review" CTA inside `BookingSummaryView`.
+    /// Carries the booking status because `WriteReviewView` gates the form
+    /// on `.completed`.
+    case writeReview(PastBooking)
+    /// Pushed from the "Book Again" CTA inside `BookingSummaryView` — lands
+    /// on `MakeABookingView` for the same expert with topics + slots ready
+    /// to pick.
+    case makeBooking(BookAgainSeed)
+    /// Pushed from the "Cancel" action inside `UpcomingBookingView`. Loads
+    /// the booking's display fields on appear and calls
+    /// `POST /client/bookings/:id/cancel` on confirm.
+    case cancelBooking(UpcomingBooking)
+    /// Pushed from the "Reschedule" action inside `UpcomingBookingView`.
+    /// Loads booking detail + expert availability and calls
+    /// `PATCH /client/bookings/:id/reschedule` on confirm.
+    case rescheduleBooking(UpcomingBooking)
 }
 
 // MARK: - My Bookings View
@@ -103,21 +75,55 @@ struct MyBookingsView: View {
                 .navigationDestination(for: BookingRoute.self) { route in
                     switch route {
                     case let .upcoming(booking):
-                        BookingSummaryView(
-                            expertName: booking.expertName,
-                            expertImageURL: booking.imageURL,
-                            topic: booking.topic,
-                            dateTime: "\(booking.date) • \(booking.timeRange)",
-                            feedbackStars: 0,
-                            feedbackText: nil
+                        // Upcoming taps land on the details screen; its
+                        // "Cancel" and "Reschedule" actions push the
+                        // respective flows onto this stack.
+                        UpcomingBookingView(
+                            bookingId: booking.id,
+                            onReschedule: { path.append(.rescheduleBooking(booking)) },
+                            onCancel: { path.append(.cancelBooking(booking)) }
                         )
                     case let .past(booking):
+                        // Past taps land on the session summary. The
+                        // summary's CTAs push `WriteReviewView` (leave a
+                        // review) or `MakeABooking` (book again with the
+                        // same expert) onto this same NavigationStack.
                         BookingSummaryView(
-                            expertName: booking.expertName,
-                            topic: booking.topic,
-                            dateTime: "\(booking.date) • \(booking.timeRange)",
-                            feedbackStars: booking.status == .completed ? 5 : 0,
-                            feedbackText: booking.status == .completed ? nil : nil
+                            bookingId: booking.id,
+                            onBookAgain: { seed in
+                                if let seed { path.append(.makeBooking(seed)) }
+                            },
+                            onLeaveReview: { path.append(.writeReview(booking)) }
+                        )
+                    case let .writeReview(booking):
+                        WriteReviewView(
+                            bookingId: booking.id,
+                            bookingStatus: booking.status,
+                            seedExpertName: booking.expertName
+                        )
+                    case let .makeBooking(seed):
+                        MakeABooking(
+                            expertId: seed.expertId,
+                            expertName: seed.expertName,
+                            expertTitle: seed.expertTitle,
+                            expertImageURL: seed.expertImageURL
+                        )
+                    case let .cancelBooking(booking):
+                        // On confirm — or "keep booking" — pop back to the
+                        // My Bookings root. The list refreshes automatically
+                        // on next appear, revealing the newly-cancelled
+                        // booking under the past tab.
+                        ClientCancellationView(
+                            bookingId: booking.id,
+                            onKeepBooking: { path.removeAll() },
+                            onConfirmCancellation: { _, _ in path.removeAll() }
+                        )
+                    case let .rescheduleBooking(booking):
+                        // On success, pop all the way back to My Bookings
+                        // so the list re-fetches with the updated slot.
+                        RescheduleView(
+                            bookingId: booking.id,
+                            onRescheduled: { path.removeAll() }
                         )
                     }
                 }
@@ -129,22 +135,23 @@ struct MyBookingsView: View {
             MyBookingsBrand.bg.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                Text("My bookings")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(MyBookingsBrand.onSurface)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 56)
-                    .padding(.bottom, 20)
-
                 MyBookingsSegmentPicker(selectedTab: $viewModel.selectedTab)
                     .padding(.horizontal, 20)
+                    .padding(.top, 12)
                     .padding(.bottom, 24)
 
                 content
             }
+            // Anchor the content stack to the top — the ZStack was centering
+            // the VStack whenever it collapsed to its content size (i.e.
+            // loading spinner / error state), leaving the header floating.
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("My Bookings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(MyBookingsBrand.bg, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { viewModel.glowPulse = true }
         .task { await viewModel.load() }
     }
@@ -221,7 +228,7 @@ struct MyBookingsView: View {
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
-                    .background(Capsule().fill(Color(red: 0.267, green: 0.965, blue: 0.592)))
+                    .background(Capsule().fill(Brand.primary))
             }
             .padding(.top, 4)
         }
@@ -272,25 +279,32 @@ struct MyBookingsView: View {
         topic: "\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}",
         date: "Jan 1, 2026",
         timeRange: "10:00 AM - 11:00 AM",
-        imageURL: ""
+        imageURL: "",
+        startTime: Date()
     )
 }
 
 // MARK: - Previews
 
 #Preview("Upcoming") {
-    MyBookingsView(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        MyBookingsView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Empty State") {
-    MyBookingsView(viewModel: .previewSeed(upcomingBookings: []))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        MyBookingsView(viewModel: .previewSeed(upcomingBookings: []))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Past") {
-    MyBookingsView(viewModel: .previewSeed(selectedTab: 1))
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        MyBookingsView(viewModel: .previewSeed(selectedTab: 1))
+    }
+    .preferredColorScheme(.dark)
 }
 
 /// Hits `/client/bookings` on appear. Token comes from the gitignored
@@ -298,6 +312,8 @@ struct MyBookingsView: View {
 /// will 401 and the error view will render.
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
-    return MyBookingsView()
-        .preferredColorScheme(.dark)
+    return NavigationStack {
+        MyBookingsView()
+    }
+    .preferredColorScheme(.dark)
 }

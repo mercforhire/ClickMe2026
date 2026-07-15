@@ -15,12 +15,6 @@ struct ExpertiseTagChip: Identifiable {
     var name: String
 }
 
-struct HourlyRateItem: Identifiable {
-    let id = UUID()
-    var topic: String
-    var rate: Int
-}
-
 struct AvailabilitySlot: Identifiable {
     let id = UUID()
     let day: String
@@ -44,32 +38,10 @@ struct ExpertProfileSettingsView: View {
 
         ZStack {
             Brand.surface.ignoresSafeArea()
-
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    ExpertProfileSettingsAvatar(viewModel: viewModel)
-                        .frame(maxWidth: .infinity)
-                        .padding(.bottom, 24)
-
-                    clientFieldsStack(vm: vm)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 24)
-
-                    ExpertProfileSettingsExpertise(viewModel: viewModel)
-                        .padding(.horizontal, 20).padding(.bottom, 24)
-
-                    ExpertProfileSettingsRates(viewModel: viewModel)
-                        .padding(.horizontal, 20).padding(.bottom, 24)
-
-                    ExpertProfileSettingsAvailability(viewModel: viewModel)
-                        .padding(.horizontal, 20).padding(.bottom, 24)
-
-                    ExpertProfileSettingsSaveButton(viewModel: viewModel)
-                        .padding(.horizontal, 20).padding(.bottom, 40)
-                }
-                .padding(.top, 16)
-            }
+            content
         }
+        .task { await viewModel.load() }
+        .refreshable { await viewModel.reload() }
         .navigationTitle("Expert Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Brand.surface, for: .navigationBar)
@@ -80,10 +52,10 @@ struct ExpertProfileSettingsView: View {
                 autoSaveStatusIcon
             }
         }
-        .onChange(of: autoSaveSnapshot) { _ in
+        .onChange(of: autoSaveSnapshot) {
             viewModel.scheduleAutoSave()
         }
-        .onChange(of: viewModel.selectedPhoto) { _ in
+        .onChange(of: viewModel.selectedPhoto) {
             Task { await viewModel.loadSelectedPhoto() }
         }
         .alert(
@@ -127,41 +99,110 @@ struct ExpertProfileSettingsView: View {
         }
     }
 
-    // MARK: - Client-side fields stack
+    // MARK: - Content router
 
-    /// Mirrors `ClientProfileSettingsView.fieldsStack` — first/last name,
-    /// phone, bio, professional card, city+state, country, and languages.
-    /// Email is intentionally omitted per product spec.
-    private func clientFieldsStack(vm: Bindable<ExpertProfileSettingsViewModel>) -> some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                ProfileLabeledField(label: "First Name", text: vm.firstName)
-                ProfileLabeledField(label: "Last Name", text: vm.lastName)
-            }
-            ProfileLabeledField(label: "Phone", text: vm.phone, keyboard: .phonePad)
-
-            ProfileBioField(text: vm.bio)
-
-            ProfileProfessionalCard(
-                jobTitle: vm.wrappedValue.jobTitle,
-                company: vm.wrappedValue.company,
-                action: { vm.wrappedValue.showProfSheet = true }
-            )
-
-            HStack(spacing: 8) {
-                ProfileLabeledField(label: "City", text: vm.city)
-                    .frame(maxWidth: .infinity)
-                ProfileLabeledField(label: "State/Province", text: vm.state)
-                    .frame(maxWidth: 120)
-            }
-
-            ProfileCountryField(country: vm.country)
-
-            ProfileLanguageField(
-                languages: vm.wrappedValue.languages,
-                action: { vm.wrappedValue.showLangSheet = true }
-            )
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.loadState {
+        case .idle, .loading:
+            loadingContent
+        case .failed(let message):
+            errorContent(message: message)
+        case .loaded:
+            loadedContent
         }
+    }
+
+    private var loadedContent: some View {
+        @Bindable var vm = viewModel
+
+        return ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    ExpertProfileSettingsAvatar(viewModel: viewModel)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 24)
+
+                    // Mirrors ClientProfileSettingsView.fieldsStack — first/
+                    // last name, phone, bio, professional card, city+state,
+                    // country, and languages. Email is omitted per spec.
+                    VStack(spacing: 10) {
+                        HStack(spacing: 10) {
+                            ProfileLabeledField(label: "First Name", text: $vm.firstName)
+                            ProfileLabeledField(label: "Last Name", text: $vm.lastName)
+                        }
+                        ProfileLabeledField(label: "Phone", text: $vm.phone, keyboard: .phonePad)
+
+                        ProfileBioField(text: $vm.bio)
+
+                        ProfileProfessionalCard(
+                            jobTitle: vm.jobTitle,
+                            company: vm.company,
+                            action: { vm.showProfSheet = true }
+                        )
+
+                        HStack(spacing: 8) {
+                            ProfileLabeledField(label: "City", text: $vm.city)
+                                .frame(maxWidth: .infinity)
+                            ProfileLabeledField(label: "State/Province", text: $vm.state)
+                                .frame(maxWidth: 120)
+                        }
+
+                        ProfileCountryField(country: $vm.country)
+
+                        ProfileLanguageField(
+                            languages: vm.languages,
+                            action: { vm.showLangSheet = true }
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
+
+                    ExpertProfileSettingsExpertise(viewModel: viewModel)
+                        .padding(.horizontal, 20).padding(.bottom, 24)
+
+                    ExpertProfileSettingsAvailability(viewModel: viewModel)
+                        .padding(.horizontal, 20).padding(.bottom, 40)
+                }
+                .padding(.top, 16)
+            }
+    }
+
+    private var loadingContent: some View {
+        VStack(spacing: 12) {
+            ProgressView().tint(Brand.onSurface)
+            Text("Loading profile…")
+                .font(.system(size: 13, design: .rounded))
+                .foregroundColor(Brand.onSurfaceVariant)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func errorContent(message: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 28, weight: .light))
+                .foregroundColor(Brand.onSurfaceVariant)
+            Text("Couldn't load profile")
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundColor(Brand.onSurface)
+            Text(message)
+                .font(.system(size: 13, design: .rounded))
+                .foregroundColor(Brand.onSurfaceVariant)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Button {
+                Task { await viewModel.reload() }
+            } label: {
+                Text("Retry")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(Brand.onPrimary)
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Brand.primary))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Auto-save chrome
@@ -193,33 +234,19 @@ struct ExpertProfileSettingsView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum ExpertProfileSettingsPreviewRoute: Hashable { case settings }
-
-/// Wraps the screen in a NavigationStack with a dummy "Expert" parent
-/// already pushed, so the system back chevron renders in the canvas —
-/// matches how the profile hub pushes this screen in production.
-private struct ExpertProfileSettingsPreviewHarness: View {
-    @State private var path: [ExpertProfileSettingsPreviewRoute] = [.settings]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Profile Hub")
-                NavigationLink("Edit Profile", value: ExpertProfileSettingsPreviewRoute.settings)
-            }
-            .navigationTitle("Expert")
-            .navigationDestination(for: ExpertProfileSettingsPreviewRoute.self) { _ in
-                ExpertProfileSettingsView()
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Expert Profile") {
-    ExpertProfileSettingsPreviewHarness()
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Profile Hub", navTitle: "Expert", rowTitle: "Edit Profile") {
+        ExpertProfileSettingsView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Live Fetch") {
+    ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
+    return PreviewNavHarness(parentText: "Profile Hub", navTitle: "Expert", rowTitle: "Edit Profile") {
+        ExpertProfileSettingsView()
+    }
+    .preferredColorScheme(.dark)
 }

@@ -11,11 +11,26 @@ import SwiftUI
 @MainActor
 final class MakeABookingViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
+
+    /// Sub-states of the paid booking flow. Free bookings never leave `.idle`
+    /// — they use `isBooking` instead. Transitions:
+    /// `idle → creatingIntent → awaitingPaymentSheet → confirming → idle`.
+    enum PaidStep: Equatable {
         case idle
-        case loading
-        case loaded
-        case failed(String)
+        case creatingIntent
+        case awaitingPaymentSheet
+        case confirming
+    }
+
+    /// Snapshot of the amounts returned by `POST /bookings/payment-intent`.
+    /// Values are in **major units** (dollars for USD, yen for JPY, etc.),
+    /// per the server contract. Formatting is a UI concern — this struct
+    /// stores raw numbers plus the ISO-4217 currency code.
+    struct PaymentSummary: Equatable {
+        let subtotal: Double
+        let discount: Double
+        let total: Double
+        let currency: String
     }
 
     // MARK: Expert seed (required inputs)
@@ -30,8 +45,15 @@ final class MakeABookingViewModel: ObservableObject {
     /// Topics of discussion, populated from `GET /experts/:id/details`.
     @Published var topics: [BookingTopic] = []
 
-    /// Available time slots grouped by `yyyy-MM-dd` key, populated from
+    /// Available time slots grouped by **client-local** `yyyy-MM-dd` key
+    /// (derived from each slot's `startTime`), populated from
     /// `GET /experts/:id/availability?month=yyyy-MM`.
+    ///
+    /// The server buckets `day.date` in the expert's timezone, which drifts
+    /// from the client's timezone at day boundaries — a slot the server
+    /// files under "2026-07-15" (expert-local) may be "2026-07-16"
+    /// client-local. We re-bucket on the client so lookups always agree
+    /// with the calendar the user is looking at.
     @Published var availabilityByDate: [String: [BookingTimeSlot]] = [:]
 
     /// Expert's IANA timezone identifier (e.g. `America/Toronto`). Rendered
@@ -59,9 +81,18 @@ final class MakeABookingViewModel: ObservableObject {
     @Published var bookingError: String?
     @Published var bookingSuccessMessage: String?
 
-    /// True when the user tapped Book Now on a paid topic — Stripe isn't
-    /// wired yet, so the view shows an "Coming soon" alert.
-    @Published var showPaidUnsupportedAlert: Bool = false
+    // MARK: Paid flow state
+
+    /// Where we are in the paid booking flow. Free bookings never move past
+    /// `.idle` — they use `isBooking` instead.
+    @Published var paidStep: PaidStep = .idle
+    @Published var paymentIntentId: String?
+    @Published var paymentIntentClientSecret: String?
+    @Published var paymentSummary: PaymentSummary?
+
+    /// True while either the free flow is submitting or the paid flow is
+    /// in-flight. The book button binds to this.
+    var isSubmitting: Bool { isBooking || paidStep != .idle }
 
     // MARK: Calendar constants
 
@@ -137,18 +168,52 @@ final class MakeABookingViewModel: ObservableObject {
 
     /// Loads availability for the given calendar month (`yyyy-MM`). Cheap
     /// enough to re-fire each time the user paginates months.
+    /// Loads the requested month plus its two neighbors and merges the
+    /// result. Why: the server groups slots in the expert's timezone, but
+    /// the client renders in its own timezone — a slot in expert-local
+    /// month N can spill into client-local N±1. Neighbor fetches keep the
+    /// visible client-local month fully populated at both edges.
+    ///
+    /// The center month's failure is user-visible; neighbor fetches are
+    /// best-effort (silent on failure). Runs sequentially to avoid the
+    /// Sendable-conformance pitfalls of parallel decoding across actor
+    /// boundaries — acceptable since this only fires on month change.
     func loadAvailability(for month: Date) async {
         availabilityState = .loading
         selectedTimeSlot = nil
+
+        // Center month — surfaces the error if this one fails.
+        let center: SuccessDataResponse<ExpertAvailabilityData>
         do {
-            let monthString = Self.monthKey(month)
-            let response = try await api.getExpertAvailability(id: expertId, month: monthString)
-            self.expertTimezone = response.data.expertTimezone
-            self.availabilityByDate = Self.groupSlots(response.data.days)
-            self.availabilityState = .loaded
+            center = try await api.getExpertAvailability(id: expertId, month: Self.monthKey(month))
         } catch {
-            self.availabilityState = .failed(Self.message(for: error))
+            availabilityState = .failed(Self.message(for: error))
+            return
         }
+
+        // Neighbors — best-effort. `try?` swallows failures silently so a
+        // flaky neighbor doesn't blank out the whole calendar.
+        let prev = calendar.date(byAdding: .month, value: -1, to: month) ?? month
+        let next = calendar.date(byAdding: .month, value: 1, to: month) ?? month
+        let prevData = try? await api.getExpertAvailability(id: expertId, month: Self.monthKey(prev)).data
+        let nextData = try? await api.getExpertAvailability(id: expertId, month: Self.monthKey(next)).data
+
+        var merged: [String: [BookingTimeSlot]] = [:]
+        for data in [prevData, center.data, nextData].compactMap({ $0 }) {
+            let bucket = Self.groupSlots(data.days, calendar: calendar)
+            for (k, slots) in bucket {
+                merged[k, default: []].append(contentsOf: slots)
+            }
+        }
+        // De-dup + resort per day — the same slot can appear in two adjacent
+        // month responses if the server includes overlapping edges.
+        for k in merged.keys {
+            merged[k] = Array(Set(merged[k] ?? [])).sorted { $0.startTime < $1.startTime }
+        }
+
+        expertTimezone = center.data.expertTimezone
+        availabilityByDate = merged
+        availabilityState = .loaded
     }
 
     // MARK: - Month navigation
@@ -172,37 +237,119 @@ final class MakeABookingViewModel: ObservableObject {
 
     // MARK: - Book action
 
-    /// Runs the booking flow for the current selection. Free topics fire
-    /// `POST /bookings/request`. Paid topics surface a "coming soon" alert
-    /// (Stripe integration is intentionally deferred).
+    /// Entry point for the "Book Now" button. Branches on `topic.isFree`:
+    /// free → `POST /bookings/request` (single call), paid → begin the paid
+    /// flow which fetches a PaymentIntent and hands the client secret over
+    /// to the view for PaymentSheet presentation.
     func book() {
-        guard !isBooking else { return }
+        guard !isSubmitting else { return }
         guard let topic = selectedTopic, let slot = selectedTimeSlot else { return }
 
-        if !topic.isFree {
-            showPaidUnsupportedAlert = true
+        if topic.isFree {
+            Task { await performFreeBooking(topic: topic, slot: slot) }
+        } else {
+            Task { await beginPaidBooking(topic: topic, slot: slot) }
+        }
+    }
+
+    private func performFreeBooking(topic: BookingTopic, slot: BookingTimeSlot) async {
+        isBooking = true
+        defer { isBooking = false }
+        do {
+            let iso = Self.iso8601String(from: slot.startTime)
+            let response = try await api.requestBooking(
+                expertId: expertId,
+                topicId: topic.id,
+                scheduledStart: iso,
+                durationMinutes: topic.durationMinutes,
+                meetingType: meetingType,
+                timezone: TimeZone.current.identifier,
+                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            )
+            bookingSuccessMessage = response.data.message
+        } catch {
+            bookingError = Self.message(for: error)
+        }
+    }
+
+    // MARK: - Paid flow
+
+    /// Fetches a PaymentIntent from the server and moves the flow into
+    /// `.awaitingPaymentSheet`. The view observes that state and presents
+    /// Stripe's PaymentSheet with `paymentIntentClientSecret`.
+    private func beginPaidBooking(topic: BookingTopic, slot: BookingTimeSlot) async {
+        paidStep = .creatingIntent
+        do {
+            let selectedDateUTC = Self.utcDateString(from: slot.startTime)
+            let timeSlotUTC = Self.utcTimeSlotString(from: slot.startTime)
+            let response = try await api.createPaymentIntent(
+                expertId: expertId,
+                topicId: topic.id,
+                selectedDate: selectedDateUTC,
+                timeSlot: timeSlotUTC,
+                durationMinutes: topic.durationMinutes,
+                promoCode: nil
+            )
+            paymentIntentId = response.paymentIntentId
+            paymentIntentClientSecret = response.clientSecret
+            paymentSummary = PaymentSummary(
+                subtotal: response.summary.subtotal,
+                discount: response.summary.discount,
+                total: response.summary.total,
+                currency: response.currency
+            )
+            paidStep = .awaitingPaymentSheet
+        } catch {
+            bookingError = Self.message(for: error)
+            resetPaidFlow()
+        }
+    }
+
+    /// Called from the PaymentSheet completion handler after the user's
+    /// card has been charged. Records the booking on our backend with the
+    /// `paymentIntentId` + `stripePaymentMethodId` pair.
+    func completePaidBooking(paymentMethodId: String) async {
+        guard let topic = selectedTopic,
+              let slot = selectedTimeSlot,
+              let intentId = paymentIntentId
+        else {
+            resetPaidFlow()
             return
         }
 
-        isBooking = true
-        Task {
-            defer { isBooking = false }
-            do {
-                let iso = Self.iso8601String(from: slot.startTime)
-                let response = try await api.requestBooking(
-                    expertId: expertId,
-                    topicId: topic.id,
-                    scheduledStart: iso,
-                    durationMinutes: topic.durationMinutes,
-                    meetingType: meetingType,
-                    timezone: TimeZone.current.identifier,
-                    clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
-                )
-                bookingSuccessMessage = response.data.message
-            } catch {
-                bookingError = Self.message(for: error)
-            }
+        paidStep = .confirming
+        do {
+            let startTimeISO = Self.iso8601String(from: slot.startTime)
+            let response = try await api.confirmBooking(
+                paymentIntentId: intentId,
+                expertId: expertId,
+                topicId: topic.id,
+                startTime: startTimeISO,
+                meetingType: meetingType,
+                stripePaymentMethodId: paymentMethodId,
+                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+                promoCode: nil
+            )
+            bookingSuccessMessage = response.data.message
+        } catch {
+            // NOTE: money has been captured by Stripe at this point. Surface
+            // the paymentIntentId with the error so support can reconcile.
+            let base = Self.message(for: error)
+            bookingError = "\(base)\n\nPayment reference: \(intentId)"
         }
+        resetPaidFlow()
+    }
+
+    /// Called when the user dismisses the PaymentSheet without paying.
+    func cancelPaidBooking() {
+        resetPaidFlow()
+    }
+
+    private func resetPaidFlow() {
+        paidStep = .idle
+        paymentIntentId = nil
+        paymentIntentClientSecret = nil
+        paymentSummary = nil
     }
 
     // MARK: - Date helpers
@@ -281,22 +428,32 @@ final class MakeABookingViewModel: ObservableObject {
         )
     }
 
-    private static func groupSlots(_ days: [ExpertAvailabilityData.Day]) -> [String: [BookingTimeSlot]] {
+    /// Flattens every slot the server returned and re-buckets them by the
+    /// **client-local** ymd derived from each slot's UTC `startTime`. Server
+    /// `day.date` is expert-local and is intentionally ignored — see the
+    /// comment on `availabilityByDate` for the drift rationale.
+    private static func groupSlots(
+        _ days: [ExpertAvailabilityData.Day],
+        calendar: Calendar
+    ) -> [String: [BookingTimeSlot]] {
         var result: [String: [BookingTimeSlot]] = [:]
         for day in days {
-            guard let dateKey = day.date, let slots = day.slots else { continue }
-            let mapped: [BookingTimeSlot] = slots.compactMap { slot in
-                guard let start = slot.startTime else { return nil }
+            guard let slots = day.slots else { continue }
+            for slot in slots {
+                guard let start = slot.startTime else { continue }
                 let isAvailable = (slot.available ?? true) && !(slot.held ?? false)
-                return BookingTimeSlot(
+                let booking = BookingTimeSlot(
                     startTime: start,
                     endTime: slot.endTime,
                     isAvailable: isAvailable
                 )
+                let key = dateKey(start, calendar: calendar)
+                result[key, default: []].append(booking)
             }
-            if !mapped.isEmpty {
-                result[dateKey] = mapped
-            }
+        }
+        // Keep each day's slots chronological for stable UI ordering.
+        for key in result.keys {
+            result[key]?.sort { $0.startTime < $1.startTime }
         }
         return result
     }
@@ -319,6 +476,26 @@ final class MakeABookingViewModel: ObservableObject {
     private static func iso8601String(from date: Date) -> String {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime]
+        return f.string(from: date)
+    }
+
+    /// `yyyy-MM-dd` in UTC. Server (`booking.controller.js`) interprets
+    /// `selected_date` as UTC, so we format in UTC to match.
+    private static func utcDateString(from date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
+    }
+
+    /// `HH:mm` in UTC, 24-hour, zero-padded. Server schema validates against
+    /// `/^\d{2}:\d{2}$/` and interprets it as UTC.
+    private static func utcTimeSlotString(from date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(identifier: "UTC")
+        f.dateFormat = "HH:mm"
         return f.string(from: date)
     }
 

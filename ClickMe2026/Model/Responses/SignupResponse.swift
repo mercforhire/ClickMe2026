@@ -7,13 +7,12 @@
 
 import Foundation
 
-/// Response payload for `POST /auth/signup`. Same shape as
-/// `LoginData` — the mobile client stashes the token immediately and
-/// treats the user as authenticated for the rest of the onboarding
-/// flow, even though `emailVerified` is initially `false`.
+/// Response payload for `POST /auth/signup`. Mirrors `LoginData`'s
+/// `token`/`user` pair and adds an `emailVerified` flag so the client
+/// can drive the Overview checklist without a follow-up call.
 struct SignupResponse: Decodable {
+    let token: String
     let user: AuthUser
-    let accessToken: String
     let emailVerified: Bool
 }
 

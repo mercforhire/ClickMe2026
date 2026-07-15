@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class NotificationSettingsViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Sections
     @Published var sections: [NotificationSection]
@@ -25,11 +19,24 @@ final class NotificationSettingsViewModel: ObservableObject {
     // MARK: Load state
     @Published var state: LoadState
 
-    // MARK: Save state
-    @Published var isSaving: Bool
-    @Published var didSave: Bool
+    // MARK: Auto-save state
+
+    /// True while a debounced auto-save is currently uploading.
+    @Published var isAutoSaving: Bool = false
+    /// True immediately after a successful auto-save. Cleared as soon as
+    /// the user flips another toggle.
+    @Published var didAutoSave: Bool = false
     /// Surfaced to the view for an alert when the PATCH fails.
-    @Published var saveError: String?
+    @Published var autoSaveError: String?
+
+    /// Task holding the pending debounce sleep + PATCH. Cancelled whenever
+    /// a new toggle flip comes in so only the trailing save fires.
+    private var autoSaveTask: Task<Void, Never>?
+
+    /// Debounce window between the last toggle change and the actual PATCH.
+    /// Long enough that rapid multi-toggle flips coalesce into one request,
+    /// short enough that a single tap feels near-instant.
+    private let autoSaveDebounce: UInt64 = 800_000_000 // 0.8 s
 
     // MARK: Dependencies
 
@@ -38,14 +45,10 @@ final class NotificationSettingsViewModel: ObservableObject {
     init(
         sections: [NotificationSection] = NotificationSettingsViewModel.defaultSections,
         state: LoadState = .idle,
-        isSaving: Bool = false,
-        didSave: Bool = false,
         api: ClickMeAPI = .shared
     ) {
         self.sections = sections
         self.state = state
-        self.isSaving = isSaving
-        self.didSave = didSave
         self.api = api
     }
 
@@ -77,7 +80,7 @@ final class NotificationSettingsViewModel: ObservableObject {
             apply(preferences: response.data.preferences)
             state = .loaded
         } catch {
-            state = .failed(Self.errorMessage(for: error))
+            state = .failed(error.userMessage)
         }
     }
 
@@ -100,33 +103,35 @@ final class NotificationSettingsViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Save
+    // MARK: - Auto-save
 
-    /// Bulk-updates the user's notification preferences via
-    /// `PATCH /notifications/preferences`. Each UI toggle flips all three
-    /// channels (push / email / in-app) for that sub-category; the master
-    /// toggle UX matches the current design.
-    func saveChanges() {
-        guard !isSaving, !didSave else { return }
-        withAnimation { isSaving = true }
+    /// Called by the view whenever any toggle flips. Cancels any pending
+    /// PATCH and schedules a fresh one after the debounce window — rapid
+    /// multi-toggle flips coalesce into a single trailing request.
+    func scheduleAutoSave() {
+        autoSaveTask?.cancel()
+        // Hide the "saved" checkmark while the user is actively editing.
+        if didAutoSave { didAutoSave = false }
 
-        Task {
-            defer {
-                withAnimation { isSaving = false }
-            }
-            do {
-                let inputs = buildPreferenceInputs()
-                _ = try await api.updateNotificationPreferences(
-                    UpdateNotificationPreferencesRequest(preferences: inputs)
-                )
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                    didSave = true
-                }
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                withAnimation { didSave = false }
-            } catch {
-                saveError = Self.errorMessage(for: error)
-            }
+        autoSaveTask = Task { [weak self] in
+            guard let debounce = self?.autoSaveDebounce else { return }
+            try? await Task.sleep(nanoseconds: debounce)
+            guard !Task.isCancelled else { return }
+            await self?.performAutoSave()
+        }
+    }
+
+    private func performAutoSave() async {
+        isAutoSaving = true
+        defer { isAutoSaving = false }
+        do {
+            let inputs = buildPreferenceInputs()
+            _ = try await api.updateNotificationPreferences(
+                UpdateNotificationPreferencesRequest(preferences: inputs)
+            )
+            withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
+        } catch {
+            autoSaveError = error.userMessage
         }
     }
 
@@ -144,14 +149,6 @@ final class NotificationSettingsViewModel: ObservableObject {
         }
     }
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: Defaults
     //

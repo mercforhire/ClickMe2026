@@ -11,11 +11,12 @@ import Foundation
 // MARK: - Tab identity
 
 enum HomeClientTab: Int, CaseIterable, Hashable {
-    case explore, bookings, chats, profile
+    case explore, search, bookings, chats, profile
 
     var title: String {
         switch self {
         case .explore: return "Explore"
+        case .search: return "Search"
         case .bookings: return "Bookings"
         case .chats: return "Chats"
         case .profile: return "Profile"
@@ -24,7 +25,8 @@ enum HomeClientTab: Int, CaseIterable, Hashable {
 
     var systemImage: String {
         switch self {
-        case .explore: return "magnifyingglass"
+        case .explore: return "sparkles"
+        case .search: return "magnifyingglass"
         case .bookings: return "calendar"
         case .chats: return "bubble.left.and.bubble.right"
         case .profile: return "person.circle"

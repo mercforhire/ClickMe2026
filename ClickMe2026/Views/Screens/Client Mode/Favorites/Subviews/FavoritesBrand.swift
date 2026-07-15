@@ -19,11 +19,11 @@ enum FavoritesBrand {
     static let chipBorder = Color(red: 0.200, green: 0.200, blue: 0.215)
     static let tipBg = Color(red: 0.080, green: 0.085, blue: 0.095)
     static let tipBorder = Color(red: 0.200, green: 0.210, blue: 0.230)
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
+    static let brandGreen = Brand.primary
     static let brandGreenAlt = Color(red: 0.18, green: 0.85, blue: 0.55)
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
+    static let onSurface = Brand.onSurface
     static let onSurfaceVar = Color(red: 0.580, green: 0.640, blue: 0.610)
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
+    static let onPrimary = Brand.onPrimary
     static let heartColor = Color(red: 1.000, green: 0.500, blue: 0.520)
 }
 

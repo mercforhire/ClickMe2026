@@ -13,7 +13,7 @@ struct ExpertProfileSettingsAvatar: View {
     @Bindable var viewModel: ExpertProfileSettingsViewModel
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
+        ZStack {
             // Glow aura
             Circle()
                 .fill(RadialGradient(
@@ -53,12 +53,12 @@ struct ExpertProfileSettingsAvatar: View {
             }
             .frame(width: 134, height: 134)
             .clipShape(Circle())
-
-            // Edit badge
+        }
+        .frame(width: 180, height: 180)
+        .overlay(alignment: .bottomTrailing) {
             editBadge
                 .offset(x: 2, y: 2)
         }
-        .frame(width: 180, height: 180)
         .onChange(of: viewModel.selectedPhoto) {
             Task { await viewModel.loadSelectedPhoto() }
         }

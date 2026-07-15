@@ -8,62 +8,6 @@
 
 import SwiftUI
 
-// MARK: - Models
-
-/// Client-side view model of an expert's topic of discussion. Backed by the
-/// server-side `PublicProfileDetailsData.TopicOfDiscussion` — `id` is the
-/// authoritative server UUID, needed when firing booking requests.
-struct BookingTopic: Identifiable, Hashable {
-    let id: UUID
-    let title: String
-    let durationMinutes: Int
-    /// Price in minor units (cents). `nil` when the topic is free or price
-    /// isn't set on the server.
-    let priceAmount: Int?
-    let currency: String?
-    let isFree: Bool
-
-    /// Human-readable price label. "Free", "USD 50", or "—" when unknown.
-    var priceLabel: String {
-        if isFree { return "Free" }
-        if let priceAmount, let currency {
-            return "\(currency) \(priceAmount / 100)"
-        }
-        return "—"
-    }
-
-    /// Duration label used in the topic picker + summary.
-    var durationLabel: String { "\(durationMinutes) min" }
-}
-
-/// A single availability slot resolved from `ExpertAvailabilityData`.
-struct BookingTimeSlot: Identifiable, Hashable {
-    var id: Date { startTime }
-    let startTime: Date
-    let endTime: Date?
-    let isAvailable: Bool
-
-    var displayLabel: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "h:mm a"
-        return f.string(from: startTime)
-    }
-}
-
-extension MeetingType {
-    /// Human-readable label used in the meeting-type picker.
-    var displayName: String {
-        switch self {
-        case .inAppVoice: return "In-app Voice Call"
-        case .skypeZoom:  return "Skype/Zoom Call"
-        }
-    }
-
-    /// All cases, ordered for the picker.
-    static var pickerCases: [MeetingType] { [.inAppVoice, .skypeZoom] }
-}
-
 // MARK: - Book Session View
 
 struct MakeABooking: View {
@@ -128,7 +72,7 @@ struct MakeABooking: View {
                     )
 
                     MakeABookingBookButton(
-                        isBooking: viewModel.isBooking,
+                        isBooking: viewModel.isSubmitting,
                         isEnabled: canBook,
                         action: viewModel.book
                     )
@@ -144,12 +88,7 @@ struct MakeABooking: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await viewModel.onAppear() }
-        .alert("Paid bookings coming soon",
-               isPresented: $viewModel.showPaidUnsupportedAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text("Payment support isn't available in this build yet. Please pick a free topic to book right now.")
-        }
+        .bookingPaymentSheet(viewModel: viewModel)
         .alert("Booking sent",
                isPresented: presenting(\.bookingSuccessMessage),
                presenting: viewModel.bookingSuccessMessage) { _ in
@@ -169,7 +108,9 @@ struct MakeABooking: View {
     // MARK: Derived
 
     private var canBook: Bool {
-        viewModel.selectedTopic != nil && viewModel.selectedTimeSlot != nil && !viewModel.isBooking
+        viewModel.selectedTopic != nil
+            && viewModel.selectedTimeSlot != nil
+            && !viewModel.isSubmitting
     }
 
     private var summaryDateTimeLabel: String {
@@ -189,86 +130,139 @@ struct MakeABooking: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Preview helpers
 
-private enum MakeABookingPreviewRoute: Hashable {
-    case free
-    case paid
+#if DEBUG
+private func makeABookingPreviewViewModel(isFree: Bool) -> MakeABookingViewModel {
+    let topics: [BookingTopic] = [
+        BookingTopic(
+            id: UUID(),
+            title: isFree ? "Intro Session" : "Marketing Strategy Deep Dive",
+            durationMinutes: 30,
+            priceAmount: isFree ? nil : 5000,
+            currency: isFree ? nil : "USD",
+            isFree: isFree
+        ),
+        BookingTopic(
+            id: UUID(),
+            title: "Brand Growth",
+            durationMinutes: 45,
+            priceAmount: 7500,
+            currency: "USD",
+            isFree: false
+        ),
+    ]
+    let today = Calendar.current.startOfDay(for: Date())
+    let sampleSlots: [BookingTimeSlot] = (9...15).map { hour in
+        let start = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: today) ?? today
+        return BookingTimeSlot(startTime: start, endTime: nil, isAvailable: true)
+    }
+    let key: String = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: today)
+    }()
+
+    return MakeABookingViewModel(
+        expertName: "Marcus Chen",
+        expertTitle: "Growth Hacker & Analyst",
+        expertImageURL: "https://randomuser.me/api/portraits/men/32.jpg",
+        topics: topics,
+        availabilityByDate: [key: sampleSlots],
+        expertTimezone: "America/Toronto"
+    )
 }
+#endif
 
-private struct MakeABookingPreviewHarness: View {
-    let route: MakeABookingPreviewRoute
-    @State private var path: [MakeABookingPreviewRoute]
+// MARK: - Live-fetch bootstrap
 
-    init(route: MakeABookingPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
+/// Bootstraps by calling `/client/home` to grab a real expert, then pushes
+/// `MakeABooking` which loads topics + availability against the live
+/// backend. Requires `PreviewSecrets.clientBearerToken` to hold a valid
+/// client-role JWT.
+private struct LiveFetchBookingBootstrap: View {
+    @State private var seed: Seed?
+    @State private var errorMessage: String?
+
+    private struct Seed {
+        let expertId: UUID
+        let name: String
+        let title: String
+        let imageURL: String
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("About")
-                NavigationLink("Book a session", value: route)
+        if let seed {
+            MakeABooking(
+                expertId: seed.expertId,
+                expertName: seed.name,
+                expertTitle: seed.title,
+                expertImageURL: seed.imageURL
+            )
+        } else if let errorMessage {
+            VStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundColor(.white.opacity(0.6))
+                Text("Preview bootstrap failed")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(errorMessage)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
             }
-            .navigationTitle("Expert profile")
-            .navigationDestination(for: MakeABookingPreviewRoute.self) { route in
-                MakeABooking(viewModel: Self.previewViewModel(for: route))
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(MakeABookingBrand.bg.ignoresSafeArea())
+        } else {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(MakeABookingBrand.bg.ignoresSafeArea())
+                .task { await bootstrap() }
         }
     }
 
-    private static func previewViewModel(for route: MakeABookingPreviewRoute) -> MakeABookingViewModel {
-        let isFree = route == .free
-        let topics: [BookingTopic] = [
-            BookingTopic(
-                id: UUID(),
-                title: isFree ? "Intro Session" : "Marketing Strategy Deep Dive",
-                durationMinutes: 30,
-                priceAmount: isFree ? nil : 5000,
-                currency: isFree ? nil : "USD",
-                isFree: isFree
-            ),
-            BookingTopic(
-                id: UUID(),
-                title: "Brand Growth",
-                durationMinutes: 45,
-                priceAmount: 7500,
-                currency: "USD",
-                isFree: false
-            ),
-        ]
-        let today = Calendar.current.startOfDay(for: Date())
-        let sampleSlots: [BookingTimeSlot] = (9...15).map { hour in
-            let start = Calendar.current.date(bySettingHour: hour, minute: 0, second: 0, of: today) ?? today
-            return BookingTimeSlot(startTime: start, endTime: nil, isAvailable: true)
+    private func bootstrap() async {
+        ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
+        do {
+            let home = try await ClickMeAPI.shared.getClientHome()
+            guard let re = home.data.recommendedExperts.first else {
+                errorMessage = "No recommended experts in the home feed to preview."
+                return
+            }
+            seed = Seed(
+                expertId: re.expertId,
+                name: re.fullName ?? "Expert",
+                title: re.title ?? "",
+                imageURL: re.profileImageUrl ?? ""
+            )
+        } catch {
+            errorMessage = error.localizedDescription
         }
-        let key: String = {
-            let f = DateFormatter()
-            f.locale = Locale(identifier: "en_US_POSIX")
-            f.dateFormat = "yyyy-MM-dd"
-            return f.string(from: today)
-        }()
-
-        return MakeABookingViewModel(
-            expertName: "Marcus Chen",
-            expertTitle: "Growth Hacker & Analyst",
-            expertImageURL: "https://randomuser.me/api/portraits/men/32.jpg",
-            topics: topics,
-            availabilityByDate: [key: sampleSlots],
-            expertTimezone: "America/Toronto"
-        )
     }
 }
 
 // MARK: - Previews
 
 #Preview("Free Topic") {
-    MakeABookingPreviewHarness(route: .free)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "About", navTitle: "Expert profile", rowTitle: "Book a session") {
+        MakeABooking(viewModel: makeABookingPreviewViewModel(isFree: true))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Paid Topic") {
-    MakeABookingPreviewHarness(route: .paid)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "About", navTitle: "Expert profile", rowTitle: "Book a session") {
+        MakeABooking(viewModel: makeABookingPreviewViewModel(isFree: false))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Live Fetch") {
+    PreviewNavHarness(parentText: "About", navTitle: "Expert profile", rowTitle: "Book a session") {
+        LiveFetchBookingBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }

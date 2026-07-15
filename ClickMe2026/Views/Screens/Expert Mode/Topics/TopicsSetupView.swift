@@ -24,11 +24,16 @@ struct TopicsSetupView: View {
         }
         .navigationTitle("Manage Expertise")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                autoSaveStatusIcon
+            }
+        }
         .task { await viewModel.load() }
-        .sheet(isPresented: $viewModel.showTopicEditor) {
-            TopicsSetupTopicEditorSheet(
+        .fullScreenCover(isPresented: $viewModel.showTopicEditor) {
+            TopicEditorView(
                 topic: viewModel.editingTopic,
-                onSave: { title, description, durationMins, hourlyRateAmount, currency, freeConsultMins in
+                onSave: { title, description, durationMins, hourlyRateAmount, currency, iconSlug in
                     Task {
                         await viewModel.saveTopic(
                             title: title,
@@ -36,14 +41,12 @@ struct TopicsSetupView: View {
                             durationMins: durationMins,
                             hourlyRateAmount: hourlyRateAmount,
                             currency: currency,
-                            freeConsultationMinutes: freeConsultMins
+                            iconSlug: iconSlug
                         )
                     }
                 },
                 onDismiss: { viewModel.dismissTopicEditor() }
             )
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
         }
         .alert(
             "Something went wrong",
@@ -78,10 +81,25 @@ struct TopicsSetupView: View {
             VStack(alignment: .leading, spacing: 32) {
                 TopicsSetupExpertiseSection(viewModel: viewModel)
                 TopicsSetupTopicsSection(viewModel: viewModel)
-                TopicsSetupSaveButton(viewModel: viewModel)
             }
             .padding(20)
             .padding(.bottom, 32)
+        }
+    }
+
+    /// Trailing-nav-bar spinner while the debounced tag save is uploading,
+    /// checkmark right after a successful save. Empty in all other states
+    /// so the bar stays clean.
+    @ViewBuilder
+    private var autoSaveStatusIcon: some View {
+        if viewModel.isAutoSaving {
+            ProgressView()
+                .controlSize(.small)
+                .tint(Brand.onSurface)
+        } else if viewModel.didAutoSave {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(Brand.primary)
+                .transition(.opacity)
         }
     }
 

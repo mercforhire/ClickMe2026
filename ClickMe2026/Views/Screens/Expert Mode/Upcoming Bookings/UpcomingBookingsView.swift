@@ -167,48 +167,26 @@ extension UpcomingSession {
     ]
 }
 
-// MARK: - Preview harness
-
-private enum UpcomingBookingsPreviewRoute: Hashable { case list }
-
-private struct UpcomingBookingsPreviewHarness: View {
-    let viewModel: UpcomingBookingsViewModel?
-    @State private var path: [UpcomingBookingsPreviewRoute] = [.list]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Dashboard overview")
-                NavigationLink("Upcoming Bookings", value: UpcomingBookingsPreviewRoute.list)
-                Text("Incoming Requests")
-                Text("Earnings")
-            }
-            .navigationTitle("Expert Dashboard")
-            .navigationDestination(for: UpcomingBookingsPreviewRoute.self) { _ in
-                if let vm = viewModel {
-                    UpcomingBookingsView(viewModel: vm)
-                } else {
-                    UpcomingBookingsView()
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Upcoming Sessions — Populated") {
-    UpcomingBookingsPreviewHarness(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Dashboard overview", navTitle: "Expert Dashboard", rowTitle: "Upcoming Bookings") {
+        UpcomingBookingsView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Upcoming Sessions — Empty") {
-    UpcomingBookingsPreviewHarness(viewModel: .previewSeed(sessions: []))
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Dashboard overview", navTitle: "Expert Dashboard", rowTitle: "Upcoming Bookings") {
+        UpcomingBookingsView(viewModel: .previewSeed(sessions: []))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    return UpcomingBookingsPreviewHarness(viewModel: nil)
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Dashboard overview", navTitle: "Expert Dashboard", rowTitle: "Upcoming Bookings") {
+        UpcomingBookingsView()
+    }
+    .preferredColorScheme(.dark)
 }

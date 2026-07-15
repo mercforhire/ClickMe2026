@@ -219,46 +219,21 @@ struct AvailabilitySettingsView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum AvailabilitySettingsPreviewRoute: Hashable { case settings }
-
-/// Wraps the screen inside a NavigationStack with a dummy "Expert" parent
-/// already pushed, so the system back chevron renders in the canvas —
-/// matches how the profile hub pushes this screen in production.
-private struct AvailabilitySettingsPreviewHarness: View {
-    let viewModel: AvailabilitySettingsViewModel?
-    @State private var path: [AvailabilitySettingsPreviewRoute] = [.settings]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Profile Hub")
-                NavigationLink("Availability", value: AvailabilitySettingsPreviewRoute.settings)
-            }
-            .navigationTitle("Expert")
-            .navigationDestination(for: AvailabilitySettingsPreviewRoute.self) { _ in
-                if let vm = viewModel {
-                    AvailabilitySettingsView(viewModel: vm)
-                } else {
-                    AvailabilitySettingsView()
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Availability Settings") {
-    AvailabilitySettingsPreviewHarness(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Profile Hub", navTitle: "Expert", rowTitle: "Availability") {
+        AvailabilitySettingsView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    return AvailabilitySettingsPreviewHarness(viewModel: nil)
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Profile Hub", navTitle: "Expert", rowTitle: "Availability") {
+        AvailabilitySettingsView()
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Time Range Picker") {

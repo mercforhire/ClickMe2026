@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class HelpViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Data
     @Published var categories: [FaqCategory]
@@ -71,10 +65,18 @@ final class HelpViewModel: ObservableObject {
         loadState = .loading
         do {
             let response = try await api.getFAQs()
-            categories = response.data.categories.sorted { $0.displayOrder < $1.displayOrder }
+            // Drop categories that have no featured articles — the server's
+            // `/help/faqs` payload only surfaces featured articles, so an
+            // empty `featuredArticles` array would render an expandable
+            // card with nothing inside. Hide them until either the
+            // category gets featured content or backend exposes a
+            // per-category articles endpoint.
+            categories = response.data.categories
+                .filter { !$0.featuredArticles.isEmpty }
+                .sorted { $0.displayOrder < $1.displayOrder }
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -96,14 +98,6 @@ final class HelpViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: Sample data
 

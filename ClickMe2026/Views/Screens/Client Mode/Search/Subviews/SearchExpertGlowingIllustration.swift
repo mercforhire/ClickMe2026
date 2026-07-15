@@ -28,7 +28,7 @@ struct SearchExpertGlowingIllustration: View {
             Canvas { ctx, size in
                 let cx = size.width / 2
                 let cy = size.height / 2
-                let green = Color(red: 0.267, green: 0.965, blue: 0.592)
+                let green = Brand.primary
                 let strokeStyle = StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round)
 
                 func glowStroke(_ path: Path, width: CGFloat = 2.5) {

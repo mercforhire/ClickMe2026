@@ -1,5 +1,5 @@
 //
-//  ChangePasswordViewModel.swift
+//  AccountSecurityViewModel.swift
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-09.
@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-final class ChangePasswordViewModel: ObservableObject {
+final class AccountSecurityViewModel: ObservableObject {
 
     // MARK: Form state
 
@@ -58,8 +58,8 @@ final class ChangePasswordViewModel: ObservableObject {
         current: String,
         new: String,
         confirm: String
-    ) -> ChangePasswordViewModel {
-        let vm = ChangePasswordViewModel()
+    ) -> AccountSecurityViewModel {
+        let vm = AccountSecurityViewModel()
         vm.currentPassword = current
         vm.newPassword = new
         vm.confirmPassword = confirm

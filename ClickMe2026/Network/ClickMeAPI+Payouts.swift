@@ -31,23 +31,6 @@ extension ClickMeAPI {
         try await service.httpRequest(url: url(.getPayoutSummary), method: .get)
     }
 
-    /// `POST /expert/payouts/withdraw` — initiate a withdrawal to the
-    /// expert's connected bank account. Requires an `Idempotency-Key`
-    /// header (auto-generated per call — retrying with a different key
-    /// after a network drop could double-post; if the UI needs retry
-    /// semantics, thread a stable key through from the caller instead).
-    ///
-    /// Rate-limited to 5 requests / 15 min per user. 409
-    /// `WITHDRAW_IN_PROGRESS` when a concurrent withdrawal is in flight.
-    func withdrawPayout(amount: Int) async throws -> SuccessDataResponse<WithdrawPayoutData> {
-        try await service.httpRequest(
-            url: url(.withdrawPayout),
-            method: .post,
-            parameters: ["amount": amount],
-            headers: ["Idempotency-Key": UUID().uuidString]
-        )
-    }
-
     /// `POST /expert/connect/onboard` — create (or reuse) the expert's
     /// Stripe Connect Express account and return a fresh hosted Account
     /// Link URL. URL expires in ~5 minutes and is single-use — call this

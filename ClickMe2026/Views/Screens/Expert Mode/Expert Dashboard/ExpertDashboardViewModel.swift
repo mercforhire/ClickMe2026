@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class ExpertDashboardViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Data
 
@@ -43,19 +37,8 @@ final class ExpertDashboardViewModel: ObservableObject {
 
     /// True when `getPayoutSummary` returned 400 `NO_PAYOUT_METHOD` /
     /// `KYC_INCOMPLETE`. Drives a "Complete payout setup" CTA in place
-    /// of the balance + withdraw button.
+    /// of the balance block.
     @Published var payoutOnboardingRequired: Bool
-
-    /// True while a withdrawal is in-flight — disables the Withdraw
-    /// button and shows a spinner in its place.
-    @Published var isWithdrawing: Bool
-
-    /// Alert text for withdraw failures (400 / 409 / 422 / 429 / 500).
-    @Published var withdrawError: String?
-
-    /// Alert text for a successful withdrawal — server always returns
-    /// `status = "processing"`; the actual arrival is async.
-    @Published var withdrawSuccessMessage: String?
 
     /// Fresh Stripe Account Link URL — set by `startOnboarding()` for the
     /// view to open in a browser. Consumed immediately; the URL is
@@ -86,9 +69,6 @@ final class ExpertDashboardViewModel: ObservableObject {
         self.weeklyEarnings = nil
         self.payoutSummary = nil
         self.payoutOnboardingRequired = false
-        self.isWithdrawing = false
-        self.withdrawError = nil
-        self.withdrawSuccessMessage = nil
         self.connectOnboardingURL = nil
         self.connectError = nil
         self.loadState = .idle
@@ -114,9 +94,7 @@ final class ExpertDashboardViewModel: ObservableObject {
             pendingAmount: 42000,
             currency: "USD",
             nextPayoutDate: "2026-07-15",
-            payoutMethod: "bank_transfer",
-            canWithdraw: true,
-            minWithdrawableAmount: 5000
+            payoutMethod: "bank_transfer"
         ),
         payoutOnboardingRequired: Bool = false
     ) -> ExpertDashboardViewModel {
@@ -177,7 +155,7 @@ final class ExpertDashboardViewModel: ObservableObject {
             pendingCount = requestResponse.data.pagination?.totalCount
                 ?? requestResponse.data.requests.count
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
             return
         }
 
@@ -218,30 +196,6 @@ final class ExpertDashboardViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Withdraw
-
-    /// Fires `POST /expert/payouts/withdraw` for the full available
-    /// balance. Callers should only invoke when `payoutSummary?.canWithdraw`
-    /// is true. On success shows a "processing" message and refreshes the
-    /// summary so the UI reflects the new balance.
-    func withdrawAvailableBalance() async {
-        guard !isWithdrawing else { return }
-        guard let summary = payoutSummary, summary.canWithdraw else { return }
-
-        withdrawError = nil
-        withdrawSuccessMessage = nil
-        isWithdrawing = true
-        defer { isWithdrawing = false }
-
-        do {
-            let response = try await api.withdrawPayout(amount: summary.availableAmount)
-            withdrawSuccessMessage = "Withdrawal of \(Self.currencyLabel(minorUnits: response.data.amount, currency: response.data.currency)) is processing."
-            await fetchPayoutSummary()
-        } catch {
-            withdrawError = Self.errorMessage(for: error)
-        }
-    }
-
     // MARK: - Stripe Connect onboarding
 
     /// Fetches a fresh Stripe Account Link URL and hands it to the view
@@ -253,7 +207,7 @@ final class ExpertDashboardViewModel: ObservableObject {
             let response = try await api.startConnectOnboarding()
             connectOnboardingURL = URL(string: response.data.url)
         } catch {
-            connectError = Self.errorMessage(for: error)
+            connectError = error.userMessage
         }
     }
 
@@ -313,12 +267,4 @@ final class ExpertDashboardViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

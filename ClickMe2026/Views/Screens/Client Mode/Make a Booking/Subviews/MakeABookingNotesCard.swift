@@ -40,7 +40,7 @@ struct MakeABookingNotesCard: View {
                     .padding(.horizontal, 11)
                     .padding(.vertical, 6)
                     .frame(minHeight: 100)
-                    .onChange(of: clientNotes) { newValue in
+                    .onChange(of: clientNotes) { _, newValue in
                         if newValue.count > maxLength {
                             clientNotes = String(newValue.prefix(maxLength))
                         }

@@ -50,19 +50,52 @@ struct NotificationSettingsView: View {
         .toolbarBackground(NotificationSettingsBrand.bg, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                autoSaveStatusIcon
+            }
+        }
         .task { await viewModel.load() }
+        .onChange(of: autoSaveSnapshot) {
+            viewModel.scheduleAutoSave()
+        }
         .alert(
             "Couldn't save preferences",
             isPresented: Binding(
-                get: { viewModel.saveError != nil },
-                set: { if !$0 { viewModel.saveError = nil } }
+                get: { viewModel.autoSaveError != nil },
+                set: { if !$0 { viewModel.autoSaveError = nil } }
             ),
-            presenting: viewModel.saveError
+            presenting: viewModel.autoSaveError
         ) { _ in
             Button("OK", role: .cancel) {}
         } message: { message in
             Text(message)
         }
+    }
+
+    // MARK: - Auto-save chrome
+
+    /// Trailing-nav-bar spinner while saving, checkmark right after a
+    /// successful save. Empty in all other states so the bar stays clean.
+    @ViewBuilder
+    private var autoSaveStatusIcon: some View {
+        if viewModel.isAutoSaving {
+            ProgressView()
+                .controlSize(.small)
+                .tint(NotificationSettingsBrand.onSurface)
+        } else if viewModel.didAutoSave {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(NotificationSettingsBrand.brandGreen)
+                .transition(.opacity)
+        }
+    }
+
+    /// Compact string that changes whenever any toggle flips. A single
+    /// `.onChange` on this drives the debounced auto-save scheduler.
+    private var autoSaveSnapshot: String {
+        viewModel.sections.flatMap { section in
+            section.settings.map { "\(section.categoryKey).\($0.subCategoryKey)=\($0.isOn)" }
+        }.joined(separator: "|")
     }
 
     // MARK: - Content router
@@ -88,17 +121,10 @@ struct NotificationSettingsView: View {
                         settings: $viewModel.sections[si].settings
                     )
                 }
-
-                NotificationSaveButton(
-                    isSaving: viewModel.isSaving,
-                    didSave: viewModel.didSave,
-                    action: { viewModel.saveChanges() }
-                )
-                .padding(.top, 8)
-                .padding(.bottom, 40)
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
+            .padding(.bottom, 40)
         }
     }
 
@@ -142,77 +168,19 @@ struct NotificationSettingsView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum NotificationSettingsPreviewRoute: Hashable {
-    case `default`
-}
-
-/// Wraps the notification-settings screen inside a NavigationStack with a
-/// dummy "Settings" parent already pushed, so the system back chevron
-/// renders in the canvas.
-private struct NotificationSettingsPreviewHarness: View {
-    let route: NotificationSettingsPreviewRoute
-    @State private var path: [NotificationSettingsPreviewRoute]
-
-    init(route: NotificationSettingsPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Account")
-                NavigationLink("Notifications", value: route)
-            }
-            .navigationTitle("Settings")
-            .navigationDestination(for: NotificationSettingsPreviewRoute.self) { dest in
-                switch dest {
-                case .default:
-                    NotificationSettingsView(viewModel: .previewSeed())
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Live fetch preview harness
-
-private enum LiveFetchNotificationSettingsRoute: Hashable {
-    case notifications
-}
-
-/// Live-fetch harness. Sets the bearer token from `PreviewSecrets`, wraps
-/// the screen in a dummy "Settings" parent, and lets the view fetch its
-/// own state via `GET /notifications/preferences`. Toggling + hitting Save
-/// exercises the real `PATCH /notifications/preferences` round trip.
-private struct LiveFetchNotificationSettingsPreviewHarness: View {
-    @State private var path: [LiveFetchNotificationSettingsRoute] = [.notifications]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Account")
-                NavigationLink("Notifications", value: LiveFetchNotificationSettingsRoute.notifications)
-            }
-            .navigationTitle("Settings")
-            .navigationDestination(for: LiveFetchNotificationSettingsRoute.self) { _ in
-                NotificationSettingsView()
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Notification Settings") {
-    NotificationSettingsPreviewHarness(route: .default)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Account", navTitle: "Settings", rowTitle: "Notifications") {
+        NotificationSettingsView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
-    return LiveFetchNotificationSettingsPreviewHarness()
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Account", navTitle: "Settings", rowTitle: "Notifications") {
+        NotificationSettingsView()
+    }
+    .preferredColorScheme(.dark)
 }

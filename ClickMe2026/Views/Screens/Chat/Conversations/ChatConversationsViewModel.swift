@@ -12,16 +12,9 @@ import SwiftUI
 @MainActor
 final class ChatConversationsViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: View state
     @Published var searchText: String
-    @Published var activeTab: ChatTab
     @Published var loadState: LoadState = .idle
 
     // MARK: Data
@@ -37,22 +30,19 @@ final class ChatConversationsViewModel: ObservableObject {
     /// `GET /chats`.
     init(
         searchText: String = "",
-        activeTab: ChatTab = .clients,
         chats: [ChatPreview] = [],
         api: ClickMeAPI = .shared
     ) {
         self.searchText = searchText
-        self.activeTab = activeTab
         self.chats = chats
         self.api = api
     }
 
     /// Preview seam — installs canned data as if the fetch had succeeded.
     static func previewSeed(
-        activeTab: ChatTab = .clients,
         chats: [ChatPreview] = ChatPreview.samples
     ) -> ChatConversationsViewModel {
-        let vm = ChatConversationsViewModel(activeTab: activeTab, chats: chats)
+        let vm = ChatConversationsViewModel(chats: chats)
         vm.loadState = .loaded
         return vm
     }
@@ -60,9 +50,8 @@ final class ChatConversationsViewModel: ObservableObject {
     // MARK: Derived
 
     var filteredChats: [ChatPreview] {
-        let tabFiltered = chats.filter { $0.tab == activeTab }
-        guard !searchText.isEmpty else { return tabFiltered }
-        return tabFiltered.filter {
+        guard !searchText.isEmpty else { return chats }
+        return chats.filter {
             $0.name.localizedCaseInsensitiveContains(searchText) ||
                 $0.lastMessage.localizedCaseInsensitiveContains(searchText)
         }
@@ -80,11 +69,6 @@ final class ChatConversationsViewModel: ObservableObject {
     /// Idempotent — skips when already loaded so preview seeds aren't
     /// clobbered.
     ///
-    /// Backend gap: `ChatThreadItem` currently carries only `partnerId`.
-    /// Until the server enriches the response with `partner.name` /
-    /// `partner.avatarUrl` / `partner.role`, the list shows generic
-    /// placeholders for name+avatar and routes every thread to the
-    /// Clients tab (internal_ tab is unreachable).
     func load() async {
         if case .loaded = loadState { return }
         await forceLoad()
@@ -101,7 +85,7 @@ final class ChatConversationsViewModel: ObservableObject {
             chats = response.data.threads.map(Self.mapThread(from:))
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -110,13 +94,12 @@ final class ChatConversationsViewModel: ObservableObject {
     private static func mapThread(from item: ChatThreadItem) -> ChatPreview {
         ChatPreview(
             threadId: item.threadId,
-            name: "Chat",
+            name: item.partner.name ?? "Chat",
             lastMessage: item.lastMessage ?? "",
             timeLabel: relativeTimeLabel(from: item.lastMsgAt),
-            imageURL: "",
+            imageURL: item.partner.avatarUrl ?? "",
             isOnline: item.isOnline,
-            unreadCount: item.unreadCount,
-            tab: .clients
+            unreadCount: item.unreadCount
         )
     }
 
@@ -140,12 +123,4 @@ final class ChatConversationsViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class RescheduleViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Identity
     let bookingId: UUID?
@@ -136,7 +130,7 @@ final class RescheduleViewModel: ObservableObject {
             expertId = response.data.expert.id
             self.expertId = expertId
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
             return
         }
 
@@ -170,7 +164,7 @@ final class RescheduleViewModel: ObservableObject {
             }
             loadedMonths.insert(key)
         } catch {
-            availabilityError = Self.errorMessage(for: error)
+            availabilityError = error.userMessage
         }
     }
 
@@ -216,7 +210,7 @@ final class RescheduleViewModel: ObservableObject {
                 note: trimmed.isEmpty ? nil : trimmed
             )
         } catch {
-            submitError = Self.errorMessage(for: error)
+            submitError = error.userMessage
             return
         }
 
@@ -348,14 +342,6 @@ final class RescheduleViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: - Defaults
 

@@ -10,11 +10,24 @@ import Foundation
 
 extension ClickMeAPI {
 
-    func getClientHome(page: Int = 1, limit: Int = 20) async throws -> SuccessDataResponse<ClientHomeData> {
-        try await service.httpRequest(
+    /// - Parameter categorySlugs: Optional list of `categories.id` slugs (e.g.
+    ///   `"business"`, `"technology"`). When non-empty, joined with commas and
+    ///   sent as `?category=slug1,slug2` — the server filters `recommended_experts`
+    ///   to experts under ANY listed category. `trending_categories` is never filtered.
+    ///   Pass `nil` or `[]` for the full unfiltered feed.
+    func getClientHome(
+        categorySlugs: [String]? = nil,
+        page: Int = 1,
+        limit: Int = 20
+    ) async throws -> SuccessDataResponse<ClientHomeData> {
+        var params: [String: Any] = ["page": page, "limit": limit]
+        if let categorySlugs, !categorySlugs.isEmpty {
+            params["category"] = categorySlugs.joined(separator: ",")
+        }
+        return try await service.httpRequest(
             url: url(.getClientHome),
             method: .get,
-            parameters: ["page": page, "limit": limit]
+            parameters: params
         )
     }
 

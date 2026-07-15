@@ -12,23 +12,23 @@ import SwiftUI
 /// system exactly.
 enum ClientProfileHomeBrand {
     /// #131313 — page background.
-    static let bg = Color(red: 0.075, green: 0.075, blue: 0.075)
+    static let bg = Brand.surface
     /// #1c1b1b — card / list-row background.
     static let cardBg = Color(red: 0.110, green: 0.106, blue: 0.106)
     /// #2a2a2a — icon badge background.
-    static let iconBg = Color(red: 0.165, green: 0.165, blue: 0.165)
+    static let iconBg = Brand.surfaceContainerHigh
     /// #3c4a3f — subtle card border.
-    static let outlineVar = Color(red: 0.235, green: 0.290, blue: 0.247)
+    static let outlineVar = Brand.outlineVariant
     /// #44f697 — primary brand accent (icons, edit button, chevron highlight).
-    static let primary = Color(red: 0.267, green: 0.965, blue: 0.592)
+    static let primary = Brand.primary
     /// #22e286 — section headers (green, all-caps, tracked).
     static let sectionHeader = Color(red: 0.133, green: 0.886, blue: 0.525)
     /// #e5e2e1 — primary text.
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
+    static let onSurface = Brand.onSurface
     /// #bacbbc — secondary text + chevron.
-    static let onSurfaceVar = Color(red: 0.729, green: 0.796, blue: 0.737)
+    static let onSurfaceVar = Brand.onSurfaceVariant
     /// #ffb4ab — destructive (Log Out).
-    static let error = Color(red: 1.000, green: 0.706, blue: 0.671)
+    static let error = Brand.error
     /// #93000a with 20% alpha — Log Out icon badge tint.
     static let errorBg = Color(red: 0.576, green: 0.000, blue: 0.039).opacity(0.20)
 }

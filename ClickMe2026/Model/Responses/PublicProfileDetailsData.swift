@@ -9,13 +9,12 @@
 import Foundation
 
 /// Simplified expert card details. Stubs (D-11): `total_bookings=0`,
-/// `avg_response_time=null`, `recent_reviews=[]`.
+/// `recent_reviews=[]`.
 struct PublicProfileDetailsData: Decodable {
     struct Profile: Decodable {
         struct Stats: Decodable {
             let experienceYears: Int?
             let totalBookings: Int
-            let avgResponseTime: String?
         }
 
         let name: String

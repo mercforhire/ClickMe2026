@@ -22,9 +22,20 @@ extension ClickMeAPI {
     }
 
     func uploadAvatar(imageData: Data, filename: String = "avatar.jpg", mimeType: String = "image/jpeg") async throws -> SuccessDataResponse<MediaUploadData> {
+        // Server expects the multipart field named `image`, not `file`.
         try await service.multipartUpload(
             url: url(.uploadAvatar),
-            parts: [.file(name: "file", filename: filename, mimeType: mimeType, data: imageData)]
+            parts: [.file(name: "image", filename: filename, mimeType: mimeType, data: imageData)]
         )
+    }
+
+    /// `PATCH /user/password`. Session-bound password change — the caller's
+    /// existing access token stays valid after a 200. Server enforces
+    /// `new_password` ≥ 8 chars + at least one digit + must differ from
+    /// `current_password`; validation failures come back as 422 with a
+    /// `FieldValidationErrorResponse` payload. A wrong `current_password`
+    /// comes back as 403 FORBIDDEN.
+    func updatePassword(_ body: UpdatePasswordRequest) async throws -> SuccessMessageResponse {
+        try await service.httpRequest(url: url(.updatePassword), method: .patch, body: body)
     }
 }

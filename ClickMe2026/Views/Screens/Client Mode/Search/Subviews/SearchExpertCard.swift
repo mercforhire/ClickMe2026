@@ -52,11 +52,18 @@ struct SearchExpertCard: View {
                         .font(.system(size: 13, weight: .regular, design: .rounded))
                         .foregroundColor(SearchExpertBrand.onSurfaceVar)
 
-                    Text(expert.bio)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(SearchExpertBrand.onSurface.opacity(0.75))
-                        .lineLimit(2)
-                        .lineSpacing(2)
+                    if !expert.bio.isEmpty {
+                        Text(expert.bio)
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundColor(SearchExpertBrand.onSurface.opacity(0.75))
+                            .lineLimit(2)
+                            .lineSpacing(2)
+                    }
+
+                    if !expert.tags.isEmpty {
+                        tagsRow
+                            .padding(.top, 2)
+                    }
                 }
             }
             .padding(16)
@@ -68,5 +75,27 @@ struct SearchExpertCard: View {
             )
         }
         .buttonStyle(PressScaleButtonStyle())
+    }
+
+    // MARK: Tags
+
+    private var tagsRow: some View {
+        HStack(spacing: 6) {
+            ForEach(expert.tags.prefix(3), id: \.self) { tag in
+                Text(tag)
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundColor(SearchExpertBrand.onSurface.opacity(0.75))
+                    .lineLimit(1)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color.white.opacity(0.06))
+                            .overlay(
+                                Capsule().stroke(SearchExpertBrand.cardBorder, lineWidth: 1)
+                            )
+                    )
+            }
+        }
     }
 }

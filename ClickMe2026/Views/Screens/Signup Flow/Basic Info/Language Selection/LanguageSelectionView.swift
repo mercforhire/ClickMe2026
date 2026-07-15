@@ -23,10 +23,10 @@ struct LanguageSelectionView: View {
 
     // MARK: Design tokens
 
-    private let bg          = Color(red: 0.075, green: 0.075, blue: 0.075)
+    private let bg          = Brand.surface
     private let fieldBg     = Color(red: 0.118, green: 0.118, blue: 0.118)
     private let fieldBorder = Color(red: 0.200, green: 0.200, blue: 0.200)
-    private let brandGreen  = Color(red: 0.267, green: 0.965, blue: 0.592)
+    private let brandGreen  = Brand.primary
     private let onSurface   = Color(red: 0.95, green: 0.95, blue: 0.95)
     private let onSurfaceVar = Color(red: 0.55, green: 0.58, blue: 0.55)
     private let onPrimary   = Color.black

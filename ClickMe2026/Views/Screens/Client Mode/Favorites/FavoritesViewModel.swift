@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class FavoritesViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: View state
     @Published var favorites: [FavoriteExpert]

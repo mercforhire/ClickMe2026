@@ -16,6 +16,9 @@ struct BookingSummaryExpertCard: View {
     let expertImageURL: String
     let topic: String
     let dateTime: String
+    /// Formatted total the client paid (e.g. `"$45.00"`). Hidden when nil
+    /// — used for free sessions or when the server omitted price fields.
+    var pricePaid: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -97,6 +100,19 @@ struct BookingSummaryExpertCard: View {
             Text(dateTime)
                 .font(.system(size: 14, weight: .regular, design: .rounded))
                 .foregroundColor(BookingSummaryBrand.onSurfaceVar)
+
+            if let pricePaid {
+                HStack(spacing: 6) {
+                    Text("PAID")
+                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .foregroundColor(BookingSummaryBrand.onSurfaceVar)
+                        .tracking(1.4)
+                    Text(pricePaid)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(BookingSummaryBrand.onSurface)
+                }
+                .padding(.top, 4)
+            }
         }
     }
 }

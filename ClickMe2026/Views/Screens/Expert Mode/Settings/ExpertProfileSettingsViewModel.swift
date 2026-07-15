@@ -65,21 +65,26 @@ final class ExpertProfileSettingsViewModel {
     @ObservationIgnored
     private let autoSaveDebounce: UInt64 = 1_200_000_000 // 1.2s
 
+    /// Snapshot of the fields as they last were on the server. Set after
+    /// `load()` hydrates from `GET /user/profile` and after each successful
+    /// PATCH. Used by `scheduleAutoSave` to skip no-op saves — critical
+    /// during the initial-load render when `.onChange` would otherwise
+    /// PATCH the just-fetched values right back.
+    @ObservationIgnored
+    private var lastPersistedSnapshot: String?
+
+    // MARK: Load state
+
+    var loadState: LoadState = .idle
+
+
     // MARK: Expert-only sections (local state)
 
     var expertiseTags: [ExpertiseTagChip]
     var newTopic: String
 
-    var rates: [HourlyRateItem]
-    var freeConsultation: Bool
-
     var availabilityExpanded: Bool
     var availability: [AvailabilitySlot]
-
-    // MARK: Save state (for the expert-only Save button)
-
-    var isSaving: Bool = false
-    var didSave: Bool = false
 
     // MARK: Dependencies
 
@@ -106,12 +111,6 @@ final class ExpertProfileSettingsViewModel {
             ExpertiseTagChip(name: "Marketing"),
         ],
         newTopic: String = "",
-        rates: [HourlyRateItem] = [
-            HourlyRateItem(topic: "Business Strategy", rate: 50),
-            HourlyRateItem(topic: "Marketing", rate: 60),
-            HourlyRateItem(topic: "Product Management", rate: 70),
-        ],
-        freeConsultation: Bool = true,
         availabilityExpanded: Bool = true,
         availability: [AvailabilitySlot] = [
             AvailabilitySlot(day: "Mon", columns: [true, false, false, false, false], timeRange: "9:00 AM - 5:00 PM"),
@@ -135,11 +134,17 @@ final class ExpertProfileSettingsViewModel {
         self.profileImage = profileImage
         self.expertiseTags = expertiseTags
         self.newTopic = newTopic
-        self.rates = rates
-        self.freeConsultation = freeConsultation
         self.availabilityExpanded = availabilityExpanded
         self.availability = availability
         self.api = api
+    }
+
+    /// Preview seam — installs canned data as if the fetch had succeeded.
+    static func previewSeed() -> ExpertProfileSettingsViewModel {
+        let vm = ExpertProfileSettingsViewModel()
+        vm.loadState = .loaded
+        vm.lastPersistedSnapshot = vm.currentSnapshot
+        return vm
     }
 
     // MARK: - Intents (expert-only)
@@ -156,23 +161,6 @@ final class ExpertProfileSettingsViewModel {
     func toggleAvailability() {
         withAnimation(.easeInOut(duration: 0.25)) {
             availabilityExpanded.toggle()
-        }
-    }
-
-    /// Local-only save-button used by the expert-only sections. The
-    /// client-side fields already round-trip via auto-save.
-    func save() {
-        guard !isSaving, !didSave else { return }
-        withAnimation { isSaving = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
-            guard let self else { return }
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                self.isSaving = false
-                self.didSave = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                withAnimation { self?.didSave = false }
-            }
         }
     }
 
@@ -198,17 +186,65 @@ final class ExpertProfileSettingsViewModel {
         do {
             _ = try await api.uploadAvatar(imageData: data)
         } catch {
-            avatarUploadError = Self.errorMessage(for: error)
+            avatarUploadError = error.userMessage
         }
+    }
+
+    // MARK: - Load
+
+    /// Fetches `/user/profile` and hydrates fields. Idempotent — skips
+    /// when already loaded so preview seeds aren't clobbered. Auto-save
+    /// is dedup'd against the loaded snapshot so this initial hydration
+    /// doesn't trigger a no-op PATCH.
+    func load() async {
+        if case .loaded = loadState { return }
+        await forceLoad()
+    }
+
+    func reload() async {
+        await forceLoad()
+    }
+
+    private func forceLoad() async {
+        loadState = .loading
+        do {
+            let response = try await api.getUserProfile()
+            hydrate(from: response.data)
+            lastPersistedSnapshot = currentSnapshot
+            loadState = .loaded
+        } catch {
+            loadState = .failed(error.userMessage)
+        }
+    }
+
+    private func hydrate(from data: UserProfileData) {
+        let personal = data.personalDetails
+        let professional = data.professionalDetails
+        let location = data.location
+        firstName = personal.firstName ?? ""
+        lastName = personal.lastName ?? ""
+        phone = personal.phone ?? ""
+        bio = personal.bio ?? ""
+        jobTitle = professional.jobTitle ?? ""
+        company = professional.company ?? ""
+        city = location.city ?? ""
+        state = location.stateProvince ?? ""
+        country = location.country ?? ""
+        languages = data.languages.compactMap(\.label)
     }
 
     // MARK: - Auto-save (client fields → PATCH /user/profile)
 
     /// Called from the view whenever a client-side field changes. Cancels
     /// any pending save and schedules a fresh one after the debounce window.
+    /// Short-circuits if the current state matches what we last persisted —
+    /// this prevents the initial `.onChange` firing after `load()` from
+    /// PATCHing the just-fetched values back to the server.
     func scheduleAutoSave() {
         autoSaveTask?.cancel()
         if didAutoSave { didAutoSave = false }
+
+        guard currentSnapshot != lastPersistedSnapshot else { return }
 
         autoSaveTask = Task { [weak self] in
             guard let debounce = self?.autoSaveDebounce else { return }
@@ -239,24 +275,26 @@ final class ExpertProfileSettingsViewModel {
             company: company.trimmingCharacters(in: .whitespaces)
         )
 
+        let snapshotAtSaveTime = currentSnapshot
+
         isAutoSaving = true
         defer { isAutoSaving = false }
         do {
             _ = try await api.updateUserProfile(body)
+            lastPersistedSnapshot = snapshotAtSaveTime
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
-            autoSaveError = Self.errorMessage(for: error)
+            autoSaveError = error.userMessage
         }
+    }
+
+    /// Concatenated view of the auto-save-tracked fields. Used to dedup
+    /// the debounced save against the server's known state.
+    private var currentSnapshot: String {
+        [firstName, lastName, phone, bio, jobTitle, company, city, state, country]
+            .joined(separator: "|")
     }
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

@@ -111,21 +111,13 @@ final class SignupProfilePhotoViewModel: ObservableObject {
         defer { isSaving = false }
         do {
             let response = try await api.uploadAvatar(imageData: data)
-            accumulator?.avatarUrl = response.data.url
+            accumulator?.avatarUrl = response.data.avatarUrl
             withAnimation(.easeInOut(duration: 0.25)) { isSaved = true }
         } catch {
-            saveError = Self.errorMessage(for: error)
+            saveError = error.userMessage
         }
     }
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

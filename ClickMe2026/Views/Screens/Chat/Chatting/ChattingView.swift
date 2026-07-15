@@ -8,41 +8,6 @@
 
 import SwiftUI
 
-// MARK: - Display models
-
-enum MessageSender { case me, them }
-
-enum ChatItem: Identifiable {
-    case message(ChatMessage)
-    case timestamp(String)
-    case systemEvent(BookingEvent)
-
-    var id: String {
-        switch self {
-        case let .message(m): return m.id.uuidString
-        case let .timestamp(t): return "ts_\(t)"
-        case let .systemEvent(e): return e.id.uuidString
-        }
-    }
-}
-
-struct ChatMessage: Identifiable {
-    let id = UUID()
-    let sender: MessageSender
-    let senderName: String
-    let body: String
-    let avatarURL: String
-}
-
-struct BookingEvent: Identifiable {
-    let id = UUID()
-    let icon: String // SF Symbol
-    let title: String
-    let subtitle: String?
-    let isAccepted: Bool
-    let avatarURL: String? // nil = no avatar on left
-}
-
 // MARK: - Chat View
 
 struct ChatView: View {
@@ -50,6 +15,10 @@ struct ChatView: View {
     @StateObject private var viewModel: ChattingViewModel
 
     @FocusState private var inputFocused: Bool
+
+    /// Set from the toolbar menu's "Block or Report" button; triggers the
+    /// push into `ReportChatView` via `.navigationDestination(isPresented:)`.
+    @State private var showingBlockReport: Bool = false
 
     // MARK: Init
 
@@ -94,7 +63,20 @@ struct ChatView: View {
         .confirmationDialog("Options", isPresented: $viewModel.showMenu, titleVisibility: .hidden) {
             Button("View Profile") {}
             Button("Mute Chat") {}
-            Button("Block User", role: .destructive) {}
+            Button("Block or Report", role: .destructive) {
+                showingBlockReport = true
+            }
+        }
+        .navigationDestination(isPresented: $showingBlockReport) {
+            if let threadId = viewModel.threadId {
+                ReportChatView(
+                    threadId: threadId,
+                    userName: viewModel.peerName,
+                    onBlock: { _ in showingBlockReport = false },
+                    onReport: { _, _ in },
+                    onDismiss: { showingBlockReport = false }
+                )
+            }
         }
         .alert(
             "Couldn't send message",
@@ -178,7 +160,7 @@ struct ChatView: View {
             } label: {
                 Text("Retry")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(ChattingBrand.onPrimary)
+                    .foregroundColor(ChattingBrand.myText)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
                     .background(Capsule().fill(ChattingBrand.brandGreen))
@@ -203,7 +185,7 @@ struct ChatView: View {
                 }
                 .padding(.vertical, 12)
             }
-            .onChange(of: viewModel.items.count) { _ in
+            .onChange(of: viewModel.items.count) {
                 withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
             }
             .onAppear {
@@ -296,57 +278,30 @@ extension ChatItem {
     ]
 }
 
-// MARK: - Preview harness
-
-private enum ChatPreviewRoute: Hashable { case chat }
-
-private struct ChatPreviewHarness: View {
-    let viewModel: ChattingViewModel
-    @State private var path: [ChatPreviewRoute] = [.chat]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Chats")
-                NavigationLink("Open conversation", value: ChatPreviewRoute.chat)
-            }
-            .navigationTitle("Chats")
-            .navigationDestination(for: ChatPreviewRoute.self) { _ in
-                ChatView(viewModel: viewModel)
-            }
-        }
-    }
-}
+// MARK: - Live-fetch harness
 
 /// Resolves a real `threadId` from `GET /chats` and pushes `ChatView`
-/// with that id so `getChatMessages` actually fetches messages.
+/// with that id so `getChatMessages` actually fetches messages. Custom
+/// async logic — can't be swapped for the generic `PreviewNavHarness`.
 private struct LiveFetchChattingHarness: View {
     @State private var resolved: (id: UUID, name: String, avatar: String)?
     @State private var errorMessage: String?
-    @State private var path: [ChatPreviewRoute] = [.chat]
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Chats")
-                NavigationLink("Open first conversation", value: ChatPreviewRoute.chat)
-            }
-            .navigationTitle("Chats")
-            .navigationDestination(for: ChatPreviewRoute.self) { _ in
-                if let r = resolved {
-                    ChatView(threadId: r.id, peerName: r.name, peerAvatarURL: r.avatar)
-                } else if let errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                } else {
-                    ProgressView("Resolving thread…")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                        .task { await resolveThread() }
-                }
+        PreviewNavHarness(parentText: "Chats", navTitle: "Chats", rowTitle: "Open first conversation") {
+            if let r = resolved {
+                ChatView(threadId: r.id, peerName: r.name, peerAvatarURL: r.avatar)
+            } else if let errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black)
+            } else {
+                ProgressView("Resolving thread…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.black)
+                    .task { await resolveThread() }
             }
         }
     }
@@ -360,7 +315,7 @@ private struct LiveFetchChattingHarness: View {
             }
             resolved = (first.threadId, "Chat", "")
         } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 }
@@ -368,13 +323,17 @@ private struct LiveFetchChattingHarness: View {
 // MARK: - Previews
 
 #Preview("With Messages") {
-    ChatPreviewHarness(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Chats", navTitle: "Chats", rowTitle: "Open conversation") {
+        ChatView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Empty — Start Conversation") {
-    ChatPreviewHarness(viewModel: .previewSeed(items: []))
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Chats", navTitle: "Chats", rowTitle: "Open conversation") {
+        ChatView(viewModel: .previewSeed(items: []))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {

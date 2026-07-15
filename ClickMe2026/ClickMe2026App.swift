@@ -19,7 +19,7 @@ struct ClickMe2026App: App {
                 // Whenever the auth state flips to logged-out from a
                 // logged-in screen, snap back to the login route. This is
                 // how `UserManager.logout()` becomes user-visible.
-                .onChange(of: userManager.isLoggedIn) { isLoggedIn in
+                .onChange(of: userManager.isLoggedIn) { _, isLoggedIn in
                     guard !isLoggedIn else { return }
                     if route == .clientHome || route == .expertHome {
                         route = .login

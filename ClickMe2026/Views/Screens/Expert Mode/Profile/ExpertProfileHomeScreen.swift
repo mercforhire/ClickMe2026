@@ -178,11 +178,11 @@ struct ExpertProfileHomeScreen: View {
         case .expertiseTopics:
             TopicsSetupView()
         case .availability:
-            AvailiabilitySettingsView()
+            AvailabilitySettingsView()
         case .payouts:
             PayoutsView()
         case .security:
-            placeholder(title: "Security & Password")
+            AccountSecurityView()
         case .notifications:
             NotificationSettingsView()
         case .privacy:

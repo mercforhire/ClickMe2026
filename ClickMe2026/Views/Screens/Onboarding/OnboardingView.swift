@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Onboarding Page Model
 
 struct OnboardingPage {
-    let illustration: String // SF Symbol used as placeholder; swap for real assets
+    let illustration: OnboardingIllustration
     let title: String
     let subtitle: String
 }
@@ -43,7 +43,7 @@ struct OnboardingView: View {
 
             VStack(spacing: 0) {
                 OnboardingIllustrationCard(
-                    systemImage: viewModel.currentPageModel.illustration,
+                    illustration: viewModel.currentPageModel.illustration,
                     scale: viewModel.illustrationScale,
                     opacity: viewModel.illustrationOpacity
                 )

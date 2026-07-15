@@ -16,10 +16,10 @@ enum RescheduleBrand {
     static let cardBorder = Color(red: 0.170, green: 0.185, blue: 0.200)
     static let chipBg = Color(red: 0.130, green: 0.140, blue: 0.158)
     static let chipBorder = Color(red: 0.200, green: 0.215, blue: 0.230)
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592) // #44f697
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882) // #e5e2e1
+    static let brandGreen = Brand.primary // #44f697
+    static let onSurface = Brand.onSurface // #e5e2e1
     static let onSurfaceVar = Color(red: 0.620, green: 0.660, blue: 0.640)
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114) // #003920
+    static let onPrimary = Brand.onPrimary // #003920
     static let avatarFallback = Color(red: 0.10, green: 0.16, blue: 0.12)
 }
 

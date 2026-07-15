@@ -58,7 +58,8 @@ final class SignupReviewViewModel: ObservableObject {
             ),
             spokenLanguages: accumulator.languages.map(\.label).joined(separator: ", "),
             avatarURL: accumulator.avatarUrl ?? "",
-            hourlyRate: accumulator.hourlyRateAmount ?? 0,
+            // Accumulator stores minor units — display as major.
+            hourlyRate: (accumulator.hourlyRateAmount ?? 0) / 100,
             hourlyRateCurrency: accumulator.hourlyRateCurrency,
             skills: accumulator.expertiseTags.map(\.label)
         )
@@ -88,7 +89,7 @@ final class SignupReviewViewModel: ObservableObject {
             didPublish = true
             return true
         } catch {
-            publishError = Self.errorMessage(for: error)
+            publishError = error.userMessage
             return false
         }
     }
@@ -103,14 +104,6 @@ final class SignupReviewViewModel: ObservableObject {
             .joined(separator: ", ")
     }
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: Defaults
 

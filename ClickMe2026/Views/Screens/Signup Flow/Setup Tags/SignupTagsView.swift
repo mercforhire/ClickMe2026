@@ -152,7 +152,7 @@ struct SignupTagsView: View {
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
-                    .background(Capsule().fill(Color(red: 0.267, green: 0.965, blue: 0.592)))
+                    .background(Capsule().fill(Brand.primary))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -202,71 +202,36 @@ struct SignupTagsView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum TagsPreviewRoute: Hashable {
-    case defaultSelection
-    case empty
-    case many
-    case liveFetch
-}
-
-/// Wraps the tags screen inside a NavigationStack with a dummy "Profile
-/// checklist" parent already pushed, so the system back chevron renders in
-/// the canvas.
-private struct TagsPreviewHarness: View {
-    let route: TagsPreviewRoute
-    @State private var path: [TagsPreviewRoute]
-
-    init(route: TagsPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Complete your profile")
-                NavigationLink("Add expertise", value: route)
-            }
-            .navigationTitle("Profile setup")
-            .navigationDestination(for: TagsPreviewRoute.self) { dest in
-                switch dest {
-                case .defaultSelection:
-                    let seed = Array(SignupTagsViewModel.previewTags.prefix(2))
-                    SignupTagsView(viewModel: .previewSeed(selected: seed))
-                case .empty:
-                    SignupTagsView(viewModel: .previewSeed(selected: []))
-                case .many:
-                    let seed = Array(SignupTagsViewModel.previewTags.prefix(4))
-                    SignupTagsView(viewModel: .previewSeed(selected: seed))
-                case .liveFetch:
-                    SignupTagsView()
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
+#if DEBUG
+private func tagsPreview<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View {
+    PreviewNavHarness(parentText: "Complete your profile", navTitle: "Profile setup", rowTitle: "Add expertise") {
+        content()
+    }
+    .preferredColorScheme(.dark)
+}
+#endif
+
 #Preview("Default — 2 selected") {
-    TagsPreviewHarness(route: .defaultSelection)
-        .preferredColorScheme(.dark)
+    tagsPreview {
+        SignupTagsView(viewModel: .previewSeed(selected: Array(SignupTagsViewModel.previewTags.prefix(2))))
+    }
 }
 
 #Preview("Empty — no selection") {
-    TagsPreviewHarness(route: .empty)
-        .preferredColorScheme(.dark)
+    tagsPreview {
+        SignupTagsView(viewModel: .previewSeed(selected: []))
+    }
 }
 
 #Preview("Many selected") {
-    TagsPreviewHarness(route: .many)
-        .preferredColorScheme(.dark)
+    tagsPreview {
+        SignupTagsView(viewModel: .previewSeed(selected: Array(SignupTagsViewModel.previewTags.prefix(4))))
+    }
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    return TagsPreviewHarness(route: .liveFetch)
-        .preferredColorScheme(.dark)
+    return tagsPreview { SignupTagsView() }
 }

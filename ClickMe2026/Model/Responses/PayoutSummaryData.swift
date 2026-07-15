@@ -14,11 +14,11 @@ import Foundation
 /// has no Stripe Connect account yet, and 400 `KYC_INCOMPLETE` when
 /// verification hasn't been completed. Amounts are integer minor units.
 struct PayoutSummaryData: Decodable {
-    /// Live Stripe available balance in minor units — what the "Withdraw"
-    /// button can transfer today.
+    /// Live Stripe available balance in minor units — will be paid out
+    /// automatically on the next scheduled date.
     let availableAmount: Int
     /// Live Stripe pending balance in minor units — captured but in the
-    /// hold/dispute window; not withdrawable yet.
+    /// hold/dispute window; not yet available for payout.
     let pendingAmount: Int
     /// ISO 3-letter uppercase — connected account's payout currency.
     let currency: String
@@ -27,10 +27,4 @@ struct PayoutSummaryData: Decodable {
     let nextPayoutDate: String?
     /// Always `"bank_transfer"` in v1.
     let payoutMethod: String
-    /// True when `availableAmount >= minWithdrawableAmount`. When false,
-    /// the Withdraw button should be disabled.
-    let canWithdraw: Bool
-    /// Minimum withdrawal in minor units (configured server-side via
-    /// `MIN_WITHDRAWABLE_{CURRENCY}` env).
-    let minWithdrawableAmount: Int
 }

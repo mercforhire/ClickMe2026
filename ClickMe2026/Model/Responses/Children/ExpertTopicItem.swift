@@ -10,11 +10,10 @@ import Foundation
 
 /// An expert's discussion topic with server-formatted price label.
 ///
-/// x-discrepancy #14: `hourlyRate` and `freeConsultationMinutes` are the
-/// per-topic fields introduced for `GET /expert/topics` (my own list) and
-/// are also mirrored back on the public `GET /experts/:id/topics` payload
-/// for booking flows. Both are optional to keep this DTO decodable against
-/// older responses that don't include them.
+/// x-discrepancy #14: `hourlyRate` is the per-topic field introduced for
+/// `GET /expert/topics` (my own list) and is also mirrored back on the
+/// public `GET /experts/:id/topics` payload for booking flows. Optional to
+/// keep this DTO decodable against older responses that don't include it.
 struct ExpertTopicItem: Decodable {
     struct Price: Decodable {
         let amount: Int?
@@ -34,5 +33,8 @@ struct ExpertTopicItem: Decodable {
     let description: String?
     let price: Price
     let hourlyRate: HourlyRate?
-    let freeConsultationMinutes: Int?
+    /// Stable slug matching `CategoryIconMap` (e.g. `"marketing"`,
+    /// `"finance"`). Client resolves it to an SF Symbol at render time;
+    /// nil falls back to a decorative default.
+    let iconSlug: String?
 }

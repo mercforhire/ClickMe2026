@@ -105,21 +105,13 @@ final class ExpertCancellationViewModel: ObservableObject {
                 )
                 onConfirm(self.selectedReason)
             } catch {
-                self.apiError = Self.errorMessage(for: error)
+                self.apiError = error.userMessage
             }
         }
     }
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: Defaults
 

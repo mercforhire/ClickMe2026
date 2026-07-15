@@ -19,30 +19,24 @@ enum SplashDestination: Equatable {
 @Observable
 final class SplashViewModel {
     private let userManager: UserManager
-    private let minimumDisplaySeconds: TimeInterval
+    private let displaySeconds: TimeInterval
 
     private(set) var destination: SplashDestination?
 
     init(
         userManager: UserManager = .shared,
-        minimumDisplaySeconds: TimeInterval = 2.2
+        displaySeconds: TimeInterval = 3.0
     ) {
         self.userManager = userManager
-        self.minimumDisplaySeconds = minimumDisplaySeconds
+        self.displaySeconds = displaySeconds
     }
 
-    /// Runs the auth check and enforces the minimum splash display time.
-    /// When both complete, `destination` is populated so the view can transition.
+    /// Shows the splash for `displaySeconds`, then checks the user manager and
+    /// populates `destination` so the view can transition.
     func start() async {
-        let startedAt = Date()
+        try? await Task.sleep(nanoseconds: UInt64(displaySeconds * 1_000_000_000))
+
         let succeeded = await userManager.tryAutoLogin()
-
-        let elapsed = Date().timeIntervalSince(startedAt)
-        let remaining = max(0, minimumDisplaySeconds - elapsed)
-        if remaining > 0 {
-            try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
-        }
-
         if succeeded, let role = userManager.me?.role {
             destination = .dashboard(role)
         } else {

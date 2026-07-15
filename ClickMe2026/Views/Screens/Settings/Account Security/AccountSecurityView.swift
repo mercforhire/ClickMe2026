@@ -1,5 +1,5 @@
 //
-//  ChangePasswordView.swift
+//  AccountSecurityView.swift
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-09.
@@ -13,17 +13,17 @@ import SwiftUI
 private enum ChangePasswordBrand {
     static let pageBg = Color.black
     static let inputBg = Color(red: 0.110, green: 0.106, blue: 0.106) // #1c1b1b
-    static let inputBorder = Color(red: 0.235, green: 0.290, blue: 0.247).opacity(0.40) // #3c4a3f / 40%
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592) // #44f697
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114) // #00391d
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882) // #e5e2e1
-    static let onSurfaceVar = Color(red: 0.729, green: 0.796, blue: 0.737) // #bacbbc
+    static let inputBorder = Brand.outlineVariant.opacity(0.40) // #3c4a3f / 40%
+    static let brandGreen = Brand.primary
+    static let onPrimary = Brand.onPrimary // #00391d
+    static let onSurface = Brand.onSurface // #e5e2e1
+    static let onSurfaceVar = Brand.onSurfaceVariant // #bacbbc
     static let strengthTrack = Color(red: 0.208, green: 0.208, blue: 0.204).opacity(0.30)
-    static let error = Color(red: 1.000, green: 0.706, blue: 0.671) // #ffb4ab
+    static let error = Brand.error // #ffb4ab
     static let warning = Color(red: 0.918, green: 0.702, blue: 0.031) // yellow-500
     static let neonGlow = Color(red: 0.000, green: 0.851, blue: 0.494).opacity(0.30) // rgba(0,217,126,0.3)
     static let dangerRed = Color(red: 1.000, green: 0.302, blue: 0.302) // #ff4d4d
-    static let sectionDivider = Color(red: 0.165, green: 0.165, blue: 0.165) // #2a2a2a
+    static let sectionDivider = Brand.surfaceContainerHigh // #2a2a2a
 }
 
 // MARK: - Strength model
@@ -80,11 +80,11 @@ private enum ChangePasswordStrength: Int {
 
 // MARK: - Change Password View
 
-struct ChangePasswordView: View {
+struct AccountSecurityView: View {
 
-    @StateObject private var viewModel: ChangePasswordViewModel
+    @StateObject private var viewModel: AccountSecurityViewModel
 
-    init(viewModel: ChangePasswordViewModel = ChangePasswordViewModel()) {
+    init(viewModel: AccountSecurityViewModel = AccountSecurityViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 
@@ -366,86 +366,30 @@ private struct StrengthIndicator: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum ChangePasswordPreviewRoute: Hashable {
-    case changePassword
-}
-
-/// Wraps the change-password screen inside a NavigationStack with a dummy
-/// "Settings" parent already pushed, so the system back chevron renders in
-/// the canvas — matches how the hub pushes this screen in production.
-private struct ChangePasswordPreviewHarness: View {
-    let viewModel: ChangePasswordViewModel
-    @State private var path: [ChangePasswordPreviewRoute]
-
-    init(viewModel: ChangePasswordViewModel = ChangePasswordViewModel()) {
-        self.viewModel = viewModel
-        _path = State(initialValue: [.changePassword])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Account")
-                NavigationLink("Security & Password", value: ChangePasswordPreviewRoute.changePassword)
-            }
-            .navigationTitle("Settings")
-            .navigationDestination(for: ChangePasswordPreviewRoute.self) { _ in
-                ChangePasswordView(viewModel: viewModel)
-            }
-        }
-    }
-}
-
-// MARK: - Live-fetch preview harness
-
-/// Wraps the change-password screen inside a NavigationStack with a dummy
-/// "Settings" parent and installs the client bearer token, so tapping
-/// **Update Password** performs a real `PATCH /user/password` call against
-/// the live backend. Change either password to confirm the round-trip works
-/// end-to-end (403 / 422 / 200 all handled by the view model).
-private struct LiveFetchChangePasswordPreviewHarness: View {
-    @State private var path: [ChangePasswordPreviewRoute]
-
-    init() {
-        _path = State(initialValue: [.changePassword])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Account")
-                NavigationLink("Security & Password", value: ChangePasswordPreviewRoute.changePassword)
-            }
-            .navigationTitle("Settings")
-            .navigationDestination(for: ChangePasswordPreviewRoute.self) { _ in
-                ChangePasswordView()
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Change Password") {
-    ChangePasswordPreviewHarness()
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Account", navTitle: "Settings", rowTitle: "Security & Password") {
+        AccountSecurityView()
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Filled — Valid Inputs") {
-    ChangePasswordPreviewHarness(
-        viewModel: .previewSeed(
+    PreviewNavHarness(parentText: "Account", navTitle: "Settings", rowTitle: "Security & Password") {
+        AccountSecurityView(viewModel: .previewSeed(
             current: "OldPass2025!",
             new: "N3wStr0ngPass!",
             confirm: "N3wStr0ngPass!"
-        )
-    )
+        ))
+    }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
-    return LiveFetchChangePasswordPreviewHarness()
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Account", navTitle: "Settings", rowTitle: "Security & Password") {
+        AccountSecurityView()
+    }
+    .preferredColorScheme(.dark)
 }

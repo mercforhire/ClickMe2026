@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Shared color palette for the "Reset Password" screen.
 enum ForgetPassBrand {
-    static let green       = Color(red: 0.22, green: 0.82, blue: 0.44)
+    static let green       = Brand.primary
     static let bgTop       = Color(red: 0.04, green: 0.13, blue: 0.07)
     static let bgBottom    = Color(red: 0.05, green: 0.08, blue: 0.05)
     static let bg          = Color(red: 0.05, green: 0.08, blue: 0.05)

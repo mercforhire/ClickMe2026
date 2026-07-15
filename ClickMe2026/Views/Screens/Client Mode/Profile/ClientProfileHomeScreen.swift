@@ -14,13 +14,17 @@ import SwiftUI
 /// visible in one place and unimplemented rows show a placeholder stub
 /// rather than crashing.
 private enum ClientProfileHomeRoute: Hashable {
+    /// The edit-profile route — reached via the pencil on the user card and
+    /// (in the past) via a "Personal Information" list row. We kept the case
+    /// so the pencil still has a target after that list row was removed for
+    /// being redundant with the pencil affordance.
     case personalInfo
-    case professionalProfile
     case security
     case notifications
     case privacy
     case faq
     case feedback
+    case modeSwitch
 }
 
 // MARK: - Screen
@@ -49,13 +53,11 @@ struct ClientProfileHomeScreen: View {
                     VStack(spacing: 32) {
                         userCard
 
+                        ClientProfileHomeModeSwitchCard(
+                            action: { path.append(.modeSwitch) }
+                        )
+
                         section(title: "Account") {
-                            row(icon: "person.fill", title: "Personal Information") {
-                                path.append(.personalInfo)
-                            }
-                            row(icon: "briefcase.fill", title: "Professional Profile") {
-                                path.append(.professionalProfile)
-                            }
                             row(icon: "lock.fill", title: "Security & Password") {
                                 path.append(.security)
                             }
@@ -159,18 +161,18 @@ struct ClientProfileHomeScreen: View {
         switch route {
         case .personalInfo:
             ClientProfileSettingsView()
-        case .professionalProfile:
-            placeholder(title: "Professional Profile")
         case .security:
             placeholder(title: "Security & Password")
         case .notifications:
-            placeholder(title: "Notifications")
+            NotificationSettingsView()
         case .privacy:
             placeholder(title: "Privacy")
         case .faq:
-            placeholder(title: "FAQ & Help")
+            HelpView()
         case .feedback:
-            placeholder(title: "Send Feedback")
+            FeedbackView()
+        case .modeSwitch:
+            ModeSwitchView()
         }
     }
 

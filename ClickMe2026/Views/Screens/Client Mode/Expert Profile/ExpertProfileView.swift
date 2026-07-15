@@ -11,13 +11,16 @@ import SwiftUI
 // MARK: - Models
 
 struct PublicExpertProfile {
+    /// Server-issued expert UUID. Optional because we may construct a
+    /// profile from hardcoded sample data that has no real backing. Required
+    /// for calling `/client/favorites/:expertId`.
+    let expertId: UUID?
     let name: String
     let title: String
     let rating: Double
     let reviewCount: Int
     let yearsExp: String
     let bookings: String
-    let responseTime: String
     let isOnline: Bool
     let bio: String
     let expertiseTags: [PublicExpertTag]
@@ -50,6 +53,11 @@ struct PublicReview {
 struct ExpertProfileView: View {
 
     @StateObject private var viewModel: ExpertProfileViewModel
+
+    /// Push-state for the reviews screen. Set by the "See all reviews" tap
+    /// and observed by `.navigationDestination(isPresented:)`, which
+    /// piggybacks on whichever `NavigationStack` this profile is inside.
+    @State private var showReviews: Bool = false
 
     var onBookSession: () -> Void
     var onMessage: () -> Void
@@ -107,8 +115,7 @@ struct ExpertProfileView: View {
 
                     ExpertProfileStatsBar(
                         yearsExp: expert.yearsExp,
-                        bookings: expert.bookings,
-                        responseTime: expert.responseTime
+                        bookings: expert.bookings
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
@@ -134,111 +141,171 @@ struct ExpertProfileView: View {
 
                     ExpertProfileReviewsCard(
                         reviews: expert.reviews,
-                        onSeeAllReviews: onSeeAllReviews
+                        onSeeAllReviews: {
+                            showReviews = true
+                            onSeeAllReviews()
+                        }
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 48)
                 }
             }
         }
-        .toolbarBackground(ExpertProfileBrand.bg, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        // Transparent nav bar so hero + scroll content shows through. Dark
+        // color scheme keeps the back chevron / heart legible against the
+        // Luminous-Dark palette.
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    viewModel.toggleFavorite()
-                    onFavorite()
+                    Task {
+                        await viewModel.toggleFavorite()
+                        onFavorite()
+                    }
                 } label: {
-                    Image(systemName: viewModel.isFavorited ? "bookmark.fill" : "bookmark")
+                    Image(systemName: viewModel.isFavorited ? "heart.fill" : "heart")
                         .font(.system(size: 18, weight: .regular))
                         .foregroundColor(viewModel.isFavorited ? ExpertProfileBrand.brandGreen : ExpertProfileBrand.onSurface)
                 }
+                .disabled(viewModel.isFavoriteInFlight)
+                .accessibilityLabel(viewModel.isFavorited ? "Remove from favorites" : "Add to favorites")
             }
         }
         .onAppear { viewModel.glowPulse = true }
-    }
-}
-
-// MARK: - Sample data
-
-extension PublicExpertProfile {
-    static let sarahChen = PublicExpertProfile(
-        name: "Sarah Chen",
-        title: "Senior UX Architect",
-        rating: 4.9,
-        reviewCount: 128,
-        yearsExp: "12 Yrs",
-        bookings: "850+",
-        responseTime: "< 2hrs",
-        isOnline: true,
-        bio: "Strategic UX leader with over a decade of experience building design systems for Fortune 500 tech companies. Specialized in bridging the gap between complex engineering and human-centric product design. I help designers level up their career and teams scale their design operations.",
-        expertiseTags: [
-            PublicExpertTag(label: "Design Systems", isHighlighted: false),
-            PublicExpertTag(label: "Product Strategy", isHighlighted: false),
-            PublicExpertTag(label: "Career Mentorship", isHighlighted: true),
-            PublicExpertTag(label: "SaaS Architecture", isHighlighted: false),
-        ],
-        topics: [
-            PublicTopic(title: "Intro Consultation", duration: "15 mins", description: "Discovery call", price: "Free", isFree: true),
-            PublicTopic(title: "Portfolio Review", duration: "45 mins", description: "Deep dive review", price: "$120", isFree: false),
-            PublicTopic(title: "System Architecture", duration: "60 mins", description: "Consultation", price: "$185", isFree: false),
-        ],
-        reviews: [
-            PublicReview(reviewer: "Marcus R.", stars: 5,
-                         body: "Sarah provided incredible insights into our design system workflow. Highly recommended!"),
-            PublicReview(reviewer: "Elena V.", stars: 5,
-                         body: "Very structured and helpful session. Gave me actionable steps for my senior promotion."),
-        ],
-        imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuBuLM2HFvVn5iq2xYO5dHjpK19mu_EIMDZPjqK9qMv_4k9iM8TChFmTqACEX1U1Y7seJaotE5worzC248lK7Bija0o6Tw1nGFJtipzoLhwviH12b31HWbNlk3JNpsQs78fDIYnmkZKldEXuJDsl9VUICiXpbHejktKaWMXUyhYQ9QP_GLQ4UCT-e7zH4a8nFpQ8zjDJvgXY56NSBf45xvhmZ-rzvdkzsAro7Nm_1dP0HWI8tm1sykwFW40ekKsX127tVbzJZTdbObM"
-    )
-}
-
-// MARK: - Preview harness
-
-private enum ExpertProfilePreviewRoute: Hashable {
-    case sarahChen
-    case bookmarked
-}
-
-/// Wraps the profile view inside a NavigationStack with a dummy "Search"
-/// parent already pushed, so the system back chevron renders in the canvas.
-private struct ExpertProfilePreviewHarness: View {
-    let route: ExpertProfilePreviewRoute
-    @State private var path: [ExpertProfilePreviewRoute]
-
-    init(route: ExpertProfilePreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Search results")
-                NavigationLink("View expert", value: route)
-            }
-            .navigationTitle("Experts")
-            .navigationDestination(for: ExpertProfilePreviewRoute.self) { dest in
-                switch dest {
-                case .sarahChen:
-                    ExpertProfileView()
-                case .bookmarked:
-                    ExpertProfileView(viewModel: ExpertProfileViewModel(isFavorited: true))
-                }
-            }
+        .task { await viewModel.loadProfileDetails() }
+        .navigationDestination(isPresented: $showReviews) {
+            ExpertReviewsView(expertId: expert.expertId)
+        }
+        .alert(
+            "Couldn't update favorites",
+            isPresented: presenting(\.apiError),
+            presenting: viewModel.apiError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
         }
     }
+
+    /// Binding that's `true` while `apiError` is non-nil; setting it to
+    /// `false` clears the error and dismisses the alert.
+    private func presenting(_ keyPath: ReferenceWritableKeyPath<ExpertProfileViewModel, String?>) -> Binding<Bool> {
+        Binding(
+            get: { viewModel[keyPath: keyPath] != nil },
+            set: { if !$0 { viewModel[keyPath: keyPath] = nil } }
+        )
+    }
+}
+
+// MARK: - Placeholder
+
+extension PublicExpertProfile {
+    /// Empty profile used as a safe initial value before real data lands.
+    /// Callers that construct a profile from a display type (Explore card,
+    /// Search result, Favorite card) start from `.placeholder` and overlay
+    /// what they know; `ExpertProfileViewModel.loadProfileDetails()` then
+    /// refreshes bio / stats / topics from `/experts/:id/details`.
+    static let placeholder = PublicExpertProfile(
+        expertId: nil,
+        name: "",
+        title: "",
+        rating: 0,
+        reviewCount: 0,
+        yearsExp: "",
+        bookings: "",
+        isOnline: false,
+        bio: "",
+        expertiseTags: [],
+        topics: [],
+        reviews: [],
+        imageURL: ""
+    )
 }
 
 // MARK: - Previews
 
-#Preview("Sarah Chen") {
-    ExpertProfilePreviewHarness(route: .sarahChen)
-        .preferredColorScheme(.dark)
+/// Live-fetch preview. Bootstraps by calling `/client/home` to pick a real
+/// recommended expert, seeds the profile from that row (including
+/// `is_favorite`), then lets the view's own `.task` refresh bio/topics via
+/// `/experts/:id/details`. Tapping the heart fires real `PUT`/`DELETE`
+/// `/client/favorites/:id` and reconciles with the response.
+///
+/// Requires `PreviewSecrets.clientBearerToken` to hold a valid client-role JWT.
+#Preview("Live Fetch") {
+    PreviewNavHarness(parentText: "Search results", navTitle: "Experts", rowTitle: "View expert") {
+        LiveFetchProfileBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }
 
-#Preview("Bookmarked") {
-    ExpertProfilePreviewHarness(route: .bookmarked)
-        .preferredColorScheme(.dark)
+/// Custom async bootstrap that pulls a real expert from `/client/home`
+/// then hands off to `ExpertProfileView`.
+private struct LiveFetchProfileBootstrap: View {
+    @State private var seed: PublicExpertProfile?
+    @State private var initialFavorite: Bool = false
+    @State private var errorMessage: String?
+
+    var body: some View {
+        if let seed {
+            ExpertProfileView(
+                viewModel: ExpertProfileViewModel(
+                    expert: seed,
+                    isFavorited: initialFavorite
+                )
+            )
+        } else if let errorMessage {
+            VStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundColor(.white.opacity(0.6))
+                Text("Preview bootstrap failed")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(errorMessage)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(ExpertProfileBrand.bg.ignoresSafeArea())
+        } else {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(ExpertProfileBrand.bg.ignoresSafeArea())
+                .task { await bootstrap() }
+        }
+    }
+
+    private func bootstrap() async {
+        ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
+        do {
+            let home = try await ClickMeAPI.shared.getClientHome()
+            guard let re = home.data.recommendedExperts.first else {
+                errorMessage = "No recommended experts in the home feed to preview."
+                return
+            }
+            seed = PublicExpertProfile(
+                expertId: re.expertId,
+                name: re.fullName ?? "Expert",
+                title: re.title ?? "",
+                rating: re.rating ?? 0,
+                reviewCount: re.reviewCount ?? 0,
+                yearsExp: re.yearsExperience.map { "\($0) Yrs" } ?? "",
+                bookings: "",
+                isOnline: true,
+                bio: "",
+                expertiseTags: (re.expertiseTags ?? []).map {
+                    PublicExpertTag(label: $0, isHighlighted: false)
+                },
+                topics: [],
+                reviews: [],
+                imageURL: re.profileImageUrl ?? ""
+            )
+            initialFavorite = re.isFavorite
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 }

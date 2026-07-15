@@ -133,7 +133,7 @@ final class SignupAccumulator {
                 countryCode: countryCode
             ),
             timezone: timezone,
-            languages: languages.map { $0.id.uuidString },
+            languages: languages.map(\.id),
             expertiseTags: expertiseTags.map { $0.id.uuidString },
             hourlyRate: .init(amount: amount, currency: hourlyRateCurrency)
         )

@@ -22,6 +22,9 @@ enum APIRequestURLs {
 
     // MARK: Auth
     case login
+    case signup
+    case resendVerificationEmail
+    case checkEmailVerified
     case forgotPassword
     case resetPassword
 
@@ -36,13 +39,13 @@ enum APIRequestURLs {
     case getExpertiseTags
     case getCurrencies
     case getLanguages
+    case getAllCategories
 
     // MARK: User Profile
     case getUserProfile
-    case updateProfessionalDetails
-    case updateLocation
-    case updateLanguages
+    case updateUserProfile
     case uploadAvatar
+    case updatePassword
 
     // MARK: Discovery
     case getClientHome
@@ -53,6 +56,11 @@ enum APIRequestURLs {
     case getExpertDetails
     case getExpertTopics
     case getExpert
+
+    // MARK: Favorites
+    case getClientFavorites
+    case addFavorite
+    case removeFavorite
 
     // MARK: Availability
     case getMyAvailability
@@ -68,6 +76,7 @@ enum APIRequestURLs {
     case confirmBooking
     case requestBooking
     case getClientBookings
+    case getClientBookingDetail
     case rescheduleClientBooking
     case cancelClientBooking
     case getExpertBookings
@@ -86,6 +95,20 @@ enum APIRequestURLs {
     case getBookingNote
     case createBookingNote
 
+    // MARK: Expert Topics
+    case getMyTopics
+    case createMyTopic
+    case updateMyTopic
+    case deleteMyTopic
+
+    // MARK: Expert Clients
+    case getClientProfile
+
+    // MARK: Expert Payouts + Stripe Connect
+    case getWeeklyEarnings
+    case getPayoutSummary
+    case startConnectOnboarding
+
     // MARK: Call
     case joinCall
     case confirmCallConnection
@@ -102,6 +125,7 @@ enum APIRequestURLs {
     case registerDeviceToken
     case unregisterDeviceToken
     case getNotifications
+    case getNotificationPreferences
     case updateNotificationPreferences
 
     // MARK: Reviews
@@ -134,9 +158,12 @@ enum APIRequestURLs {
     var path: String {
         switch self {
         // Auth
-        case .login:          return "/auth/login"
-        case .forgotPassword: return "/auth/password/forgot"
-        case .resetPassword:  return "/auth/password/reset"
+        case .login:                   return "/auth/login"
+        case .signup:                  return "/auth/signup"
+        case .resendVerificationEmail: return "/auth/email/resend"
+        case .checkEmailVerified:      return "/auth/email/status"
+        case .forgotPassword:          return "/auth/password/forgot"
+        case .resetPassword:           return "/auth/password/reset"
 
         // Me
         case .getMe: return "/me"
@@ -149,13 +176,13 @@ enum APIRequestURLs {
         case .getExpertiseTags: return "/meta/expertise-tags"
         case .getCurrencies:    return "/meta/currencies"
         case .getLanguages:     return "/meta/languages"
+        case .getAllCategories: return "/categories"
 
         // User Profile
-        case .getUserProfile:            return "/user/profile"
-        case .updateProfessionalDetails: return "/user/profile/professional"
-        case .updateLocation:            return "/user/profile/location"
-        case .updateLanguages:           return "/user/profile/languages"
-        case .uploadAvatar:              return "/user/profile/avatar"
+        case .getUserProfile:    return "/user/profile"
+        case .updateUserProfile: return "/user/profile"
+        case .uploadAvatar:      return "/user/profile/avatar"
+        case .updatePassword:    return "/user/password"
 
         // Discovery
         case .getClientHome:     return "/client/home"
@@ -166,6 +193,11 @@ enum APIRequestURLs {
         case .getExpertDetails:  return "/experts/:id/details"
         case .getExpertTopics:   return "/experts/:id/topics"
         case .getExpert:         return "/experts/:id"
+
+        // Favorites
+        case .getClientFavorites: return "/client/favorites"
+        case .addFavorite,
+             .removeFavorite:    return "/client/favorites/:id"
 
         // Availability
         case .getMyAvailability,
@@ -181,6 +213,7 @@ enum APIRequestURLs {
         case .confirmBooking:          return "/bookings/confirm"
         case .requestBooking:          return "/bookings/request"
         case .getClientBookings:       return "/client/bookings"
+        case .getClientBookingDetail:  return "/client/bookings/:id"
         case .rescheduleClientBooking: return "/client/bookings/:id/reschedule"
         case .cancelClientBooking:     return "/client/bookings/:id/cancel"
         case .getExpertBookings:       return "/expert/bookings"
@@ -199,6 +232,20 @@ enum APIRequestURLs {
         case .getBookingNote,
              .createBookingNote:       return "/bookings/:id/note"
 
+        // Expert Topics
+        case .getMyTopics,
+             .createMyTopic:           return "/expert/topics"
+        case .updateMyTopic,
+             .deleteMyTopic:           return "/expert/topics/:id"
+
+        // Expert Clients
+        case .getClientProfile:        return "/expert/clients/:id"
+
+        // Expert Payouts + Stripe Connect
+        case .getWeeklyEarnings:       return "/expert/earnings/weekly"
+        case .getPayoutSummary:        return "/expert/payouts/summary"
+        case .startConnectOnboarding:  return "/expert/connect/onboard"
+
         // Call
         case .joinCall:              return "/bookings/:id/join"
         case .confirmCallConnection: return "/bookings/:id/confirm-connection"
@@ -215,6 +262,7 @@ enum APIRequestURLs {
         case .registerDeviceToken:           return "/notifications/tokens"
         case .unregisterDeviceToken:         return "/notifications/tokens/:device_id"
         case .getNotifications:              return "/notifications"
+        case .getNotificationPreferences:    return "/notifications/preferences"
         case .updateNotificationPreferences: return "/notifications/preferences"
 
         // Reviews
@@ -249,8 +297,10 @@ enum APIRequestURLs {
     func getHTTPMethod() -> HTTPMethod {
         switch self {
         // Auth
-        case .login, .forgotPassword, .resetPassword:
+        case .login, .signup, .resendVerificationEmail, .forgotPassword, .resetPassword:
             return .post
+        case .checkEmailVerified:
+            return .get
 
         // Me
         case .getMe:
@@ -261,16 +311,14 @@ enum APIRequestURLs {
             return .patch
 
         // Meta
-        case .getExpertiseTags, .getCurrencies, .getLanguages:
+        case .getExpertiseTags, .getCurrencies, .getLanguages, .getAllCategories:
             return .get
 
         // User Profile
         case .getUserProfile:
             return .get
-        case .updateProfessionalDetails, .updateLocation:
+        case .updateUserProfile, .updatePassword:
             return .patch
-        case .updateLanguages:
-            return .put
         case .uploadAvatar:
             return .post
 
@@ -280,6 +328,14 @@ enum APIRequestURLs {
             return .get
         case .recordInteraction:
             return .post
+
+        // Favorites
+        case .getClientFavorites:
+            return .get
+        case .addFavorite:
+            return .put
+        case .removeFavorite:
+            return .delete
 
         // Availability
         case .getMyAvailability, .getAvailabilityOverrides, .getExpertAvailability:
@@ -297,14 +353,31 @@ enum APIRequestURLs {
              .declineExpertBooking, .acceptBookingRequest, .declineBookingRequest,
              .createBookingNote:
             return .post
-        case .getClientBookings, .getExpertBookings, .getExpertBookingDetails,
-             .getExpertBookingSummary, .getBookingRequests, .getBookingRequest,
-             .getBookingNote:
+        case .getClientBookings, .getClientBookingDetail, .getExpertBookings,
+             .getExpertBookingDetails, .getExpertBookingSummary,
+             .getBookingRequests, .getBookingRequest, .getBookingNote:
             return .get
         case .rescheduleClientBooking, .updateBookingStatus, .rescheduleExpertBooking:
             return .patch
         case .updateBookingTakeaways:
             return .put
+
+        // Expert Topics
+        case .getMyTopics:    return .get
+        case .createMyTopic:  return .post
+        case .updateMyTopic:  return .patch
+        case .deleteMyTopic:  return .delete
+
+        // Expert Clients
+        case .getClientProfile:
+            return .get
+
+        // Expert Payouts + Stripe Connect
+        case .getWeeklyEarnings,
+             .getPayoutSummary:
+            return .get
+        case .startConnectOnboarding:
+            return .post
 
         // Call
         case .joinCall, .endCall:
@@ -323,7 +396,7 @@ enum APIRequestURLs {
             return .post
         case .unregisterDeviceToken:
             return .delete
-        case .getNotifications:
+        case .getNotifications, .getNotificationPreferences:
             return .get
         case .updateNotificationPreferences:
             return .patch
@@ -362,7 +435,17 @@ enum APIRequestURLs {
         }
     }
 
+    /// Only the credential-establishing endpoints are truly unauthenticated.
+    /// The verification endpoints (`/auth/email/*`) live under `/auth/` for
+    /// path taxonomy but are authorised by the bearer issued at signup.
+    private static let publicPaths: Set<String> = [
+        "/auth/login",
+        "/auth/signup",
+        "/auth/password/forgot",
+        "/auth/password/reset",
+    ]
+
     static func needAuthToken(url: String) -> Bool {
-        !url.contains("/auth/")
+        !publicPaths.contains { url.hasSuffix($0) }
     }
 }

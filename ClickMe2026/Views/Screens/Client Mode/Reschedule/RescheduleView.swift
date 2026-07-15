@@ -185,41 +185,72 @@ struct RescheduleView: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum ReschedulePreviewRoute: Hashable {
-    case reschedule
-}
-
-/// Wraps the reschedule screen inside a NavigationStack with a dummy
-/// "My Bookings" parent already pushed, so the system back chevron renders
-/// in the canvas.
-private struct ReschedulePreviewHarness: View {
-    let viewModel: RescheduleViewModel
-    @State private var path: [ReschedulePreviewRoute]
-
-    init(viewModel: RescheduleViewModel) {
-        self.viewModel = viewModel
-        _path = State(initialValue: [.reschedule])
-    }
+/// Bootstraps by hitting `GET /client/bookings?type=upcoming` to grab the
+/// soonest real upcoming booking id, then hands off to `RescheduleView`.
+/// Custom async logic — sits inside the shared `PreviewNavHarness`.
+private struct LiveFetchRescheduleBootstrap: View {
+    @State private var bookingId: UUID?
+    @State private var errorMessage: String?
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Upcoming sessions")
-                NavigationLink("Reschedule booking", value: ReschedulePreviewRoute.reschedule)
+        if let bookingId {
+            RescheduleView(bookingId: bookingId)
+        } else if let errorMessage {
+            VStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundColor(.white.opacity(0.6))
+                Text("Preview bootstrap failed")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(errorMessage)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
             }
-            .navigationTitle("My Bookings")
-            .navigationDestination(for: ReschedulePreviewRoute.self) { _ in
-                RescheduleView(viewModel: viewModel)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(RescheduleBrand.bg.ignoresSafeArea())
+        } else {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(RescheduleBrand.bg.ignoresSafeArea())
+                .task { await bootstrap() }
+        }
+    }
+
+    private func bootstrap() async {
+        ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
+        do {
+            let response = try await ClickMeAPI.shared.getClientBookings(type: .upcoming)
+            guard let booking = response.data.bookings
+                .sorted(by: { $0.startTime < $1.startTime })
+                .first
+            else {
+                errorMessage = "No upcoming bookings found for this account."
+                return
             }
+            bookingId = booking.bookingId
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 }
 
 // MARK: - Previews
 
+#Preview("Live Fetch") {
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Reschedule booking") {
+        LiveFetchRescheduleBootstrap()
+    }
+    .preferredColorScheme(.dark)
+}
+
 #Preview("Reschedule") {
-    ReschedulePreviewHarness(viewModel: RescheduleViewModel())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Reschedule booking") {
+        RescheduleView(viewModel: RescheduleViewModel())
+    }
+    .preferredColorScheme(.dark)
 }

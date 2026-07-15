@@ -43,6 +43,10 @@ extension ClickMeAPI {
         return try await service.httpRequest(url: url(.getNotifications), method: .get, parameters: params)
     }
 
+    func getNotificationPreferences() async throws -> SuccessDataResponse<NotificationPreferencesData> {
+        try await service.httpRequest(url: url(.getNotificationPreferences), method: .get)
+    }
+
     func updateNotificationPreferences(_ body: UpdateNotificationPreferencesRequest) async throws -> SuccessMessageResponse {
         try await service.httpRequest(url: url(.updateNotificationPreferences), method: .patch, body: body)
     }

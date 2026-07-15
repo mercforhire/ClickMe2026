@@ -9,7 +9,7 @@
 import Foundation
 
 /// A static feedback category available for submission.
-struct FeedbackTypeItem: Decodable {
+struct FeedbackTypeItem: Decodable, Identifiable, Hashable {
     let id: String
     let label: String
     let description: String

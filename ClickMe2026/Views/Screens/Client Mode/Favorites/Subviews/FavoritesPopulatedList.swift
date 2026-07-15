@@ -13,7 +13,6 @@ import SwiftUI
 struct FavoritesPopulatedList: View {
     let favorites: [FavoriteExpert]
     let onUnfavorite: (FavoriteExpert) -> Void
-    let onBookSession: (FavoriteExpert) -> Void
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -38,11 +37,13 @@ struct FavoritesPopulatedList: View {
 
                 VStack(spacing: 14) {
                     ForEach(favorites) { expert in
-                        FavoriteExpertCard(
-                            expert: expert,
-                            onUnfavorite: { onUnfavorite(expert) },
-                            onBookSession: { onBookSession(expert) }
-                        )
+                        NavigationLink(value: expert) {
+                            FavoriteExpertCard(
+                                expert: expert,
+                                onUnfavorite: { onUnfavorite(expert) }
+                            )
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 16)

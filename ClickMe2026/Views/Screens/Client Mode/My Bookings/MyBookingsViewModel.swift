@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class MyBookingsViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: View state
     @Published var selectedTab: Int
@@ -74,53 +68,44 @@ final class MyBookingsViewModel: ObservableObject {
         await forceLoad()
     }
 
+    /// The server already partitions upcoming/past via the required `type`
+    /// query param, so we make two calls sequentially. Sequential (not
+    /// parallel) to avoid Sendable-conformance issues with concurrent
+    /// decoding across actor boundaries — acceptable since this only fires
+    /// on tab appear or pull-to-refresh.
     private func forceLoad() async {
         state = .loading
         do {
-            let response = try await api.getClientBookings()
-            let partitioned = Self.partition(response.data.bookings)
-            self.upcomingBookings = partitioned.upcoming
-            self.pastBookings = partitioned.past
+            let upResponse = try await api.getClientBookings(type: .upcoming)
+            let pastResponse = try await api.getClientBookings(type: .past)
+
+            self.upcomingBookings = upResponse.data.bookings
+                .sorted { $0.startTime < $1.startTime }
+                .map(Self.mapUpcoming)
+
+            self.pastBookings = pastResponse.data.bookings
+                .sorted { $0.startTime > $1.startTime }
+                .compactMap(Self.mapPastIfApplicable)
+
             self.state = .loaded
         } catch {
             self.state = .failed(Self.message(for: error))
         }
     }
 
-    // MARK: - Partitioning
-
-    /// Splits a flat bookings list into upcoming vs past buckets based on
-    /// `BookingStatus`, then formats each into the UI display type.
-    ///
-    /// - Upcoming (`pendingApproval`, `confirmed`, `pendingReschedule`,
-    ///   `inProgress`) sorted soonest-first.
-    /// - Past (`completed`, `cancelled`, `declined`, `missed`, `expired`)
-    ///   sorted most-recent-first. `declined` maps to `.cancelled` and
-    ///   `expired` to `.missed` since the UI enum only has three cases.
-    private static func partition(_ items: [ClientBookingItem]) -> (upcoming: [UpcomingBooking], past: [PastBooking]) {
-        let sortedAsc = items.sorted { $0.startTime < $1.startTime }
-
-        var upcoming: [UpcomingBooking] = []
-        var past: [PastBooking] = []
-
-        for item in sortedAsc {
-            guard let status = BookingStatus(rawValue: item.status) else { continue }
-            switch status {
-            case .pendingApproval, .confirmed, .pendingReschedule, .inProgress:
-                upcoming.append(mapUpcoming(item))
-            case .completed:
-                past.append(mapPast(item, status: .completed))
-            case .cancelled, .declined:
-                past.append(mapPast(item, status: .cancelled))
-            case .missed, .expired:
-                past.append(mapPast(item, status: .missed))
-            }
+    /// Server-past bookings map to the 3-case UI enum:
+    /// `completed → .completed`, `cancelled / declined → .cancelled`,
+    /// `missed / expired → .missed`. Unknown statuses are dropped.
+    private static func mapPastIfApplicable(_ item: ClientBookingItem) -> PastBooking? {
+        guard let status = BookingStatus(rawValue: item.status) else { return nil }
+        let uiStatus: PastBookingStatus
+        switch status {
+        case .completed:              uiStatus = .completed
+        case .cancelled, .declined:   uiStatus = .cancelled
+        case .missed, .expired:       uiStatus = .missed
+        default:                      return nil
         }
-
-        // Past should show most-recent-first; reversing the ascending sort
-        // gives us that without a second sort pass.
-        past.reverse()
-        return (upcoming, past)
+        return mapPast(item, status: uiStatus)
     }
 
     // MARK: - Mapping
@@ -132,7 +117,8 @@ final class MyBookingsViewModel: ObservableObject {
             topic: item.topic ?? "Consultation",
             date: dateString(item.startTime),
             timeRange: timeRangeString(from: item.startTime, to: item.endTime),
-            imageURL: item.expert.avatarUrl ?? ""
+            imageURL: item.expert.avatarUrl ?? "",
+            startTime: item.startTime
         )
     }
 
@@ -173,15 +159,19 @@ final class MyBookingsViewModel: ObservableObject {
     // MARK: Sample data
 
     static let sampleUpcoming: [UpcomingBooking] = [
+        // First sample starts in 30 min — inside the join window (shows button).
         UpcomingBooking(id: UUID(), expertName: "Sarah Chen", topic: "Advanced Product Strategy Review",
                         date: "Oct 15, 2024", timeRange: "10:00 AM - 11:00 AM",
-                        imageURL: "https://randomuser.me/api/portraits/women/44.jpg"),
+                        imageURL: "https://randomuser.me/api/portraits/women/44.jpg",
+                        startTime: Date().addingTimeInterval(30 * 60)),
         UpcomingBooking(id: UUID(), expertName: "David Miller", topic: "Machine Learning Consultation",
                         date: "Oct 18, 2024", timeRange: "2:30 PM - 3:30 PM",
-                        imageURL: "https://randomuser.me/api/portraits/men/32.jpg"),
+                        imageURL: "https://randomuser.me/api/portraits/men/32.jpg",
+                        startTime: Date().addingTimeInterval(3 * 3600)),
         UpcomingBooking(id: UUID(), expertName: "Emily Davis", topic: "UX Research Plan Feedback",
                         date: "Oct 22, 2024", timeRange: "9:00 AM - 10:00 AM",
-                        imageURL: "https://randomuser.me/api/portraits/women/68.jpg"),
+                        imageURL: "https://randomuser.me/api/portraits/women/68.jpg",
+                        startTime: Date().addingTimeInterval(7 * 24 * 3600)),
     ]
 
     static let samplePast: [PastBooking] = [

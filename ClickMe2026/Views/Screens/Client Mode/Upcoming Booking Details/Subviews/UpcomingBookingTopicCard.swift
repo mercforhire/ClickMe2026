@@ -32,7 +32,7 @@ struct UpcomingBookingTopicCard: View {
                 .frame(height: 1)
 
             HStack {
-                Text("Consultation Fee")
+                Text("Total Paid")
                     .font(.system(size: 14, weight: .regular, design: .rounded))
                     .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 Spacer()

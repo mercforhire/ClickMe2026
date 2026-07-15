@@ -129,18 +129,10 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         do {
             _ = try await api.uploadAvatar(imageData: data)
         } catch {
-            avatarUploadError = Self.errorMessage(for: error)
+            avatarUploadError = error.userMessage
         }
     }
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: - Auto-save
 
@@ -190,7 +182,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
             _ = try await api.updateUserProfile(body)
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
-            autoSaveError = Self.errorMessage(for: error)
+            autoSaveError = error.userMessage
         }
     }
 }

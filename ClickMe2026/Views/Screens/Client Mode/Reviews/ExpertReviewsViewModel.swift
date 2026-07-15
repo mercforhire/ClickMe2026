@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class ExpertReviewsViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Identity
     /// Server UUID of the expert whose reviews we're rendering. Nil when

@@ -16,11 +16,11 @@ struct SignupTimezoneView: View {
     var onNext: () -> Void
 
     // MARK: Design tokens — reuse the Basic Info palette for continuity
-    private let bg          = Color(red: 0.075, green: 0.075, blue: 0.075)
+    private let bg          = Brand.surface
     private let cardBg      = Color(red: 0.118, green: 0.118, blue: 0.118)
     private let cardBorder  = Color(red: 0.200, green: 0.200, blue: 0.200)
-    private let brandGreen  = Color(red: 0.267, green: 0.965, blue: 0.592)
-    private let onSurface   = Color(red: 0.898, green: 0.886, blue: 0.882)
+    private let brandGreen  = Brand.primary
+    private let onSurface   = Brand.onSurface
     private let onSurfaceVar = Color(red: 0.60, green: 0.68, blue: 0.62)
     private let onPrimary   = Color.black
 
@@ -179,31 +179,11 @@ struct SignupTimezoneView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum SignupTimezonePreviewRoute: Hashable { case timezone }
-
-private struct SignupTimezonePreviewHarness: View {
-    let viewModel: SignupTimezoneViewModel
-    @State private var path: [SignupTimezonePreviewRoute] = [.timezone]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Create account")
-                NavigationLink("Timezone", value: SignupTimezonePreviewRoute.timezone)
-            }
-            .navigationTitle("Signup")
-            .navigationDestination(for: SignupTimezonePreviewRoute.self) { _ in
-                SignupTimezoneView(viewModel: viewModel)
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Auto-detected") {
-    SignupTimezonePreviewHarness(viewModel: SignupTimezoneViewModel())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Create account", navTitle: "Signup", rowTitle: "Timezone") {
+        SignupTimezoneView(viewModel: SignupTimezoneViewModel())
+    }
+    .preferredColorScheme(.dark)
 }

@@ -19,10 +19,18 @@ struct LoginForgetPassView: View {
     @State private var contentOpacity: Double = 0
     @State private var contentOffset: CGFloat = 16
 
+    /// Invoked once the backend accepts the reset request. Delivers the
+    /// trimmed email so the next screen can prefill it for `/auth/password/reset`.
+    var onCodeSent: (String) -> Void
+
     // MARK: Inits
 
-    init(viewModel: LoginForgetPassViewModel = LoginForgetPassViewModel()) {
+    init(
+        viewModel: LoginForgetPassViewModel = LoginForgetPassViewModel(),
+        onCodeSent: @escaping (String) -> Void = { _ in }
+    ) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onCodeSent = onCodeSent
     }
 
     // MARK: Body
@@ -44,7 +52,7 @@ struct LoginForgetPassView: View {
                         .padding(.top, 28)
                         .padding(.horizontal, 24)
 
-                    fieldLabel("Email or Username")
+                    fieldLabel("Email")
                         .padding(.top, 32)
                         .padding(.horizontal, 24)
 
@@ -60,7 +68,11 @@ struct LoginForgetPassView: View {
                         isLoading: viewModel.isLoading,
                         isSent: viewModel.isSent
                     ) {
-                        Task { await viewModel.attemptSend() }
+                        Task {
+                            if let email = await viewModel.attemptSend() {
+                                onCodeSent(email)
+                            }
+                        }
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 28)
@@ -110,15 +122,6 @@ struct LoginForgetPassView: View {
         } message: { message in
             Text(message)
         }
-        .alert(
-            "Check your email",
-            isPresented: presenting(\.successMessage),
-            presenting: viewModel.successMessage
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { message in
-            Text(message)
-        }
     }
 
     /// Binding that's `true` while the given optional property is non-nil, and
@@ -139,79 +142,46 @@ struct LoginForgetPassView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum ForgetPassPreviewRoute: Hashable {
-    case `default`
-    case emailError
-    case emptyFieldError
-    case linkSent
-}
-
-/// Wraps the forget-password view inside a NavigationStack with a dummy
-/// "Login" parent already pushed, so the system back chevron renders in
-/// the canvas.
-private struct ForgetPassPreviewHarness: View {
-    let route: ForgetPassPreviewRoute
-    @State private var path: [ForgetPassPreviewRoute]
-
-    init(route: ForgetPassPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Login")
-                NavigationLink("Forgot password", value: route)
-            }
-            .navigationTitle("Sign in")
-            .navigationDestination(for: ForgetPassPreviewRoute.self) { dest in
-                switch dest {
-                case .default:
-                    LoginForgetPassView()
-                case .emailError:
-                    LoginForgetPassView(viewModel: LoginForgetPassViewModel(
-                        email: "john.doe@notanemail",
-                        emailError: "Invalid email format",
-                        didAttemptSend: true
-                    ))
-                case .emptyFieldError:
-                    LoginForgetPassView(viewModel: LoginForgetPassViewModel(
-                        email: "",
-                        emailError: "Please enter your email or username",
-                        didAttemptSend: true
-                    ))
-                case .linkSent:
-                    LoginForgetPassView(viewModel: LoginForgetPassViewModel(
-                        email: "john.doe@example.com",
-                        isSent: true
-                    ))
-                }
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
+#if DEBUG
+private func forgetPassPreview<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View {
+    PreviewNavHarness(parentText: "Login", navTitle: "Sign in", rowTitle: "Forgot password") {
+        content()
+    }
+    .preferredColorScheme(.dark)
+}
+#endif
+
 #Preview("Default") {
-    ForgetPassPreviewHarness(route: .default)
-        .preferredColorScheme(.dark)
+    forgetPassPreview { LoginForgetPassView() }
 }
 
 #Preview("Email Error") {
-    ForgetPassPreviewHarness(route: .emailError)
-        .preferredColorScheme(.dark)
+    forgetPassPreview {
+        LoginForgetPassView(viewModel: LoginForgetPassViewModel(
+            email: "john.doe@notanemail",
+            emailError: "Invalid email format",
+            didAttemptSend: true
+        ))
+    }
 }
 
 #Preview("Empty Field Error") {
-    ForgetPassPreviewHarness(route: .emptyFieldError)
-        .preferredColorScheme(.dark)
+    forgetPassPreview {
+        LoginForgetPassView(viewModel: LoginForgetPassViewModel(
+            email: "",
+            emailError: "Please enter your email",
+            didAttemptSend: true
+        ))
+    }
 }
 
 #Preview("Code Sent") {
-    ForgetPassPreviewHarness(route: .linkSent)
-        .preferredColorScheme(.dark)
+    forgetPassPreview {
+        LoginForgetPassView(viewModel: LoginForgetPassViewModel(
+            email: "john.doe@example.com",
+            isSent: true
+        ))
+    }
 }

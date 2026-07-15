@@ -11,7 +11,8 @@ import Foundation
 import Testing
 @testable import ClickMe2026
 
-@Suite("ClickMeAPI+Auth · login")
+@Suite("ClickMeAPI+Auth · login", .serialized)
+@MainActor
 struct LoginTests {
 
     // MARK: - Request shape

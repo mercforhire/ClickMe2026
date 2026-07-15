@@ -26,7 +26,14 @@ struct UpcomingBookingCard: View {
             .contentShape(Rectangle())
             .onTapGesture { onCardTap() }
 
-            joinCallButton
+            // Ticks once a minute so the button appears/disappears as the
+            // start time crosses the join window boundary, without needing
+            // a pull-to-refresh.
+            TimelineView(.periodic(from: .now, by: 60)) { _ in
+                if booking.isWithinJoinWindow {
+                    joinCallButton
+                }
+            }
             secondaryActions
         }
         .padding(18)

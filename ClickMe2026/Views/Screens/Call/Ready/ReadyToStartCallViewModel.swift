@@ -13,12 +13,6 @@ import UIKit
 @MainActor
 final class ReadyToStartCallViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Identity
 
@@ -131,7 +125,7 @@ final class ReadyToStartCallViewModel: ObservableObject {
                 loadState = .failed("This booking uses in-app voice, not Skype/Zoom.")
             }
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -162,12 +156,4 @@ final class ReadyToStartCallViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

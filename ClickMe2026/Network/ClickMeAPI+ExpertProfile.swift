@@ -17,7 +17,7 @@ struct MyExpertTopicsPayload: Decodable {
 
 extension ClickMeAPI {
 
-    func setupExpertProfile(_ body: SetupExpertProfileRequest) async throws -> SuccessDataResponse<ExpertProfileData> {
+    func setupExpertProfile(_ body: SetupExpertProfileRequest) async throws -> SuccessDataResponse<SetupExpertProfileData> {
         try await service.httpRequest(url: url(.setupExpertProfile), method: .patch, body: body)
     }
 

@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class CategoriesModalViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: View state
     @Published var state: LoadState = .idle
@@ -50,6 +44,15 @@ final class CategoriesModalViewModel: ObservableObject {
 
     func isSelected(_ category: Category) -> Bool {
         selectedIds.contains(category.id)
+    }
+
+    /// The "All" pseudo-chip is selected whenever no concrete category is
+    /// selected. This is a derivation, not a stored field.
+    var isAllSelected: Bool { selectedIds.isEmpty }
+
+    /// Clears the current chip selection, leaving the "All" chip active.
+    func selectAll() {
+        selectedIds.removeAll()
     }
 
     // MARK: Actions

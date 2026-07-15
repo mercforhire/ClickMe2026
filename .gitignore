@@ -1,1 +1,4 @@
 xcuserdata
+
+# Per-developer preview secrets (JWT tokens etc.) — never commit
+ClickMe2026/Debug/PreviewSecrets.swift

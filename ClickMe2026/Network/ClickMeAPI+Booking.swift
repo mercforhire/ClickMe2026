@@ -8,6 +8,13 @@
 
 import Foundation
 
+/// Filter for `GET /client/bookings`. The server requires the `type` query
+/// param — omitting it returns a 422 VALIDATION_ERROR.
+enum ClientBookingsType: String {
+    case upcoming
+    case past
+}
+
 extension ClickMeAPI {
 
     func initiateBooking(expertId: UUID, topicId: UUID) async throws -> SuccessDataResponse<InitiateBookingData> {
@@ -81,12 +88,20 @@ extension ClickMeAPI {
         return try await service.httpRequest(url: url(.requestBooking), method: .post, parameters: params)
     }
 
-    func getClientBookings(page: Int = 1, limit: Int = 20) async throws -> SuccessDataResponse<ClientBookingsPayload> {
+    func getClientBookings(
+        type: ClientBookingsType,
+        page: Int = 1,
+        limit: Int = 20
+    ) async throws -> SuccessDataResponse<ClientBookingsPayload> {
         try await service.httpRequest(
             url: url(.getClientBookings),
             method: .get,
-            parameters: ["page": page, "limit": limit]
+            parameters: ["type": type.rawValue, "page": page, "limit": limit]
         )
+    }
+
+    func getClientBookingDetail(id: UUID) async throws -> SuccessDataResponse<ClientBookingDetail> {
+        try await service.httpRequest(url: url(.getClientBookingDetail, id: id), method: .get)
     }
 
     func rescheduleClientBooking(

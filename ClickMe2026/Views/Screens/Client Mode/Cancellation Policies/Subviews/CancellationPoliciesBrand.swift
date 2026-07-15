@@ -13,10 +13,10 @@ import SwiftUI
 enum CancellationPoliciesBrand {
     static let bg = Color(red: 0.065, green: 0.065, blue: 0.090)
     static let cardBg = Color(red: 0.095, green: 0.100, blue: 0.120)
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
+    static let onSurface = Brand.onSurface
     static let onSurfaceVar = Color(red: 0.580, green: 0.630, blue: 0.610)
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
+    static let brandGreen = Brand.primary
+    static let onPrimary = Brand.onPrimary
     static let errorRed = Color(red: 1.0, green: 0.42, blue: 0.42)
 
     // MARK: Iridescent card borders

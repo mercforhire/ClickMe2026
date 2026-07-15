@@ -21,4 +21,8 @@ extension ClickMeAPI {
     func getLanguages() async throws -> SuccessDataResponse<LanguagesPayload> {
         try await service.httpRequest(url: url(.getLanguages), method: .get)
     }
+
+    func getAllCategories() async throws -> SuccessDataResponse<CategoriesPayload> {
+        try await service.httpRequest(url: url(.getAllCategories), method: .get)
+    }
 }

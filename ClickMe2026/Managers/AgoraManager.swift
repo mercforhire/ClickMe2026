@@ -287,7 +287,7 @@ extension AgoraManager: AgoraRtcEngineDelegate {
         _ engine: AgoraRtcEngineKit,
         remoteAudioStateChangedOfUid uid: UInt,
         state: AgoraAudioRemoteState,
-        reason: AgoraAudioRemoteStateReason,
+        reason: AgoraAudioRemoteReason,
         elapsed: Int
     ) {
         guard uid != 0 else { return }

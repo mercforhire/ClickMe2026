@@ -12,18 +12,18 @@ import SwiftUI
 
 enum CancellationBrand {
     static let bg = Color(red: 0.000, green: 0.000, blue: 0.000)
-    static let cardBg = Color(red: 0.075, green: 0.075, blue: 0.075)
+    static let cardBg = Brand.surface
     static let cardBorder = Color(red: 0.150, green: 0.165, blue: 0.155)
     static let innerBg = Color(red: 0.110, green: 0.110, blue: 0.110)
-    static let innerBorder = Color(red: 0.235, green: 0.290, blue: 0.247)
+    static let innerBorder = Brand.outlineVariant
     static let fieldBg = Color(red: 0.110, green: 0.115, blue: 0.115)
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
+    static let brandGreen = Brand.primary
+    static let onSurface = Brand.onSurface
     static let onSurfaceVar = Color(red: 0.580, green: 0.640, blue: 0.600)
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
-    static let errorColor = Color(red: 1.000, green: 0.706, blue: 0.671)
-    static let errorBorder = Color(red: 1.000, green: 0.706, blue: 0.671).opacity(0.55)
-    static let outlineVar = Color(red: 0.235, green: 0.290, blue: 0.247)
+    static let onPrimary = Brand.onPrimary
+    static let errorColor = Brand.error
+    static let errorBorder = Brand.error.opacity(0.55)
+    static let outlineVar = Brand.outlineVariant
     static let blobPurple = Color(red: 0.48, green: 0.23, blue: 0.93)
 }
 

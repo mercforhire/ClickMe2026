@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class WriteReviewViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Required inputs
 

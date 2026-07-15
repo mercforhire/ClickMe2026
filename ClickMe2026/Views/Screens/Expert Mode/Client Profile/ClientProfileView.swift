@@ -39,9 +39,9 @@ enum BookingHistoryStatus {
 
     var tint: Color {
         switch self {
-        case .upcoming: return Color(red: 0.267, green: 0.965, blue: 0.592)
-        case .completed: return Color(red: 0.267, green: 0.965, blue: 0.592)
-        case .cancelled: return Color(red: 1.000, green: 0.706, blue: 0.671)
+        case .upcoming: return Brand.primary
+        case .completed: return Brand.primary
+        case .cancelled: return Brand.error
         }
     }
 }
@@ -187,33 +187,48 @@ struct ClientProfileView: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum ClientProfilePreviewRoute: Hashable {
-    case profile
-}
-
-private struct ClientProfilePreviewHarness: View {
-    let viewModel: ClientProfileViewModel?
-    let liveClientId: UUID?
-    @State private var path: [ClientProfilePreviewRoute] = [.profile]
+/// Resolves a real client UUID by fetching `/expert/bookings` first, then
+/// hands it to `ClientProfileView`.
+private struct LiveFetchClientProfileBootstrap: View {
+    @State private var resolvedClientId: UUID?
+    @State private var errorMessage: String?
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Active clients")
-                NavigationLink("Sophia Carter", value: ClientProfilePreviewRoute.profile)
+        if let clientId = resolvedClientId {
+            ClientProfileView(clientId: clientId)
+        } else if let errorMessage {
+            VStack(spacing: 8) {
+                Text("Couldn't resolve a client ID")
+                    .font(.system(size: 15, weight: .semibold))
+                Text(errorMessage)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
             }
-            .navigationTitle("My Clients")
-            .navigationDestination(for: ClientProfilePreviewRoute.self) { _ in
-                if let vm = viewModel {
-                    ClientProfileView(viewModel: vm)
-                } else if let clientId = liveClientId {
-                    ClientProfileView(clientId: clientId)
-                } else {
-                    Text("No client")
-                }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black)
+        } else {
+            ProgressView("Resolving client…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+                .task { await resolveClientId() }
+        }
+    }
+
+    private func resolveClientId() async {
+        do {
+            let response = try await ClickMeAPI.shared.getExpertBookings(page: 1, limit: 5)
+            guard let clientId = response.data.bookings.first?.client.id else {
+                errorMessage = "No bookings on this account — can't derive a client ID for the live fetch."
+                return
             }
+            resolvedClientId = clientId
+        } catch {
+            errorMessage = error.userMessage
         }
     }
 }
@@ -221,28 +236,23 @@ private struct ClientProfilePreviewHarness: View {
 // MARK: - Previews
 
 #Preview("Client Profile") {
-    ClientProfilePreviewHarness(
-        viewModel: .previewSeed(),
-        liveClientId: nil
-    )
+    PreviewNavHarness(parentText: "Active clients", navTitle: "My Clients", rowTitle: "Sophia Carter") {
+        ClientProfileView(viewModel: .previewSeed())
+    }
     .preferredColorScheme(.dark)
 }
 
 #Preview("No Bookings") {
-    ClientProfilePreviewHarness(
-        viewModel: .previewSeed(bookingHistory: []),
-        liveClientId: nil
-    )
+    PreviewNavHarness(parentText: "Active clients", navTitle: "My Clients", rowTitle: "Sophia Carter") {
+        ClientProfileView(viewModel: .previewSeed(bookingHistory: []))
+    }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    // Replace with a real client UUID from your dev environment for a
-    // real fetch. Kept as a fresh UUID here so the preview compiles.
-    return ClientProfilePreviewHarness(
-        viewModel: nil,
-        liveClientId: UUID()
-    )
+    return PreviewNavHarness(parentText: "Active clients", navTitle: "My Clients", rowTitle: "First booking's client") {
+        LiveFetchClientProfileBootstrap()
+    }
     .preferredColorScheme(.dark)
 }

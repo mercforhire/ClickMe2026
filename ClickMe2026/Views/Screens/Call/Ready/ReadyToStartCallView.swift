@@ -168,65 +168,29 @@ struct ReadyToStartCallView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum ReadyToStartCallPreviewRoute: Hashable {
-    case connect
-}
-
-/// Wraps the connect-via-Skype screen inside a NavigationStack with a
-/// dummy "Upcoming session" parent already pushed, so the system back
-/// chevron renders in the canvas.
-private struct ReadyToStartCallPreviewHarness: View {
-    let viewModel: ReadyToStartCallViewModel
-    @State private var path: [ReadyToStartCallPreviewRoute] = [.connect]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Session details")
-                NavigationLink("Ready to join", value: ReadyToStartCallPreviewRoute.connect)
-            }
-            .navigationTitle("Upcoming session")
-            .navigationDestination(for: ReadyToStartCallPreviewRoute.self) { _ in
-                ReadyToStartCallView(viewModel: viewModel)
-            }
-        }
-    }
-}
+// MARK: - Live-fetch bootstrap
 
 /// Resolves a real Skype/Zoom booking id from `GET /expert/bookings` and
-/// pushes `ReadyToStartCallView` with it — so `POST /bookings/:id/join`
-/// actually hits the server. Skips in-app-voice bookings (they use the
-/// Agora call screen instead).
-private struct LiveFetchReadyToStartCallHarness: View {
+/// hands off to `ReadyToStartCallView` with it. Skips in-app-voice bookings
+/// (they use the Agora call screen instead).
+private struct LiveFetchReadyToStartCallBootstrap: View {
     @State private var resolvedBookingId: UUID?
     @State private var errorMessage: String?
-    @State private var path: [ReadyToStartCallPreviewRoute] = [.connect]
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Session details")
-                NavigationLink("Ready to join", value: ReadyToStartCallPreviewRoute.connect)
-            }
-            .navigationTitle("Upcoming session")
-            .navigationDestination(for: ReadyToStartCallPreviewRoute.self) { _ in
-                if let id = resolvedBookingId {
-                    ReadyToStartCallView(bookingId: id)
-                } else if let errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.white)
-                        .padding()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                } else {
-                    ProgressView("Resolving booking…")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black)
-                        .task { await resolve() }
-                }
-            }
+        if let id = resolvedBookingId {
+            ReadyToStartCallView(bookingId: id)
+        } else if let errorMessage {
+            Text(errorMessage)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+        } else {
+            ProgressView("Resolving booking…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+                .task { await resolve() }
         }
     }
 
@@ -243,7 +207,7 @@ private struct LiveFetchReadyToStartCallHarness: View {
             }
             resolvedBookingId = picked.bookingId
         } catch {
-            errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            errorMessage = error.userMessage
         }
     }
 }
@@ -251,12 +215,16 @@ private struct LiveFetchReadyToStartCallHarness: View {
 // MARK: - Previews
 
 #Preview("Connect via Skype") {
-    ReadyToStartCallPreviewHarness(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Session details", navTitle: "Upcoming session", rowTitle: "Ready to join") {
+        ReadyToStartCallView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    return LiveFetchReadyToStartCallHarness()
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Session details", navTitle: "Upcoming session", rowTitle: "Ready to join") {
+        LiveFetchReadyToStartCallBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }

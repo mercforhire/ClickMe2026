@@ -215,74 +215,17 @@ extension ExpertReview {
     ]
 }
 
-// MARK: - Sample-data preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum ExpertReviewsPreviewRoute: Hashable {
-    case reviews
-}
-
-/// Wraps the expert-reviews screen inside a NavigationStack with a dummy
-/// "Expert profile" parent already pushed, so the system back chevron
-/// renders in the canvas.
-private struct ExpertReviewsPreviewHarness: View {
-    let route: ExpertReviewsPreviewRoute
-    @State private var path: [ExpertReviewsPreviewRoute]
-
-    init(route: ExpertReviewsPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("About")
-                NavigationLink("All reviews", value: route)
-            }
-            .navigationTitle("Expert profile")
-            .navigationDestination(for: ExpertReviewsPreviewRoute.self) { _ in
-                ExpertReviewsView(
-                    viewModel: ExpertReviewsViewModel(
-                        overallRating: 4.9,
-                        totalReviews: 128,
-                        reviews: ExpertReview.samples
-                    )
-                )
-            }
-        }
-    }
-}
-
-// MARK: - Live-fetch preview harness
-
-private enum LiveFetchReviewsRoute: Hashable {
-    case reviews
-}
-
-/// Live-fetch harness. Bootstraps by calling `/client/home` to grab a real
-/// expertId, then pushes `ExpertReviewsView` which fetches the review list
-/// via `GET /experts/:id/reviews` on appear. Requires
-/// `PreviewSecrets.bearerToken` to be filled.
-private struct LiveFetchReviewsPreviewHarness: View {
+/// Bootstraps by calling `/client/home` to grab a real expertId, then
+/// pushes `ExpertReviewsView` which fetches the review list via
+/// `GET /experts/:id/reviews`. Custom async logic — can't be swapped for
+/// the generic `PreviewNavHarness` closure.
+private struct LiveFetchReviewsBootstrap: View {
     @State private var expertId: UUID?
     @State private var errorMessage: String?
-    @State private var path: [LiveFetchReviewsRoute] = [.reviews]
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("About")
-                NavigationLink("All reviews", value: LiveFetchReviewsRoute.reviews)
-            }
-            .navigationTitle("Expert profile")
-            .navigationDestination(for: LiveFetchReviewsRoute.self) { _ in
-                destinationContent
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var destinationContent: some View {
         if let expertId {
             ExpertReviewsView(expertId: expertId)
         } else if let errorMessage {
@@ -310,7 +253,7 @@ private struct LiveFetchReviewsPreviewHarness: View {
     }
 
     private func bootstrap() async {
-        ClickMeAPI.shared.bearerToken = PreviewSecrets.bearerToken
+        ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
         do {
             let home = try await ClickMeAPI.shared.getClientHome()
             guard let re = home.data.recommendedExperts.first else {
@@ -327,11 +270,21 @@ private struct LiveFetchReviewsPreviewHarness: View {
 // MARK: - Previews
 
 #Preview("Expert Reviews") {
-    ExpertReviewsPreviewHarness(route: .reviews)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "About", navTitle: "Expert profile", rowTitle: "All reviews") {
+        ExpertReviewsView(
+            viewModel: ExpertReviewsViewModel(
+                overallRating: 4.9,
+                totalReviews: 128,
+                reviews: ExpertReview.samples
+            )
+        )
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
-    LiveFetchReviewsPreviewHarness()
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "About", navTitle: "Expert profile", rowTitle: "All reviews") {
+        LiveFetchReviewsBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }

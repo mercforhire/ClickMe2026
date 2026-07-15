@@ -91,9 +91,13 @@ struct MakeABookingCalendarCard: View {
         let isSelected = item.date.map { viewModel.calendar.isDate($0, inSameDayAs: viewModel.selectedDate) } ?? false
         let isToday = item.date.map { viewModel.calendar.isDateInToday($0) } ?? false
         let isCurrentMonth = item.isCurrentMonth
+        let isPast = item.date.map { viewModel.isPastDate($0) } ?? false
 
         return Button {
-            if let d = item.date, isCurrentMonth { viewModel.selectedDate = d }
+            if let d = item.date, isCurrentMonth, !isPast {
+                viewModel.selectedDate = d
+                viewModel.selectedTimeSlot = nil
+            }
         } label: {
             ZStack {
                 if isSelected {
@@ -106,7 +110,7 @@ struct MakeABookingCalendarCard: View {
                     .font(.system(size: 14, weight: isSelected ? .bold : .regular, design: .rounded))
                     .foregroundColor(
                         isSelected ? MakeABookingBrand.onPrimary :
-                            !isCurrentMonth ? MakeABookingBrand.onSurfaceVar.opacity(0.35) :
+                            (!isCurrentMonth || isPast) ? MakeABookingBrand.onSurfaceVar.opacity(0.35) :
                             isToday ? MakeABookingBrand.brandGreen : MakeABookingBrand.onSurface
                     )
             }
@@ -114,6 +118,6 @@ struct MakeABookingCalendarCard: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
-        .disabled(!isCurrentMonth || item.date == nil)
+        .disabled(!isCurrentMonth || item.date == nil || isPast)
     }
 }

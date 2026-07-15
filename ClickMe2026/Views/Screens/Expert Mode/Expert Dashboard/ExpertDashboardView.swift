@@ -16,6 +16,7 @@ private enum ExpertDashboardRoute: Hashable {
     case availability
     case editTopics
     case profileSettings
+    case payouts
 }
 
 // MARK: - Expert Home View
@@ -24,10 +25,11 @@ struct ExpertDashboardView: View {
 
     @StateObject private var viewModel: ExpertDashboardViewModel
     @State private var path: [ExpertDashboardRoute] = []
+    @Environment(\.openURL) private var openURL
 
     // MARK: Design tokens — Luminous Dark
 
-    private let bg = Color(red: 0.075, green: 0.075, blue: 0.075)
+    private let bg = Brand.surface
     private let cardBg = Color(red: 0.110, green: 0.110, blue: 0.115)
     private let cardBorder = Color(red: 0.173, green: 0.173, blue: 0.173)
     private let pendingBg = Color(red: 0.078, green: 0.145, blue: 0.100)
@@ -35,10 +37,10 @@ struct ExpertDashboardView: View {
     private let sessionBg = Color(red: 0.095, green: 0.120, blue: 0.100)
     private let toolBg = Color(red: 0.100, green: 0.110, blue: 0.110)
     private let toolIconBg = Color(red: 0.130, green: 0.155, blue: 0.138)
-    private let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
-    private let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
+    private let brandGreen = Brand.primary
+    private let onSurface = Brand.onSurface
     private let onSurfaceVar = Color(red: 0.580, green: 0.640, blue: 0.610)
-    private let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
+    private let onPrimary = Brand.onPrimary
 
     // MARK: Init
 
@@ -59,6 +61,26 @@ struct ExpertDashboardView: View {
             .navigationDestination(for: ExpertDashboardRoute.self) { route in
                 destination(for: route)
             }
+        }
+        // Stripe hands us a fresh single-use URL — open it immediately in
+        // Safari (or the system default browser) and clear the field so a
+        // subsequent onboarding tap gets a new URL.
+        .onChange(of: viewModel.connectOnboardingURL) { _, url in
+            guard let url else { return }
+            openURL(url)
+            viewModel.connectOnboardingURL = nil
+        }
+        .alert(
+            "Couldn't open payout setup",
+            isPresented: Binding(
+                get: { viewModel.connectError != nil },
+                set: { if !$0 { viewModel.connectError = nil } }
+            ),
+            presenting: viewModel.connectError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
         }
     }
 
@@ -82,6 +104,7 @@ struct ExpertDashboardView: View {
                 heroHeader
                 pendingBanner
                 todaysSessions
+                financialSummary
                 expertTools
             }
             .padding(.horizontal, 20)
@@ -139,11 +162,13 @@ struct ExpertDashboardView: View {
         case .calendar:
             UpcomingBookingsView()
         case .availability:
-            AvailiabilitySettingsView()
+            AvailabilitySettingsView()
         case .editTopics:
             TopicsSetupView()
         case .profileSettings:
             ExpertProfileSettingsView()
+        case .payouts:
+            PayoutsView()
         }
     }
 
@@ -351,6 +376,143 @@ struct ExpertDashboardView: View {
         )
     }
 
+    // MARK: - Financial Summary
+
+    /// Section for the "This Week" earnings + "Available Payout" balance.
+    /// Falls back to a Stripe Connect onboarding CTA when
+    /// `payoutOnboardingRequired` is true (server returned 400
+    /// NO_PAYOUT_METHOD / KYC_INCOMPLETE).
+    private var financialSummary: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Financial Summary")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundColor(onSurface)
+
+            if viewModel.payoutOnboardingRequired {
+                onboardPayoutCard
+            } else {
+                balanceCard
+            }
+        }
+    }
+
+    /// The whole balance card is tappable — pushes the dedicated
+    /// `PayoutsView` for the full breakdown. Payouts arrive automatically
+    /// on Stripe's schedule; there is no manual withdrawal.
+    private var balanceCard: some View {
+        Button {
+            path.append(.payouts)
+        } label: {
+            VStack(spacing: 18) {
+                // Earnings row
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("This Week")
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundColor(onSurfaceVar)
+                        Text(weeklyEarningsLabel)
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundColor(brandGreen)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("Available Payout")
+                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .foregroundColor(onSurfaceVar)
+                        Text(availablePayoutLabel)
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(onSurface)
+                    }
+                }
+
+                // Payout meta
+                HStack(spacing: 8) {
+                    Image(systemName: "banknote")
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(brandGreen)
+                    Text(nextPayoutLabel)
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(onSurfaceVar)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                }
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(cardBg)
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(cardBorder, lineWidth: 1))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Displayed in place of the balance block when Stripe Connect isn't
+    /// fully onboarded. Tapping fires `startConnectOnboarding` and opens
+    /// the returned single-use Account Link URL in Safari.
+    private var onboardPayoutCard: some View {
+        Button {
+            Task { await viewModel.startOnboarding() }
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(brandGreen.opacity(0.18))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "creditcard")
+                        .font(.system(size: 20, weight: .regular))
+                        .foregroundColor(brandGreen)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Complete payout setup")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(brandGreen)
+                    Text("Verify your identity and add a bank account to receive earnings.")
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(onSurfaceVar)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(brandGreen)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(pendingBg)
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(pendingBdr, lineWidth: 1))
+            )
+        }
+        .buttonStyle(PressScaleButtonStyle())
+    }
+
+    // MARK: Financial formatting
+
+    private var weeklyEarningsLabel: String {
+        guard let e = viewModel.weeklyEarnings else { return "—" }
+        return ExpertDashboardViewModel.currencyLabel(minorUnits: e.netAmount, currency: e.currency)
+    }
+
+    private var availablePayoutLabel: String {
+        guard let s = viewModel.payoutSummary else { return "—" }
+        return ExpertDashboardViewModel.currencyLabel(minorUnits: s.availableAmount, currency: s.currency)
+    }
+
+    private var nextPayoutLabel: String {
+        guard let s = viewModel.payoutSummary else { return "Payout schedule unavailable" }
+        if let iso = s.nextPayoutDate {
+            return "Next payout on \(ExpertDashboardViewModel.payoutDateLabel(iso))"
+        }
+        return "Payouts are on manual schedule"
+    }
+
     // MARK: - Expert Tools
 
     private var expertTools: some View {
@@ -359,12 +521,10 @@ struct ExpertDashboardView: View {
                 .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundColor(onSurface)
 
-            // "Payouts" tile is deliberately omitted until a backend
-            // payouts / withdrawal endpoint ships (financial data hidden
-            // per current product decision).
             let tools: [(String, String, ExpertDashboardRoute)] = [
                 ("calendar.badge.clock", "Availability", .availability),
                 ("pencil.and.list.clipboard", "Edit Topics", .editTopics),
+                ("creditcard", "Payouts", .payouts),
                 ("gearshape", "Profile Settings", .profileSettings),
                 ("calendar", "Bookings", .calendar),
             ]
@@ -419,6 +579,13 @@ struct ExpertDashboardView: View {
 #Preview("Empty Today") {
     ExpertDashboardView(
         viewModel: .previewSeed(pendingCount: 0, todaysSessions: [])
+    )
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Payout Onboarding") {
+    ExpertDashboardView(
+        viewModel: .previewSeed(payoutSummary: nil, payoutOnboardingRequired: true)
     )
     .preferredColorScheme(.dark)
 }

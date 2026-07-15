@@ -310,31 +310,44 @@ struct RequestDecisionView: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum RequestDecisionPreviewRoute: Hashable {
-    case decision
-}
-
-private struct RequestDecisionPreviewHarness: View {
-    let viewModel: RequestDecisionViewModel
-    @State private var path: [RequestDecisionPreviewRoute]
-
-    init(viewModel: RequestDecisionViewModel) {
-        self.viewModel = viewModel
-        _path = State(initialValue: [.decision])
-    }
+/// Resolves a real request UUID from `GET /expert/booking-requests` and
+/// hands it to `RequestDecisionView(requestId:)`.
+private struct LiveFetchRequestDecisionBootstrap: View {
+    @State private var resolved: (id: UUID, isExpired: Bool)?
+    @State private var errorMessage: String?
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Dashboard")
-                NavigationLink("Booking request", value: RequestDecisionPreviewRoute.decision)
+        if let resolved {
+            RequestDecisionView(requestId: resolved.id, isExpired: resolved.isExpired)
+        } else if let errorMessage {
+            Text(errorMessage)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+        } else {
+            ProgressView("Resolving request…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+                .task { await resolveRequest() }
+        }
+    }
+
+    private func resolveRequest() async {
+        do {
+            let response = try await ClickMeAPI.shared.getBookingRequests(page: 1, limit: 5)
+            guard let first = response.data.requests.first else {
+                errorMessage = "No booking requests on this account."
+                return
             }
-            .navigationTitle("Incoming requests")
-            .navigationDestination(for: RequestDecisionPreviewRoute.self) { _ in
-                RequestDecisionView(viewModel: viewModel)
-            }
+            let now = Date()
+            let isExpired = first.status == "expired"
+                || (first.expiresAt.map { $0 <= now } ?? false)
+            resolved = (first.requestId, isExpired)
+        } catch {
+            errorMessage = error.userMessage
         }
     }
 }
@@ -342,14 +355,24 @@ private struct RequestDecisionPreviewHarness: View {
 // MARK: - Previews
 
 #Preview("Default") {
-    RequestDecisionPreviewHarness(viewModel: RequestDecisionViewModel())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Incoming requests", rowTitle: "Booking request") {
+        RequestDecisionView(viewModel: RequestDecisionViewModel())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Expired") {
-    RequestDecisionPreviewHarness(
-        viewModel: RequestDecisionViewModel(isExpired: true)
-    )
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Incoming requests", rowTitle: "Booking request") {
+        RequestDecisionView(viewModel: RequestDecisionViewModel(isExpired: true))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Live Fetch") {
+    ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
+    return PreviewNavHarness(parentText: "Dashboard", navTitle: "Incoming requests", rowTitle: "First booking request") {
+        LiveFetchRequestDecisionBootstrap()
+    }
     .preferredColorScheme(.dark)
 }
 

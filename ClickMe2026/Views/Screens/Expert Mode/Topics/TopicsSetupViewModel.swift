@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class TopicsSetupViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: Server-sourced data
 
@@ -37,11 +31,26 @@ final class TopicsSetupViewModel: ObservableObject {
     @Published var editingTopic: ExpertTopicItem?
     @Published var showTopicEditor: Bool
 
-    // MARK: Save state (expertise tags patch)
-    @Published var isSaving: Bool
-    @Published var didSave: Bool
+    // MARK: Auto-save state (expertise tags PATCH — debounced)
+
+    /// True while a debounced auto-save is currently uploading. The nav
+    /// bar shows a small spinner while this is true.
+    @Published var isAutoSaving: Bool
+    /// True immediately after a successful auto-save. Cleared as soon as
+    /// the user flips another tag so the nav bar's checkmark hides.
+    @Published var didAutoSave: Bool
     /// Non-fatal error surfaced from any mutation (create/update/delete/tag save).
     @Published var apiError: String?
+
+    /// Task holding the pending debounce sleep + PATCH. Cancelled whenever
+    /// a new tag flip comes in so only the trailing save fires.
+    private var autoSaveTask: Task<Void, Never>?
+
+    /// Debounce window between the last tag toggle and the actual PATCH.
+    /// Long enough that rapid multi-toggle flips coalesce into one request,
+    /// short enough that a single tap feels near-instant. Matches the
+    /// notification-settings pattern.
+    private let autoSaveDebounce: UInt64 = 800_000_000 // 0.8s
 
     // MARK: Dependencies
 
@@ -61,8 +70,8 @@ final class TopicsSetupViewModel: ObservableObject {
         self.loadState = .idle
         self.editingTopic = nil
         self.showTopicEditor = false
-        self.isSaving = false
-        self.didSave = false
+        self.isAutoSaving = false
+        self.didAutoSave = false
         self.apiError = nil
         self.api = api
     }
@@ -107,7 +116,7 @@ final class TopicsSetupViewModel: ObservableObject {
             availableTags = tagsResponse.data.tags
                 .sorted { $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending }
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
             return
         }
 
@@ -117,7 +126,7 @@ final class TopicsSetupViewModel: ObservableObject {
             hydrateSelectedTags()
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -137,15 +146,20 @@ final class TopicsSetupViewModel: ObservableObject {
 
     /// Toggle a tag on/off. Respects the 5-tag cap on the way in — if the
     /// user is already at cap, ignore new selections silently. Removals
-    /// always succeed.
+    /// always succeed. Fires a debounced auto-save so the change is
+    /// persisted without requiring a Save button.
     func toggleTag(_ tag: ExpertiseTagItem) {
+        var mutated = false
         withAnimation(.easeInOut(duration: 0.2)) {
             if selectedTagIds.contains(tag.id) {
                 selectedTagIds.remove(tag.id)
+                mutated = true
             } else if selectedTagIds.count < maxTagSelection {
                 selectedTagIds.insert(tag.id)
+                mutated = true
             }
         }
+        if mutated { scheduleAutoSave() }
     }
 
     // MARK: - Topic CRUD
@@ -176,7 +190,7 @@ final class TopicsSetupViewModel: ObservableObject {
         durationMins: Int,
         hourlyRateAmount: Int,
         currency: String,
-        freeConsultationMinutes: Int?
+        iconSlug: String?
     ) async {
         apiError = nil
         do {
@@ -186,7 +200,7 @@ final class TopicsSetupViewModel: ObservableObject {
                     description: description,
                     durationMins: durationMins,
                     hourlyRate: .init(amount: hourlyRateAmount, currency: currency),
-                    freeConsultationMinutes: freeConsultationMinutes
+                    iconSlug: iconSlug
                 )
                 let updated = try await api.updateMyTopic(id: existing.id, body).data
                 if let idx = topics.firstIndex(where: { $0.id == existing.id }) {
@@ -198,14 +212,14 @@ final class TopicsSetupViewModel: ObservableObject {
                     description: description,
                     durationMins: durationMins,
                     hourlyRate: .init(amount: hourlyRateAmount, currency: currency),
-                    freeConsultationMinutes: freeConsultationMinutes
+                    iconSlug: iconSlug
                 )
                 let created = try await api.createMyTopic(body).data
                 topics.append(created)
             }
             dismissTopicEditor()
         } catch {
-            apiError = Self.errorMessage(for: error)
+            apiError = error.userMessage
         }
     }
 
@@ -217,20 +231,35 @@ final class TopicsSetupViewModel: ObservableObject {
             _ = try await api.deleteMyTopic(id: topic.id)
             topics.removeAll { $0.id == topic.id }
         } catch {
-            apiError = Self.errorMessage(for: error)
+            apiError = error.userMessage
         }
     }
 
-    // MARK: - Save (expertise tags → PATCH /expert/profile)
+    // MARK: - Auto-save (expertise tags → PATCH /expert/profile)
+
+    /// Cancels any pending PATCH and schedules a fresh one after the
+    /// debounce window — rapid multi-toggle flips coalesce into a single
+    /// trailing request. Called from `toggleTag(_:)` on every change.
+    func scheduleAutoSave() {
+        autoSaveTask?.cancel()
+        // Hide the "saved" checkmark while the user is actively editing.
+        if didAutoSave { didAutoSave = false }
+
+        autoSaveTask = Task { [weak self] in
+            guard let debounce = self?.autoSaveDebounce else { return }
+            try? await Task.sleep(nanoseconds: debounce)
+            guard !Task.isCancelled else { return }
+            await self?.performAutoSave()
+        }
+    }
 
     /// Sends the currently-selected tags via `PATCH /expert/profile`.
     /// First selected tag is flagged `is_primary`. On success flashes the
-    /// "Saved!" state briefly; on failure surfaces `apiError`.
-    func save() async {
-        guard !isSaving, !didSave else { return }
-
-        withAnimation { isSaving = true }
-        defer { isSaving = false }
+    /// nav-bar "saved" checkmark until the next toggle; on failure
+    /// surfaces `apiError`.
+    private func performAutoSave() async {
+        isAutoSaving = true
+        defer { isAutoSaving = false }
 
         let ordered = availableTags
             .filter { selectedTagIds.contains($0.id) }
@@ -251,24 +280,14 @@ final class TopicsSetupViewModel: ObservableObject {
 
         do {
             _ = try await api.updateExpertProfile(body)
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { didSave = true }
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            withAnimation { didSave = false }
+            withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
-            apiError = Self.errorMessage(for: error)
+            apiError = error.userMessage
         }
     }
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: - Preview data
 
@@ -281,7 +300,7 @@ final class TopicsSetupViewModel: ObservableObject {
             description: nil,
             price: .init(amount: 25000, currency: "USD", isFree: false, label: "$250 / hr"),
             hourlyRate: .init(amount: 25000, currency: "USD"),
-            freeConsultationMinutes: 15
+            iconSlug: "business"
         ),
         ExpertTopicItem(
             id: UUID(),
@@ -290,7 +309,7 @@ final class TopicsSetupViewModel: ObservableObject {
             description: nil,
             price: .init(amount: 18000, currency: "USD", isFree: false, label: "$180 / hr"),
             hourlyRate: .init(amount: 18000, currency: "USD"),
-            freeConsultationMinutes: nil
+            iconSlug: "marketing"
         ),
     ]
 

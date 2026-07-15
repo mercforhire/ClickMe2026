@@ -10,8 +10,8 @@ on:
 
 env:
   XCODE_VERSION: '26'
-  XCODE_PROJECT: TemplateApp.xcodeproj
-  SCHEME: TemplateApp
+  XCODE_PROJECT: ClickMe2026.xcodeproj
+  SCHEME: ClickMe2026
   TEST_PLAN: AllTests
   TEST_RESULT_BUNDLE: TestResults.xcresult
 

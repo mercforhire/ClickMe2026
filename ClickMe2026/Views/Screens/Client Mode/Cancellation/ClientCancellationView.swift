@@ -15,7 +15,12 @@ struct CancellationBooking {
     let expertTitle: String
     let dateString: String
     let imageURL: String
-    let refundType: String // "full refund", "partial refund", "no refund"
+    /// Formatted refund amount previewed to the user (e.g. `"$45.00"`).
+    /// `nil` hides the refund copy entirely — used for free sessions, when
+    /// no payment was made, or when the booking has already been refunded.
+    /// Derived client-side from `topic.price` + `paymentStatus` until a
+    /// server-side refund-preview endpoint ships.
+    let refundAmount: String?
 }
 
 enum CancelStep { case reason, confirmation }
@@ -33,32 +38,28 @@ struct ClientCancellationView: View {
 
     // MARK: Init
 
+    /// Runtime init — fetches the booking's display fields from
+    /// `GET /client/bookings/:id` and calls `POST /client/bookings/:id/cancel`
+    /// on confirm.
     init(
-        viewModel: ClientCancellationViewModel = ClientCancellationViewModel(),
+        bookingId: UUID,
+        onKeepBooking: @escaping () -> Void = {},
+        onConfirmCancellation: @escaping (String, String) -> Void = { _, _ in }
+    ) {
+        _viewModel = StateObject(wrappedValue: ClientCancellationViewModel(bookingId: bookingId))
+        self.onKeepBooking = onKeepBooking
+        self.onConfirmCancellation = onConfirmCancellation
+    }
+
+    /// Preview / test seam — inject a pre-configured view model.
+    init(
+        viewModel: ClientCancellationViewModel,
         onKeepBooking: @escaping () -> Void = {},
         onConfirmCancellation: @escaping (String, String) -> Void = { _, _ in }
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onKeepBooking = onKeepBooking
         self.onConfirmCancellation = onConfirmCancellation
-    }
-
-    /// Convenience init mirroring the prior signature so existing call sites
-    /// that pass a booking + initial step keep working.
-    init(
-        booking: CancellationBooking = ClientCancellationViewModel.sampleBooking,
-        initialStep: CancelStep = .reason,
-        onKeepBooking: @escaping () -> Void = {},
-        onConfirmCancellation: @escaping (String, String) -> Void = { _, _ in }
-    ) {
-        self.init(
-            viewModel: ClientCancellationViewModel(
-                booking: booking,
-                step: initialStep
-            ),
-            onKeepBooking: onKeepBooking,
-            onConfirmCancellation: onConfirmCancellation
-        )
     }
 
     // MARK: Body
@@ -68,22 +69,93 @@ struct ClientCancellationView: View {
             CancellationBrand.bg.ignoresSafeArea()
             GreenGlowBlobLayer().ignoresSafeArea()
 
-            switch viewModel.step {
-            case .reason:
-                reasonStep
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-            case .confirmation:
-                confirmStep
-                    .transition(.asymmetric(
-                        insertion: .move(edge: .trailing).combined(with: .opacity),
-                        removal: .move(edge: .leading).combined(with: .opacity)
-                    ))
-            }
+            content
         }
         .animation(.easeInOut(duration: 0.28), value: viewModel.step)
+        .task { await viewModel.load() }
+        .alert(
+            "Couldn't cancel booking",
+            isPresented: Binding(
+                get: { viewModel.cancelError != nil },
+                set: { if !$0 { viewModel.cancelError = nil } }
+            ),
+            presenting: viewModel.cancelError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+    }
+
+    // MARK: - Content router
+
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.loadState {
+        case .idle, .loading:
+            loadingContent
+        case .failed(let message):
+            errorContent(message: message)
+        case .loaded:
+            steps
+        }
+    }
+
+    private var loadingContent: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .tint(CancellationBrand.onSurface)
+            Text("Loading booking…")
+                .font(.system(size: 13, design: .rounded))
+                .foregroundColor(CancellationBrand.onSurfaceVar)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func errorContent(message: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 28, weight: .light))
+                .foregroundColor(CancellationBrand.onSurfaceVar)
+            Text("Couldn't load booking")
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundColor(CancellationBrand.onSurface)
+            Text(message)
+                .font(.system(size: 13, design: .rounded))
+                .foregroundColor(CancellationBrand.onSurfaceVar)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Button {
+                Task { await viewModel.reload() }
+            } label: {
+                Text("Retry")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(CancellationBrand.brandGreen))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private var steps: some View {
+        switch viewModel.step {
+        case .reason:
+            reasonStep
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
+        case .confirmation:
+            confirmStep
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing).combined(with: .opacity),
+                    removal: .move(edge: .leading).combined(with: .opacity)
+                ))
+        }
     }
 
     // MARK: - Step 1 — Reason
@@ -127,7 +199,9 @@ struct ClientCancellationView: View {
                     isConfirming: viewModel.isConfirming,
                     onKeepBooking: onKeepBooking,
                     onConfirmCancellation: {
-                        viewModel.confirmCancellation(onConfirm: onConfirmCancellation)
+                        Task {
+                            await viewModel.confirmCancellation(onConfirm: onConfirmCancellation)
+                        }
                     }
                 )
                 .padding(.horizontal, 20)
@@ -138,40 +212,48 @@ struct ClientCancellationView: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum ClientCancellationPreviewRoute: Hashable {
-    case reason
-    case confirmation
-}
-
-/// Wraps the cancellation flow inside a NavigationStack with a dummy
-/// "My Bookings" parent already pushed, so the system back chevron
-/// renders in the canvas.
-private struct ClientCancellationPreviewHarness: View {
-    let route: ClientCancellationPreviewRoute
-    @State private var path: [ClientCancellationPreviewRoute]
-
-    init(route: ClientCancellationPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
+/// Fetches the client's first cancellable booking and hands off to the
+/// cancel view with that real `bookingId`, so the flow can end-to-end call
+/// `POST /client/bookings/:id/cancel`.
+private struct LiveFetchClientCancellationBootstrap: View {
+    @State private var resolvedBookingId: UUID?
+    @State private var errorMessage: String?
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Upcoming sessions")
-                NavigationLink("Cancel booking", value: route)
+        if let bookingId = resolvedBookingId {
+            ClientCancellationView(bookingId: bookingId)
+        } else if let errorMessage {
+            Text(errorMessage)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+        } else {
+            ProgressView("Resolving booking…")
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.black)
+                .task { await resolveBookingId() }
+        }
+    }
+
+    private func resolveBookingId() async {
+        do {
+            let response = try await ClickMeAPI.shared.getClientBookings(type: .upcoming, page: 1, limit: 5)
+            let cancellable = response.data.bookings.first { row in
+                let status = row.status.lowercased()
+                return status == "confirmed"
+                    || status == "pending_approval"
+                    || status == "pending_reschedule"
             }
-            .navigationTitle("My Bookings")
-            .navigationDestination(for: ClientCancellationPreviewRoute.self) { dest in
-                switch dest {
-                case .reason:
-                    ClientCancellationView()
-                case .confirmation:
-                    ClientCancellationView(initialStep: .confirmation)
-                }
+            guard let picked = cancellable else {
+                errorMessage = "No cancellable bookings on this account."
+                return
             }
+            resolvedBookingId = picked.bookingId
+        } catch {
+            errorMessage = error.userMessage
         }
     }
 }
@@ -179,11 +261,23 @@ private struct ClientCancellationPreviewHarness: View {
 // MARK: - Previews
 
 #Preview("Step 1 — Reason") {
-    ClientCancellationPreviewHarness(route: .reason)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Cancel booking") {
+        ClientCancellationView(viewModel: ClientCancellationViewModel())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Step 2 — Confirm") {
-    ClientCancellationPreviewHarness(route: .confirmation)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Cancel booking") {
+        ClientCancellationView(viewModel: ClientCancellationViewModel(step: .confirmation))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Live Fetch") {
+    ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
+    return PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Cancel booking") {
+        LiveFetchClientCancellationBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }

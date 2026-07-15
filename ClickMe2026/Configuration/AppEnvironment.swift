@@ -15,6 +15,10 @@ struct AppEnvironment {
     /// Development/Staging, `pk_live_...` for Production. This is the client
     /// half of Stripe's key pair — safe to ship in the app binary.
     let stripePublishableKey: String
+    /// Agora RTC App ID for in-app voice calls. Ships in the binary — the
+    /// App ID alone isn't sensitive; it's the token minted per session
+    /// (returned by `POST /bookings/:id/join`) that grants channel access.
+    let agoraAppId: String
 
     /// The active environment, resolved from `Environments.plist`.
     static let current: AppEnvironment = {
@@ -28,14 +32,16 @@ struct AppEnvironment {
               let environments = root["Environments"] as? [String: Any],
               let envDict = environments[currentName] as? [String: Any],
               let baseURL = envDict["BaseURL"] as? String,
-              let stripeKey = envDict["StripePublishableKey"] as? String
+              let stripeKey = envDict["StripePublishableKey"] as? String,
+              let agoraAppId = envDict["AgoraAppId"] as? String
         else {
             preconditionFailure("Environments.plist is missing or malformed.")
         }
         return AppEnvironment(
             name: currentName,
             baseURL: baseURL,
-            stripePublishableKey: stripeKey
+            stripePublishableKey: stripeKey,
+            agoraAppId: agoraAppId
         )
     }()
 }

@@ -11,15 +11,15 @@ import SwiftUI
 // MARK: - Design tokens — Luminous Dark
 
 enum ExpertProfileBrand {
-    static let bg = Color(red: 0.075, green: 0.075, blue: 0.075)
+    static let bg = Brand.surface
     static let surfaceContainer = Color(red: 0.125, green: 0.125, blue: 0.125)
-    static let surfaceHigh = Color(red: 0.165, green: 0.165, blue: 0.165)
-    static let outlineVar = Color(red: 0.235, green: 0.290, blue: 0.247)
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
-    static let onSurfaceVar = Color(red: 0.729, green: 0.796, blue: 0.737)
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
-    static let starYellow = Color(red: 0.267, green: 0.965, blue: 0.592) // green stars per design
+    static let surfaceHigh = Brand.surfaceContainerHigh
+    static let outlineVar = Brand.outlineVariant
+    static let brandGreen = Brand.primary
+    static let onSurface = Brand.onSurface
+    static let onSurfaceVar = Brand.onSurfaceVariant
+    static let onPrimary = Brand.onPrimary
+    static let starYellow = Brand.primary // green stars per design
     static let tagBg = Color(red: 0.140, green: 0.165, blue: 0.145)
     static let cardBg = Color(red: 0.100, green: 0.120, blue: 0.105)
     static let cardBorder = Color(red: 0.180, green: 0.230, blue: 0.190)

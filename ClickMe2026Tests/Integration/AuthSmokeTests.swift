@@ -73,6 +73,65 @@ struct AuthSmokeTests {
         }
     }
 
+    // MARK: - Forgot password
+
+    @Test("forgotPassword returns a well-formed response for a probe identity")
+    func forgotPasswordReturnsWellFormedResponse() async throws {
+        let api = makeRealAPI()
+
+        // Use a random probe identity so we never trigger a real reset email
+        // to an existing account. Most servers respond with a generic success
+        // regardless of whether the account exists (to prevent enumeration),
+        // but we accept either shape.
+        let probe = "probe-\(UUID().uuidString)@invalid.local"
+
+        do {
+            let response = try await api.forgotPassword(identity: probe)
+            #expect(response.status == "success")
+            #expect(!response.message.isEmpty)
+        } catch let NetworkError.httpError(statusCode, data) {
+            #expect((400 ... 499).contains(statusCode))
+
+            // The error body should decode into one of our documented shapes.
+            let decoder = JSONDecoder()
+            let asStandard = try? decoder.decode(StandardErrorResponse.self, from: data)
+            let asFieldErr = try? decoder.decode(FieldValidationErrorResponse.self, from: data)
+            #expect(asStandard != nil || asFieldErr != nil,
+                    "Server error body did not match either known error shape: \(String(data: data, encoding: .utf8) ?? "<binary>")")
+        }
+    }
+
+    // MARK: - Reset password
+
+    @Test("resetPassword with an unknown-email / bogus code returns 400 EXPIRED_TOKEN")
+    func resetPasswordWithBogusCodeReturnsExpiredToken() async throws {
+        let api = makeRealAPI()
+
+        // Enumeration-safe design: unknown email / expired / used / max-attempts
+        // all fold into 400 EXPIRED_TOKEN. Using a probe email means we never
+        // touch a real account's reset flow.
+        let probe = "probe-\(UUID().uuidString)@invalid.local"
+
+        do {
+            _ = try await api.resetPassword(
+                email: probe,
+                code: "000000",
+                password: "N3wSecur3P@ss!",
+                passwordConfirmation: "N3wSecur3P@ss!"
+            )
+            Issue.record("resetPassword with a bogus code unexpectedly succeeded.")
+        } catch let NetworkError.httpError(statusCode, data) {
+            #expect(statusCode == 400,
+                    "Expected 400 EXPIRED_TOKEN, got \(statusCode).")
+
+            let decoded = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
+            #expect(decoded?.code == .expiredToken,
+                    "Expected code EXPIRED_TOKEN, got \(String(describing: decoded?.code)).")
+        } catch {
+            Issue.record("Backend unreachable or returned an unexpected error: \(error)")
+        }
+    }
+
     // MARK: - Happy path (needs real credentials)
 
     @Test(

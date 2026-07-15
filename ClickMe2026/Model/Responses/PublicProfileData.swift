@@ -11,8 +11,9 @@ import Foundation
 /// Full public expert profile.
 ///
 /// x-discrepancy #3: `header.is_online`, `header.rating`, `header.total_reviews`,
-/// `quick_stats.total_bookings`, `quick_stats.response_time`, and
-/// `recent_reviews.items` are currently stub values (D-09/D-11 placeholders).
+/// `quick_stats.total_bookings`, and `recent_reviews.items` are currently
+/// stub values (D-09/D-11 placeholders). `response_time` was removed —
+/// the backend will not implement it.
 struct PublicProfileData: Decodable {
     struct Header: Decodable {
         let fullName: String
@@ -26,7 +27,6 @@ struct PublicProfileData: Decodable {
     struct QuickStats: Decodable {
         let experienceYears: Int?
         let totalBookings: Int
-        let responseTime: String?
     }
 
     struct About: Decodable {

@@ -8,11 +8,11 @@
 import SwiftUI
 
 /// Full payout detail screen — pushed from the Expert Dashboard's
-/// Financial Summary card. Shows the live Stripe Connect balance, next
-/// payout date, min withdrawable amount, and a Withdraw button (with a
-/// confirmation prompt). When Stripe Connect isn't onboarded yet, the
-/// balance block is swapped for an onboarding CTA that opens Stripe's
-/// hosted Account Link URL in Safari.
+/// Financial Summary card. Shows the live Stripe Connect balance and
+/// next payout date. Payouts happen automatically on Stripe's schedule;
+/// there is no manual withdrawal. When Stripe Connect isn't onboarded
+/// yet, the balance block is swapped for an onboarding CTA that opens
+/// Stripe's hosted Account Link URL in Safari.
 struct PayoutsView: View {
 
     @StateObject private var viewModel: PayoutsViewModel
@@ -20,15 +20,15 @@ struct PayoutsView: View {
 
     // MARK: Design tokens — Luminous Dark
 
-    private let bg = Color(red: 0.075, green: 0.075, blue: 0.075)
+    private let bg = Brand.surface
     private let cardBg = Color(red: 0.110, green: 0.110, blue: 0.115)
     private let cardBorder = Color(red: 0.173, green: 0.173, blue: 0.173)
     private let pendingBg = Color(red: 0.078, green: 0.145, blue: 0.100)
     private let pendingBdr = Color(red: 0.155, green: 0.290, blue: 0.200)
-    private let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
-    private let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
+    private let brandGreen = Brand.primary
+    private let onSurface = Brand.onSurface
     private let onSurfaceVar = Color(red: 0.580, green: 0.640, blue: 0.610)
-    private let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
+    private let onPrimary = Brand.onPrimary
 
     // MARK: Init
 
@@ -50,44 +50,10 @@ struct PayoutsView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await viewModel.load() }
         .refreshable { await viewModel.reload() }
-        .onChange(of: viewModel.connectOnboardingURL) { url in
+        .onChange(of: viewModel.connectOnboardingURL) { _, url in
             guard let url else { return }
             openURL(url)
             viewModel.connectOnboardingURL = nil
-        }
-        .confirmationDialog(
-            withdrawConfirmMessage,
-            isPresented: $viewModel.showWithdrawConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Withdraw", role: .destructive) {
-                Task { await viewModel.performWithdrawal() }
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-        .alert(
-            "Withdrawal failed",
-            isPresented: Binding(
-                get: { viewModel.withdrawError != nil },
-                set: { if !$0 { viewModel.withdrawError = nil } }
-            ),
-            presenting: viewModel.withdrawError
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { message in
-            Text(message)
-        }
-        .alert(
-            "Withdrawal submitted",
-            isPresented: Binding(
-                get: { viewModel.withdrawSuccessMessage != nil },
-                set: { if !$0 { viewModel.withdrawSuccessMessage = nil } }
-            ),
-            presenting: viewModel.withdrawSuccessMessage
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { message in
-            Text(message)
         }
         .alert(
             "Couldn't open payout setup",
@@ -125,7 +91,7 @@ struct PayoutsView: View {
                 } else {
                     balanceHero
                     payoutMetaCard
-                    withdrawSection
+                    payoutScheduleNote
                 }
             }
             .padding(.horizontal, 20)
@@ -204,8 +170,6 @@ struct PayoutsView: View {
             metaRow(label: "Next payout", value: nextPayoutValue)
             divider
             metaRow(label: "Payout method", value: payoutMethodValue)
-            divider
-            metaRow(label: "Minimum withdrawal", value: minWithdrawableValue)
         }
         .padding(4)
         .background(
@@ -237,44 +201,28 @@ struct PayoutsView: View {
             .padding(.horizontal, 14)
     }
 
-    // MARK: - Withdraw section
+    // MARK: - Payout schedule note
 
-    private var withdrawSection: some View {
-        VStack(spacing: 10) {
-            Button {
-                viewModel.confirmWithdrawal()
-            } label: {
-                Group {
-                    if viewModel.isWithdrawing {
-                        ProgressView().tint(onPrimary)
-                    } else {
-                        Text("Withdraw \(availableLabel)")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(onPrimary)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(brandGreen.opacity(canWithdraw ? 1.0 : 0.35))
-                        .shadow(
-                            color: brandGreen.opacity(canWithdraw ? 0.45 : 0),
-                            radius: 14, x: 0, y: 4
-                        )
-                )
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .disabled(!canWithdraw || viewModel.isWithdrawing)
-
-            if !canWithdraw, let s = viewModel.summary {
-                Text("Available balance must be at least \(PayoutsViewModel.currencyLabel(minorUnits: s.minWithdrawableAmount, currency: s.currency)) to withdraw.")
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
-                    .foregroundColor(onSurfaceVar)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-            }
+    private var payoutScheduleNote: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "info.circle")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(onSurfaceVar)
+            Text("Your available balance is transferred to your bank automatically on the schedule above.")
+                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .foregroundColor(onSurfaceVar)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
         }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(cardBg)
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(cardBorder, lineWidth: 1))
+        )
     }
 
     // MARK: - Onboarding CTA
@@ -357,99 +305,43 @@ struct PayoutsView: View {
         }
     }
 
-    private var minWithdrawableValue: String {
-        guard let s = viewModel.summary else { return "—" }
-        return PayoutsViewModel.currencyLabel(minorUnits: s.minWithdrawableAmount, currency: s.currency)
-    }
-
-    private var canWithdraw: Bool {
-        viewModel.summary?.canWithdraw ?? false
-    }
-
-    /// Copy shown as the confirmation-dialog title. Includes the actual
-    /// amount so the user can double-check before firing.
-    private var withdrawConfirmMessage: String {
-        "Withdraw \(availableLabel) to your bank account?"
-    }
-}
-
-// MARK: - Preview harness
-
-private enum PayoutsPreviewRoute: Hashable { case payouts }
-
-private struct PayoutsPreviewHarness: View {
-    let viewModel: PayoutsViewModel
-    @State private var path: [PayoutsPreviewRoute]
-
-    init(viewModel: PayoutsViewModel) {
-        self.viewModel = viewModel
-        _path = State(initialValue: [.payouts])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Dashboard")
-                NavigationLink("Payouts", value: PayoutsPreviewRoute.payouts)
-            }
-            .navigationTitle("Expert")
-            .navigationDestination(for: PayoutsPreviewRoute.self) { _ in
-                PayoutsView(viewModel: viewModel)
-            }
-        }
-    }
-}
-
-private struct LiveFetchPayoutsPreviewHarness: View {
-    @State private var path: [PayoutsPreviewRoute] = [.payouts]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Dashboard")
-                NavigationLink("Payouts", value: PayoutsPreviewRoute.payouts)
-            }
-            .navigationTitle("Expert")
-            .navigationDestination(for: PayoutsPreviewRoute.self) { _ in
-                PayoutsView()
-            }
-        }
-    }
 }
 
 // MARK: - Previews
 
 #Preview("Payouts") {
-    PayoutsPreviewHarness(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Expert", rowTitle: "Payouts") {
+        PayoutsView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
-#Preview("Below Minimum") {
-    PayoutsPreviewHarness(
-        viewModel: .previewSeed(
+#Preview("Zero Balance") {
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Expert", rowTitle: "Payouts") {
+        PayoutsView(viewModel: .previewSeed(
             summary: PayoutSummaryData(
-                availableAmount: 1200,
+                availableAmount: 0,
                 pendingAmount: 8000,
                 currency: "USD",
                 nextPayoutDate: "2026-07-15",
-                payoutMethod: "bank_transfer",
-                canWithdraw: false,
-                minWithdrawableAmount: 5000
+                payoutMethod: "bank_transfer"
             )
-        )
-    )
+        ))
+    }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Onboarding Required") {
-    PayoutsPreviewHarness(
-        viewModel: .previewSeed(summary: nil, onboardingRequired: true)
-    )
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Expert", rowTitle: "Payouts") {
+        PayoutsView(viewModel: .previewSeed(summary: nil, onboardingRequired: true))
+    }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    return LiveFetchPayoutsPreviewHarness()
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Dashboard", navTitle: "Expert", rowTitle: "Payouts") {
+        PayoutsView()
+    }
+    .preferredColorScheme(.dark)
 }

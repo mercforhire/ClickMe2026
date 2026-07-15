@@ -12,28 +12,41 @@ import SwiftUI
 
 struct AllCategoriesQuickChips: View {
     let categories: [Category]
+    let isAllSelected: Bool
+    let onSelectAll: () -> Void
     let isSelected: (Category) -> Bool
     let onToggle: (Category) -> Void
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
+                allChip
+
                 ForEach(categories) { category in
-                    chip(category)
+                    chip(category.name, selected: isSelected(category)) {
+                        onToggle(category)
+                    }
                 }
             }
             .padding(.horizontal, 20)
         }
     }
 
-    private func chip(_ category: Category) -> some View {
-        let selected = isSelected(category)
-        return Button {
+    // MARK: Chips
+
+    private var allChip: some View {
+        chip("All", selected: isAllSelected) {
+            onSelectAll()
+        }
+    }
+
+    private func chip(_ label: String, selected: Bool, tap: @escaping () -> Void) -> some View {
+        Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.75)) {
-                onToggle(category)
+                tap()
             }
         } label: {
-            Text(category.name)
+            Text(label)
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundColor(selected ? AllCategoriesBrand.onPrimary : AllCategoriesBrand.onSurface)
                 .padding(.horizontal, 14)

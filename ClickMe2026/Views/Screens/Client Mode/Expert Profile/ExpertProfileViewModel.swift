@@ -28,7 +28,7 @@ final class ExpertProfileViewModel: ObservableObject {
     private let api: ClickMeAPI
 
     init(
-        expert: PublicExpertProfile = .sarahChen,
+        expert: PublicExpertProfile = .placeholder,
         glowPulse: Bool = false,
         isFavorited: Bool = false,
         api: ClickMeAPI = .shared
@@ -37,6 +37,77 @@ final class ExpertProfileViewModel: ObservableObject {
         self.glowPulse = glowPulse
         self.isFavorited = isFavorited
         self.api = api
+    }
+
+    // MARK: - Load
+
+    /// Refreshes the profile from `GET /experts/:expertId/details`. No-ops
+    /// when `expert.expertId` is nil (e.g., a hardcoded sample profile) or
+    /// when the call fails — in the failure case the existing profile is
+    /// left in place so the UI never blanks out.
+    ///
+    /// The details endpoint returns bio, stats, and topics of discussion,
+    /// but not rating / reviewCount / expertiseTags / avatarUrl / isOnline
+    /// — those fields are preserved from whatever the caller seeded (e.g.,
+    /// `/client/home` recommended-expert data).
+    func loadProfileDetails() async {
+        guard let expertId = expert.expertId else { return }
+        do {
+            let response = try await api.getExpertDetails(id: expertId)
+            expert = Self.merge(response.data, into: expert)
+        } catch {
+            // Silent — the pre-seeded profile stays visible.
+        }
+    }
+
+    /// Overlays the fields the details endpoint owns (name, title, bio,
+    /// stats, topics) onto the existing profile, preserving fields the
+    /// endpoint doesn't return.
+    private static func merge(
+        _ details: PublicProfileDetailsData,
+        into existing: PublicExpertProfile
+    ) -> PublicExpertProfile {
+        let stats = details.profile.stats
+        let yearsExp = stats.experienceYears.map { "\($0) Yrs" } ?? existing.yearsExp
+        let bookings = "\(stats.totalBookings)"
+
+        return PublicExpertProfile(
+            expertId: existing.expertId,
+            name: details.profile.name,
+            title: details.profile.title ?? existing.title,
+            rating: existing.rating,
+            reviewCount: existing.reviewCount,
+            yearsExp: yearsExp,
+            bookings: bookings,
+            isOnline: existing.isOnline,
+            bio: details.profile.bio ?? existing.bio,
+            expertiseTags: existing.expertiseTags,
+            topics: details.topicsOfDiscussion.map(Self.mapTopic),
+            reviews: existing.reviews,
+            imageURL: existing.imageURL
+        )
+    }
+
+    /// Converts a server-side topic into the display type. Amounts arrive
+    /// in minor units (cents), so divide by 100 for display. Currency code
+    /// is passed through — future formatter can map ISO-4217 to a symbol.
+    private static func mapTopic(_ t: PublicProfileDetailsData.TopicOfDiscussion) -> PublicTopic {
+        let duration = t.durationMins.map { "\($0) mins" } ?? ""
+        let priceString: String
+        if t.price.isFree {
+            priceString = "Free"
+        } else if let amount = t.price.amount, let currency = t.price.currency {
+            priceString = "\(currency) \(amount / 100)"
+        } else {
+            priceString = "—"
+        }
+        return PublicTopic(
+            title: t.title,
+            duration: duration,
+            description: t.description ?? "",
+            price: priceString,
+            isFree: t.price.isFree
+        )
     }
 
     // MARK: Actions

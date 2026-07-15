@@ -8,14 +8,19 @@
 
 import SwiftUI
 
-// MARK: - Preparation notes card
+// MARK: - Client's message-to-expert card
+//
+// The body renders the `client_notes` string the user attached when they
+// booked the session (via `MakeABookingNotesCard`). Label reads
+// "YOUR MESSAGE" so it matches the source — this isn't an expert-authored
+// prep brief.
 
 struct UpcomingBookingPrepNotesCard: View {
     let preparationNote: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("PREPARATION NOTES")
+            Text("YOUR MESSAGE")
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 .tracking(1.3)

@@ -164,79 +164,15 @@ struct BookingRequestSentView: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum BookingRequestSentPreviewRoute: Hashable {
-    case `default`
-    case custom
-}
-
-/// Wraps the request-sent screen inside a NavigationStack with a dummy
-/// "Book a session" parent already pushed, so the system back chevron
-/// renders in the canvas.
-private struct BookingRequestSentPreviewHarness: View {
-    let route: BookingRequestSentPreviewRoute
-    @State private var path: [BookingRequestSentPreviewRoute]
-
-    init(route: BookingRequestSentPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Confirm booking")
-                NavigationLink("Request sent", value: route)
-            }
-            .navigationTitle("Book a session")
-            .navigationDestination(for: BookingRequestSentPreviewRoute.self) { dest in
-                switch dest {
-                case .default:
-                    BookingRequestSentView(viewModel: .previewSeed())
-                case .custom:
-                    BookingRequestSentView(viewModel: .previewSeed(
-                        expertName: "Dr. Marcus Chen",
-                        topic: "Growth Strategy Session",
-                        dateTime: "Nov 5, 2024 | 10:00 AM - 11:00 AM"
-                    ))
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Live fetch preview harness
-
-private enum LiveFetchBookingRequestSentRoute: Hashable {
-    case sent
-}
-
-/// Live-fetch harness. Bootstraps by hitting
-/// `GET /client/bookings?type=upcoming` to grab the soonest real upcoming
-/// booking id, then pushes the request-sent screen which loads full
-/// details via `GET /client/bookings/:id`. Requires
-/// `PreviewSecrets.clientBearerToken`.
-private struct LiveFetchBookingRequestSentPreviewHarness: View {
+/// Bootstraps by hitting `GET /client/bookings?type=upcoming` to grab the
+/// soonest real upcoming booking id, then hands off to `BookingRequestSentView`.
+private struct LiveFetchBookingRequestSentBootstrap: View {
     @State private var bookingId: UUID?
     @State private var errorMessage: String?
-    @State private var path: [LiveFetchBookingRequestSentRoute] = [.sent]
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Confirm booking")
-                NavigationLink("Request sent", value: LiveFetchBookingRequestSentRoute.sent)
-            }
-            .navigationTitle("Book a session")
-            .navigationDestination(for: LiveFetchBookingRequestSentRoute.self) { _ in
-                destinationContent
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var destinationContent: some View {
         if let bookingId {
             BookingRequestSentView(bookingId: bookingId)
         } else if let errorMessage {
@@ -284,16 +220,26 @@ private struct LiveFetchBookingRequestSentPreviewHarness: View {
 // MARK: - Previews
 
 #Preview("Booking Request Sent") {
-    BookingRequestSentPreviewHarness(route: .default)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Confirm booking", navTitle: "Book a session", rowTitle: "Request sent") {
+        BookingRequestSentView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Custom Expert") {
-    BookingRequestSentPreviewHarness(route: .custom)
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Confirm booking", navTitle: "Book a session", rowTitle: "Request sent") {
+        BookingRequestSentView(viewModel: .previewSeed(
+            expertName: "Dr. Marcus Chen",
+            topic: "Growth Strategy Session",
+            dateTime: "Nov 5, 2024 | 10:00 AM - 11:00 AM"
+        ))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
-    LiveFetchBookingRequestSentPreviewHarness()
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Confirm booking", navTitle: "Book a session", rowTitle: "Request sent") {
+        LiveFetchBookingRequestSentBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }

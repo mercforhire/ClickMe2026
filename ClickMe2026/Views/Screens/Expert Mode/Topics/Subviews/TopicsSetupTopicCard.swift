@@ -29,8 +29,19 @@ struct TopicsSetupTopicCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Header — three-dot edit/delete menu
+            // Header — topic icon (left) + three-dot edit/delete menu (right)
             HStack {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Brand.primary.opacity(0.12))
+                        .frame(width: 38, height: 38)
+                    // Resolve server slug → SF Symbol via CategoryIconMap.
+                    // Falls back to `sparkles` when nil or the slug isn't
+                    // in the table yet.
+                    Image(systemName: topic.iconSlug.map { CategoryIconMap.sfSymbol(forSlug: $0) } ?? "sparkles")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(Brand.primary)
+                }
                 Spacer()
                 Menu {
                     Button("Edit") { viewModel.editTopic(topic) }
@@ -47,15 +58,10 @@ struct TopicsSetupTopicCard: View {
 
             // Topic + rate
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Topic Title")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Brand.onSurfaceVariant)
-                    Text(topic.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Brand.onSurface)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Text(topic.title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Brand.onSurface)
+                    .fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Hourly Rate")
@@ -65,37 +71,6 @@ struct TopicsSetupTopicCard: View {
                         .font(.system(size: 22, weight: .bold))
                         .foregroundColor(Brand.primary)
                 }
-            }
-
-            Divider().background(Brand.outlineVariant.opacity(0.6))
-
-            // Free consultation row
-            HStack(spacing: 10) {
-                if let minutes = topic.freeConsultationMinutes {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(Brand.primary)
-                    Text("\(minutes)m Free Consultation")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Brand.onSurface)
-                } else {
-                    Image(systemName: "circle")
-                        .font(.system(size: 18))
-                        .foregroundColor(Brand.onSurfaceVariant)
-                    Text("No Free Consultation")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(Brand.onSurfaceVariant)
-                }
-                Spacer()
-                Button {
-                    Task { await viewModel.deleteTopic(topic) }
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.system(size: 15))
-                        .foregroundColor(Brand.onSurfaceVariant)
-                        .frame(width: 32, height: 32)
-                }
-                .buttonStyle(.plain)
             }
         }
         .padding(16)

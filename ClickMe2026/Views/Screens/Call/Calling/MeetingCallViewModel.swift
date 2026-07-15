@@ -181,7 +181,7 @@ final class MeetingCallViewModel: ObservableObject {
                 self.joinStartTime = Date()
                 self.startTimer()
             } catch {
-                self.joinError = Self.errorMessage(for: error)
+                self.joinError = error.userMessage
             }
         }
     }
@@ -253,12 +253,4 @@ final class MeetingCallViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

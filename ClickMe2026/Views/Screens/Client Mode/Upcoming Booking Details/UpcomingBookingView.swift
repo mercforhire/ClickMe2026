@@ -105,11 +105,8 @@ struct UpcomingBookingView: View {
                     timezoneRow(timezone: timezone)
                 }
 
-                if let payment = viewModel.paymentStatus, payment != "none" {
-                    paymentStatusRow(payment: payment)
-                }
-
                 UpcomingBookingJoinCard(
+                    meetingType: viewModel.meetingType,
                     joinLink: viewModel.joinLink,
                     onJoinCall: onJoinCall,
                     onCopyLink: onCopyLink
@@ -142,19 +139,6 @@ struct UpcomingBookingView: View {
             Text("Expert timezone: \(timezone)")
                 .font(.system(size: 12, weight: .regular, design: .rounded))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
-            Spacer()
-        }
-        .padding(.horizontal, 4)
-    }
-
-    private func paymentStatusRow(payment: String) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: "creditcard.fill")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(UpcomingBookingBrand.brandGreen)
-            Text("Payment: \(payment.capitalized)")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(UpcomingBookingBrand.onSurface)
             Spacer()
         }
         .padding(.horizontal, 4)
@@ -202,71 +186,15 @@ struct UpcomingBookingView: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum UpcomingBookingPreviewRoute: Hashable {
-    case confirmed
-}
-
-/// Wraps the booking-details screen inside a NavigationStack with a dummy
-/// "My Bookings" parent already pushed, so the system back chevron renders
-/// in the canvas.
-private struct UpcomingBookingPreviewHarness: View {
-    let route: UpcomingBookingPreviewRoute
-    @State private var path: [UpcomingBookingPreviewRoute]
-
-    init(route: UpcomingBookingPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Upcoming sessions")
-                NavigationLink("Booking details", value: route)
-            }
-            .navigationTitle("My Bookings")
-            .navigationDestination(for: UpcomingBookingPreviewRoute.self) { dest in
-                switch dest {
-                case .confirmed:
-                    UpcomingBookingView(viewModel: .previewSeed())
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Live fetch preview harness
-
-private enum LiveFetchUpcomingRoute: Hashable {
-    case details
-}
-
-/// Live-fetch harness. Bootstraps by hitting
-/// `GET /client/bookings?type=upcoming` to grab the soonest real upcoming
-/// booking id, then pushes the details screen which loads that booking via
-/// `GET /client/bookings/:id`. Requires `PreviewSecrets.clientBearerToken`.
-private struct LiveFetchUpcomingBookingPreviewHarness: View {
+/// Bootstraps by hitting `GET /client/bookings?type=upcoming` to grab the
+/// soonest real upcoming booking id, then hands off to `UpcomingBookingView`.
+private struct LiveFetchUpcomingBookingBootstrap: View {
     @State private var bookingId: UUID?
     @State private var errorMessage: String?
-    @State private var path: [LiveFetchUpcomingRoute] = [.details]
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Upcoming sessions")
-                NavigationLink("Booking details", value: LiveFetchUpcomingRoute.details)
-            }
-            .navigationTitle("My Bookings")
-            .navigationDestination(for: LiveFetchUpcomingRoute.self) { _ in
-                destinationContent
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var destinationContent: some View {
         if let bookingId {
             UpcomingBookingView(bookingId: bookingId)
         } else if let errorMessage {
@@ -313,12 +241,26 @@ private struct LiveFetchUpcomingBookingPreviewHarness: View {
 
 // MARK: - Previews
 
-#Preview("Booking Details — Confirmed") {
-    UpcomingBookingPreviewHarness(route: .confirmed)
-        .preferredColorScheme(.dark)
+#Preview("In-app Call") {
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Booking details") {
+        UpcomingBookingView(viewModel: .previewSeed(meetingType: .inAppVoice, joinLink: ""))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Skype / Zoom Call") {
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Booking details") {
+        UpcomingBookingView(viewModel: .previewSeed(
+            meetingType: .skypeZoom,
+            joinLink: "https://zoom.us/j/98237192834"
+        ))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
-    LiveFetchUpcomingBookingPreviewHarness()
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Booking details") {
+        LiveFetchUpcomingBookingBootstrap()
+    }
+    .preferredColorScheme(.dark)
 }

@@ -11,12 +11,6 @@ import SwiftUI
 @MainActor
 final class PayoutsViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: State
 
@@ -32,13 +26,6 @@ final class PayoutsViewModel: ObservableObject {
 
     @Published var loadState: LoadState
 
-    // MARK: Withdrawal
-    @Published var isWithdrawing: Bool
-    @Published var withdrawError: String?
-    @Published var withdrawSuccessMessage: String?
-    /// True when the "confirm withdrawal?" alert is showing.
-    @Published var showWithdrawConfirm: Bool
-
     // MARK: Stripe Connect onboarding
     @Published var connectOnboardingURL: URL?
     @Published var connectError: String?
@@ -52,10 +39,6 @@ final class PayoutsViewModel: ObservableObject {
         self.summary = nil
         self.onboardingRequired = false
         self.loadState = .idle
-        self.isWithdrawing = false
-        self.withdrawError = nil
-        self.withdrawSuccessMessage = nil
-        self.showWithdrawConfirm = false
         self.connectOnboardingURL = nil
         self.connectError = nil
         self.api = api
@@ -68,9 +51,7 @@ final class PayoutsViewModel: ObservableObject {
             pendingAmount: 42000,
             currency: "USD",
             nextPayoutDate: "2026-07-15",
-            payoutMethod: "bank_transfer",
-            canWithdraw: true,
-            minWithdrawableAmount: 5000
+            payoutMethod: "bank_transfer"
         ),
         onboardingRequired: Bool = false
     ) -> PayoutsViewModel {
@@ -111,36 +92,8 @@ final class PayoutsViewModel: ObservableObject {
             } else {
                 summary = nil
                 onboardingRequired = false
-                loadState = .failed(Self.errorMessage(for: error))
+                loadState = .failed(error.userMessage)
             }
-        }
-    }
-
-    // MARK: - Withdraw
-
-    func confirmWithdrawal() {
-        guard let summary, summary.canWithdraw, !isWithdrawing else { return }
-        showWithdrawConfirm = true
-    }
-
-    /// Actually POSTs the withdrawal. Called by the confirm-alert's
-    /// destructive button. Refreshes the summary on success so the UI
-    /// reflects the new balance immediately.
-    func performWithdrawal() async {
-        guard !isWithdrawing else { return }
-        guard let summary, summary.canWithdraw else { return }
-
-        withdrawError = nil
-        withdrawSuccessMessage = nil
-        isWithdrawing = true
-        defer { isWithdrawing = false }
-
-        do {
-            let response = try await api.withdrawPayout(amount: summary.availableAmount)
-            withdrawSuccessMessage = "Withdrawal of \(Self.currencyLabel(minorUnits: response.data.amount, currency: response.data.currency)) is processing."
-            await reload()
-        } catch {
-            withdrawError = Self.errorMessage(for: error)
         }
     }
 
@@ -154,7 +107,7 @@ final class PayoutsViewModel: ObservableObject {
             let response = try await api.startConnectOnboarding()
             connectOnboardingURL = URL(string: response.data.url)
         } catch {
-            connectError = Self.errorMessage(for: error)
+            connectError = error.userMessage
         }
     }
 
@@ -183,12 +136,4 @@ final class PayoutsViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

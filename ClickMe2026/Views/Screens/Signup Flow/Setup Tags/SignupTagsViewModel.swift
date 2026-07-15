@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class SignupTagsViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: State
     @Published var searchText: String
@@ -89,7 +83,7 @@ final class SignupTagsViewModel: ObservableObject {
                 .sorted { $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending }
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -132,14 +126,6 @@ final class SignupTagsViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 
     // MARK: - Preview data
 

@@ -18,59 +18,45 @@ struct ClientProfileSettingsView: View {
     /// the onboarding-shown flag (debug affordance for QA / demos).
     @State private var versionTapCount: Int = 0
     @State private var showOnboardingResetAlert: Bool = false
-    @State private var showModeSwitch: Bool = false
 
     init(viewModel: ClientProfileSettingsViewModel = ClientProfileSettingsViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                ProfileSettingsBrand.bg.ignoresSafeArea()
+        ZStack {
+            ProfileSettingsBrand.bg.ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        ProfileModeSwitchCard(action: { showModeSwitch = true })
-                            .padding(.horizontal, 20)
-                            .padding(.top, 12)
-                            .padding(.bottom, 20)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    ProfileAvatarSection(
+                        profileImage: viewModel.profileImage,
+                        selectedPhoto: $viewModel.selectedPhoto
+                    )
+                    .padding(.top, 12)
+                    .padding(.bottom, 24)
 
-                        ProfileAvatarSection(
-                            profileImage: viewModel.profileImage,
-                            selectedPhoto: $viewModel.selectedPhoto
-                        )
+                    fieldsStack
+                        .padding(.horizontal, 20)
                         .padding(.bottom, 24)
 
-                        fieldsStack
-                            .padding(.horizontal, 20)
-
-                        ProfileAccountSettingsRow()
-                            .padding(.horizontal, 20)
-                            .padding(.top, 20)
-                            .padding(.bottom, 24)
-
-                        versionFooter
-                            .padding(.bottom, 32)
-                    }
+                    versionFooter
+                        .padding(.bottom, 32)
                 }
             }
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(ProfileSettingsBrand.bg, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    autoSaveStatusIcon
-                }
+        }
+        .navigationTitle("Profile Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(ProfileSettingsBrand.bg, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                autoSaveStatusIcon
             }
-            .onChange(of: autoSaveSnapshot) { _ in
-                viewModel.scheduleAutoSave()
-            }
-            .navigationDestination(isPresented: $showModeSwitch) {
-                ModeSwitchView()
-            }
+        }
+        .onChange(of: autoSaveSnapshot) {
+            viewModel.scheduleAutoSave()
         }
         .alert("Onboarding reset", isPresented: $showOnboardingResetAlert) {
             Button("OK", role: .cancel) {}
@@ -116,7 +102,7 @@ struct ClientProfileSettingsView: View {
                 .presentationDragIndicator(.visible)
                 .presentationBackground(ProfileSettingsBrand.sheetBg)
         }
-        .onChange(of: viewModel.selectedPhoto) { _ in
+        .onChange(of: viewModel.selectedPhoto) {
             Task { await viewModel.loadSelectedPhoto() }
         }
     }
@@ -212,9 +198,11 @@ struct ClientProfileSettingsView: View {
 
 // MARK: - Previews
 
-#Preview("Edit Profile") {
-    ClientProfileSettingsView()
-        .preferredColorScheme(.dark)
+#Preview("Profile Settings") {
+    PreviewNavHarness(parentText: "Account", navTitle: "Profile", rowTitle: "Personal Information") {
+        ClientProfileSettingsView()
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Professional Details Sheet") {

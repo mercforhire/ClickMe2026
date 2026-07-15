@@ -129,74 +129,28 @@ struct HelpView: View {
     }
 }
 
-// MARK: - Preview harness
-
-private enum HelpPreviewRoute: Hashable {
-    case help
-}
-
-/// Wraps the help screen inside a NavigationStack with a dummy
-/// "Settings" parent already pushed, so the system back chevron renders
-/// in the canvas.
-private struct HelpPreviewHarness: View {
-    let viewModel: HelpViewModel
-    @State private var path: [HelpPreviewRoute]
-
-    init(viewModel: HelpViewModel) {
-        self.viewModel = viewModel
-        _path = State(initialValue: [.help])
-    }
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Support")
-                NavigationLink("Help", value: HelpPreviewRoute.help)
-            }
-            .navigationTitle("Settings")
-            .navigationDestination(for: HelpPreviewRoute.self) { _ in
-                HelpView(viewModel: viewModel)
-            }
-        }
-    }
-}
-
-/// Live-fetch harness — pushes `HelpView` with a fresh view model so the
-/// real `GET /help/faqs` fetch runs. Uses `clientBearerToken` since the
-/// endpoint requires an authenticated caller.
-private struct LiveFetchHelpPreviewHarness: View {
-    @State private var path: [HelpPreviewRoute] = [.help]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Support")
-                NavigationLink("Help", value: HelpPreviewRoute.help)
-            }
-            .navigationTitle("Settings")
-            .navigationDestination(for: HelpPreviewRoute.self) { _ in
-                HelpView()
-            }
-        }
-    }
-}
-
 // MARK: - Previews
 
+#Preview("Live Fetch") {
+    ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
+    return PreviewNavHarness(parentText: "Support", navTitle: "Settings", rowTitle: "Help") {
+        HelpView()
+    }
+    .preferredColorScheme(.dark)
+}
+
 #Preview("Help — Collapsed") {
-    HelpPreviewHarness(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Support", navTitle: "Settings", rowTitle: "Help") {
+        HelpView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Help — All Expanded") {
     let seed = HelpViewModel.previewSeed()
-    _ = { seed.expandedCategories = Set(seed.categories.map { $0.id }) }()
-    return HelpPreviewHarness(viewModel: seed)
-        .preferredColorScheme(.dark)
-}
-
-#Preview("Live Fetch") {
-    ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
-    return LiveFetchHelpPreviewHarness()
-        .preferredColorScheme(.dark)
+    seed.expandedCategories = Set(seed.categories.map { $0.id })
+    return PreviewNavHarness(parentText: "Support", navTitle: "Settings", rowTitle: "Help") {
+        HelpView(viewModel: seed)
+    }
+    .preferredColorScheme(.dark)
 }

@@ -20,7 +20,9 @@ struct ExploreCategoryCard: View {
                 Text(category.name)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(category.isSelected ? .white : Color.white.opacity(0.75))
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .frame(width: 96, alignment: .leading)
             .padding(.horizontal, 12)

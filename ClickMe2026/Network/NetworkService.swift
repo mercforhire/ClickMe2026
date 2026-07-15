@@ -58,11 +58,23 @@ final class NetworkService {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
-            let str = try container.decode(String.self)
+            let raw = try container.decode(String.self)
+
+            // Postgres/JS backends often serialize timestamps with
+            // microsecond precision (e.g. `.983286`). `DateFormatter`'s
+            // `.SSS` pattern only accepts millisecond precision (3 digits),
+            // so truncate any longer fractional-second run to 3 digits
+            // before parsing.
+            let normalized = raw.replacingOccurrences(
+                of: #"\.(\d{3})\d+"#,
+                with: ".$1",
+                options: .regularExpression
+            )
+
             formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX"
-            if let d = formatter.date(from: str) { return d }
+            if let d = formatter.date(from: normalized) { return d }
             formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssXXXXX"
-            if let d = formatter.date(from: str) { return d }
+            if let d = formatter.date(from: normalized) { return d }
             throw NetworkError.invalidDate
         }
         self.jsonDecoder = decoder
@@ -77,9 +89,11 @@ final class NetworkService {
     func httpRequest<T: Decodable>(
         url: String,
         method: HTTPMethod,
-        parameters: [String: Any]? = nil
+        parameters: [String: Any]? = nil,
+        headers: [String: String]? = nil
     ) async throws -> T {
-        let request = try buildRequest(url: url, method: method, parameters: parameters)
+        var request = try buildRequest(url: url, method: method, parameters: parameters)
+        apply(headers: headers, to: &request)
         return try await send(request)
     }
 
@@ -87,10 +101,23 @@ final class NetworkService {
     func httpRequest<T: Decodable, Body: Encodable>(
         url: String,
         method: HTTPMethod,
-        body: Body
+        body: Body,
+        headers: [String: String]? = nil
     ) async throws -> T {
-        let request = try buildRequest(url: url, method: method, encodableBody: body)
+        var request = try buildRequest(url: url, method: method, encodableBody: body)
+        apply(headers: headers, to: &request)
         return try await send(request)
+    }
+
+    /// Applies caller-supplied headers on top of the built request. Used
+    /// for one-off headers like `Idempotency-Key` on the withdraw endpoint;
+    /// standard `Content-Type` / bearer auth are already set by the
+    /// underlying builders and won't be clobbered by nil headers.
+    private func apply(headers: [String: String]?, to request: inout URLRequest) {
+        guard let headers else { return }
+        for (name, value) in headers {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
     }
 
     // MARK: - Multipart upload

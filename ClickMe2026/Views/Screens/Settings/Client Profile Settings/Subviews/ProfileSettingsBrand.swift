@@ -18,11 +18,11 @@ enum ProfileSettingsBrand {
     static let chipBorder = Color(red: 0.220, green: 0.360, blue: 0.245)
     static let settingsBg = Color(red: 0.060, green: 0.090, blue: 0.065)
     static let settingsBdr = Color(red: 0.180, green: 0.280, blue: 0.200)
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
-    static let onSurfaceVar = Color(red: 0.729, green: 0.796, blue: 0.737)
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
-    static let labelColor = Color(red: 0.267, green: 0.965, blue: 0.592)
+    static let brandGreen = Brand.primary
+    static let onSurface = Brand.onSurface
+    static let onSurfaceVar = Brand.onSurfaceVariant
+    static let onPrimary = Brand.onPrimary
+    static let labelColor = Brand.primary
     static let sheetBg = Color(red: 0.055, green: 0.090, blue: 0.065)
 }
 

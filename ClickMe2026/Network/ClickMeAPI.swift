@@ -11,6 +11,7 @@ import Foundation
 // Many GET endpoints return `data: { <named_array>: [...] }`. These small wrappers
 // decode the named-array layer so call sites can read `.data.<name>` directly.
 
+struct CategoriesPayload: Decodable        { let categories: [Category] }
 struct CurrenciesPayload: Decodable        { let currencies: [CurrencyItem] }
 struct ExpertiseTagsPayload: Decodable     { let tags: [ExpertiseTagItem] }
 struct LanguagesPayload: Decodable         { let languages: [LanguageItem] }
@@ -32,6 +33,10 @@ struct DiscoveryFeedPayload: Decodable {
 }
 struct RandomExpertsPayload: Decodable {
     let experts: [RandomExpertItem]
+    let pagination: PaginationMeta?
+}
+struct FavoritesPayload: Decodable {
+    let experts: [FavoriteExpertItem]
     let pagination: PaginationMeta?
 }
 
@@ -91,7 +96,7 @@ final class ClickMeAPI {
     }
 
     init(
-        baseURL: String = "https://api.clickme.example/api/v1",
+        baseURL: String = AppEnvironment.current.baseURL,
         service: NetworkService = NetworkService()
     ) {
         self.baseURL = baseURL

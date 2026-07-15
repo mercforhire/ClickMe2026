@@ -58,9 +58,9 @@ struct HomeClientView: View {
         case .bookings:
             MyBookingsView()
         case .chats:
-            ChatConversationsView(chats: [], onSelectChat: { _ in })
+            ChatConversationsView()
         case .profile:
-            ClientProfileSettingsView()
+            ClientProfileHomeScreen()
         }
     }
 }

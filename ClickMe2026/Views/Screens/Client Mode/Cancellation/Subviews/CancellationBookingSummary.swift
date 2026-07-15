@@ -76,20 +76,19 @@ struct CancellationBookingSummary: View {
                     .foregroundColor(CancellationBrand.onSurface)
             }
 
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "creditcard")
-                    .font(.system(size: 15))
-                    .foregroundColor(CancellationBrand.onSurfaceVar)
-                    .frame(width: 18)
-                Text("A ")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundColor(CancellationBrand.onSurfaceVar)
-                    + Text(booking.refundType)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(CancellationBrand.brandGreen)
-                    + Text(" will be processed according to our policy.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundColor(CancellationBrand.onSurfaceVar)
+            if let refundAmount = booking.refundAmount {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "creditcard")
+                        .font(.system(size: 15))
+                        .foregroundColor(CancellationBrand.onSurfaceVar)
+                        .frame(width: 18)
+                    Text(refundAmount)
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundColor(CancellationBrand.brandGreen)
+                        + Text(" will be refunded according to our policy.")
+                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .foregroundColor(CancellationBrand.onSurfaceVar)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

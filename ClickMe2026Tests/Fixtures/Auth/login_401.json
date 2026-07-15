@@ -1,5 +1,5 @@
 {
   "status": "error",
-  "code": "INVALID_CREDENTIALS",
+  "code": "INVALID_INPUT",
   "message": "The email or password is incorrect."
 }

@@ -248,81 +248,121 @@ struct WriteReviewView: View {
     }
 }
 
-// MARK: - Preview harness
+// MARK: - Live-fetch bootstrap
 
-private enum WriteReviewPreviewRoute: Hashable {
-    case fiveStar
-    case alreadySubmitted
-    case submitted
-    case ineligibleMissed
-}
+/// Bootstraps by hitting `GET /client/bookings?type=past` to grab a real
+/// completed booking, then hands off to `WriteReviewView`. Requires
+/// `PreviewSecrets.clientBearerToken` to hold a valid client JWT.
+private struct LiveFetchWriteReviewBootstrap: View {
+    @State private var seed: Seed?
+    @State private var errorMessage: String?
 
-/// Wraps the write-review screen inside a NavigationStack with a dummy
-/// "My Bookings" parent already pushed, so the system back chevron renders
-/// in the canvas.
-private struct WriteReviewPreviewHarness: View {
-    let route: WriteReviewPreviewRoute
-    @State private var path: [WriteReviewPreviewRoute]
-
-    init(route: WriteReviewPreviewRoute) {
-        self.route = route
-        _path = State(initialValue: [route])
+    private struct Seed {
+        let bookingId: UUID
+        let expertName: String
+        let expertImageURL: String
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                Text("Past sessions")
-                NavigationLink("Leave a review", value: route)
-            }
-            .navigationTitle("My Bookings")
-            .navigationDestination(for: WriteReviewPreviewRoute.self) { dest in
-                switch dest {
-                case .fiveStar:
-                    WriteReviewView(viewModel: .previewSeed())
-                case .alreadySubmitted:
-                    WriteReviewView(viewModel: .previewSeed(
-                        selectedStars: 4,
-                        reviewText: "Helpful discussion — appreciated the concrete next steps.",
-                        hasSubmittedBefore: true,
-                        starsAnimated: true
-                    ))
-                case .submitted:
-                    WriteReviewView(viewModel: .previewSeed(
-                        selectedStars: 5,
-                        reviewText: "Outstanding consultation — I left with a clear action plan.",
-                        didSubmit: true,
-                        starsAnimated: true
-                    ))
-                case .ineligibleMissed:
-                    WriteReviewView(viewModel: .previewSeed(
-                        bookingStatus: .missed,
-                        expertName: "Marcus Chen"
-                    ))
+        if let seed {
+            WriteReviewView(
+                bookingId: seed.bookingId,
+                bookingStatus: .completed,
+                seedExpertName: seed.expertName,
+                seedExpertImageURL: seed.expertImageURL,
+                onSubmit: { rating, text in
+                    print("Live Fetch review submitted — \(rating) stars, \(text.count) chars")
                 }
+            )
+        } else if let errorMessage {
+            VStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle")
+                    .font(.system(size: 28, weight: .light))
+                    .foregroundColor(.white.opacity(0.6))
+                Text("Preview bootstrap failed")
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text(errorMessage)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(WriteReviewBrand.bg.ignoresSafeArea())
+        } else {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(WriteReviewBrand.bg.ignoresSafeArea())
+                .task { await bootstrap() }
+        }
+    }
+
+    private func bootstrap() async {
+        ClickMeAPI.shared.bearerToken = PreviewSecrets.clientBearerToken
+        do {
+            let response = try await ClickMeAPI.shared.getClientBookings(type: .past)
+            guard let completed = response.data.bookings.first(where: { $0.status == "completed" }) else {
+                errorMessage = "No completed past bookings found for this account."
+                return
+            }
+            seed = Seed(
+                bookingId: completed.bookingId,
+                expertName: completed.expert.fullName ?? "Expert",
+                expertImageURL: completed.expert.avatarUrl ?? ""
+            )
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 }
 
 // MARK: - Previews
 
+#if DEBUG
+private func writeReviewPreview<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View {
+    PreviewNavHarness(parentText: "Past sessions", navTitle: "My Bookings", rowTitle: "Leave a review") {
+        content()
+    }
+    .preferredColorScheme(.dark)
+}
+#endif
+
 #Preview("Default — 5 stars") {
-    WriteReviewPreviewHarness(route: .fiveStar)
-        .preferredColorScheme(.dark)
+    writeReviewPreview { WriteReviewView(viewModel: .previewSeed()) }
 }
 
 #Preview("Already submitted") {
-    WriteReviewPreviewHarness(route: .alreadySubmitted)
-        .preferredColorScheme(.dark)
+    writeReviewPreview {
+        WriteReviewView(viewModel: .previewSeed(
+            selectedStars: 4,
+            reviewText: "Helpful discussion — appreciated the concrete next steps.",
+            hasSubmittedBefore: true,
+            starsAnimated: true
+        ))
+    }
 }
 
 #Preview("Submitted state") {
-    WriteReviewPreviewHarness(route: .submitted)
-        .preferredColorScheme(.dark)
+    writeReviewPreview {
+        WriteReviewView(viewModel: .previewSeed(
+            selectedStars: 5,
+            reviewText: "Outstanding consultation — I left with a clear action plan.",
+            didSubmit: true,
+            starsAnimated: true
+        ))
+    }
 }
 
 #Preview("Ineligible (missed)") {
-    WriteReviewPreviewHarness(route: .ineligibleMissed)
-        .preferredColorScheme(.dark)
+    writeReviewPreview {
+        WriteReviewView(viewModel: .previewSeed(
+            bookingStatus: .missed,
+            expertName: "Marcus Chen"
+        ))
+    }
+}
+
+#Preview("Live Fetch") {
+    writeReviewPreview { LiveFetchWriteReviewBootstrap() }
 }

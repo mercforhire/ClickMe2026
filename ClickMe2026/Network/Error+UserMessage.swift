@@ -20,7 +20,8 @@ extension Error {
     /// Callers use this in place of the (formerly copy-pasted)
     /// `private static func errorMessage(for:)` helper.
     var userMessage: String {
-        if case let NetworkError.httpError(_, data) = self,
+        if let netError = self as? NetworkError,
+           case let .httpError(_, data) = netError,
            let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
         {
             return response.message

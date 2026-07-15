@@ -12,12 +12,6 @@ import SwiftUI
 @MainActor
 final class IncomingRequestsViewModel: ObservableObject {
 
-    enum LoadState: Equatable {
-        case idle
-        case loading
-        case loaded
-        case failed(String)
-    }
 
     // MARK: State
     @Published var requests: [BookingRequest]
@@ -70,7 +64,7 @@ final class IncomingRequestsViewModel: ObservableObject {
                 .sorted { Self.sortKey(for: $0) < Self.sortKey(for: $1) }
             loadState = .loaded
         } catch {
-            loadState = .failed(Self.errorMessage(for: error))
+            loadState = .failed(error.userMessage)
         }
     }
 
@@ -129,12 +123,4 @@ final class IncomingRequestsViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
-    private static func errorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
 }

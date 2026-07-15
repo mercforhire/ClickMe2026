@@ -13,7 +13,6 @@ import SwiftUI
 struct FavoriteExpertCard: View {
     let expert: FavoriteExpert
     let onUnfavorite: () -> Void
-    let onBookSession: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -61,7 +60,7 @@ struct FavoriteExpertCard: View {
             Spacer()
 
             Button(action: onUnfavorite) {
-                Image(systemName: "heart")
+                Image(systemName: "heart.fill")
                     .font(.system(size: 22, weight: .regular))
                     .foregroundColor(FavoritesBrand.heartColor)
                     .frame(width: 36, height: 36)
@@ -89,32 +88,15 @@ struct FavoriteExpertCard: View {
         }
     }
 
-    // MARK: Bio + Book Session
+    // MARK: Bio
 
     private var bioRow: some View {
-        HStack(alignment: .bottom, spacing: 14) {
-            Text(expert.bio)
-                .font(.system(size: 13, weight: .regular, design: .rounded))
-                .foregroundColor(FavoritesBrand.onSurfaceVar)
-                .lineLimit(3)
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            Button(action: onBookSession) {
-                Text("Book Session")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(FavoritesBrand.onPrimary)
-                    .padding(.horizontal, 16)
-                    .frame(height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(FavoritesBrand.brandGreen)
-                            .shadow(color: FavoritesBrand.brandGreen.opacity(0.50), radius: 12, x: 0, y: 4)
-                    )
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .fixedSize()
-        }
+        Text(expert.bio)
+            .font(.system(size: 13, weight: .regular, design: .rounded))
+            .foregroundColor(FavoritesBrand.onSurfaceVar)
+            .lineLimit(3)
+            .lineSpacing(3)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

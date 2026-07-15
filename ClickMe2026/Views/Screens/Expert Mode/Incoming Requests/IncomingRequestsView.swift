@@ -27,42 +27,43 @@ struct BookingRequest: Identifiable {
     let isExpired: Bool
 }
 
-// MARK: - Navigation routes
+// MARK: - Navigation push payload
 
-private enum IncomingRequestsRoute: Hashable {
-    case decision(UUID)
+/// Identifiable wrapper used with `.navigationDestination(item:)` so the
+/// destination pushes into whatever NavigationStack is in scope — the
+/// dashboard's outer stack in production, the preview harness's stack in
+/// canvas. This screen deliberately does NOT own a NavigationStack so it
+/// stays composable as a pushed destination.
+///
+/// Carries `isExpired` alongside the id so the detail screen can render
+/// read-only (hide Accept/Decline) without a second fetch.
+private struct PushedRequest: Hashable, Identifiable {
+    let id: UUID
+    let isExpired: Bool
 }
 
 // MARK: - Incoming Requests View
 
 struct IncomingRequestsView: View {
     @StateObject private var viewModel: IncomingRequestsViewModel
-    @State private var path: [IncomingRequestsRoute] = []
+    @State private var pushedRequest: PushedRequest?
 
     init(viewModel: IncomingRequestsViewModel = IncomingRequestsViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
-                Brand.surface.ignoresSafeArea()
-                GreenGlowBlobLayer().ignoresSafeArea()
-                content
-            }
-            .navigationTitle("Incoming requests")
-            .navigationBarTitleDisplayMode(.inline)
-            .task { await viewModel.load() }
-            .refreshable { await viewModel.reload() }
-            .navigationDestination(for: IncomingRequestsRoute.self) { route in
-                switch route {
-                case .decision:
-                    // TODO: wire `RequestDecisionView(requestId:)` once that
-                    // screen accepts an id and loads its own detail. For now
-                    // the default stub renders.
-                    RequestDecisionView()
-                }
-            }
+        ZStack {
+            Brand.surface.ignoresSafeArea()
+            GreenGlowBlobLayer().ignoresSafeArea()
+            content
+        }
+        .navigationTitle("Incoming requests")
+        .navigationBarTitleDisplayMode(.inline)
+        .task { await viewModel.load() }
+        .refreshable { await viewModel.reload() }
+        .navigationDestination(item: $pushedRequest) { pushed in
+            RequestDecisionView(requestId: pushed.id, isExpired: pushed.isExpired)
         }
     }
 
@@ -89,8 +90,14 @@ struct IncomingRequestsView: View {
                     VStack(spacing: 16) {
                         ForEach(viewModel.requests) { request in
                             IncomingRequestCard(request: request) { tapped in
-                                guard !tapped.isExpired else { return }
-                                path.append(.decision(tapped.id))
+                                // Expired rows push the same decision screen —
+                                // it renders read-only (no Accept/Decline
+                                // footer) because we forward `isExpired`
+                                // through the route payload.
+                                pushedRequest = PushedRequest(
+                                    id: tapped.id,
+                                    isExpired: tapped.isExpired
+                                )
                             }
                         }
                     }
@@ -196,36 +203,26 @@ extension BookingRequest {
     ]
 }
 
-// MARK: - Preview harness
-
-private struct IncomingRequestsPreviewHost: View {
-    let viewModel: IncomingRequestsViewModel
-    @State private var path: [Int] = [0]
-
-    var body: some View {
-        NavigationStack(path: $path) {
-            Color.clear
-                .navigationDestination(for: Int.self) { _ in
-                    IncomingRequestsView(viewModel: viewModel)
-                }
-        }
-    }
-}
-
 // MARK: - Previews
 
 #Preview("Incoming Requests") {
-    IncomingRequestsPreviewHost(viewModel: .previewSeed())
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Expert", rowTitle: "Incoming requests") {
+        IncomingRequestsView(viewModel: .previewSeed())
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Empty") {
-    IncomingRequestsPreviewHost(viewModel: .previewSeed(requests: []))
-        .preferredColorScheme(.dark)
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Expert", rowTitle: "Incoming requests") {
+        IncomingRequestsView(viewModel: .previewSeed(requests: []))
+    }
+    .preferredColorScheme(.dark)
 }
 
 #Preview("Live Fetch") {
     ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
-    return IncomingRequestsPreviewHost(viewModel: IncomingRequestsViewModel())
-        .preferredColorScheme(.dark)
+    return PreviewNavHarness(parentText: "Dashboard", navTitle: "Expert", rowTitle: "Incoming requests") {
+        IncomingRequestsView()
+    }
+    .preferredColorScheme(.dark)
 }

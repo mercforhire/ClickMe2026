@@ -17,10 +17,10 @@ enum MyBookingsBrand {
     static let tabBg = Color(red: 0.110, green: 0.125, blue: 0.125)
     static let actionBg = Color(red: 0.130, green: 0.145, blue: 0.145)
     static let actionBorder = Color(red: 0.200, green: 0.240, blue: 0.230)
-    static let brandGreen = Color(red: 0.267, green: 0.965, blue: 0.592)
-    static let onSurface = Color(red: 0.898, green: 0.886, blue: 0.882)
+    static let brandGreen = Brand.primary
+    static let onSurface = Brand.onSurface
     static let onSurfaceVar = Color(red: 0.580, green: 0.650, blue: 0.620)
-    static let onPrimary = Color(red: 0.000, green: 0.224, blue: 0.114)
+    static let onPrimary = Brand.onPrimary
 }
 
 // MARK: - Button scale style

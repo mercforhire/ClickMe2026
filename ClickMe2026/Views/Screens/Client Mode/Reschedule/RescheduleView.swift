@@ -1,0 +1,225 @@
+//
+//  RescheduleView.swift
+//  ClickMe2026
+//
+//  Created by Leon Chen on 2026-05-21.
+//  Copyright © 2026 Q42. All rights reserved.
+//
+
+import SwiftUI
+
+// MARK: - Booking model
+
+struct RescheduleBooking {
+    let expertName: String
+    let role: String
+    let currentDateLabel: String
+    let imageURL: String
+
+    static let sample = RescheduleBooking(
+        expertName: "Dr. Anya Sharma",
+        role: "Career Mentorship",
+        currentDateLabel: "Wednesday, July 10 • 10:00 AM - 10:30 AM",
+        imageURL: "https://randomuser.me/api/portraits/women/68.jpg"
+    )
+}
+
+// MARK: - Reschedule View
+
+struct RescheduleView: View {
+
+    @StateObject private var viewModel: RescheduleViewModel
+    @FocusState private var messageFocused: Bool
+
+    /// Fires with no arguments after the API call succeeds. Callers use it
+    /// to pop the NavigationStack back to the booking list.
+    var onRescheduled: () -> Void
+
+    // MARK: Init
+
+    /// Runtime init — hydrates from `GET /client/bookings/:id` +
+    /// `GET /experts/:id/availability` and calls
+    /// `PATCH /client/bookings/:id/reschedule` on submit.
+    init(
+        bookingId: UUID,
+        onRescheduled: @escaping () -> Void = {}
+    ) {
+        _viewModel = StateObject(wrappedValue: RescheduleViewModel(bookingId: bookingId))
+        self.onRescheduled = onRescheduled
+    }
+
+    /// Preview / test seam — inject a pre-configured view model.
+    init(
+        viewModel: RescheduleViewModel,
+        onRescheduled: @escaping () -> Void = {}
+    ) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+        self.onRescheduled = onRescheduled
+    }
+
+    // MARK: Body
+
+    var body: some View {
+        ZStack {
+            RescheduleBrand.bg.ignoresSafeArea()
+            content
+        }
+        .navigationTitle("Reschedule")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(RescheduleBrand.bg, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .task { await viewModel.load() }
+        .alert(
+            "Couldn't reschedule booking",
+            isPresented: Binding(
+                get: { viewModel.submitError != nil },
+                set: { if !$0 { viewModel.submitError = nil } }
+            ),
+            presenting: viewModel.submitError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+    }
+
+    // MARK: - Content router
+
+    @ViewBuilder
+    private var content: some View {
+        switch viewModel.loadState {
+        case .idle, .loading:
+            loadingContent
+        case .failed(let message):
+            errorContent(message: message)
+        case .loaded:
+            loadedContent
+        }
+    }
+
+    private var loadedContent: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 16) {
+                RescheduleExpertCard(booking: viewModel.booking)
+
+                RescheduleCalendarCard(
+                    monthLabel: viewModel.monthYearLabel(viewModel.currentMonth),
+                    cells: viewModel.monthCells(),
+                    calendar: viewModel.calendar,
+                    isSelected: { viewModel.isSelected($0) },
+                    isBookable: { viewModel.hasSlots(on: $0) },
+                    onPrevMonth: { viewModel.shiftMonth(-1) },
+                    onNextMonth: { viewModel.shiftMonth(1) },
+                    onSelectDay: { viewModel.select(date: $0) }
+                )
+
+                if let availabilityError = viewModel.availabilityError {
+                    Text(availabilityError)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(RescheduleBrand.onSurfaceVar)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                RescheduleTimeSlotsCard(
+                    slots: viewModel.slotsForSelectedDate,
+                    selectedTime: viewModel.selectedTime,
+                    onSelect: { viewModel.select(time: $0) }
+                )
+
+                RescheduleMessageCard(
+                    text: $viewModel.message,
+                    isFocused: $messageFocused
+                )
+
+                RescheduleSubmitButton {
+                    Task { await viewModel.submit(onSuccess: onRescheduled) }
+                }
+                .padding(.top, 4)
+                .disabled(viewModel.isSubmitting || viewModel.selectedTime == nil)
+                .opacity(viewModel.selectedTime == nil ? 0.55 : 1.0)
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 40)
+        }
+    }
+
+    private var loadingContent: some View {
+        VStack(spacing: 12) {
+            ProgressView()
+                .tint(RescheduleBrand.onSurface)
+            Text("Loading booking…")
+                .font(.system(size: 13, design: .rounded))
+                .foregroundColor(RescheduleBrand.onSurfaceVar)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func errorContent(message: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 28, weight: .light))
+                .foregroundColor(RescheduleBrand.onSurfaceVar)
+            Text("Couldn't load booking")
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundColor(RescheduleBrand.onSurface)
+            Text(message)
+                .font(.system(size: 13, design: .rounded))
+                .foregroundColor(RescheduleBrand.onSurfaceVar)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Button {
+                Task { await viewModel.reload() }
+            } label: {
+                Text("Retry")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 22)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(RescheduleBrand.brandGreen))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Preview harness
+
+private enum ReschedulePreviewRoute: Hashable {
+    case reschedule
+}
+
+/// Wraps the reschedule screen inside a NavigationStack with a dummy
+/// "My Bookings" parent already pushed, so the system back chevron renders
+/// in the canvas.
+private struct ReschedulePreviewHarness: View {
+    let viewModel: RescheduleViewModel
+    @State private var path: [ReschedulePreviewRoute]
+
+    init(viewModel: RescheduleViewModel) {
+        self.viewModel = viewModel
+        _path = State(initialValue: [.reschedule])
+    }
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            List {
+                Text("Upcoming sessions")
+                NavigationLink("Reschedule booking", value: ReschedulePreviewRoute.reschedule)
+            }
+            .navigationTitle("My Bookings")
+            .navigationDestination(for: ReschedulePreviewRoute.self) { _ in
+                RescheduleView(viewModel: viewModel)
+            }
+        }
+    }
+}
+
+// MARK: - Previews
+
+#Preview("Reschedule") {
+    ReschedulePreviewHarness(viewModel: RescheduleViewModel())
+        .preferredColorScheme(.dark)
+}

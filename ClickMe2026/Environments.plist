@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Current</key>
+	<string>Development</string>
+	<key>Environments</key>
+	<dict>
+		<key>Development</key>
+		<dict>
+			<key>BaseURL</key>
+			<string>https://clickme-backend-production.up.railway.app/api/v1</string>
+			<key>StripePublishableKey</key>
+			<string>pk_test_REPLACE_ME</string>
+		</dict>
+		<key>Staging</key>
+		<dict>
+			<key>BaseURL</key>
+			<string>https://clickme-backend-production.up.railway.app/api/v1</string>
+			<key>StripePublishableKey</key>
+			<string>pk_test_REPLACE_ME</string>
+		</dict>
+		<key>Production</key>
+		<dict>
+			<key>BaseURL</key>
+			<string>https://clickme-backend-production.up.railway.app/api/v1</string>
+			<key>StripePublishableKey</key>
+			<string>pk_live_REPLACE_ME</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

@@ -60,10 +60,28 @@ struct HomeClientView: View {
                 .tag(HomeClientTab.profile)
         }
         .tint(Brand.primary)
+        // Lock the shell into dark mode so system chrome (nav bar +
+        // tab bar) doesn't flash to a light appearance during tab
+        // transitions when a destination view hasn't explicitly set
+        // its own toolbar background.
+        .preferredColorScheme(.dark)
         // Chat-open action lives at the shell level so any tab's leaf
         // views can invoke it — switches to the Chats tab AND pushes
         // the thread onto the Chats tab's own path.
         .environment(\.openChatThread, OpenChatThreadAction { threadId, peerName, peerAvatarURL in
+            selectedTab = .chats
+            chatsPath.push(HomeRoute.chat(
+                threadId: threadId,
+                peerName: peerName,
+                peerAvatarURL: peerAvatarURL
+            ))
+        })
+        // Global call surface + floating pill overlays. Sits above the
+        // TabView but below any modal (sheet / fullScreenCover), so
+        // ordinary navigation continues to work while a call is in
+        // progress — the user just sees the pill / expanded call
+        // hovering above the tabs.
+        .modifier(CallOverlayHost { threadId, peerName, peerAvatarURL in
             selectedTab = .chats
             chatsPath.push(HomeRoute.chat(
                 threadId: threadId,
@@ -166,6 +184,38 @@ struct HomeClientView: View {
                 threadId: threadId,
                 peerName: peerName,
                 peerAvatarURL: peerAvatarURL
+            )
+        case let .upcomingBooking(bookingId):
+            UpcomingBookingView(bookingId: bookingId)
+        case let .bookingSummary(bookingId):
+            BookingSummaryView(bookingId: bookingId)
+        case .expertBookingSummary:
+            // Expert-only destination. Not reachable from the client shell,
+            // but the case must be exhaustive.
+            EmptyView()
+        case .expertReschedule:
+            // Expert-only destination. Not reachable from the client shell.
+            EmptyView()
+        case let .peerProfile(userId, name, avatarURL):
+            // Client is viewing the expert they were chatting with —
+            // seed the profile with what we already know, then let the
+            // view fetch bio/topics/reviews via /experts/:id/details.
+            ExpertProfileView(
+                expert: PublicExpertProfile(
+                    expertId: userId,
+                    name: name,
+                    title: "",
+                    rating: 0,
+                    reviewCount: 0,
+                    yearsExp: "",
+                    bookings: "",
+                    isOnline: false,
+                    bio: "",
+                    expertiseTags: [],
+                    topics: [],
+                    reviews: [],
+                    imageURL: avatarURL
+                )
             )
         }
     }

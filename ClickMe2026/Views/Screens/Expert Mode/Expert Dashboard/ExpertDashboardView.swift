@@ -24,8 +24,18 @@ private enum ExpertDashboardRoute: Hashable {
 struct ExpertDashboardView: View {
 
     @StateObject private var viewModel: ExpertDashboardViewModel
-    @State private var path: [ExpertDashboardRoute] = []
+    /// Push path is provided by the enclosing `HomeExpertView` via
+    /// `@Environment(\.homeNavigationPath)`. When rendered outside the
+    /// shell (previews, tests) the fallback `_localPath` provides a
+    /// self-contained NavigationStack so the screen still works.
+    @Environment(\.homeNavigationPath) private var navPath
+    @State private var _localPath: [ExpertDashboardRoute] = []
     @Environment(\.openURL) private var openURL
+
+    /// Bound to `CallCenter.shared.joinError` — surfaces the alert on
+    /// this screen when a join fails. Actual call presentation is
+    /// hosted globally by `CallOverlayHost` on `HomeExpertView`.
+    @ObservedObject private var callCenter = CallCenter.shared
 
     // MARK: Design tokens — Luminous Dark
 
@@ -51,15 +61,13 @@ struct ExpertDashboardView: View {
     // MARK: Body
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
-                bg.ignoresSafeArea()
-                content
-            }
-            .task { await viewModel.load() }
-            .refreshable { await viewModel.reload() }
-            .navigationDestination(for: ExpertDashboardRoute.self) { route in
-                destination(for: route)
+        Group {
+            if navPath != nil {
+                screenWithDestinations
+            } else {
+                NavigationStack(path: $_localPath) {
+                    screenWithDestinations
+                }
             }
         }
         // Stripe hands us a fresh single-use URL — open it immediately in
@@ -81,6 +89,41 @@ struct ExpertDashboardView: View {
             Button("OK", role: .cancel) {}
         } message: { message in
             Text(message)
+        }
+    }
+
+    private var screenWithDestinations: some View {
+        ZStack {
+            bg.ignoresSafeArea()
+            content
+        }
+        .task { await viewModel.load() }
+        .refreshable { await viewModel.reload() }
+        .navigationDestination(for: ExpertDashboardRoute.self) { route in
+            destination(for: route)
+        }
+        // Call surface is hosted globally by `CallOverlayHost` on
+        // `HomeExpertView`. This screen just surfaces a join-failure
+        // alert bound to CallCenter's shared error field.
+        .alert(
+            "Couldn't join session",
+            isPresented: Binding(
+                get: { callCenter.joinError != nil },
+                set: { if !$0 { callCenter.joinError = nil } }
+            ),
+            presenting: callCenter.joinError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+    }
+
+    private func push(_ route: ExpertDashboardRoute) {
+        if let navPath {
+            navPath.push(route)
+        } else {
+            _localPath.append(route)
         }
     }
 
@@ -197,7 +240,7 @@ struct ExpertDashboardView: View {
     // MARK: - Pending banner
 
     private var pendingBanner: some View {
-        Button { path.append(.pendingRequests) } label: {
+        Button { push(.pendingRequests) } label: {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -243,7 +286,7 @@ struct ExpertDashboardView: View {
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(onSurface)
                 Spacer()
-                Button { path.append(.calendar) } label: {
+                Button { push(.calendar) } label: {
                     Text("View Calendar")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(brandGreen)
@@ -339,12 +382,24 @@ struct ExpertDashboardView: View {
                     .foregroundColor(onSurface)
             }
 
-            // Join Session button — enabled only when the server says we can
-            // (`actions.canJoin`) so the button doesn't lead to a rejected
-            // request outside the join window.
+            // Join Session button — visible when the session is within
+            // one hour of start (±60 min). Deliberately matches the
+            // client-side `UpcomingBooking.isWithinJoinWindow` window
+            // instead of the server's tighter `actions.canJoin` (~5 min)
+            // so the button appears at the same time for both roles.
+            // If the server refuses at tap time, `MeetingCallView`'s
+            // `onJoinFailure` surfaces the reason on this screen.
+            let inWindow = Self.isWithinJoinWindow(startTime: session.session.startTime)
             Button {
-                // TODO: wire join flow via AgoraManager once the expert-side
-                // in-app call handshake is fully wired.
+                CallCenter.shared.startCall(
+                    bookingId: session.bookingId,
+                    peerId: session.client.id,
+                    peerName: session.client.name ?? "Client",
+                    peerImageURL: session.client.avatarUrl ?? "",
+                    topic: session.session.topic ?? "",
+                    scheduledStart: session.session.startTime,
+                    scheduledEnd: session.session.endTime
+                )
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "video.fill")
@@ -357,15 +412,15 @@ struct ExpertDashboardView: View {
                 .frame(height: 50)
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(brandGreen.opacity(session.actions.canJoin ? 1.0 : 0.55))
+                        .fill(brandGreen.opacity(inWindow ? 1.0 : 0.55))
                         .shadow(
-                            color: brandGreen.opacity(session.actions.canJoin ? 0.45 : 0),
+                            color: brandGreen.opacity(inWindow ? 0.45 : 0),
                             radius: 14, x: 0, y: 4
                         )
                 )
             }
             .buttonStyle(PressScaleButtonStyle())
-            .disabled(!session.actions.canJoin)
+            .disabled(!inWindow)
         }
         .padding(16)
         .background(
@@ -374,6 +429,18 @@ struct ExpertDashboardView: View {
                 .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(cardBorder, lineWidth: 1))
         )
+    }
+
+    /// Client-side join window used on both the dashboard's Join
+    /// Session button and the Upcoming Sessions card. Matches the
+    /// client-side `UpcomingBooking.isWithinJoinWindow` (±1 hour of
+    /// start) — kept in sync so both roles get the same affordance
+    /// timing. The server may reject at tap time if its own window is
+    /// tighter, in which case `MeetingCallView.onJoinFailure` surfaces
+    /// the reason.
+    private static func isWithinJoinWindow(startTime: Date) -> Bool {
+        let delta = startTime.timeIntervalSinceNow
+        return delta <= 3600 && delta >= -3600
     }
 
     // MARK: - Financial Summary
@@ -401,7 +468,7 @@ struct ExpertDashboardView: View {
     /// on Stripe's schedule; there is no manual withdrawal.
     private var balanceCard: some View {
         Button {
-            path.append(.payouts)
+            push(.payouts)
         } label: {
             VStack(spacing: 18) {
                 // Earnings row
@@ -453,6 +520,9 @@ struct ExpertDashboardView: View {
     /// the returned single-use Account Link URL in Safari.
     private var onboardPayoutCard: some View {
         Button {
+            // Stripe Connect onboarding hands off to a browser —
+            // interrupts the audio session. Gate it.
+            guard CallCenter.shared.attempt("set up payouts") else { return }
             Task { await viewModel.startOnboarding() }
         } label: {
             HStack(spacing: 14) {
@@ -534,7 +604,7 @@ struct ExpertDashboardView: View {
                 spacing: 14
             ) {
                 ForEach(tools, id: \.1) { icon, label, route in
-                    toolCell(icon: icon, label: label) { path.append(route) }
+                    toolCell(icon: icon, label: label) { push(route) }
                 }
             }
         }

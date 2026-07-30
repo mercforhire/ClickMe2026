@@ -38,6 +38,7 @@ enum AppMode: CaseIterable {
 
 struct ModeSwitchView: View {
     @StateObject private var viewModel: ModeSwitchViewModel
+    @Environment(\.dismiss) private var dismiss
 
     var onConfirm: (AppMode) -> Void
 
@@ -57,28 +58,29 @@ struct ModeSwitchView: View {
         ZStack {
             ModeSwitchBrand.bgDark.ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                VStack(spacing: 14) {
-                    ForEach(AppMode.allCases, id: \.title) { mode in
-                        ModeSwitchCard(
-                            mode: mode,
-                            isActive: viewModel.selectedMode == mode,
-                            onTap: { viewModel.select(mode) }
-                        )
-                    }
+            VStack(spacing: 14) {
+                ForEach(AppMode.allCases, id: \.title) { mode in
+                    ModeSwitchCard(
+                        mode: mode,
+                        isActive: viewModel.selectedMode == mode,
+                        onTap: {
+                            // Tap-to-confirm — no bottom button. Update
+                            // the visual highlight first, fire the
+                            // callback (which flips currentMode and
+                            // snaps the app to the new home if it
+                            // changed), then dismiss ourselves so the
+                            // same-mode tap doesn't leave the user
+                            // stranded on this screen.
+                            viewModel.select(mode)
+                            onConfirm(mode)
+                            dismiss()
+                        }
+                    )
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 20)
-
                 Spacer()
-
-                ModeSwitchConfirmButton(
-                    selectedMode: viewModel.selectedMode,
-                    action: { onConfirm(viewModel.selectedMode) }
-                )
-                .padding(.horizontal, 16)
-                .padding(.bottom, 36)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 20)
         }
         .navigationTitle("Mode Switcher")
         .navigationBarTitleDisplayMode(.inline)

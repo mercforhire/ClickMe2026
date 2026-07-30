@@ -133,6 +133,13 @@ struct RescheduleView: View {
                 )
 
                 RescheduleSubmitButton {
+                    // Block rescheduling the session currently in progress
+                    // — the server would reject with a race error and the
+                    // UI would show a confusing "reschedule failed" state.
+                    if let bid = viewModel.bookingId,
+                       !CallCenter.shared.attemptModifyBooking(bid, actionDescription: "reschedule this session") {
+                        return
+                    }
                     Task { await viewModel.submit(onSuccess: onRescheduled) }
                 }
                 .padding(.top, 4)

@@ -125,6 +125,10 @@ struct ExpertRescheduleView: View {
                 )
 
                 RescheduleSubmitButton {
+                    if let bid = viewModel.bookingId,
+                       !CallCenter.shared.attemptModifyBooking(bid, actionDescription: "reschedule this session") {
+                        return
+                    }
                     Task { await viewModel.submit(onSuccess: onRescheduled) }
                 }
                 .padding(.top, 4)

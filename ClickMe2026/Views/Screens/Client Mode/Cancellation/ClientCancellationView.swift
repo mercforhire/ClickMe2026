@@ -199,6 +199,14 @@ struct ClientCancellationView: View {
                     isConfirming: viewModel.isConfirming,
                     onKeepBooking: onKeepBooking,
                     onConfirmCancellation: {
+                        // Block cancelling the in-progress session —
+                        // that would race the server's own end-call
+                        // teardown and can leave the booking in a
+                        // half-cancelled state.
+                        if let bid = viewModel.bookingId,
+                           !CallCenter.shared.attemptModifyBooking(bid, actionDescription: "cancel this session") {
+                            return
+                        }
                         Task {
                             await viewModel.confirmCancellation(onConfirm: onConfirmCancellation)
                         }

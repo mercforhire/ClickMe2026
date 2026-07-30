@@ -11,18 +11,59 @@ import SwiftUI
 
 struct UpcomingSession: Identifiable {
     let id = UUID()
+    /// Server `booking_id`. Used to look up the detail record when the
+    /// card is tapped (pushes `ExpertBookingSummaryView`).
+    let bookingId: UUID
+    /// Server UUID of the client on this booking — used to look up (or
+    /// create) the chat thread when the Message button is tapped.
+    let clientId: UUID
     let clientName: String
     let clientImageURL: String
     let topic: String
     let dateLabel: String
     let earnings: String
-    let isNow: Bool
+    /// Raw UTC start moment — the card uses this to decide whether the
+    /// Join Session button is currently in range (within one hour of
+    /// start). Mirrors `UpcomingBooking.startTime` on the client side
+    /// so the two roles surface the button on the same schedule.
+    let startTime: Date
+    /// Raw UTC end moment — plumbed through into `MeetingCallView` so
+    /// the call screen can drive its "5 min remaining" warning and
+    /// soft "scheduled time complete" banner.
+    let endTime: Date
+
+    /// True when `now` is within one hour of `startTime`. Symmetric so
+    /// the button remains available for an hour after start too
+    /// (sessions can run late). Deliberately kept in lockstep with
+    /// `UpcomingBooking.isWithinJoinWindow` on the client side — the
+    /// server's `actions.canJoin` is tighter (~5 min), which was
+    /// causing the expert-side button to hide even when the client
+    /// side was showing it.
+    var isWithinJoinWindow: Bool {
+        let delta = startTime.timeIntervalSinceNow
+        return delta <= 3600 && delta >= -3600
+    }
 }
 
 // MARK: - Upcoming Sessions View
 
 struct UpcomingBookingsView: View {
     @State private var viewModel: UpcomingBookingsViewModel
+
+    /// Shell-injected action that switches to the Chats tab and pushes the
+    /// selected thread. Nil outside a `HomeExpertView` shell (previews,
+    /// isolated tests) — in that case the message tap silently no-ops
+    /// rather than crashing, which matches the pre-integration behaviour.
+    @Environment(\.openChatThread) private var openChatThread
+
+    /// Shared nav path from the expert shell — used to push the booking
+    /// summary destination when a card is tapped.
+    @Environment(\.homeNavigationPath) private var homeNavigationPath
+
+    /// Bound to `CallCenter.shared.joinError` so a failed join surfaces
+    /// an alert on this screen without keeping any modal on screen.
+    /// Actual call presentation lives on the shell's `CallOverlayHost`.
+    @ObservedObject private var callCenter = CallCenter.shared
 
     init(viewModel: UpcomingBookingsViewModel = UpcomingBookingsViewModel()) {
         _viewModel = State(initialValue: viewModel)
@@ -32,19 +73,13 @@ struct UpcomingBookingsView: View {
     /// navigation callbacks — the sessions themselves come from the API.
     init(
         onJoinSession: @escaping (UpcomingSession) -> Void = { _ in },
-        onMessage: @escaping (UpcomingSession) -> Void = { _ in },
         onReschedule: @escaping (UpcomingSession) -> Void = { _ in },
-        onEarningsDash: @escaping () -> Void = {},
-        onAddSession: @escaping () -> Void = {},
         onUpdateAvailability: @escaping () -> Void = {},
         onViewPastHistory: @escaping () -> Void = {}
     ) {
         _viewModel = State(initialValue: UpcomingBookingsViewModel(
             onJoinSession: onJoinSession,
-            onMessage: onMessage,
             onReschedule: onReschedule,
-            onEarningsDash: onEarningsDash,
-            onAddSession: onAddSession,
             onUpdateAvailability: onUpdateAvailability,
             onViewPastHistory: onViewPastHistory
         ))
@@ -59,6 +94,21 @@ struct UpcomingBookingsView: View {
         .task { await viewModel.load() }
         .refreshable { await viewModel.reload() }
         .animation(.easeInOut(duration: 0.28), value: viewModel.sessions.isEmpty)
+        // Call surface is hosted globally by `CallOverlayHost` on
+        // `HomeExpertView`. This screen just surfaces a join-failure
+        // alert bound to CallCenter's shared error field.
+        .alert(
+            "Couldn't join session",
+            isPresented: Binding(
+                get: { callCenter.joinError != nil },
+                set: { if !$0 { callCenter.joinError = nil } }
+            ),
+            presenting: callCenter.joinError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
         .navigationTitle("Upcoming Sessions")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -87,11 +137,10 @@ struct UpcomingBookingsView: View {
             } else {
                 UpcomingBookingsPopulatedList(
                     sessions: viewModel.sessions,
-                    onJoinSession: viewModel.onJoinSession,
-                    onMessage: viewModel.onMessage,
+                    onJoinSession: handleJoinSession(for:),
+                    onMessage: handleMessage(for:),
                     onReschedule: viewModel.onReschedule,
-                    onEarningsDash: viewModel.onEarningsDash,
-                    onAddSession: viewModel.onAddSession
+                    onCardTap: handleCardTap(for:)
                 )
             }
         }
@@ -105,6 +154,46 @@ struct UpcomingBookingsView: View {
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Present the in-app voice call as a full-screen cover. The
+    /// existing `UpcomingBookingsViewModel.onJoinSession` callback path
+    /// was never wired by the shell — this handler bypasses it so the
+    /// button actually does something regardless of shell integration.
+    private func handleJoinSession(for session: UpcomingSession) {
+        CallCenter.shared.startCall(
+            bookingId: session.bookingId,
+            peerId: session.clientId,
+            peerName: session.clientName,
+            peerImageURL: session.clientImageURL,
+            topic: session.topic,
+            scheduledStart: session.startTime,
+            scheduledEnd: session.endTime
+        )
+    }
+
+    /// Push the booking-summary detail screen onto the bookings tab's
+    /// nav stack. No-ops when rendered outside the expert shell
+    /// (previews) — matches the message-button graceful-degradation.
+    private func handleCardTap(for session: UpcomingSession) {
+        guard let homeNavigationPath else { return }
+        homeNavigationPath.push(HomeRoute.expertBookingSummary(bookingId: session.bookingId))
+    }
+
+    /// Look up (or create) the chat thread with this session's client and
+    /// hand off to the shell so the Chats tab opens on that conversation.
+    /// `initiateChat` is idempotent — repeat calls return the existing thread.
+    private func handleMessage(for session: UpcomingSession) {
+        guard let openChatThread else { return }
+        Task {
+            guard let response = try? await ClickMeAPI.shared.initiateChat(peerId: session.clientId)
+            else { return }
+            openChatThread(
+                threadId: response.data.threadId,
+                peerName: session.clientName,
+                peerAvatarURL: session.clientImageURL
+            )
+        }
     }
 
     private func errorContent(message: String) -> some View {
@@ -141,28 +230,37 @@ struct UpcomingBookingsView: View {
 extension UpcomingSession {
     static let samples: [UpcomingSession] = [
         UpcomingSession(
+            bookingId: UUID(),
+            clientId: UUID(),
             clientName: "Julian Reeves",
             clientImageURL: "https://randomuser.me/api/portraits/men/32.jpg",
             topic: "Strategic Scaling Strategy",
             dateLabel: "Today • 10:30 AM",
             earnings: "",
-            isNow: true
+            startTime: Date().addingTimeInterval(30 * 60), // in-window
+            endTime: Date().addingTimeInterval(60 * 60)
         ),
         UpcomingSession(
+            bookingId: UUID(),
+            clientId: UUID(),
             clientName: "Elena Vance",
             clientImageURL: "https://randomuser.me/api/portraits/women/44.jpg",
             topic: "Series B Pitch Review",
             dateLabel: "Thu, Jul 11 • 2:00 PM",
             earnings: "",
-            isNow: false
+            startTime: Date().addingTimeInterval(3 * 24 * 3600),
+            endTime: Date().addingTimeInterval(3 * 24 * 3600 + 3600)
         ),
         UpcomingSession(
+            bookingId: UUID(),
+            clientId: UUID(),
             clientName: "Marcus Thorne",
             clientImageURL: "https://randomuser.me/api/portraits/men/55.jpg",
             topic: "Team Conflict Resolution",
             dateLabel: "Fri, Jul 12 • 9:00 AM",
             earnings: "",
-            isNow: false
+            startTime: Date().addingTimeInterval(4 * 24 * 3600),
+            endTime: Date().addingTimeInterval(4 * 24 * 3600 + 3600)
         ),
     ]
 }

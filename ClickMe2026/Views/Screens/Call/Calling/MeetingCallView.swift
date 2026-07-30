@@ -52,10 +52,6 @@ struct MeetingCallView: View {
             MeetingCallBackground()
 
             VStack(spacing: 0) {
-                MeetingCallTopBar(onMinimizeTap: onMinimize)
-                    .padding(.top, 20)
-                    .padding(.horizontal, 24)
-
                 if viewModel.isInFinalStretch || viewModel.isPastScheduledEnd {
                     endingSoonBanner
                         .padding(.horizontal, 24)
@@ -88,6 +84,7 @@ struct MeetingCallView: View {
                 MeetingCallControls(
                     isMuted: viewModel.isMuted,
                     isSpeakerOn: viewModel.isSpeakerOn,
+                    onMinimize: onMinimize,
                     onOpenChat: { CallCenter.shared.requestOpenChatWithPeer() },
                     onToggleMute: { viewModel.toggleMute() },
                     onToggleSpeaker: { viewModel.toggleSpeaker() }

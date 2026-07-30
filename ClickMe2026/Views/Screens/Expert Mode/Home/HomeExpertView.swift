@@ -49,7 +49,21 @@ struct HomeExpertView: View {
                 .tag(HomeExpertTab.profile)
         }
         .tint(Brand.primary)
+        // Lock the shell into dark mode so system chrome (nav bar +
+        // tab bar) doesn't flash to a light appearance during tab
+        // transitions when a destination view hasn't explicitly set
+        // its own toolbar background.
+        .preferredColorScheme(.dark)
         .environment(\.openChatThread, OpenChatThreadAction { threadId, peerName, peerAvatarURL in
+            selectedTab = .chats
+            chatsPath.push(HomeRoute.chat(
+                threadId: threadId,
+                peerName: peerName,
+                peerAvatarURL: peerAvatarURL
+            ))
+        })
+        // Global call surface + floating pill overlays.
+        .modifier(CallOverlayHost { threadId, peerName, peerAvatarURL in
             selectedTab = .chats
             chatsPath.push(HomeRoute.chat(
                 threadId: threadId,
@@ -81,6 +95,9 @@ struct HomeExpertView: View {
     private var bookingsTab: some View {
         NavigationStack(path: $bookingsPath.path) {
             UpcomingBookingsView()
+                .navigationDestination(for: HomeRoute.self) { route in
+                    homeRouteDestination(route)
+                }
         }
         .environment(\.homeNavigationPath, bookingsPath)
     }
@@ -126,6 +143,20 @@ struct HomeExpertView: View {
                 peerName: peerName,
                 peerAvatarURL: peerAvatarURL
             )
+        case let .upcomingBooking(bookingId):
+            UpcomingBookingView(bookingId: bookingId)
+        case let .bookingSummary(bookingId):
+            BookingSummaryView(bookingId: bookingId)
+        case let .expertBookingSummary(bookingId):
+            ExpertBookingSummaryView(bookingId: bookingId)
+        case let .expertReschedule(bookingId):
+            ExpertRescheduleView(bookingId: bookingId, onRescheduled: {
+                bookingsPath.pop()
+            })
+        case let .peerProfile(userId, _, _):
+            // Expert is viewing their client — ClientProfileView loads
+            // everything by id, so name/avatar seeds are unused here.
+            ClientProfileView(clientId: userId)
         }
     }
 }

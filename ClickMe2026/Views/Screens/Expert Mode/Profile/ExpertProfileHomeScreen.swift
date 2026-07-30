@@ -28,6 +28,8 @@ private enum ExpertProfileHomeRoute: Hashable {
     // Support
     case faq
     case feedback
+    // Mode
+    case modeSwitch
 }
 
 // MARK: - Screen
@@ -39,7 +41,12 @@ struct ExpertProfileHomeScreen: View {
 
     @StateObject private var viewModel: ExpertProfileHomeViewModel
 
-    @State private var path: [ExpertProfileHomeRoute] = []
+    /// Push path is provided by the enclosing `HomeExpertView` via
+    /// `@Environment(\.homeNavigationPath)`. When rendered outside the
+    /// shell (previews, tests) the fallback `_localPath` provides a
+    /// self-contained NavigationStack so the screen still works.
+    @Environment(\.homeNavigationPath) private var navPath
+    @State private var _localPath: [ExpertProfileHomeRoute] = []
     @State private var showLogoutConfirmation: Bool = false
 
     // MARK: Inits
@@ -51,74 +58,13 @@ struct ExpertProfileHomeScreen: View {
     // MARK: Body
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
-                ClientProfileHomeBrand.bg.ignoresSafeArea()
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 32) {
-                        userCard
-
-                        section(title: "Professional") {
-                            row(icon: "brain.head.profile", title: "Expertise & Topics") {
-                                path.append(.expertiseTopics)
-                            }
-                            row(icon: "calendar", title: "Availability") {
-                                path.append(.availability)
-                            }
-                            row(icon: "banknote.fill", title: "Payouts & Earnings") {
-                                path.append(.payouts)
-                            }
-                        }
-
-                        section(title: "Account") {
-                            row(icon: "lock.fill", title: "Security & Password") {
-                                path.append(.security)
-                            }
-                        }
-
-                        section(title: "Preferences") {
-                            row(icon: "bell.fill", title: "Notifications") {
-                                path.append(.notifications)
-                            }
-                            row(icon: "eye.fill", title: "Privacy") {
-                                path.append(.privacy)
-                            }
-                        }
-
-                        section(title: "Support") {
-                            row(icon: "questionmark.circle.fill", title: "FAQ & Help") {
-                                path.append(.faq)
-                            }
-                            row(icon: "exclamationmark.bubble.fill", title: "Send Feedback") {
-                                path.append(.feedback)
-                            }
-                        }
-
-                        section(title: "Actions") {
-                            ClientProfileHomeListItem(
-                                icon: "arrow.right.square.fill",
-                                title: "Log Out",
-                                isDestructive: true,
-                                action: { showLogoutConfirmation = true }
-                            )
-                        }
-
-                        versionFooter
-                            .padding(.top, 8)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 48)
+        Group {
+            if navPath != nil {
+                screenWithDestinations
+            } else {
+                NavigationStack(path: $_localPath) {
+                    screenWithDestinations
                 }
-            }
-            .navigationTitle("Expert Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(ClientProfileHomeBrand.bg, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .navigationDestination(for: ExpertProfileHomeRoute.self) { route in
-                destination(for: route)
             }
         }
         .task { await viewModel.loadHeader() }
@@ -128,9 +74,93 @@ struct ExpertProfileHomeScreen: View {
             titleVisibility: .visible
         ) {
             Button("Log Out", role: .destructive) {
+                guard CallCenter.shared.attempt("log out") else { return }
                 viewModel.logOut()
             }
             Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var screenWithDestinations: some View {
+        ZStack {
+            ClientProfileHomeBrand.bg.ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 32) {
+                    userCard
+
+                    ExpertProfileHomeModeSwitchCard(
+                        action: { push(.modeSwitch) }
+                    )
+
+                    section(title: "Professional") {
+                        row(icon: "brain.head.profile", title: "Expertise & Topics") {
+                            push(.expertiseTopics)
+                        }
+                        row(icon: "calendar", title: "Availability") {
+                            push(.availability)
+                        }
+                        row(icon: "banknote.fill", title: "Payouts & Earnings") {
+                            push(.payouts)
+                        }
+                    }
+
+                    section(title: "Account") {
+                        row(icon: "lock.fill", title: "Security & Password") {
+                            push(.security)
+                        }
+                    }
+
+                    section(title: "Preferences") {
+                        row(icon: "bell.fill", title: "Notifications") {
+                            push(.notifications)
+                        }
+                        row(icon: "eye.fill", title: "Privacy") {
+                            push(.privacy)
+                        }
+                    }
+
+                    section(title: "Support") {
+                        row(icon: "questionmark.circle.fill", title: "FAQ & Help") {
+                            push(.faq)
+                        }
+                        row(icon: "exclamationmark.bubble.fill", title: "Send Feedback") {
+                            push(.feedback)
+                        }
+                    }
+
+                    section(title: "Actions") {
+                        ClientProfileHomeListItem(
+                            icon: "arrow.right.square.fill",
+                            title: "Log Out",
+                            isDestructive: true,
+                            action: { showLogoutConfirmation = true }
+                        )
+                    }
+
+                    versionFooter
+                        .padding(.top, 8)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 48)
+            }
+        }
+        .navigationTitle("Expert Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(ClientProfileHomeBrand.bg, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .navigationDestination(for: ExpertProfileHomeRoute.self) { route in
+            destination(for: route)
+        }
+    }
+
+    private func push(_ route: ExpertProfileHomeRoute) {
+        if let navPath {
+            navPath.push(route)
+        } else {
+            _localPath.append(route)
         }
     }
 
@@ -142,7 +172,7 @@ struct ExpertProfileHomeScreen: View {
             email: viewModel.email,
             avatarURL: viewModel.avatarURL,
             isOnline: viewModel.isOnline,
-            onEditTap: { path.append(.personalInfo) }
+            onEditTap: { push(.personalInfo) }
         )
     }
 
@@ -191,6 +221,16 @@ struct ExpertProfileHomeScreen: View {
             HelpView()
         case .feedback:
             FeedbackView()
+        case .modeSwitch:
+            ModeSwitchView { mode in
+                // Block mode-switch mid-call — tearing down the expert
+                // socket + role context would kill the active session.
+                guard CallCenter.shared.attempt("switch modes") else { return }
+                // Flip the app's active home mode. ClickMe2026App
+                // observes `currentMode` and snaps to the corresponding
+                // home route immediately.
+                UserManager.shared.setMode(mode)
+            }
         }
     }
 

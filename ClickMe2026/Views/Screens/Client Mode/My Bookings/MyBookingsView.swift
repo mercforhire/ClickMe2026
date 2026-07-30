@@ -36,13 +36,26 @@ private enum BookingRoute: Hashable {
 struct MyBookingsView: View {
 
     @StateObject private var viewModel: MyBookingsViewModel
-    @State private var path: [BookingRoute] = []
+    /// Push path is provided by the enclosing `HomeClientView` via
+    /// `@Environment(\.homeNavigationPath)`. When rendered outside the
+    /// shell (previews, tests) the fallback `_localPath` provides a
+    /// self-contained NavigationStack so the screen still works.
+    @Environment(\.homeNavigationPath) private var navPath
+    @State private var _localPath: [BookingRoute] = []
+
+    /// Shell-injected action that switches to the Chats tab and pushes
+    /// the selected thread. Nil outside a `HomeClientView` shell — in
+    /// that case the Message tap silently no-ops.
+    @Environment(\.openChatThread) private var openChatThread
+
+    /// Server-side reason the last Join Call attempt failed (e.g.
+    /// "Session join window not active"). Bound to
+    /// `CallCenter.shared.joinError` so a failed join surfaces an
+    /// alert on this surface without keeping the modal on screen.
+    @ObservedObject private var callCenter = CallCenter.shared
 
     // MARK: Callbacks
 
-    var onJoinCall: (UpcomingBooking) -> Void
-    var onReschedule: (UpcomingBooking) -> Void
-    var onMessage: (UpcomingBooking) -> Void
     var onPrivateNote: (PastBooking) -> Void
     var onLeaveReview: (PastBooking) -> Void
     var onExploreExperts: () -> Void
@@ -51,17 +64,11 @@ struct MyBookingsView: View {
 
     init(
         viewModel: MyBookingsViewModel = MyBookingsViewModel(),
-        onJoinCall: @escaping (UpcomingBooking) -> Void = { _ in },
-        onReschedule: @escaping (UpcomingBooking) -> Void = { _ in },
-        onMessage: @escaping (UpcomingBooking) -> Void = { _ in },
         onPrivateNote: @escaping (PastBooking) -> Void = { _ in },
         onLeaveReview: @escaping (PastBooking) -> Void = { _ in },
         onExploreExperts: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
-        self.onJoinCall = onJoinCall
-        self.onReschedule = onReschedule
-        self.onMessage = onMessage
         self.onPrivateNote = onPrivateNote
         self.onLeaveReview = onLeaveReview
         self.onExploreExperts = onExploreExperts
@@ -70,63 +77,106 @@ struct MyBookingsView: View {
     // MARK: Body
 
     var body: some View {
-        NavigationStack(path: $path) {
-            screen
-                .navigationDestination(for: BookingRoute.self) { route in
-                    switch route {
-                    case let .upcoming(booking):
-                        // Upcoming taps land on the details screen; its
-                        // "Cancel" and "Reschedule" actions push the
-                        // respective flows onto this stack.
-                        UpcomingBookingView(
-                            bookingId: booking.id,
-                            onReschedule: { path.append(.rescheduleBooking(booking)) },
-                            onCancel: { path.append(.cancelBooking(booking)) }
-                        )
-                    case let .past(booking):
-                        // Past taps land on the session summary. The
-                        // summary's CTAs push `WriteReviewView` (leave a
-                        // review) or `MakeABooking` (book again with the
-                        // same expert) onto this same NavigationStack.
-                        BookingSummaryView(
-                            bookingId: booking.id,
-                            onBookAgain: { seed in
-                                if let seed { path.append(.makeBooking(seed)) }
-                            },
-                            onLeaveReview: { path.append(.writeReview(booking)) }
-                        )
-                    case let .writeReview(booking):
-                        WriteReviewView(
-                            bookingId: booking.id,
-                            bookingStatus: booking.status,
-                            seedExpertName: booking.expertName
-                        )
-                    case let .makeBooking(seed):
-                        MakeABooking(
-                            expertId: seed.expertId,
-                            expertName: seed.expertName,
-                            expertTitle: seed.expertTitle,
-                            expertImageURL: seed.expertImageURL
-                        )
-                    case let .cancelBooking(booking):
-                        // On confirm — or "keep booking" — pop back to the
-                        // My Bookings root. The list refreshes automatically
-                        // on next appear, revealing the newly-cancelled
-                        // booking under the past tab.
-                        ClientCancellationView(
-                            bookingId: booking.id,
-                            onKeepBooking: { path.removeAll() },
-                            onConfirmCancellation: { _, _ in path.removeAll() }
-                        )
-                    case let .rescheduleBooking(booking):
-                        // On success, pop all the way back to My Bookings
-                        // so the list re-fetches with the updated slot.
-                        RescheduleView(
-                            bookingId: booking.id,
-                            onRescheduled: { path.removeAll() }
-                        )
-                    }
+        Group {
+            if navPath != nil {
+                screenWithDestinations
+            } else {
+                NavigationStack(path: $_localPath) {
+                    screenWithDestinations
                 }
+            }
+        }
+    }
+
+    private var screenWithDestinations: some View {
+        screen
+            .navigationDestination(for: BookingRoute.self) { route in
+                switch route {
+                case let .upcoming(booking):
+                    // Upcoming taps land on the details screen; its
+                    // "Cancel" and "Reschedule" actions push the
+                    // respective flows onto this stack.
+                    UpcomingBookingView(
+                        bookingId: booking.id,
+                        onReschedule: { push(.rescheduleBooking(booking)) },
+                        onCancel: { push(.cancelBooking(booking)) }
+                    )
+                case let .past(booking):
+                    // Past taps land on the session summary. The
+                    // summary's CTAs push `WriteReviewView` (leave a
+                    // review) or `MakeABooking` (book again with the
+                    // same expert) onto this same NavigationStack.
+                    BookingSummaryView(
+                        bookingId: booking.id,
+                        onBookAgain: { seed in
+                            if let seed { push(.makeBooking(seed)) }
+                        },
+                        onLeaveReview: { push(.writeReview(booking)) }
+                    )
+                case let .writeReview(booking):
+                    WriteReviewView(
+                        bookingId: booking.id,
+                        bookingStatus: booking.status,
+                        seedExpertName: booking.expertName
+                    )
+                case let .makeBooking(seed):
+                    MakeABooking(
+                        expertId: seed.expertId,
+                        expertName: seed.expertName,
+                        expertTitle: seed.expertTitle,
+                        expertImageURL: seed.expertImageURL
+                    )
+                case let .cancelBooking(booking):
+                    // On confirm — or "keep booking" — pop back to the
+                    // My Bookings root. The list refreshes automatically
+                    // on next appear, revealing the newly-cancelled
+                    // booking under the past tab.
+                    ClientCancellationView(
+                        bookingId: booking.id,
+                        onKeepBooking: { popToRoot() },
+                        onConfirmCancellation: { _, _ in popToRoot() }
+                    )
+                case let .rescheduleBooking(booking):
+                    // On success, pop all the way back to My Bookings
+                    // so the list re-fetches with the updated slot.
+                    RescheduleView(
+                        bookingId: booking.id,
+                        onRescheduled: { popToRoot() }
+                    )
+                }
+            }
+    }
+
+    private func push(_ route: BookingRoute) {
+        if let navPath {
+            navPath.push(route)
+        } else {
+            _localPath.append(route)
+        }
+    }
+
+    private func popToRoot() {
+        if let navPath {
+            navPath.reset()
+        } else {
+            _localPath.removeAll()
+        }
+    }
+
+    /// Look up (or create) the chat thread with this booking's expert and
+    /// hand off to the shell so the Chats tab opens on that conversation.
+    /// `initiateChat` is idempotent — repeat calls return the existing thread.
+    /// No-op when rendered outside the shell (previews, tests).
+    private func handleMessage(for booking: UpcomingBooking) {
+        guard let openChatThread else { return }
+        Task {
+            guard let response = try? await ClickMeAPI.shared.initiateChat(peerId: booking.expertId)
+            else { return }
+            openChatThread(
+                threadId: response.data.threadId,
+                peerName: booking.expertName,
+                peerAvatarURL: booking.imageURL
+            )
         }
     }
 
@@ -154,6 +204,22 @@ struct MyBookingsView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear { viewModel.glowPulse = true }
         .task { await viewModel.load() }
+        // Call surface is hosted globally by the shell (see
+        // `HomeClientView`'s `CallOverlayHost`). This screen only needs
+        // to surface a join-failure alert bound to CallCenter's
+        // shared `joinError` field.
+        .alert(
+            "Couldn't join call",
+            isPresented: Binding(
+                get: { callCenter.joinError != nil },
+                set: { if !$0 { callCenter.joinError = nil } }
+            ),
+            presenting: callCenter.joinError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
     // MARK: Content
@@ -243,10 +309,20 @@ struct MyBookingsView: View {
             ForEach(viewModel.upcomingBookings) { booking in
                 UpcomingBookingCard(
                     booking: booking,
-                    onJoinCall: { onJoinCall(booking) },
-                    onReschedule: { onReschedule(booking) },
-                    onMessage: { onMessage(booking) },
-                    onCardTap: { path.append(.upcoming(booking)) }
+                    onJoinCall: {
+                        CallCenter.shared.startCall(
+                            bookingId: booking.id,
+                            peerId: booking.expertId,
+                            peerName: booking.expertName,
+                            peerImageURL: booking.imageURL,
+                            topic: booking.topic,
+                            scheduledStart: booking.startTime,
+                            scheduledEnd: booking.endTime
+                        )
+                    },
+                    onReschedule: { push(.rescheduleBooking(booking)) },
+                    onMessage: { handleMessage(for: booking) },
+                    onCardTap: { push(.upcoming(booking)) }
                 )
             }
         }
@@ -259,7 +335,7 @@ struct MyBookingsView: View {
             ForEach(viewModel.pastBookings) { booking in
                 PastBookingCard(
                     booking: booking,
-                    onViewSummary: { path.append(.past(booking)) },
+                    onViewSummary: { push(.past(booking)) },
                     onPrivateNote: { onPrivateNote(booking) },
                     onLeaveReview: { onLeaveReview(booking) }
                 )
@@ -275,12 +351,15 @@ struct MyBookingsView: View {
     /// geometry to shimmer over during initial load.
     private static let skeletonUpcoming = UpcomingBooking(
         id: UUID(),
+        expertId: UUID(),
         expertName: "\u{2003}\u{2003}\u{2003}\u{2003}",
         topic: "\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}\u{2003}",
         date: "Jan 1, 2026",
         timeRange: "10:00 AM - 11:00 AM",
         imageURL: "",
-        startTime: Date()
+        startTime: Date(),
+        endTime: Date().addingTimeInterval(30 * 60),
+        status: .confirmed
     )
 }
 

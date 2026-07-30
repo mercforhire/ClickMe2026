@@ -230,6 +230,7 @@ struct AccountSecurityView: View {
 
     private var updateButton: some View {
         Button {
+            guard CallCenter.shared.attempt("change your password") else { return }
             Task { await viewModel.submit() }
         } label: {
             ZStack {

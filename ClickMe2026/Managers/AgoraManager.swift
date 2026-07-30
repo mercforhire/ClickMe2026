@@ -100,6 +100,15 @@ final class AgoraManager: NSObject, ObservableObject {
 
         let engine = AgoraRtcEngineKit.sharedEngine(with: config, delegate: self)
 
+        // Surface the SDK's own logging to Xcode's console in DEBUG only.
+        // Without this the Agora SDK is completely silent when a join
+        // fails, which makes "no audio, no errors" bugs hard to
+        // diagnose. `.info` level is chatty but bounded; drop to `.warn`
+        // if it becomes noisy.
+        #if DEBUG
+        engine.setLogFilter(AgoraLogFilter.info.rawValue)
+        #endif
+
         // Voice-only configuration
         engine.disableVideo()
         engine.setAudioProfile(.speechStandard)

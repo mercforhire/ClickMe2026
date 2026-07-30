@@ -144,6 +144,12 @@ struct AvailabilitySettingsView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 24)
 
+                if viewModel.hasOverlaps {
+                    overlapBanner
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
+                }
+
                 VStack(spacing: 16) {
                     ForEach($viewModel.schedule.indices, id: \.self) { i in
                         AvailabilityDayRow(day: $viewModel.schedule[i]) { slotIndex in
@@ -155,6 +161,43 @@ struct AvailabilitySettingsView: View {
                 .padding(.bottom, 40)
             }
         }
+    }
+
+    /// Inline warning shown while any enabled day has overlapping slots.
+    /// Names the offending day(s) so the user can jump straight to the
+    /// fix rather than hunting for the source.
+    private var overlapBanner: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Brand.error)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Overlapping time slots")
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(Brand.onSurface)
+                Text(overlapCopy)
+                    .font(.system(size: 12, design: .rounded))
+                    .foregroundColor(Brand.onSurfaceVariant)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Brand.error.opacity(0.10))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Brand.error.opacity(0.35), lineWidth: 1))
+        )
+    }
+
+    private var overlapCopy: String {
+        let days = viewModel.overlappingDayNames
+        if days.count == 1 {
+            return "\(days[0]) has overlapping slots. Adjust them to save."
+        }
+        let joined = ListFormatter.localizedString(byJoining: days)
+        return "\(joined) have overlapping slots. Adjust them to save."
     }
 
     private var loadingContent: some View {
@@ -209,12 +252,16 @@ struct AvailabilitySettingsView: View {
                 .transition(.opacity)
         } else {
             Button {
+                guard CallCenter.shared.attempt("edit your availability") else { return }
                 viewModel.save()
             } label: {
                 Text("Save")
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundColor(Brand.primary)
+                    .foregroundColor(viewModel.hasOverlaps
+                        ? Brand.onSurfaceVariant.opacity(0.55)
+                        : Brand.primary)
             }
+            .disabled(viewModel.hasOverlaps)
         }
     }
 }

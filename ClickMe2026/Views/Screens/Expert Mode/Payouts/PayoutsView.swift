@@ -250,6 +250,9 @@ struct PayoutsView: View {
             }
 
             Button {
+                // Stripe Connect onboarding opens an external URL /
+                // browser — messy to hand off mid-call. Gate it.
+                guard CallCenter.shared.attempt("set up payouts") else { return }
                 Task { await viewModel.startOnboarding() }
             } label: {
                 Text("Continue")

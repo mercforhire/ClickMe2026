@@ -136,6 +136,10 @@ struct PaymentMethodsView: View {
 
     private var addCardButton: some View {
         Button {
+            // Stripe's PaymentSheet reconfigures AVAudioSession in
+            // ways that can silence Agora mid-call — block the entry
+            // point when a call is active.
+            guard CallCenter.shared.attempt("add a payment method") else { return }
             Task { await viewModel.beginAddPaymentMethod() }
         } label: {
             HStack(spacing: 8) {

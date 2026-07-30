@@ -5,6 +5,7 @@
 //  Copyright © 2026 Q42. All rights reserved.
 //
 
+import Combine
 import Foundation
 import SwiftUI
 
@@ -52,10 +53,50 @@ final class CallCenter: ObservableObject {
     /// `requestOpenChatWithPeer()`.
     @Published var pendingChatOpen: PendingChatOpen?
 
+    /// Set by `attempt(_:)` when a restricted action is invoked mid-call.
+    /// Bound to a system alert on the shell (via `CallOverlayHost`) so a
+    /// single centralized alert covers every restricted surface in the
+    /// app — no per-screen alert plumbing required.
+    @Published var restrictionAlertMessage: String?
+
     /// Convenience read for restriction gates elsewhere in the app.
     var isCallActive: Bool { viewModel != nil }
 
+    // MARK: - Restriction gate
+
+    /// One-line guard used by every restricted action across the app.
+    /// If a call is active, sets `restrictionAlertMessage` (the shell
+    /// pops the alert) and returns `false` — the caller should abort.
+    /// Otherwise returns `true` and the caller proceeds as usual.
+    ///
+    /// Example:
+    /// ```swift
+    /// Button("Log out") {
+    ///     guard CallCenter.shared.attempt("log out") else { return }
+    ///     userManager.logout()
+    /// }
+    /// ```
+    @discardableResult
+    func attempt(_ actionDescription: String) -> Bool {
+        guard isCallActive else { return true }
+        restrictionAlertMessage = "End the call to \(actionDescription)."
+        return false
+    }
+
+    /// Same as `attempt(_:)` but for the specific case where the user is
+    /// trying to modify the booking that's currently in progress. Uses
+    /// booking-specific copy so the reason is unambiguous. Returns
+    /// `false` (and pops the alert) only when the id matches; unrelated
+    /// bookings pass through untouched.
+    @discardableResult
+    func attemptModifyBooking(_ bookingId: UUID, actionDescription: String) -> Bool {
+        guard let vm = viewModel, vm.bookingId == bookingId else { return true }
+        restrictionAlertMessage = "This session is in progress. End the call to \(actionDescription)."
+        return false
+    }
+
     private let api: ClickMeAPI
+    private var joinErrorSubscription: AnyCancellable?
 
     init(api: ClickMeAPI = .shared) {
         self.api = api
@@ -75,7 +116,12 @@ final class CallCenter: ObservableObject {
         scheduledStart: Date?,
         scheduledEnd: Date?
     ) {
-        guard viewModel == nil else { return }
+        // Second-join attempt during an active call — give feedback
+        // rather than silently no-op'ing.
+        guard viewModel == nil else {
+            restrictionAlertMessage = "You're already on a call. End it before starting another."
+            return
+        }
 
         let vm = MeetingCallViewModel(
             bookingId: bookingId,
@@ -88,6 +134,18 @@ final class CallCenter: ObservableObject {
         )
         viewModel = vm
         isMinimized = false
+
+        // Bridge the VM's `joinError` into CallCenter so a failed
+        // join tears down the whole call container (both overlays
+        // disappear) and surfaces the alert on whichever surface
+        // launched the call. `dropFirst` skips the initial nil.
+        joinErrorSubscription = vm.$joinError
+            .dropFirst()
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
+                self?.abortCallOnJoinFailure(message: message)
+            }
 
         // Kick off Agora join immediately — the expanded call view
         // will just observe the resulting `callStatus` transitions.
@@ -105,6 +163,7 @@ final class CallCenter: ObservableObject {
             guard let self else { return }
             self.viewModel = nil
             self.isMinimized = false
+            self.joinErrorSubscription = nil
         }
     }
 
@@ -114,6 +173,7 @@ final class CallCenter: ObservableObject {
     func abortCallOnJoinFailure(message: String) {
         viewModel = nil
         isMinimized = false
+        joinErrorSubscription = nil
         joinError = message
     }
 

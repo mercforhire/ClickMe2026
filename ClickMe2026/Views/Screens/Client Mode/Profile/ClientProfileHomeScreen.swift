@@ -19,8 +19,10 @@ private enum ClientProfileHomeRoute: Hashable {
     /// so the pencil still has a target after that list row was removed for
     /// being redundant with the pencil affordance.
     case personalInfo
+    case savedExperts
     case security
     case notifications
+    case payment
     case privacy
     case faq
     case feedback
@@ -33,7 +35,12 @@ struct ClientProfileHomeScreen: View {
 
     @StateObject private var viewModel: ClientProfileHomeViewModel
 
-    @State private var path: [ClientProfileHomeRoute] = []
+    /// Push path is provided by the enclosing `HomeClientView` via
+    /// `@Environment(\.homeNavigationPath)`. When rendered outside the
+    /// shell (previews, tests) the fallback `_localPath` provides a
+    /// self-contained NavigationStack so the screen still works.
+    @Environment(\.homeNavigationPath) private var navPath
+    @State private var _localPath: [ClientProfileHomeRoute] = []
     @State private var showLogoutConfirmation: Bool = false
 
     // MARK: Inits
@@ -45,66 +52,13 @@ struct ClientProfileHomeScreen: View {
     // MARK: Body
 
     var body: some View {
-        NavigationStack(path: $path) {
-            ZStack {
-                ClientProfileHomeBrand.bg.ignoresSafeArea()
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 32) {
-                        userCard
-
-                        ClientProfileHomeModeSwitchCard(
-                            action: { path.append(.modeSwitch) }
-                        )
-
-                        section(title: "Account") {
-                            row(icon: "lock.fill", title: "Security & Password") {
-                                path.append(.security)
-                            }
-                        }
-
-                        section(title: "Preferences") {
-                            row(icon: "bell.fill", title: "Notifications") {
-                                path.append(.notifications)
-                            }
-                            row(icon: "eye.fill", title: "Privacy") {
-                                path.append(.privacy)
-                            }
-                        }
-
-                        section(title: "Support") {
-                            row(icon: "questionmark.circle.fill", title: "FAQ & Help") {
-                                path.append(.faq)
-                            }
-                            row(icon: "exclamationmark.bubble.fill", title: "Send Feedback") {
-                                path.append(.feedback)
-                            }
-                        }
-
-                        section(title: "Actions") {
-                            ClientProfileHomeListItem(
-                                icon: "arrow.right.square.fill",
-                                title: "Log Out",
-                                isDestructive: true,
-                                action: { showLogoutConfirmation = true }
-                            )
-                        }
-
-                        versionFooter
-                            .padding(.top, 8)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 48)
+        Group {
+            if navPath != nil {
+                screenWithDestinations
+            } else {
+                NavigationStack(path: $_localPath) {
+                    screenWithDestinations
                 }
-            }
-            .navigationTitle("Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(ClientProfileHomeBrand.bg, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .navigationDestination(for: ClientProfileHomeRoute.self) { route in
-                destination(for: route)
             }
         }
         .task { await viewModel.loadHeader() }
@@ -114,9 +68,90 @@ struct ClientProfileHomeScreen: View {
             titleVisibility: .visible
         ) {
             Button("Log Out", role: .destructive) {
+                guard CallCenter.shared.attempt("log out") else { return }
                 viewModel.logOut()
             }
             Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private var screenWithDestinations: some View {
+        ZStack {
+            ClientProfileHomeBrand.bg.ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 32) {
+                    userCard
+
+                    ClientProfileHomeModeSwitchCard(
+                        action: { push(.modeSwitch) }
+                    )
+
+                    section(title: "Discovery") {
+                        row(icon: "heart.fill", title: "Saved Experts") {
+                            push(.savedExperts)
+                        }
+                    }
+
+                    section(title: "Account") {
+                        row(icon: "lock.fill", title: "Security & Password") {
+                            push(.security)
+                        }
+                        row(icon: "creditcard.fill", title: "Payment") {
+                            push(.payment)
+                        }
+                    }
+
+                    section(title: "Preferences") {
+                        row(icon: "bell.fill", title: "Notifications") {
+                            push(.notifications)
+                        }
+                        row(icon: "eye.fill", title: "Privacy") {
+                            push(.privacy)
+                        }
+                    }
+
+                    section(title: "Support") {
+                        row(icon: "questionmark.circle.fill", title: "FAQ & Help") {
+                            push(.faq)
+                        }
+                        row(icon: "exclamationmark.bubble.fill", title: "Send Feedback") {
+                            push(.feedback)
+                        }
+                    }
+
+                    section(title: "Actions") {
+                        ClientProfileHomeListItem(
+                            icon: "arrow.right.square.fill",
+                            title: "Log Out",
+                            isDestructive: true,
+                            action: { showLogoutConfirmation = true }
+                        )
+                    }
+
+                    versionFooter
+                        .padding(.top, 8)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, 48)
+            }
+        }
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(ClientProfileHomeBrand.bg, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .navigationDestination(for: ClientProfileHomeRoute.self) { route in
+            destination(for: route)
+        }
+    }
+
+    private func push(_ route: ClientProfileHomeRoute) {
+        if let navPath {
+            navPath.push(route)
+        } else {
+            _localPath.append(route)
         }
     }
 
@@ -128,7 +163,7 @@ struct ClientProfileHomeScreen: View {
             email: viewModel.email,
             avatarURL: viewModel.avatarURL,
             isOnline: viewModel.isOnline,
-            onEditTap: { path.append(.personalInfo) }
+            onEditTap: { push(.personalInfo) }
         )
     }
 
@@ -161,10 +196,14 @@ struct ClientProfileHomeScreen: View {
         switch route {
         case .personalInfo:
             ClientProfileSettingsView()
+        case .savedExperts:
+            FavoritesView()
         case .security:
             placeholder(title: "Security & Password")
         case .notifications:
             NotificationSettingsView()
+        case .payment:
+            PaymentMethodsView()
         case .privacy:
             placeholder(title: "Privacy")
         case .faq:
@@ -172,7 +211,15 @@ struct ClientProfileHomeScreen: View {
         case .feedback:
             FeedbackView()
         case .modeSwitch:
-            ModeSwitchView()
+            ModeSwitchView { mode in
+                // Block mode-switch mid-call — tearing down the client
+                // socket + role context would kill the active session.
+                guard CallCenter.shared.attempt("switch modes") else { return }
+                // Flip the app's active home mode. ClickMe2026App
+                // observes `currentMode` and snaps to the corresponding
+                // home route immediately.
+                UserManager.shared.setMode(mode)
+            }
         }
     }
 

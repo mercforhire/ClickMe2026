@@ -35,11 +35,21 @@ struct Expert: Identifiable, Hashable {
     let imageURL: String
 }
 
-// MARK: - Explore navigation routes
-
-/// Non-Expert destinations pushable from Explore. Extended as needed.
-private enum ExploreRoute: Hashable {
-    case favorites
+/// Featured topic tile shown in the horizontal "Featured Topics" strip.
+/// Populated from `/client/home` → `featured_topics`. `priceLabel` is a
+/// pre-formatted display string (e.g. `"$120"`) so the card can render
+/// without doing currency math.
+struct FeaturedTopic: Identifiable, Hashable {
+    let id = UUID()
+    /// Server topic id.
+    let topicId: UUID
+    let title: String
+    /// Pre-formatted, e.g. `"$120"` or `"Free"`.
+    let priceLabel: String
+    let expertId: UUID
+    let expertName: String
+    /// May be empty when the server omitted the URL.
+    let expertImageURL: String
 }
 
 // MARK: - Explore View
@@ -48,27 +58,60 @@ struct ExploreClientView: View {
 
     @StateObject private var viewModel: ExploreClientViewModel
 
-    /// Heterogeneous nav stack — pushes `Expert` (profile detail) and
-    /// `ExploreRoute` (favorites).
-    @State private var path = NavigationPath()
+    /// Push path is provided by the enclosing `HomeClientView` via
+    /// `@Environment(\.homeNavigationPath)`. When rendered outside the
+    /// shell (previews, tests) the fallback `_localPath` provides a
+    /// self-contained NavigationStack so the screen still works.
+    @Environment(\.homeNavigationPath) private var navPath
+    @State private var _localPath = NavigationPath()
 
-    init(viewModel: ExploreClientViewModel = ExploreClientViewModel()) {
+    /// Fired when the user taps "See all" next to Recommended Experts.
+    /// Wired by the shell to switch to the Search tab, which is the
+    /// natural "browse everyone" surface. Defaults to a no-op so
+    /// previews without a shell still compile.
+    var onSeeAllExperts: () -> Void = {}
+
+    /// Bound to `CallCenter.shared.joinError` so a failed join surfaces
+    /// an alert on this screen without keeping any modal on screen.
+    /// Actual call presentation lives on the shell's `CallOverlayHost`.
+    @ObservedObject private var callCenter = CallCenter.shared
+
+    init(
+        viewModel: ExploreClientViewModel = ExploreClientViewModel(),
+        onSeeAllExperts: @escaping () -> Void = {}
+    ) {
         _viewModel = StateObject(wrappedValue: viewModel)
+        self.onSeeAllExperts = onSeeAllExperts
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
-            content
-                .navigationDestination(for: Expert.self) { expert in
-                    ExpertProfileView(expert: PublicExpertProfile(from: expert))
+        // Only wrap in a NavigationStack when there's no ambient one.
+        Group {
+            if navPath != nil {
+                contentWithDestinations
+            } else {
+                NavigationStack(path: $_localPath) {
+                    contentWithDestinations
                 }
-                .navigationDestination(for: ExploreRoute.self) { route in
-                    switch route {
-                    case .favorites:
-                        FavoritesView()
-                    }
-                }
+            }
         }
+    }
+
+    /// Push a route onto whichever nav stack is active — the shell's
+    /// shared path if we're hosted, else the local fallback path.
+    private func push<V: Hashable>(_ value: V) {
+        if let navPath {
+            navPath.push(value)
+        } else {
+            _localPath.append(value)
+        }
+    }
+
+    private var contentWithDestinations: some View {
+        content
+            .navigationDestination(for: Expert.self) { expert in
+                ExpertProfileView(expert: PublicExpertProfile(from: expert))
+            }
     }
 
     private var content: some View {
@@ -77,15 +120,17 @@ struct ExploreClientView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
-                    ExploreHeroHeader(
-                        onFavoritesTap: { path.append(ExploreRoute.favorites) }
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                    .padding(.bottom, 28)
+                    ExploreHeroHeader()
+                        .padding(.horizontal, 20)
+                        .padding(.top, 20)
+                        .padding(.bottom, 28)
+
+                    todaysSessionsSection
 
                     categoriesSection
                         .padding(.bottom, 32)
+
+                    featuredTopicsSection
 
                     expertsSection
                         .padding(.bottom, 32)
@@ -106,9 +151,49 @@ struct ExploreClientView: View {
             )
             .presentationDragIndicator(.hidden)
         }
+        // Call surface is hosted globally by `CallOverlayHost` on the
+        // shell. This screen just surfaces the join-failure alert.
+        .alert(
+            "Couldn't join call",
+            isPresented: Binding(
+                get: { callCenter.joinError != nil },
+                set: { if !$0 { callCenter.joinError = nil } }
+            ),
+            presenting: callCenter.joinError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
     // MARK: Sections
+
+    /// Client-side counterpart to the expert dashboard's Today's Sessions
+    /// strip. Hidden entirely when the fetch resolves with no joinable
+    /// bookings for today — the section adds no scaffolding until there's
+    /// something worth showing.
+    @ViewBuilder
+    private var todaysSessionsSection: some View {
+        if !viewModel.todaysSessions.isEmpty {
+            ExploreTodaysSessionsSection(
+                sessions: viewModel.todaysSessions,
+                onJoinCall: { booking in
+                    CallCenter.shared.startCall(
+                        bookingId: booking.id,
+                        peerId: booking.expertId,
+                        peerName: booking.expertName,
+                        peerImageURL: booking.imageURL,
+                        topic: booking.topic,
+                        scheduledStart: booking.startTime,
+                        scheduledEnd: booking.endTime
+                    )
+                },
+                onTapCard: { _ in }
+            )
+            .padding(.bottom, 32)
+        }
+    }
 
     @ViewBuilder
     private var categoriesSection: some View {
@@ -133,6 +218,32 @@ struct ExploreClientView: View {
         }
     }
 
+    /// Hidden entirely when the strip has no topics — either because the
+    /// backend hasn't deployed the field yet, the account has no
+    /// eligible topics, or the load failed. This keeps the screen valid
+    /// against pre-deploy servers without leaving an empty header on
+    /// screen.
+    @ViewBuilder
+    private var featuredTopicsSection: some View {
+        if !viewModel.featuredTopics.isEmpty {
+            ExploreFeaturedTopicsSection(
+                topics: viewModel.featuredTopics,
+                onSeeAll: onSeeAllExperts,
+                onTapTopic: { topic in
+                    push(Expert(
+                        expertId: topic.expertId,
+                        name: topic.expertName,
+                        title: "",
+                        tags: [],
+                        rating: 0,
+                        imageURL: topic.expertImageURL
+                    ))
+                }
+            )
+            .padding(.bottom, 32)
+        }
+    }
+
     @ViewBuilder
     private var expertsSection: some View {
         switch viewModel.expertsState {
@@ -146,7 +257,8 @@ struct ExploreClientView: View {
         case .loaded:
             ExploreExpertsSection(
                 experts: viewModel.experts,
-                onViewProfile: { expert in path.append(expert) }
+                onSeeAll: onSeeAllExperts,
+                onViewProfile: { expert in push(expert) }
             )
 
         case .failed(let message):
@@ -253,13 +365,26 @@ private enum ExplorePreviewSeed {
         Expert(expertId: nil, name: "Dr. Sarah Jenkins", title: "Venture Capital Consultant",
                tags: ["Fundraising", "Scaling"], rating: 4.8, imageURL: "")
     ]
+
+    static let featuredTopics: [FeaturedTopic] = [
+        FeaturedTopic(topicId: UUID(), title: "Scaling Design Systems",
+                      priceLabel: "$120", expertId: UUID(),
+                      expertName: "Elena Rodriguez", expertImageURL: ""),
+        FeaturedTopic(topicId: UUID(), title: "Crypto Investment Strategy",
+                      priceLabel: "$250", expertId: UUID(),
+                      expertName: "Marcus Chen", expertImageURL: ""),
+        FeaturedTopic(topicId: UUID(), title: "SaaS Product Marketing",
+                      priceLabel: "$180", expertId: UUID(),
+                      expertName: "Dr. Sarah Jenkins", expertImageURL: "")
+    ]
 }
 
 #Preview("Loaded") {
     ExploreClientView(
         viewModel: ExploreClientViewModel(
             previewCategories: ExplorePreviewSeed.categories,
-            previewExperts: ExplorePreviewSeed.experts
+            previewExperts: ExplorePreviewSeed.experts,
+            previewFeaturedTopics: ExplorePreviewSeed.featuredTopics
         )
     )
     .preferredColorScheme(.dark)

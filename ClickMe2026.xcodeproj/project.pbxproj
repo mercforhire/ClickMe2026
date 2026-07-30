@@ -10,6 +10,7 @@
 		723D79B92FFD5F0900C5C101 /* StripePaymentSheet in Frameworks */ = {isa = PBXBuildFile; productRef = 723D79B82FFD5F0900C5C101 /* StripePaymentSheet */; };
 		728382E02FE76C73005E6400 /* RtcBasic in Frameworks */ = {isa = PBXBuildFile; productRef = 728382DF2FE76C73005E6400 /* RtcBasic */; };
 		728382E62FE78D45005E6400 /* Valet in Frameworks */ = {isa = PBXBuildFile; productRef = 728382E52FE78D45005E6400 /* Valet */; };
+		7291E31930118ADA001DC06B /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = 7291E31830118ADA001DC06B /* SocketIO */; };
 		D58BA4CE2BEE6501000D8420 /* Factory in Frameworks */ = {isa = PBXBuildFile; productRef = D58BA4CD2BEE6501000D8420 /* Factory */; };
 		D5F745F52BEE48BC0064F06A /* Salad in Frameworks */ = {isa = PBXBuildFile; productRef = D5F745F42BEE48BC0064F06A /* Salad */; };
 /* End PBXBuildFile section */
@@ -81,6 +82,7 @@
 				728382E62FE78D45005E6400 /* Valet in Frameworks */,
 				D58BA4CE2BEE6501000D8420 /* Factory in Frameworks */,
 				728382E02FE76C73005E6400 /* RtcBasic in Frameworks */,
+				7291E31930118ADA001DC06B /* SocketIO in Frameworks */,
 				723D79B92FFD5F0900C5C101 /* StripePaymentSheet in Frameworks */,
 			);
 		};
@@ -152,6 +154,7 @@
 				728382DF2FE76C73005E6400 /* RtcBasic */,
 				728382E52FE78D45005E6400 /* Valet */,
 				723D79B82FFD5F0900C5C101 /* StripePaymentSheet */,
+				7291E31830118ADA001DC06B /* SocketIO */,
 			);
 			productName = ClickMe2026;
 			productReference = D5284F2C2B57C6B600BB32E7 /* ClickMe2026.app */;
@@ -240,6 +243,7 @@
 				728382DE2FE76C73005E6400 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */,
 				728382E32FE78D1C005E6400 /* XCRemoteSwiftPackageReference "Valet" */,
 				723D79B52FFD5E9500C5C101 /* XCRemoteSwiftPackageReference "stripe-ios-spm" */,
+				7291E31730118ADA001DC06B /* XCRemoteSwiftPackageReference "socket" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = D5284F2D2B57C6B600BB32E7 /* Products */;
@@ -636,6 +640,14 @@
 				minimumVersion = 5.1.0;
 			};
 		};
+		7291E31730118ADA001DC06B /* XCRemoteSwiftPackageReference "socket" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/socketio/socket.io-client-swift";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 		D58BA4CC2BEE6501000D8420 /* XCRemoteSwiftPackageReference "Factory" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/hmlongco/Factory.git";
@@ -669,6 +681,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 728382E32FE78D1C005E6400 /* XCRemoteSwiftPackageReference "Valet" */;
 			productName = Valet;
+		};
+		7291E31830118ADA001DC06B /* SocketIO */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7291E31730118ADA001DC06B /* XCRemoteSwiftPackageReference "socket" */;
+			productName = SocketIO;
 		};
 		D58BA4CD2BEE6501000D8420 /* Factory */ = {
 			isa = XCSwiftPackageProductDependency;

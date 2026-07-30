@@ -106,7 +106,10 @@ struct DeleteAccountView: View {
                 primaryLabel: "Delete Account",
                 primaryEnabled: true,
                 isDeleting: viewModel.isDeleting,
-                primaryAction: { viewModel.advanceToFeedback() },
+                primaryAction: {
+                    guard CallCenter.shared.attempt("delete your account") else { return }
+                    viewModel.advanceToFeedback()
+                },
                 secondaryAction: { dismiss() }
             )
         }
@@ -153,7 +156,10 @@ struct DeleteAccountView: View {
                     primaryLabel: "Delete Account",
                     primaryEnabled: viewModel.canConfirmDeletion,
                     isDeleting: viewModel.isDeleting,
-                    primaryAction: { Task { await viewModel.confirmDeletion() } },
+                    primaryAction: {
+                        guard CallCenter.shared.attempt("delete your account") else { return }
+                        Task { await viewModel.confirmDeletion() }
+                    },
                     secondaryAction: { dismiss() }
                 )
             }

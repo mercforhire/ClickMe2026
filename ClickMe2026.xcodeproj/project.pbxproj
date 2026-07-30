@@ -621,7 +621,7 @@
 			repositoryURL = "https://github.com/stripe/stripe-ios-spm";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 26.2.0;
+				minimumVersion = 26.4.1;
 			};
 		};
 		728382DE2FE76C73005E6400 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */ = {

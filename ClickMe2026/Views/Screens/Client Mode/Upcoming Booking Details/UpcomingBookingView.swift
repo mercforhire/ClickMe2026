@@ -105,12 +105,16 @@ struct UpcomingBookingView: View {
                     timezoneRow(timezone: timezone)
                 }
 
-                UpcomingBookingJoinCard(
-                    meetingType: viewModel.meetingType,
-                    joinLink: viewModel.joinLink,
-                    onJoinCall: onJoinCall,
-                    onCopyLink: onCopyLink
-                )
+                if viewModel.isPendingExpertApproval {
+                    pendingApprovalBanner
+                } else {
+                    UpcomingBookingJoinCard(
+                        meetingType: viewModel.meetingType,
+                        joinLink: viewModel.joinLink,
+                        onJoinCall: onJoinCall,
+                        onCopyLink: onCopyLink
+                    )
+                }
 
                 if !viewModel.preparationNote.isEmpty {
                     UpcomingBookingPrepNotesCard(
@@ -127,6 +131,37 @@ struct UpcomingBookingView: View {
             .padding(.top, 14)
             .padding(.bottom, 48)
         }
+    }
+
+    // MARK: Pending-approval banner
+
+    /// Rendered in place of the Join card while the booking is
+    /// `pending_approval`. Explains why no join affordance is present
+    /// and hints at the expected next step.
+    private var pendingApprovalBanner: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "hourglass")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.orange)
+                Text("Waiting for expert to accept")
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundColor(UpcomingBookingBrand.onSurface)
+                Spacer()
+            }
+            Text("You'll get a notification once \(viewModel.expertName.isEmpty ? "the expert" : viewModel.expertName) confirms this session. The Join Call option unlocks then.")
+                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.orange.opacity(0.10))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.orange.opacity(0.45), lineWidth: 1))
+        )
     }
 
     // MARK: Small info rows

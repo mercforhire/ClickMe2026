@@ -26,6 +26,11 @@ final class ExpertProfileSettingsViewModel {
 
     var jobTitle: String
     var company: String
+    /// Persistent Skype / Zoom / Google Meet link the expert uses for every
+    /// video-call booking on this account. Empty when unset — the booking
+    /// details view surfaces "Link will be shared" as a fallback.
+    /// Round-trips through `PATCH /expert/profile` (professional_details.meeting_url).
+    var meetingUrl: String
     var city: String
     var state: String
     /// ISO-3166-1 alpha-3 code (e.g. "USA") — matches server contract.
@@ -36,6 +41,11 @@ final class ExpertProfileSettingsViewModel {
 
     var selectedPhoto: PhotosPickerItem?
     var profileImage: Image?
+    /// Server-hosted avatar URL from `GET /user/profile`. Rendered by the
+    /// avatar subview whenever `profileImage` (the just-picked local
+    /// UIImage) is nil, so a returning user sees their real avatar
+    /// instead of a placeholder.
+    var avatarUrl: String?
 
     /// True while the currently-selected photo is uploading. The avatar
     /// section can render a spinner if desired.
@@ -78,18 +88,21 @@ final class ExpertProfileSettingsViewModel {
     var loadState: LoadState = .idle
 
 
-    // MARK: Expert-only sections (local state)
+    // MARK: Expertise
 
-    var expertiseTags: [ExpertiseTagChip]
-    var newTopic: String
-
-    var availabilityExpanded: Bool
-    var availability: [AvailabilitySlot]
+    /// Currently-picked expertise tags for this expert, from
+    /// `/expert/profile`. Drives the read-only chip strip in the
+    /// settings screen; edits are performed inside `ExpertiseEditorSheet`.
+    var expertiseEntries: [ExpertProfileData.ExpertiseTagEntry] = []
+    /// Controls the presentation of `ExpertiseEditorSheet`.
+    var showExpertiseSheet: Bool = false
 
     // MARK: Dependencies
 
     @ObservationIgnored
     private let api: ClickMeAPI
+    @ObservationIgnored
+    private let userManager: UserManager
 
     // MARK: Init
 
@@ -100,25 +113,15 @@ final class ExpertProfileSettingsViewModel {
         bio: String = "Passionate expert with over 10 years of experience helping brands grow.",
         jobTitle: String = "Digital Marketing Expert",
         company: String = "Self-Employed",
+        meetingUrl: String = "",
         city: String = "San Francisco",
         state: String = "CA",
         country: String = "USA",
         languages: [String] = ["English", "Spanish"],
         selectedPhoto: PhotosPickerItem? = nil,
         profileImage: Image? = nil,
-        expertiseTags: [ExpertiseTagChip] = [
-            ExpertiseTagChip(name: "Business Strategy"),
-            ExpertiseTagChip(name: "Marketing"),
-        ],
-        newTopic: String = "",
-        availabilityExpanded: Bool = true,
-        availability: [AvailabilitySlot] = [
-            AvailabilitySlot(day: "Mon", columns: [true, false, false, false, false], timeRange: "9:00 AM - 5:00 PM"),
-            AvailabilitySlot(day: "Tue", columns: [false, true, false, false, false], timeRange: "9:00 AM - 5:00 PM"),
-            AvailabilitySlot(day: "Wed", columns: [true, true, false, false, false], timeRange: "9:00 AM - 5:00 PM"),
-            AvailabilitySlot(day: "Fri", columns: [false, true, false, false, false], timeRange: "9:00 AM - 5:00 PM"),
-        ],
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        userManager: UserManager = .shared
     ) {
         self.firstName = firstName
         self.lastName = lastName
@@ -126,17 +129,17 @@ final class ExpertProfileSettingsViewModel {
         self.bio = bio
         self.jobTitle = jobTitle
         self.company = company
+        self.meetingUrl = meetingUrl
         self.city = city
         self.state = state
         self.country = country
         self.languages = languages
         self.selectedPhoto = selectedPhoto
         self.profileImage = profileImage
-        self.expertiseTags = expertiseTags
-        self.newTopic = newTopic
-        self.availabilityExpanded = availabilityExpanded
-        self.availability = availability
         self.api = api
+        self.userManager = userManager
+        self.expertiseEntries = userManager.expertProfile?.expertiseTags ?? []
+        self.meetingUrl = userManager.expertProfile?.professionalDetails.meetingUrl ?? meetingUrl
     }
 
     /// Preview seam — installs canned data as if the fetch had succeeded.
@@ -149,18 +152,17 @@ final class ExpertProfileSettingsViewModel {
 
     // MARK: - Intents (expert-only)
 
-    func addTopic() {
-        let trimmed = newTopic.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return }
-        withAnimation(.easeInOut(duration: 0.2)) {
-            expertiseTags.append(ExpertiseTagChip(name: trimmed))
-            newTopic = ""
-        }
-    }
-
-    func toggleAvailability() {
-        withAnimation(.easeInOut(duration: 0.25)) {
-            availabilityExpanded.toggle()
+    /// Called by `ExpertiseEditorSheet` after a successful save. Updates
+    /// the in-memory display list so the settings screen's inline chip
+    /// strip reflects the change without waiting for its own reload.
+    func applyExpertiseEdits(_ tags: [ExpertiseTagItem]) {
+        expertiseEntries = tags.enumerated().map { index, tag in
+            ExpertProfileData.ExpertiseTagEntry(
+                id: tag.id,
+                label: tag.label,
+                isPrimary: index == 0,
+                categoryId: tag.categoryId
+            )
         }
     }
 
@@ -215,6 +217,16 @@ final class ExpertProfileSettingsViewModel {
         } catch {
             loadState = .failed(error.userMessage)
         }
+
+        // Refresh the expert-scoped profile so `expertiseEntries` +
+        // `meetingUrl` reflect the latest server state. Silent on
+        // failure — the cached copy (if any) stays displayed. Re-baseline
+        // the snapshot AFTER the meeting-url hydration so `.onChange`
+        // firing on the just-loaded value doesn't trip a no-op PATCH.
+        try? await userManager.refreshExpertProfile()
+        expertiseEntries = userManager.expertProfile?.expertiseTags ?? expertiseEntries
+        meetingUrl = userManager.expertProfile?.professionalDetails.meetingUrl ?? meetingUrl
+        lastPersistedSnapshot = currentSnapshot
     }
 
     private func hydrate(from data: UserProfileData) {
@@ -225,6 +237,7 @@ final class ExpertProfileSettingsViewModel {
         lastName = personal.lastName ?? ""
         phone = personal.phone ?? ""
         bio = personal.bio ?? ""
+        avatarUrl = personal.avatarUrl
         jobTitle = professional.jobTitle ?? ""
         company = professional.company ?? ""
         city = location.city ?? ""
@@ -276,11 +289,32 @@ final class ExpertProfileSettingsViewModel {
         )
 
         let snapshotAtSaveTime = currentSnapshot
+        let trimmedMeetingUrl = meetingUrl.trimmingCharacters(in: .whitespacesAndNewlines)
 
         isAutoSaving = true
         defer { isAutoSaving = false }
         do {
             _ = try await api.updateUserProfile(body)
+
+            // Meeting URL lives on the expert-scoped record — `PATCH /user/profile`
+            // doesn't carry it, so it needs a second call. Fired unconditionally
+            // whenever the snapshot changed; the server treats an unchanged
+            // meeting_url as a no-op merge.
+            let expertBody = UpdateExpertProfileRequest(
+                personalInfo: nil,
+                professionalDetails: .init(
+                    jobTitle: nil,
+                    company: nil,
+                    education: nil,
+                    meetingUrl: trimmedMeetingUrl
+                ),
+                locationDetails: nil,
+                languages: nil,
+                expertiseTags: nil
+            )
+            _ = try await api.updateExpertProfile(expertBody)
+            try? await userManager.refreshExpertProfile()
+
             lastPersistedSnapshot = snapshotAtSaveTime
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
@@ -291,7 +325,7 @@ final class ExpertProfileSettingsViewModel {
     /// Concatenated view of the auto-save-tracked fields. Used to dedup
     /// the debounced save against the server's known state.
     private var currentSnapshot: String {
-        [firstName, lastName, phone, bio, jobTitle, company, city, state, country]
+        [firstName, lastName, phone, bio, jobTitle, company, meetingUrl, city, state, country]
             .joined(separator: "|")
     }
 

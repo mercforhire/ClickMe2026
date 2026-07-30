@@ -153,28 +153,23 @@ final class NotificationSettingsViewModel: ObservableObject {
     // MARK: Defaults
     //
     // Sub-category keys mirror the server-side taxonomy verified against
-    // GET /notifications/preferences. Bookings has 7 real server keys; we
-    // expose 4 in the UI (the ones matching the design mock). Server rows
-    // we don't render (e.g. `promotions` — hidden by design — and the extra
-    // bookings sub-categories `declines / reschedules / completions /
-    // expirations`) are simply ignored when hydrating.
+    // GET /notifications/preferences. Category keys are SINGULAR to match
+    // the backend enum; the previous plural forms (`bookings`,
+    // `messages`) silently failed to hydrate.
+    //
+    // Rendered categories: `booking`, `session`, `message`, `review`.
+    // The `payout` and `account` categories still exist on the server
+    // but are intentionally not surfaced here — payout/account events
+    // are considered non-optional transactional notifications.
+    //
+    // The channel breakdown is collapsed into a single master toggle
+    // per row (see `buildPreferenceInputs()` — the toggle mirrors across
+    // push/email/in-app so the "off" experience is universal).
 
     static let defaultSections: [NotificationSection] = [
         NotificationSection(
-            title: "Messages",
-            categoryKey: "messages",
-            settings: [
-                NotificationSetting(
-                    title: "New Messages",
-                    subtitle: "In-app, Email, Push",
-                    subCategoryKey: "new_message",
-                    isOn: true
-                ),
-            ]
-        ),
-        NotificationSection(
             title: "Bookings",
-            categoryKey: "bookings",
+            categoryKey: "booking",
             settings: [
                 NotificationSetting(
                     title: "Booking Requests",
@@ -189,6 +184,12 @@ final class NotificationSettingsViewModel: ObservableObject {
                     isOn: true
                 ),
                 NotificationSetting(
+                    title: "Booking Declines",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "declines",
+                    isOn: true
+                ),
+                NotificationSetting(
                     title: "Booking Cancellations",
                     subtitle: "In-app, Email, Push",
                     subCategoryKey: "cancellations",
@@ -198,6 +199,72 @@ final class NotificationSettingsViewModel: ObservableObject {
                     title: "Booking Reschedules",
                     subtitle: "In-app, Email, Push",
                     subCategoryKey: "reschedules",
+                    isOn: true
+                ),
+                NotificationSetting(
+                    title: "Booking Expirations",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "expirations",
+                    isOn: true
+                ),
+                NotificationSetting(
+                    title: "Refunds",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "refunds",
+                    isOn: true
+                ),
+            ]
+        ),
+        NotificationSection(
+            title: "Sessions",
+            categoryKey: "session",
+            settings: [
+                NotificationSetting(
+                    title: "Session Reminders",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "reminder",
+                    isOn: true
+                ),
+                NotificationSetting(
+                    title: "Partner No-Show",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "no_show",
+                    isOn: true
+                ),
+                NotificationSetting(
+                    title: "Session Ended",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "ended",
+                    isOn: true
+                ),
+            ]
+        ),
+        NotificationSection(
+            title: "Messages",
+            categoryKey: "message",
+            settings: [
+                NotificationSetting(
+                    title: "New Messages",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "new_message",
+                    isOn: true
+                ),
+            ]
+        ),
+        NotificationSection(
+            title: "Reviews",
+            categoryKey: "review",
+            settings: [
+                NotificationSetting(
+                    title: "New Reviews",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "received",
+                    isOn: true
+                ),
+                NotificationSetting(
+                    title: "Review Reminders",
+                    subtitle: "In-app, Email, Push",
+                    subCategoryKey: "nudge",
                     isOn: true
                 ),
             ]

@@ -56,16 +56,40 @@ final class MyBookingsViewModel: ObservableObject {
 
     // MARK: - Load
 
-    /// Fetches page 1 of the bookings list. Idempotent — skips if already
-    /// loaded (avoids clobbering the preview seed).
+    /// Fetches page 1 of the bookings list. On re-appearance (already
+    /// `.loaded`) delegates to `silentReload()` so a freshly-placed booking
+    /// shows up without blanking the list back to the loading spinner.
     func load() async {
-        if case .loaded = state { return }
+        if case .loaded = state {
+            await silentReload()
+            return
+        }
         await forceLoad()
     }
 
     /// Pull-to-refresh handler.
     func reload() async {
         await forceLoad()
+    }
+
+    /// Re-fetches in the background without transitioning to `.loading`, so
+    /// the current list stays on screen while we update. Failure is silent —
+    /// a flaky network on re-appear shouldn't wipe the last known good view.
+    func silentReload() async {
+        do {
+            let upResponse = try await api.getClientBookings(type: .upcoming)
+            let pastResponse = try await api.getClientBookings(type: .past)
+
+            self.upcomingBookings = upResponse.data.bookings
+                .sorted { $0.startTime < $1.startTime }
+                .map(Self.mapUpcoming)
+
+            self.pastBookings = pastResponse.data.bookings
+                .sorted { $0.startTime > $1.startTime }
+                .compactMap(Self.mapPastIfApplicable)
+        } catch {
+            // Intentionally swallowed — keep the last-known-good list on screen.
+        }
     }
 
     /// The server already partitions upcoming/past via the required `type`
@@ -111,14 +135,21 @@ final class MyBookingsViewModel: ObservableObject {
     // MARK: - Mapping
 
     private static func mapUpcoming(_ item: ClientBookingItem) -> UpcomingBooking {
-        UpcomingBooking(
+        // Unknown-status rows shouldn't get here — the caller filters to
+        // the "upcoming" bucket first — but fall back to `confirmed` to
+        // keep the card renderable rather than crashing.
+        let status = BookingStatus(rawValue: item.status) ?? .confirmed
+        return UpcomingBooking(
             id: item.bookingId,
+            expertId: item.expert.id,
             expertName: item.expert.fullName ?? "Expert",
             topic: item.topic ?? "Consultation",
             date: dateString(item.startTime),
             timeRange: timeRangeString(from: item.startTime, to: item.endTime),
             imageURL: item.expert.avatarUrl ?? "",
-            startTime: item.startTime
+            startTime: item.startTime,
+            endTime: item.endTime,
+            status: status
         )
     }
 
@@ -160,18 +191,25 @@ final class MyBookingsViewModel: ObservableObject {
 
     static let sampleUpcoming: [UpcomingBooking] = [
         // First sample starts in 30 min — inside the join window (shows button).
-        UpcomingBooking(id: UUID(), expertName: "Sarah Chen", topic: "Advanced Product Strategy Review",
+        UpcomingBooking(id: UUID(), expertId: UUID(), expertName: "Sarah Chen", topic: "Advanced Product Strategy Review",
                         date: "Oct 15, 2024", timeRange: "10:00 AM - 11:00 AM",
                         imageURL: "https://randomuser.me/api/portraits/women/44.jpg",
-                        startTime: Date().addingTimeInterval(30 * 60)),
-        UpcomingBooking(id: UUID(), expertName: "David Miller", topic: "Machine Learning Consultation",
+                        startTime: Date().addingTimeInterval(30 * 60),
+                        endTime: Date().addingTimeInterval(90 * 60),
+                        status: .confirmed),
+        // Second sample — pending expert approval. Renders the awaiting banner.
+        UpcomingBooking(id: UUID(), expertId: UUID(), expertName: "David Miller", topic: "Machine Learning Consultation",
                         date: "Oct 18, 2024", timeRange: "2:30 PM - 3:30 PM",
                         imageURL: "https://randomuser.me/api/portraits/men/32.jpg",
-                        startTime: Date().addingTimeInterval(3 * 3600)),
-        UpcomingBooking(id: UUID(), expertName: "Emily Davis", topic: "UX Research Plan Feedback",
+                        startTime: Date().addingTimeInterval(3 * 3600),
+                        endTime: Date().addingTimeInterval(4 * 3600),
+                        status: .pendingApproval),
+        UpcomingBooking(id: UUID(), expertId: UUID(), expertName: "Emily Davis", topic: "UX Research Plan Feedback",
                         date: "Oct 22, 2024", timeRange: "9:00 AM - 10:00 AM",
                         imageURL: "https://randomuser.me/api/portraits/women/68.jpg",
-                        startTime: Date().addingTimeInterval(7 * 24 * 3600)),
+                        startTime: Date().addingTimeInterval(7 * 24 * 3600),
+                        endTime: Date().addingTimeInterval(7 * 24 * 3600 + 3600),
+                        status: .confirmed),
     ]
 
     static let samplePast: [PastBooking] = [

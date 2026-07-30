@@ -14,6 +14,9 @@ struct ChatPreview: Identifiable, Hashable {
     /// Server thread id — used both as `Identifiable` id and as the
     /// route target when a row is tapped.
     let threadId: UUID
+    /// Counterparty's user id. Kept so live `user.status` events can
+    /// find the affected row without having to walk messages.
+    let partnerId: UUID
     let name: String
     let lastMessage: String
     let timeLabel: String
@@ -60,6 +63,14 @@ struct ChatConversationsView: View {
                 peerName: chat.name,
                 peerAvatarURL: chat.imageURL
             )
+        }
+        // When `pushedChat` flips non-nil → nil, the user just popped back
+        // from a `ChatView`. Silently refresh so the row's last-message
+        // preview and unread badge reflect what happened in there.
+        .onChange(of: pushedChat) { oldValue, newValue in
+            if oldValue != nil, newValue == nil {
+                Task { await viewModel.silentReload() }
+            }
         }
     }
 
@@ -151,6 +162,7 @@ extension ChatPreview {
     static let samples: [ChatPreview] = [
         ChatPreview(
             threadId: UUID(),
+            partnerId: UUID(),
             name: "Dr. Olivia Bennett",
             lastMessage: "Thank you for the guidance. I'll prepare my thoughts accordingly.",
             timeLabel: "10:23 AM",
@@ -160,6 +172,7 @@ extension ChatPreview {
         ),
         ChatPreview(
             threadId: UUID(),
+            partnerId: UUID(),
             name: "Dr. Olivia Bennett",
             lastMessage: "Yes, 2 PM works perfectly. I've added it to my calendar.",
             timeLabel: "Yesterday",
@@ -169,6 +182,7 @@ extension ChatPreview {
         ),
         ChatPreview(
             threadId: UUID(),
+            partnerId: UUID(),
             name: "Dr. Marcus Carter",
             lastMessage: "I'm looking forward to our session this afternoon.",
             timeLabel: "2 days ago",
@@ -178,6 +192,7 @@ extension ChatPreview {
         ),
         ChatPreview(
             threadId: UUID(),
+            partnerId: UUID(),
             name: "Dr. Sophia Clark",
             lastMessage: "I've sent you a confirmation for our meeting at 2 PM tomorrow.",
             timeLabel: "3 days ago",
@@ -187,6 +202,7 @@ extension ChatPreview {
         ),
         ChatPreview(
             threadId: UUID(),
+            partnerId: UUID(),
             name: "Support Team",
             lastMessage: "Your account has been verified successfully.",
             timeLabel: "1 week ago",
@@ -196,6 +212,7 @@ extension ChatPreview {
         ),
         ChatPreview(
             threadId: UUID(),
+            partnerId: UUID(),
             name: "ClickMe Admin",
             lastMessage: "New feature rollout scheduled for next Monday.",
             timeLabel: "2 weeks ago",

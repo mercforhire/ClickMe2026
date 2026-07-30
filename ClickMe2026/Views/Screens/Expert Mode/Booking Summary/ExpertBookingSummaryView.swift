@@ -23,6 +23,10 @@ struct ExpertBookingSummaryView: View {
     @Environment(\.openChatThread) private var openChatThread
     @Environment(\.homeNavigationPath) private var homeNavigationPath
 
+    /// Drives the `.sheet` presenting `ExpertCancellationView`. Flipped
+    /// by the Cancel action button; cleared by the sheet's dismiss.
+    @State private var showCancellationSheet: Bool = false
+
     // MARK: Init
 
     init(bookingId: UUID) {
@@ -44,6 +48,35 @@ struct ExpertBookingSummaryView: View {
         .navigationTitle("Booking Summary")
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.load() }
+        .sheet(isPresented: $showCancellationSheet) {
+            cancellationSheet
+        }
+    }
+
+    /// Wraps `ExpertCancellationView` in its own NavigationStack (so the
+    /// sheet gets a title bar) and seeds it with the display copy the
+    /// screen expects. On success — or "Keep booking" — dismiss the sheet
+    /// and pop the summary itself back to the bookings list, since the
+    /// underlying record has changed state.
+    @ViewBuilder
+    private var cancellationSheet: some View {
+        if let detail = viewModel.detail {
+            NavigationStack {
+                ExpertCancellationView(
+                    bookingId: detail.bookingId,
+                    clientName: detail.client.name ?? "Client",
+                    clientImageURL: detail.client.avatarUrl ?? "",
+                    sessionTopic: detail.session.topicTitle ?? "Session",
+                    dateTime: "\(viewModel.dateLabel) • \(viewModel.timeRangeLabel)",
+                    refundType: "full refund",
+                    onKeepBooking: { showCancellationSheet = false },
+                    onConfirm: { _ in
+                        showCancellationSheet = false
+                        homeNavigationPath?.pop()
+                    }
+                )
+            }
+        }
     }
 
     // MARK: - Content router
@@ -82,10 +115,85 @@ struct ExpertBookingSummaryView: View {
                     messageClientButton(detail: detail)
                         .padding(.top, 4)
                 }
+
+                if detail.actions.canReschedule || detail.actions.canCancel {
+                    HStack(spacing: 12) {
+                        if detail.actions.canReschedule {
+                            secondaryActionButton(
+                                icon: "clock.arrow.circlepath",
+                                label: "Reschedule"
+                            ) {
+                                homeNavigationPath?.push(
+                                    HomeRoute.expertReschedule(bookingId: detail.bookingId)
+                                )
+                            }
+                        }
+                        if detail.actions.canCancel {
+                            destructiveActionButton(
+                                icon: "xmark.circle",
+                                label: "Cancel"
+                            ) {
+                                showCancellationSheet = true
+                            }
+                        }
+                    }
+                }
             }
             .padding(16)
             .padding(.bottom, 24)
         }
+    }
+
+    // MARK: - Secondary / destructive action buttons
+
+    private func secondaryActionButton(
+        icon: String,
+        label: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                Text(label)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+            }
+            .foregroundColor(Brand.onSurface)
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Brand.surfaceContainer)
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Brand.outlineVariant, lineWidth: 1))
+            )
+        }
+        .buttonStyle(PressScaleButtonStyle())
+    }
+
+    private func destructiveActionButton(
+        icon: String,
+        label: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                Text(label)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+            }
+            .foregroundColor(Color.red.opacity(0.95))
+            .frame(maxWidth: .infinity)
+            .frame(height: 44)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.red.opacity(0.10))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color.red.opacity(0.45), lineWidth: 1))
+            )
+        }
+        .buttonStyle(PressScaleButtonStyle())
     }
 
     // MARK: - Client header

@@ -20,6 +20,13 @@ struct ChatView: View {
     /// push into `ReportChatView` via `.navigationDestination(isPresented:)`.
     @State private var showingBlockReport: Bool = false
 
+    /// Provided by the enclosing shell (`HomeClientView` / `HomeExpertView`)
+    /// so tapping a booking-lifecycle event row can push its detail screen
+    /// onto the Chats tab's stack. Nil outside a shell — e.g. previews or
+    /// when opened from a deep-linked context — in which case event rows
+    /// remain non-tappable rather than doing nothing.
+    @Environment(\.homeNavigationPath) private var homeNavigationPath
+
     // MARK: Init
 
     /// Runtime init — pushed from `ChatConversationsView` with the tapped
@@ -61,8 +68,8 @@ struct ChatView: View {
             }
         }
         .confirmationDialog("Options", isPresented: $viewModel.showMenu, titleVisibility: .hidden) {
-            Button("View Profile") {}
-            Button("Mute Chat") {}
+            Button("View Profile") { openPeerProfile() }
+                .disabled(viewModel.peerUserId == nil)
             Button("Block or Report", role: .destructive) {
                 showingBlockReport = true
             }
@@ -122,13 +129,39 @@ struct ChatView: View {
     // MARK: - Sub-content
 
     private var inputBar: some View {
-        ChattingInputBar(
-            myAvatarURL: viewModel.myAvatarURL,
-            text: $viewModel.messageText,
-            inputFocused: $inputFocused,
-            isSending: viewModel.isSending,
-            onSend: { Task { await viewModel.sendMessage() } }
-        )
+        VStack(spacing: 0) {
+            if viewModel.peerIsTyping {
+                typingIndicator
+            }
+            ChattingInputBar(
+                myAvatarURL: viewModel.myAvatarURL,
+                text: $viewModel.messageText,
+                inputFocused: $inputFocused,
+                isSending: viewModel.isSending,
+                onSend: { Task { await viewModel.sendMessage() } }
+            )
+        }
+        // Debounced typing.start / typing.stop emit lives in the VM;
+        // just poke it whenever the input text changes.
+        .onChange(of: viewModel.messageText) {
+            viewModel.notifyMessageTextChanged()
+        }
+        .animation(.easeInOut(duration: 0.18), value: viewModel.peerIsTyping)
+    }
+
+    /// "…is typing" strip shown above the input bar. Copy uses the
+    /// peer's display name so multi-conversation stacks don't blur
+    /// together.
+    private var typingIndicator: some View {
+        HStack(spacing: 6) {
+            Text("\(viewModel.peerName) is typing…")
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(ChattingBrand.onSurfaceVar)
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 6)
+        .transition(.opacity)
     }
 
     private var loadingContent: some View {
@@ -185,10 +218,31 @@ struct ChatView: View {
                 }
                 .padding(.vertical, 12)
             }
-            .onChange(of: viewModel.items.count) {
-                withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+            // Only scroll to bottom on signals from the VM — initial load
+            // and successful sends. Loading older history (loadEarlier)
+            // deliberately doesn't bump the token, so pagination leaves
+            // the scroll position where the user is reading.
+            //
+            // Two-shot fire: `items.append(...)` and the token bump
+            // happen in the same render pass, so a naive single
+            // `scrollTo` sometimes runs before SwiftUI has laid out the
+            // newly-appended bubble — landing at the previous bottom.
+            // The first pass catches the fast case; the deferred one
+            // catches the LazyVStack materialization case.
+            .onChange(of: viewModel.scrollToBottomToken) {
+                proxy.scrollTo("bottom", anchor: .bottom)
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 80_000_000)
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
+                }
             }
             .onAppear {
+                // Fallback for the case where the token has already been
+                // bumped before this view appeared (fast fetch, preview
+                // seed). No animation — we want the chat to open already
+                // at the bottom, not visibly scroll into place.
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                     proxy.scrollTo("bottom", anchor: .bottom)
                 }
@@ -225,7 +279,7 @@ struct ChatView: View {
         switch item {
         case let .message(msg):
             ChattingMessageBubble(message: msg, myName: viewModel.myName)
-                .padding(.vertical, 4)
+                .padding(.vertical, 8)
                 .padding(.horizontal, 14)
         case let .timestamp(label):
             Text(label)
@@ -234,9 +288,50 @@ struct ChatView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
         case let .systemEvent(event):
-            ChattingSystemEventRow(event: event)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 4)
+            Group {
+                if event.bookingId != nil {
+                    Button {
+                        openBookingDetail(for: event)
+                    } label: {
+                        ChattingSystemEventRow(event: event)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    ChattingSystemEventRow(event: event)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+        }
+    }
+
+    /// Routes a tap on a system-event row to the appropriate detail
+    /// screen. Terminal states (declined / cancelled / completed /
+    /// expired) go to the read-only `BookingSummaryView`; active states
+    /// (request / confirmed / rescheduled) go to `UpcomingBookingView`
+    /// where the user can still manage the booking. No-op when the
+    /// event carries no booking id (legacy rows) or when there's no
+    /// shell nav path to push onto (previews).
+    /// Push the peer's profile onto the ambient shell nav path. Silently
+    /// no-ops when we don't yet know the peer id (empty thread, no
+    /// messages loaded) or when we're rendered outside a shell (previews).
+    private func openPeerProfile() {
+        guard let peerId = viewModel.peerUserId,
+              let navPath = homeNavigationPath else { return }
+        navPath.push(HomeRoute.peerProfile(
+            userId: peerId,
+            name: viewModel.peerName,
+            avatarURL: viewModel.peerAvatarURL
+        ))
+    }
+
+    private func openBookingDetail(for event: BookingEvent) {
+        guard let bookingId = event.bookingId,
+              let navPath = homeNavigationPath else { return }
+        if event.isTerminal {
+            navPath.push(HomeRoute.bookingSummary(bookingId: bookingId))
+        } else {
+            navPath.push(HomeRoute.upcomingBooking(bookingId: bookingId))
         }
     }
 }
@@ -247,33 +342,49 @@ extension ChatItem {
     static let sampleConversation: [ChatItem] = [
         .timestamp("Today 10:23 AM"),
         .message(ChatMessage(
-            sender: .them, senderName: "Dr. Olivia Bennett",
+            serverId: nil, sender: .them, senderName: "Dr. Olivia Bennett",
             body: "Hi Dr. Bennett, I'm looking forward to our session this afternoon. Could you please share any preparatory materials?",
-            avatarURL: "https://randomuser.me/api/portraits/women/44.jpg"
+            avatarURL: "https://randomuser.me/api/portraits/women/44.jpg",
+            timestamp: Date().addingTimeInterval(-3600),
+            status: .sent
         )),
         .message(ChatMessage(
-            sender: .me, senderName: "Ethan",
+            serverId: nil, sender: .me, senderName: "Ethan",
             body: "Thank you. You're noted for your hot as match your message?.",
-            avatarURL: "https://randomuser.me/api/portraits/men/32.jpg"
+            avatarURL: "https://randomuser.me/api/portraits/men/32.jpg",
+            timestamp: Date().addingTimeInterval(-3300),
+            status: .sent
         )),
         .systemEvent(BookingEvent(
             icon: "checkmark.square", title: "Booking Confirmed",
-            subtitle: "Tomorrow, 2:00 PM", isAccepted: true, avatarURL: nil
+            subtitle: "Tomorrow, 2:00 PM", isAccepted: true, avatarURL: nil,
+            bookingId: nil, isTerminal: false,
+            topicTitle: "30-min strategy call",
+            startTime: Date().addingTimeInterval(3600 * 24),
+            durationMins: 30
         )),
         .message(ChatMessage(
-            sender: .them, senderName: "Dr. Olivia Bennett",
+            serverId: nil, sender: .them, senderName: "Dr. Olivia Bennett",
             body: "Ethan, I've sent you a confirmation for our meeting at 2 PM tomorrow. Please let me know if that time works for you.",
-            avatarURL: "https://randomuser.me/api/portraits/women/44.jpg"
+            avatarURL: "https://randomuser.me/api/portraits/women/44.jpg",
+            timestamp: Date().addingTimeInterval(-2700),
+            status: .sent
         )),
         .message(ChatMessage(
-            sender: .me, senderName: "Ethan",
+            serverId: nil, sender: .me, senderName: "Ethan",
             body: "Yes, 2 PM works perfectly.",
-            avatarURL: "https://randomuser.me/api/portraits/men/32.jpg"
+            avatarURL: "https://randomuser.me/api/portraits/men/32.jpg",
+            timestamp: Date().addingTimeInterval(-2400),
+            status: .sent
         )),
         .systemEvent(BookingEvent(
             icon: "checkmark.square", title: "Booking Accepted",
             subtitle: nil, isAccepted: true,
-            avatarURL: "https://randomuser.me/api/portraits/women/44.jpg"
+            avatarURL: "https://randomuser.me/api/portraits/women/44.jpg",
+            bookingId: nil, isTerminal: false,
+            topicTitle: "30-min strategy call",
+            startTime: Date().addingTimeInterval(3600 * 24),
+            durationMins: 30
         )),
     ]
 }

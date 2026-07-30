@@ -301,10 +301,10 @@ final class RescheduleViewModel: ObservableObject {
         for day in days {
             guard let slots = day.slots else { continue }
             for slot in slots {
-                guard let start = slot.startTime else { continue }
+                guard let start = slot.startUtc else { continue }
                 let ts = BookingTimeSlot(
                     startTime: start,
-                    endTime: slot.endTime,
+                    endTime: slot.endUtc,
                     isAvailable: (slot.available ?? false) && !(slot.held ?? false)
                 )
                 let key = dateKey(start, calendar: calendar)

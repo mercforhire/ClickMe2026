@@ -13,6 +13,10 @@ import SwiftUI
 struct ExpertProfileHero: View {
     let expert: PublicExpertProfile
     let glowPulse: Bool
+    /// True once the reviews summary has landed. While false, the
+    /// rating row renders em-dash placeholders so a first-visit doesn't
+    /// misleadingly show "0.0 (0 reviews)" before the fetch completes.
+    var summaryLoaded: Bool = true
 
     var body: some View {
         VStack(spacing: 12) {
@@ -90,10 +94,10 @@ struct ExpertProfileHero: View {
             Image(systemName: "star.fill")
                 .font(.system(size: 14))
                 .foregroundColor(ExpertProfileBrand.starYellow)
-            Text(String(format: "%.1f", expert.rating))
+            Text(summaryLoaded ? String(format: "%.1f", expert.rating) : "—")
                 .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundColor(ExpertProfileBrand.onSurface)
-            Text("(\(expert.reviewCount) reviews)")
+            Text(summaryLoaded ? "(\(expert.reviewCount) reviews)" : "(— reviews)")
                 .font(.system(size: 13, weight: .regular, design: .rounded))
                 .foregroundColor(ExpertProfileBrand.onSurfaceVar)
         }

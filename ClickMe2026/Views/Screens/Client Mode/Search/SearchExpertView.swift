@@ -27,7 +27,12 @@ struct ExpertSearchResult: Identifiable, Hashable {
 struct SearchExpertView: View {
 
     @StateObject private var viewModel: SearchExpertViewModel
-    @State private var path: [ExpertSearchResult] = []
+    /// Push path is provided by the enclosing `HomeClientView` via
+    /// `@Environment(\.homeNavigationPath)`. When rendered outside the
+    /// shell (previews, tests) the fallback `_localPath` provides a
+    /// self-contained NavigationStack so the screen still works.
+    @Environment(\.homeNavigationPath) private var navPath
+    @State private var _localPath: [ExpertSearchResult] = []
 
     // MARK: Init
 
@@ -44,11 +49,29 @@ struct SearchExpertView: View {
     // MARK: Body
 
     var body: some View {
-        NavigationStack(path: $path) {
-            content
-                .navigationDestination(for: ExpertSearchResult.self) { result in
-                    ExpertProfileView(expert: PublicExpertProfile(from: result))
+        Group {
+            if navPath != nil {
+                contentWithDestinations
+            } else {
+                NavigationStack(path: $_localPath) {
+                    contentWithDestinations
                 }
+            }
+        }
+    }
+
+    private var contentWithDestinations: some View {
+        content
+            .navigationDestination(for: ExpertSearchResult.self) { result in
+                ExpertProfileView(expert: PublicExpertProfile(from: result))
+            }
+    }
+
+    private func push(_ expert: ExpertSearchResult) {
+        if let navPath {
+            navPath.push(expert)
+        } else {
+            _localPath.append(expert)
         }
     }
 
@@ -163,7 +186,7 @@ struct SearchExpertView: View {
             ForEach(viewModel.experts) { expert in
                 SearchExpertCard(
                     expert: expert,
-                    action: { path.append(expert) }
+                    action: { push(expert) }
                 )
             }
         }

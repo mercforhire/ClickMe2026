@@ -14,6 +14,11 @@ struct ClientProfileSettingsView: View {
 
     @StateObject private var viewModel: ClientProfileSettingsViewModel
 
+    /// Observed so the avatar refreshes reactively when
+    /// `UserManager.refreshProfile` returns a new photo URL (or when the
+    /// user uploads a new one from the signup flow / another device).
+    @ObservedObject private var userManager = UserManager.shared
+
     /// Tracks taps on the version footer. Reaching 5 consecutive taps clears
     /// the onboarding-shown flag (debug affordance for QA / demos).
     @State private var versionTapCount: Int = 0
@@ -31,6 +36,7 @@ struct ClientProfileSettingsView: View {
                 VStack(spacing: 0) {
                     ProfileAvatarSection(
                         profileImage: viewModel.profileImage,
+                        remoteAvatarURL: userManager.profile?.personalDetails.avatarUrl,
                         selectedPhoto: $viewModel.selectedPhoto
                     )
                     .padding(.top, 12)

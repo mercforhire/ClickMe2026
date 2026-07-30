@@ -23,10 +23,7 @@ final class UpcomingBookingsViewModel {
     // MARK: Actions
 
     var onJoinSession: (UpcomingSession) -> Void
-    var onMessage: (UpcomingSession) -> Void
     var onReschedule: (UpcomingSession) -> Void
-    var onEarningsDash: () -> Void
-    var onAddSession: () -> Void
     var onUpdateAvailability: () -> Void
     var onViewPastHistory: () -> Void
 
@@ -45,10 +42,7 @@ final class UpcomingBookingsViewModel {
     init(
         sessions: [UpcomingSession] = [],
         onJoinSession: @escaping (UpcomingSession) -> Void = { _ in },
-        onMessage: @escaping (UpcomingSession) -> Void = { _ in },
         onReschedule: @escaping (UpcomingSession) -> Void = { _ in },
-        onEarningsDash: @escaping () -> Void = {},
-        onAddSession: @escaping () -> Void = {},
         onUpdateAvailability: @escaping () -> Void = {},
         onViewPastHistory: @escaping () -> Void = {},
         api: ClickMeAPI = .shared,
@@ -56,10 +50,7 @@ final class UpcomingBookingsViewModel {
     ) {
         self.sessions = sessions
         self.onJoinSession = onJoinSession
-        self.onMessage = onMessage
         self.onReschedule = onReschedule
-        self.onEarningsDash = onEarningsDash
-        self.onAddSession = onAddSession
         self.onUpdateAvailability = onUpdateAvailability
         self.onViewPastHistory = onViewPastHistory
         self.api = api
@@ -118,12 +109,15 @@ final class UpcomingBookingsViewModel {
 
     private static func mapSession(from item: ExpertBookingItem, now: Date) -> UpcomingSession {
         return UpcomingSession(
+            bookingId: item.bookingId,
+            clientId: item.client.id,
             clientName: item.client.name ?? "Client",
             clientImageURL: item.client.avatarUrl ?? "",
             topic: item.session.topic ?? "Session",
             dateLabel: formatDateLabel(item.session.startTime, now: now),
             earnings: "",
-            isNow: item.actions.canJoin
+            startTime: item.session.startTime,
+            endTime: item.session.endTime
         )
     }
 

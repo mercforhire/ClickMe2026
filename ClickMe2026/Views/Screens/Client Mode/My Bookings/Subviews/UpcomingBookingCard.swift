@@ -26,12 +26,20 @@ struct UpcomingBookingCard: View {
             .contentShape(Rectangle())
             .onTapGesture { onCardTap() }
 
-            // Ticks once a minute so the button appears/disappears as the
-            // start time crosses the join window boundary, without needing
-            // a pull-to-refresh.
-            TimelineView(.periodic(from: .now, by: 60)) { _ in
-                if booking.isWithinJoinWindow {
-                    joinCallButton
+            if booking.isPendingExpertApproval {
+                // Awaiting-approval bookings never expose Join Call — the
+                // expert hasn't accepted, there's no channel. Show a
+                // status banner in its place so the client can see WHY
+                // the button isn't there.
+                pendingApprovalBanner
+            } else {
+                // Ticks once a minute so the button appears/disappears as
+                // the start time crosses the join window boundary, without
+                // needing a pull-to-refresh.
+                TimelineView(.periodic(from: .now, by: 60)) { _ in
+                    if booking.isWithinJoinWindow {
+                        joinCallButton
+                    }
                 }
             }
             secondaryActions
@@ -42,6 +50,31 @@ struct UpcomingBookingCard: View {
                 .fill(MyBookingsBrand.cardBg)
                 .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(MyBookingsBrand.cardBorder, lineWidth: 1))
+        )
+    }
+
+    // MARK: Pending-approval banner
+
+    /// Shown in place of the Join Call button when the booking is still
+    /// awaiting the expert's decision. Amber tone signals "in progress,
+    /// not yet actionable" without alarming (red would read as an error).
+    private var pendingApprovalBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "hourglass")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.orange)
+            Text("Waiting for expert to accept")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .foregroundColor(MyBookingsBrand.onSurface)
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.orange.opacity(0.10))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.orange.opacity(0.45), lineWidth: 1))
         )
     }
 

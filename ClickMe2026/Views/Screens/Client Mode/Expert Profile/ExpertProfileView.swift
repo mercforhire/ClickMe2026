@@ -59,6 +59,18 @@ struct ExpertProfileView: View {
     /// piggybacks on whichever `NavigationStack` this profile is inside.
     @State private var showReviews: Bool = false
 
+    /// Shared nav path from the home shell (Explore / Search / Favorites
+    /// all push this screen onto it). Used to push the booking flow on
+    /// "Book Session" tap.
+    @Environment(\.homeNavigationPath) private var navPath
+
+    /// Shell-injected action that switches to the Chats tab and pushes
+    /// a specific thread. Used by the "Message" button.
+    @Environment(\.openChatThread) private var openChatThread
+
+    /// Optional caller-provided hook; if wired, it runs INSTEAD of the
+    /// default push. Left as an escape hatch — no current caller uses
+    /// it, so the default MakeABooking push is the effective behavior.
     var onBookSession: () -> Void
     var onMessage: () -> Void
     var onFavorite: () -> Void
@@ -109,7 +121,11 @@ struct ExpertProfileView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
-                    ExpertProfileHero(expert: expert, glowPulse: viewModel.glowPulse)
+                    ExpertProfileHero(
+                        expert: expert,
+                        glowPulse: viewModel.glowPulse,
+                        summaryLoaded: viewModel.isSummaryLoaded
+                    )
                         .padding(.top, 16)
                         .padding(.bottom, 24)
 
@@ -121,8 +137,8 @@ struct ExpertProfileView: View {
                     .padding(.bottom, 20)
 
                     ExpertProfileActionButtons(
-                        onBookSession: onBookSession,
-                        onMessage: onMessage
+                        onBookSession: handleBookSession,
+                        onMessage: handleMessage
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 28)
@@ -166,7 +182,7 @@ struct ExpertProfileView: View {
                 } label: {
                     Image(systemName: viewModel.isFavorited ? "heart.fill" : "heart")
                         .font(.system(size: 18, weight: .regular))
-                        .foregroundColor(viewModel.isFavorited ? ExpertProfileBrand.brandGreen : ExpertProfileBrand.onSurface)
+                        .foregroundColor(viewModel.isFavorited ? .red : ExpertProfileBrand.onSurface)
                 }
                 .disabled(viewModel.isFavoriteInFlight)
                 .accessibilityLabel(viewModel.isFavorited ? "Remove from favorites" : "Add to favorites")
@@ -176,6 +192,18 @@ struct ExpertProfileView: View {
         .task { await viewModel.loadProfileDetails() }
         .navigationDestination(isPresented: $showReviews) {
             ExpertReviewsView(expertId: expert.expertId)
+        }
+        // "Book Session" pushes the booking flow onto the same NavStack.
+        // Reuses `BookAgainSeed` since its four fields match exactly what
+        // `MakeABooking` needs — despite the "book again" name, the type
+        // is a general seed for the booking-flow entry point.
+        .navigationDestination(for: BookAgainSeed.self) { seed in
+            MakeABooking(
+                expertId: seed.expertId,
+                expertName: seed.expertName,
+                expertTitle: seed.expertTitle,
+                expertImageURL: seed.expertImageURL
+            )
         }
         .alert(
             "Couldn't update favorites",
@@ -195,6 +223,54 @@ struct ExpertProfileView: View {
             get: { viewModel[keyPath: keyPath] != nil },
             set: { if !$0 { viewModel[keyPath: keyPath] = nil } }
         )
+    }
+
+    /// Book Session tap handler. Runs the caller-provided `onBookSession`
+    /// hook if any, then pushes `MakeABooking` onto the ambient shell
+    /// nav stack via `BookAgainSeed`. Silently no-ops when the expert
+    /// has no `expertId` (preview seeds / placeholder data) since the
+    /// backend can't book against a nil id.
+    private func handleBookSession() {
+        onBookSession()
+        guard let expertId = expert.expertId else { return }
+        let seed = BookAgainSeed(
+            expertId: expertId,
+            expertName: expert.name,
+            expertTitle: expert.title,
+            expertImageURL: expert.imageURL
+        )
+        if let navPath {
+            navPath.push(seed)
+        }
+    }
+
+    /// Message tap handler. Fires `onMessage` (caller escape hatch),
+    /// then calls `POST /chats/initiate` to get or create a thread with
+    /// this expert and asks the shell to open the Chats tab + push the
+    /// thread. Silently no-ops without an expertId (preview / placeholder
+    /// data) or when no ambient shell action is installed.
+    private func handleMessage() {
+        onMessage()
+        guard let expertId = expert.expertId,
+              let openChatThread
+        else { return }
+
+        Task {
+            do {
+                let response = try await ClickMeAPI.shared.initiateChat(peerId: expertId)
+                openChatThread(
+                    threadId: response.data.threadId,
+                    peerName: expert.name,
+                    peerAvatarURL: expert.imageURL
+                )
+            } catch {
+                // Silent — the caller's expected UX is a thread appearing.
+                // On failure the user can retry from the Chats tab.
+                // TODO: surface via viewModel.apiError once we have a
+                // dedicated messaging error state distinct from favorite
+                // toggling.
+            }
+        }
     }
 }
 

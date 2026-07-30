@@ -32,12 +32,14 @@ struct ExpertProfileSettingsAvatar: View {
                 .frame(width: 140, height: 140)
                 .shadow(color: Brand.primary.opacity(0.60), radius: 10)
 
-            // Photo
+            // Photo — prefer the just-picked local image; fall back to the
+            // server-hosted avatar URL from the fetched profile; then a
+            // placeholder person glyph when neither is available.
             Group {
                 if let image = viewModel.profileImage {
                     image.resizable().scaledToFill()
                 } else {
-                    AsyncImage(url: URL(string: "https://randomuser.me/api/portraits/men/32.jpg")) { phase in
+                    AsyncImage(url: viewModel.avatarUrl.flatMap(URL.init(string:))) { phase in
                         switch phase {
                         case let .success(img): img.resizable().scaledToFill()
                         default:

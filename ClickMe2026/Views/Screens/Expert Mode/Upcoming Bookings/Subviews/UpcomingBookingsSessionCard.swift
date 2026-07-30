@@ -13,8 +13,54 @@ struct UpcomingBookingsSessionCard: View {
     var onJoin: () -> Void
     var onMessage: () -> Void
     var onReschedule: () -> Void
+    /// Fires when the client-info / date section of the card is tapped.
+    /// Scoped so it doesn't intercept taps on the action buttons below.
+    var onCardTap: () -> Void = {}
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Info section (avatar / name / topic / date) — tap opens
+            // the booking summary. Buttons below are outside this
+            // contentShape so they keep their own tap behaviour.
+            infoSection
+                .contentShape(Rectangle())
+                .onTapGesture { onCardTap() }
+
+            // Join Session — only for isNow
+            if session.isWithinJoinWindow {
+                Button(action: onJoin) {
+                    Text("Join Session")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(Brand.onPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Brand.primary)
+                                .shadow(color: Brand.primary.opacity(0.50), radius: 14, x: 0, y: 4)
+                        )
+                }
+                .buttonStyle(PressScaleButtonStyle())
+            }
+
+            // Message + Reschedule
+            HStack(spacing: 12) {
+                actionButton(icon: "bubble.left", label: "Message", action: onMessage)
+                actionButton(icon: "clock.arrow.circlepath", label: "Reschedule", action: onReschedule)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Brand.surfaceContainerLow)
+                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Brand.outlineVariant, lineWidth: 1))
+        )
+    }
+
+    // MARK: - Info section (tap target)
+
+    private var infoSection: some View {
         VStack(alignment: .leading, spacing: 14) {
             // Avatar | name + topic | earnings
             HStack(alignment: .top, spacing: 12) {
@@ -61,7 +107,7 @@ struct UpcomingBookingsSessionCard: View {
 
             // Date row + NOW badge
             HStack(spacing: 10) {
-                if session.isNow {
+                if session.isWithinJoinWindow {
                     Text("NOW")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundColor(Brand.onPrimary)
@@ -78,37 +124,7 @@ struct UpcomingBookingsSessionCard: View {
                     .font(.system(size: 13, weight: .regular, design: .rounded))
                     .foregroundColor(Brand.onSurface)
             }
-
-            // Join Session — only for isNow
-            if session.isNow {
-                Button(action: onJoin) {
-                    Text("Join Session")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                        .foregroundColor(Brand.onPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Brand.primary)
-                                .shadow(color: Brand.primary.opacity(0.50), radius: 14, x: 0, y: 4)
-                        )
-                }
-                .buttonStyle(PressScaleButtonStyle())
-            }
-
-            // Message + Reschedule
-            HStack(spacing: 12) {
-                actionButton(icon: "bubble.left", label: "Message", action: onMessage)
-                actionButton(icon: "clock.arrow.circlepath", label: "Reschedule", action: onReschedule)
-            }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Brand.surfaceContainerLow)
-                .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Brand.outlineVariant, lineWidth: 1))
-        )
     }
 
     private func actionButton(icon: String, label: String, action: @escaping () -> Void) -> some View {

@@ -82,8 +82,13 @@ struct AvailabilityDayRow: View {
                 if !day.slots.isEmpty {
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) {
-                            let last = day.slots.last!
-                            let newStart = last.end + 30
+                            // Anchor to the latest end across ALL slots,
+                            // not just `last` — the user may have edited
+                            // an earlier slot to run later, so `last`
+                            // isn't necessarily the max. Prevents the
+                            // fresh add from overlapping.
+                            let maxEnd = day.slots.map(\.end).max() ?? 0
+                            let newStart = min(maxEnd + 30, 23 * 60)
                             let newEnd = min(newStart + 60, 24 * 60)
                             day.slots.append(AvailabilityTimeSlot(start: newStart, end: newEnd))
                         }

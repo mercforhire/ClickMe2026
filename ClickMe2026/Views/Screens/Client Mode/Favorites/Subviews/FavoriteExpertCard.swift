@@ -72,11 +72,17 @@ struct FavoriteExpertCard: View {
     // MARK: Tags
 
     private var tagsRow: some View {
-        HStack(spacing: 8) {
+        // Flow layout so chips wrap onto a second row instead of being
+        // squeezed to fit one line. Each chip's `Text` is `lineLimit(1)` +
+        // `fixedSize` so words like "Accounting" can't be broken mid-word
+        // by an HStack that ran out of horizontal room.
+        TopicsSetupFlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
             ForEach(expert.tags, id: \.self) { tag in
                 Text(tag)
                     .font(.system(size: 12, weight: .medium, design: .rounded))
                     .foregroundColor(FavoritesBrand.onSurface)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(

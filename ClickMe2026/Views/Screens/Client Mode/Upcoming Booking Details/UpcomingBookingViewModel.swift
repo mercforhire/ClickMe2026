@@ -32,6 +32,11 @@ final class UpcomingBookingViewModel: ObservableObject {
     @Published var meetingType: MeetingType
     @Published var joinLink: String
     @Published var preparationNote: String
+    /// Booking status parsed from `ClientBookingDetail.status`. Drives
+    /// `isPendingExpertApproval` — used by the view to hide the Join
+    /// card and surface a "Waiting for expert to accept" banner instead
+    /// while the request is still awaiting the expert's decision.
+    @Published var bookingStatus: BookingStatus
 
     // MARK: Load state
 
@@ -40,6 +45,11 @@ final class UpcomingBookingViewModel: ObservableObject {
     // MARK: Dependencies
 
     private let api: ClickMeAPI
+
+    // MARK: Realtime
+
+    /// Auto-cancels on VM deallocation.
+    private var bookingUpdateSubscription: RealtimeSubscription?
 
     // MARK: Inits
 
@@ -60,8 +70,18 @@ final class UpcomingBookingViewModel: ObservableObject {
         self.meetingType = .inAppVoice
         self.joinLink = ""
         self.preparationNote = ""
+        self.bookingStatus = .confirmed
         self.state = .idle
         self.api = api
+
+        // Any live change to this specific booking re-hits the detail
+        // endpoint so status / times / meeting-type stay accurate while
+        // the screen is on-view.
+        let targetId = bookingId
+        self.bookingUpdateSubscription = RealtimeService.shared.onBookingUpdate { [weak self] event in
+            guard event.bookingId == targetId else { return }
+            Task { @MainActor in await self?.reload() }
+        }
     }
 
     /// Preview seam — pre-installs display strings so the canvas can render
@@ -80,7 +100,8 @@ final class UpcomingBookingViewModel: ObservableObject {
         paymentStatus: String? = "held",
         meetingType: MeetingType = .inAppVoice,
         joinLink: String = "",
-        preparationNote: String = "Please have your current product roadmap and user persona documents ready. We'll be diving deep into the Q4 objectives and identifying key friction points in the user journey."
+        preparationNote: String = "Please have your current product roadmap and user persona documents ready. We'll be diving deep into the Q4 objectives and identifying key friction points in the user journey.",
+        bookingStatus: BookingStatus = .confirmed
     ) -> UpcomingBookingViewModel {
         let vm = UpcomingBookingViewModel(bookingId: bookingId)
         vm.bookingIDLabel = bookingIDLabel
@@ -96,8 +117,15 @@ final class UpcomingBookingViewModel: ObservableObject {
         vm.meetingType = meetingType
         vm.joinLink = joinLink
         vm.preparationNote = preparationNote
+        vm.bookingStatus = bookingStatus
         vm.state = .loaded
         return vm
+    }
+
+    /// True when the booking still needs the expert's decision. Used by
+    /// the view to swap the Join card for a waiting banner.
+    var isPendingExpertApproval: Bool {
+        bookingStatus == .pendingApproval
     }
 
     // MARK: - Load
@@ -142,6 +170,11 @@ final class UpcomingBookingViewModel: ObservableObject {
         // CALL" button in that case, so an empty string here is fine.
         joinLink = data.joinLink ?? ""
         preparationNote = data.clientNotes ?? ""
+        // Unknown-status rows shouldn't hit this view — the caller
+        // narrows to the upcoming bucket first — but fall back to
+        // `confirmed` so we render normally rather than mis-showing the
+        // waiting banner.
+        bookingStatus = BookingStatus(rawValue: data.status) ?? .confirmed
     }
 
     // MARK: - Formatting helpers

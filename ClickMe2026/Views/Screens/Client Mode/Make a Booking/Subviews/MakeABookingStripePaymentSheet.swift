@@ -49,6 +49,19 @@ private struct MakeABookingStripePaymentSheetModifier: ViewModifier {
         config.merchantDisplayName = "ClickMe"
         config.allowsDelayedPaymentMethods = false
 
+        // If the server minted a customer session for this checkout,
+        // pass it to PaymentSheet so the caller's saved cards appear at
+        // the top of the sheet (with an "Add card" row below). Absent
+        // this, PaymentSheet drops straight into "enter a new card"
+        // mode with no saved-card list.
+        if let customerId = viewModel.stripeCustomerId,
+           let ephemeralKey = viewModel.stripeEphemeralKey {
+            config.customer = .init(
+                id: customerId,
+                ephemeralKeySecret: ephemeralKey
+            )
+        }
+
         let sheet = PaymentSheet(
             paymentIntentClientSecret: secret,
             configuration: config

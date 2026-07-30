@@ -22,32 +22,32 @@ struct TopicsSetupView: View {
             Brand.surface.ignoresSafeArea()
             content
         }
-        .navigationTitle("Manage Expertise")
+        .navigationTitle("Topics")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                autoSaveStatusIcon
-            }
-        }
         .task { await viewModel.load() }
         .fullScreenCover(isPresented: $viewModel.showTopicEditor) {
             TopicEditorView(
                 topic: viewModel.editingTopic,
-                onSave: { title, description, durationMins, hourlyRateAmount, currency, iconSlug in
-                    Task {
-                        await viewModel.saveTopic(
-                            title: title,
-                            description: description,
-                            durationMins: durationMins,
-                            hourlyRateAmount: hourlyRateAmount,
-                            currency: currency,
-                            iconSlug: iconSlug
-                        )
-                    }
+                onSave: { title, description, durationMins, hourlyRateAmount, currency, iconSlug, expertiseTagIds in
+                    // Returns the server error message (or nil on
+                    // success) so the editor owns the "show alert /
+                    // stay open / dismiss on success" decision.
+                    return await viewModel.saveTopic(
+                        title: title,
+                        description: description,
+                        durationMins: durationMins,
+                        hourlyRateAmount: hourlyRateAmount,
+                        currency: currency,
+                        iconSlug: iconSlug,
+                        expertiseTagIds: expertiseTagIds
+                    )
                 },
                 onDismiss: { viewModel.dismissTopicEditor() }
             )
         }
+        // Parent-level alert retained for the delete-topic path, which
+        // fires from this screen (not inside a cover) and still routes
+        // its error via `viewModel.apiError`.
         .alert(
             "Something went wrong",
             isPresented: Binding(
@@ -78,28 +78,9 @@ struct TopicsSetupView: View {
 
     private var loadedContent: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 32) {
-                TopicsSetupExpertiseSection(viewModel: viewModel)
-                TopicsSetupTopicsSection(viewModel: viewModel)
-            }
-            .padding(20)
-            .padding(.bottom, 32)
-        }
-    }
-
-    /// Trailing-nav-bar spinner while the debounced tag save is uploading,
-    /// checkmark right after a successful save. Empty in all other states
-    /// so the bar stays clean.
-    @ViewBuilder
-    private var autoSaveStatusIcon: some View {
-        if viewModel.isAutoSaving {
-            ProgressView()
-                .controlSize(.small)
-                .tint(Brand.onSurface)
-        } else if viewModel.didAutoSave {
-            Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(Brand.primary)
-                .transition(.opacity)
+            TopicsSetupTopicsSection(viewModel: viewModel)
+                .padding(20)
+                .padding(.bottom, 32)
         }
     }
 
@@ -107,7 +88,7 @@ struct TopicsSetupView: View {
         VStack(spacing: 12) {
             ProgressView()
                 .tint(Brand.onSurface)
-            Text("Loading expertise…")
+            Text("Loading topics…")
                 .font(.system(size: 13, design: .rounded))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
@@ -119,7 +100,7 @@ struct TopicsSetupView: View {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 28, weight: .light))
                 .foregroundColor(Brand.onSurfaceVariant)
-            Text("Couldn't load expertise")
+            Text("Couldn't load topics")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
@@ -167,8 +148,7 @@ private struct TopicsSetupPreviewHost: View {
 }
 
 /// Live-fetch harness — installs the expert bearer token and lets the
-/// screen fetch its own state via `GET /meta/expertise-tags` +
-/// `GET /expert/topics`.
+/// screen fetch its own state via `GET /expert/topics`.
 private struct LiveFetchTopicsSetupHarness: View {
     @State private var path: [Int] = [0]
 

@@ -32,6 +32,10 @@ final class FeedbackViewModel: ObservableObject {
     @Published var showDetailsError: Bool
     /// Non-field submission failures — network / 5xx / 429. Surfaced as an alert.
     @Published var apiError: String?
+    /// True after a successful submission — drives a thank-you alert.
+    /// Cleared when the user dismisses the alert, at which point
+    /// `didSubmit` is also cleared so the button re-enables.
+    @Published var showThanks: Bool
 
     // MARK: Dependencies
 
@@ -48,6 +52,7 @@ final class FeedbackViewModel: ObservableObject {
         didSubmit: Bool = false,
         showDetailsError: Bool = false,
         apiError: String? = nil,
+        showThanks: Bool = false,
         api: ClickMeAPI = .shared
     ) {
         self.feedbackTypes = feedbackTypes
@@ -60,6 +65,7 @@ final class FeedbackViewModel: ObservableObject {
         self.didSubmit = didSubmit
         self.showDetailsError = showDetailsError
         self.apiError = apiError
+        self.showThanks = showThanks
         self.api = api
     }
 
@@ -176,16 +182,20 @@ final class FeedbackViewModel: ObservableObject {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
             didSubmit = true
         }
-        // Auto-clear the form once submission is confirmed so the next visit
-        // starts fresh instead of reusing stale copy.
+        // Clear the form immediately so the thank-you alert covers a
+        // clean slate — makes the "send another" path frictionless.
         details = ""
         email = ""
         showDetailsError = false
         if let first = feedbackTypes.first { selectedType = first }
 
-        // Flash the "Sent!" confirmation for 2s, then drop back to the idle
-        // Submit label so the button is ready for another entry.
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        showThanks = true
+    }
+
+    /// Dismiss the thank-you alert and re-enable the submit button so the
+    /// user can send another entry.
+    func dismissThanks() {
+        showThanks = false
         withAnimation { didSubmit = false }
     }
 

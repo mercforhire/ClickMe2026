@@ -148,7 +148,7 @@ final class ExpertDashboardViewModel: ObservableObject {
         do {
             let bookingResponse = try await api.getExpertBookings(page: 1, limit: 50)
             todaysSessions = bookingResponse.data.bookings
-                .filter { isToday($0.session.startTime) }
+                .filter { isToday($0.session.startTime) && Self.isJoinable($0.status.code) }
                 .sorted { $0.session.startTime < $1.session.startTime }
 
             let requestResponse = try await api.getBookingRequests(page: 1, limit: 20)
@@ -263,6 +263,20 @@ final class ExpertDashboardViewModel: ObservableObject {
 
     private func isToday(_ date: Date) -> Bool {
         calendar.isDateInToday(date)
+    }
+
+    /// Statuses that qualify a booking to appear on the dashboard's
+    /// "Today's Sessions" strip. `pendingApproval` is intentionally excluded
+    /// — those show up separately in the "Pending Requests" banner, and
+    /// they shouldn't render a Join button since the expert hasn't accepted
+    /// the request yet.
+    private static func isJoinable(_ status: BookingStatus) -> Bool {
+        switch status {
+        case .confirmed, .inProgress, .pendingReschedule:
+            return true
+        case .pendingApproval, .completed, .cancelled, .declined, .missed, .expired:
+            return false
+        }
     }
 
     // MARK: - Error mapping

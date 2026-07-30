@@ -89,6 +89,12 @@ final class MakeABookingViewModel: ObservableObject {
     @Published var paymentIntentId: String?
     @Published var paymentIntentClientSecret: String?
     @Published var paymentSummary: PaymentSummary?
+    /// Stripe Customer id + short-lived ephemeral key — fed into
+    /// `PaymentSheet.Configuration.customer` so the sheet lists the
+    /// caller's saved cards. Populated from the payment-intent
+    /// response; nil until `beginPaidBooking` succeeds.
+    @Published var stripeCustomerId: String?
+    @Published var stripeEphemeralKey: String?
 
     /// True while either the free flow is submitting or the paid flow is
     /// in-flight. The book button binds to this.
@@ -292,6 +298,8 @@ final class MakeABookingViewModel: ObservableObject {
             )
             paymentIntentId = response.paymentIntentId
             paymentIntentClientSecret = response.clientSecret
+            stripeCustomerId = response.customerId
+            stripeEphemeralKey = response.ephemeralKey
             paymentSummary = PaymentSummary(
                 subtotal: response.summary.subtotal,
                 discount: response.summary.discount,
@@ -349,6 +357,8 @@ final class MakeABookingViewModel: ObservableObject {
         paidStep = .idle
         paymentIntentId = nil
         paymentIntentClientSecret = nil
+        stripeCustomerId = nil
+        stripeEphemeralKey = nil
         paymentSummary = nil
     }
 
@@ -440,11 +450,11 @@ final class MakeABookingViewModel: ObservableObject {
         for day in days {
             guard let slots = day.slots else { continue }
             for slot in slots {
-                guard let start = slot.startTime else { continue }
+                guard let start = slot.startUtc else { continue }
                 let isAvailable = (slot.available ?? true) && !(slot.held ?? false)
                 let booking = BookingTimeSlot(
                     startTime: start,
-                    endTime: slot.endTime,
+                    endTime: slot.endUtc,
                     isAvailable: isAvailable
                 )
                 let key = dateKey(start, calendar: calendar)

@@ -49,6 +49,11 @@ final class BookingSummaryViewModel: ObservableObject {
 
     private let api: ClickMeAPI
 
+    // MARK: Realtime
+
+    /// Auto-cancels on VM deallocation.
+    private var bookingUpdateSubscription: RealtimeSubscription?
+
     /// Runtime init — fetches booking + review context from the backend.
     init(
         bookingId: UUID,
@@ -67,6 +72,15 @@ final class BookingSummaryViewModel: ObservableObject {
         self.hasSubmittedReview = false
         self.loadState = .idle
         self.api = api
+
+        // Terminal state changes (e.g. completed) still land here — if
+        // the booking is under this screen when it flips, refresh so
+        // review eligibility / final price stay accurate.
+        let targetId = bookingId
+        self.bookingUpdateSubscription = RealtimeService.shared.onBookingUpdate { [weak self] event in
+            guard event.bookingId == targetId else { return }
+            Task { @MainActor in await self?.reload() }
+        }
     }
 
     /// Preview seam — pre-populates all display fields as if the fetch had

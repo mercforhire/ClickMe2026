@@ -14,6 +14,16 @@ struct ChattingMessageBubble: View {
     let message: ChatMessage
     let myName: String
 
+    /// Locale-aware short time formatter (e.g. "10:23 AM" in en-US,
+    /// "10:23" in 24-hour locales). Cached statically so we don't
+    /// allocate a new formatter for every bubble in the list.
+    private static let timestampFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .none
+        f.timeStyle = .short
+        return f
+    }()
+
     var body: some View {
         let isMe = message.sender == .me
         return HStack(alignment: .bottom, spacing: 8) {
@@ -40,6 +50,23 @@ struct ChattingMessageBubble: View {
                             .fill(isMe ? ChattingBrand.myBubble : ChattingBrand.theirBubble)
                     )
                     .frame(maxWidth: 260, alignment: isMe ? .trailing : .leading)
+
+                HStack(spacing: 4) {
+                    Text(Self.timestampFormatter.string(from: message.timestamp))
+                    // Only surface "Read" on my own bubbles — read state
+                    // for peer messages isn't user-visible, and the
+                    // socket receipt only flips this on the sender's
+                    // side anyway.
+                    if isMe, message.status == .read {
+                        Text("· Read")
+                            .foregroundColor(ChattingBrand.brandGreen)
+                            .transition(.opacity)
+                    }
+                }
+                .font(.system(size: 10, weight: .regular, design: .rounded))
+                .foregroundColor(ChattingBrand.onSurfaceVar)
+                .padding(.horizontal, 4)
+                .animation(.easeInOut(duration: 0.2), value: message.status)
             }
 
             if isMe {

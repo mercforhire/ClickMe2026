@@ -23,6 +23,10 @@ final class RequestDecisionViewModel: ObservableObject {
     @Published var clientMessage: String
     @Published var potentialEarnings: Double
     @Published var currency: String
+    /// Server UUID of the client on this request — needed to look up (or
+    /// create) the chat thread when the footer's Message button is tapped.
+    /// Populated from `detail.client.id` after the fetch resolves.
+    @Published var clientId: UUID?
     /// Inherited from the list — when true the footer hides Accept/Decline
     /// and the view renders an "This request has expired" banner instead.
     @Published var isExpired: Bool
@@ -55,6 +59,7 @@ final class RequestDecisionViewModel: ObservableObject {
         self.clientMessage = ""
         self.potentialEarnings = 0
         self.currency = "USD"
+        self.clientId = nil
         self.isExpired = isExpired
         self.loadState = .idle
         self.isSubmitting = false
@@ -80,6 +85,7 @@ final class RequestDecisionViewModel: ObservableObject {
         self.clientMessage = clientMessage
         self.potentialEarnings = potentialEarnings
         self.currency = currency
+        self.clientId = nil
         self.isExpired = isExpired
         self.loadState = loadState
         self.isSubmitting = false
@@ -113,6 +119,7 @@ final class RequestDecisionViewModel: ObservableObject {
             clientMessage = detail.session.clientMessage ?? ""
             potentialEarnings = detail.economics.potentialEarnings ?? 0
             currency = detail.economics.currency ?? "USD"
+            clientId = detail.client.id
             loadState = .loaded
         } catch {
             loadState = .failed(error.userMessage)
@@ -202,13 +209,6 @@ final class RequestDecisionViewModel: ObservableObject {
     }
 
     // MARK: - Other intents
-
-    /// Fires from the "Message" button in the footer. TODO: wire to the
-    /// chat thread with this client once the chat flow is available from
-    /// the expert side.
-    func messageTapped() {
-        // no-op for now
-    }
 
     /// Fires from the "View Profile" label under the client name. TODO:
     /// wire to a public client profile route once that screen exists.

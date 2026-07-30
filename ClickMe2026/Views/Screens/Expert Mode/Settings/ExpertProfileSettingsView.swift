@@ -8,20 +8,6 @@
 
 import SwiftUI
 
-// MARK: - Models
-
-struct ExpertiseTagChip: Identifiable {
-    let id = UUID()
-    var name: String
-}
-
-struct AvailabilitySlot: Identifiable {
-    let id = UUID()
-    let day: String
-    var columns: [Bool] // Mon,Tue,Wed,Thu,Fri checkboxes
-    var timeRange: String
-}
-
 // MARK: - Expert Profile Management View
 
 struct ExpertProfileSettingsView: View {
@@ -85,9 +71,10 @@ struct ExpertProfileSettingsView: View {
         .sheet(isPresented: $vm.showProfSheet) {
             ProfessionalDetailsSheet(
                 jobTitle: $vm.jobTitle,
-                company: $vm.company
+                company: $vm.company,
+                meetingUrl: $vm.meetingUrl
             )
-            .presentationDetents([.medium])
+            .presentationDetents([.large])
             .presentationDragIndicator(.visible)
             .presentationBackground(ProfileSettingsBrand.sheetBg)
         }
@@ -96,6 +83,11 @@ struct ExpertProfileSettingsView: View {
                 .presentationDetents([.fraction(0.72)])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(ProfileSettingsBrand.sheetBg)
+        }
+        .sheet(isPresented: $vm.showExpertiseSheet) {
+            ExpertiseEditorSheet { updated in
+                viewModel.applyExpertiseEdits(updated)
+            }
         }
     }
 
@@ -158,9 +150,6 @@ struct ExpertProfileSettingsView: View {
                     .padding(.bottom, 24)
 
                     ExpertProfileSettingsExpertise(viewModel: viewModel)
-                        .padding(.horizontal, 20).padding(.bottom, 24)
-
-                    ExpertProfileSettingsAvailability(viewModel: viewModel)
                         .padding(.horizontal, 20).padding(.bottom, 40)
                 }
                 .padding(.top, 16)
@@ -213,7 +202,7 @@ struct ExpertProfileSettingsView: View {
     private var autoSaveSnapshot: String {
         [
             viewModel.firstName, viewModel.lastName, viewModel.phone, viewModel.bio,
-            viewModel.jobTitle, viewModel.company,
+            viewModel.jobTitle, viewModel.company, viewModel.meetingUrl,
             viewModel.city, viewModel.state, viewModel.country
         ].joined(separator: "|")
     }

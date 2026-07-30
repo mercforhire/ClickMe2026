@@ -133,8 +133,18 @@ struct TimeRangePickerSheet: View {
                 }
                 .frame(height: 180)
                 .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        proxy.scrollTo(selectedMinutes.wrappedValue, anchor: .center)
+                    // Two-shot fire: the first pass covers the fast
+                    // case (sheet already stable); the deferred pass
+                    // covers the slide-in-animation case, where the
+                    // ScrollView's geometry finalizes ~350ms after
+                    // `.onAppear` and any earlier scrollTo silently
+                    // targets stale offsets.
+                    let target = selectedMinutes.wrappedValue
+                    DispatchQueue.main.async {
+                        proxy.scrollTo(target, anchor: .center)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        proxy.scrollTo(target, anchor: .center)
                     }
                 }
             }

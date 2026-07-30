@@ -110,6 +110,11 @@ extension IncomingRequest {
 struct RequestDecisionView: View {
     @StateObject private var viewModel: RequestDecisionViewModel
 
+    /// Shell-injected action that switches to the Chats tab and pushes the
+    /// selected thread. Nil outside a `HomeExpertView` shell (previews,
+    /// isolated tests) — in that case the Message tap silently no-ops.
+    @Environment(\.openChatThread) private var openChatThread
+
     // MARK: Init
 
     /// Runtime init — hydrates from
@@ -222,11 +227,31 @@ struct RequestDecisionView: View {
                 RequestDecisionActionFooter(
                     isAccepted: viewModel.isAccepted,
                     isDeclined: viewModel.isDeclined,
-                    onMessage: viewModel.messageTapped,
+                    onMessage: handleMessage,
                     onDeclineTap: viewModel.openDeclineSheet,
                     onAcceptTap: viewModel.openAcceptSheet
                 )
             }
+        }
+    }
+
+    /// Look up (or create) the chat thread with this request's client and
+    /// hand off to the shell so the Chats tab opens on that conversation.
+    /// `initiateChat` is idempotent — repeat calls return the existing thread.
+    /// No-ops when the client id hasn't loaded yet or when rendered outside
+    /// a shell (previews, tests).
+    private func handleMessage() {
+        guard let openChatThread, let clientId = viewModel.clientId else { return }
+        let peerName = viewModel.request.clientName
+        let peerAvatarURL = viewModel.request.imageURL
+        Task {
+            guard let response = try? await ClickMeAPI.shared.initiateChat(peerId: clientId)
+            else { return }
+            openChatThread(
+                threadId: response.data.threadId,
+                peerName: peerName,
+                peerAvatarURL: peerAvatarURL
+            )
         }
     }
 

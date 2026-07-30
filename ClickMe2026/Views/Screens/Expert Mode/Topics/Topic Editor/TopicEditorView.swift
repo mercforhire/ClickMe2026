@@ -16,9 +16,26 @@ struct TopicEditorView: View {
     @StateObject private var viewModel: TopicEditorViewModel
 
     /// Fires once the user taps Save and inputs pass local validation.
-    /// Args: (title, description, durationMins, hourlyRateAmountMinorUnits, currency, iconSlug?).
-    let onSave: (String, String?, Int, Int, String, String?) -> Void
+    /// Args: (title, description, durationMins, hourlyRateAmountMinorUnits,
+    /// currency, iconSlug?, expertiseTagIds).
+    ///
+    /// Returns `nil` when the save succeeded, or a human-readable error
+    /// message when it failed. The editor stays open on failure and
+    /// surfaces the message in its own alert — so the user can correct
+    /// and retry without the cover being torn down under them.
+    let onSave: (String, String?, Int, Int, String, String?, [String]) async -> String?
     let onDismiss: () -> Void
+
+    /// Error message from the most recent save attempt. Owned locally
+    /// (not on the shared `TopicsSetupViewModel`) because SwiftUI's
+    /// `.alert` bound to state on the presenter behaves erratically when
+    /// attached to content inside a `fullScreenCover` — the alert would
+    /// only render after the cover had dismissed. Owning the state here
+    /// makes the alert reliably fire ON the editor.
+    @State private var saveError: String?
+    /// True while an async `onSave` is in flight. Blocks the Save button
+    /// from being tapped twice.
+    @State private var isSaving: Bool = false
 
     // MARK: Init
 
@@ -26,7 +43,7 @@ struct TopicEditorView: View {
     /// or nil (add mode).
     init(
         topic: ExpertTopicItem?,
-        onSave: @escaping (String, String?, Int, Int, String, String?) -> Void,
+        onSave: @escaping (String, String?, Int, Int, String, String?, [String]) async -> String?,
         onDismiss: @escaping () -> Void
     ) {
         _viewModel = StateObject(wrappedValue: TopicEditorViewModel(topic: topic))
@@ -37,7 +54,7 @@ struct TopicEditorView: View {
     /// Preview / test seam — inject a pre-configured view model.
     init(
         viewModel: TopicEditorViewModel,
-        onSave: @escaping (String, String?, Int, Int, String, String?) -> Void = { _, _, _, _, _, _ in },
+        onSave: @escaping (String, String?, Int, Int, String, String?, [String]) async -> String? = { _, _, _, _, _, _, _ in nil },
         onDismiss: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -70,19 +87,16 @@ struct TopicEditorView: View {
                             keyboard: .default
                         )
 
-                        editorField(
-                            label: "Session Duration (minutes)",
-                            placeholder: "e.g. 60",
-                            text: $viewModel.durationMinutes,
-                            keyboard: .numberPad
-                        )
+                        durationStepper
 
                         editorField(
-                            label: "Hourly Rate ($)",
+                            label: "Price per Session ($)",
                             placeholder: "e.g. 150",
                             text: $viewModel.rate,
                             keyboard: .numberPad
                         )
+
+                        tagPicker
 
                         if viewModel.showError {
                             Text("Please fill in all required fields with valid values.")
@@ -94,6 +108,7 @@ struct TopicEditorView: View {
                     .padding(24)
                 }
             }
+            .task { await viewModel.loadTags() }
             .navigationTitle(viewModel.isEditing ? "Edit Topic" : "Add Topic")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Brand.surface, for: .navigationBar)
@@ -108,9 +123,28 @@ struct TopicEditorView: View {
                     Button("Save", action: attemptSave)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(Brand.primary)
+                        .disabled(isSaving)
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: viewModel.showError)
+            // Alert lives on the editor's own state, not on the parent
+            // view model — SwiftUI's `.alert` bound to state outside the
+            // cover only rendered after the cover dismissed, which was
+            // the whole reported bug ("error shows up after the view
+            // has been popped"). Keeping it local makes the alert reliably
+            // fire ON the editor so the user can correct + retry.
+            .alert(
+                "Couldn't save topic",
+                isPresented: Binding(
+                    get: { saveError != nil },
+                    set: { if !$0 { saveError = nil } }
+                ),
+                presenting: saveError
+            ) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { message in
+                Text(message)
+            }
         }
     }
 
@@ -157,18 +191,177 @@ struct TopicEditorView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Tag picker
+
+    private var tagPicker: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Expertise Tags")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Brand.onSurfaceVariant)
+                Spacer()
+                Text("Select up to \(viewModel.maxTagSelection)")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Brand.onSurfaceVariant)
+            }
+
+            if viewModel.isLoadingTags {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small).tint(Brand.onSurfaceVariant)
+                    Text("Loading tags…")
+                        .font(.system(size: 13))
+                        .foregroundColor(Brand.onSurfaceVariant)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
+            } else if viewModel.availableTags.isEmpty {
+                Text("Add expertise on your profile to tag topics with them.")
+                    .font(.system(size: 13))
+                    .foregroundColor(Brand.onSurfaceVariant)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                tagFilterField
+                if viewModel.filteredTags.isEmpty {
+                    Text("No tags match \"\(viewModel.tagFilter)\"")
+                        .font(.system(size: 13))
+                        .foregroundColor(Brand.onSurfaceVariant)
+                        .padding(.top, 4)
+                } else {
+                    TopicsSetupFlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
+                        ForEach(viewModel.filteredTags) { tag in
+                            tagPill(for: tag)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var tagFilterField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 13))
+                .foregroundColor(Brand.onSurfaceVariant)
+            TextField("Filter tags", text: $viewModel.tagFilter)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .font(.system(size: 14))
+                .foregroundColor(Brand.onSurface)
+            if !viewModel.tagFilter.isEmpty {
+                Button {
+                    viewModel.tagFilter = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(Brand.onSurfaceVariant)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(Brand.surfaceContainer)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Brand.outlineVariant.opacity(0.6), lineWidth: 1)
+                )
+        )
+    }
+
+    private func tagPill(for tag: ExpertiseTagItem) -> some View {
+        let isSelected = viewModel.isSelectedTag(tag)
+        let atCap = viewModel.selectedTagIds.count >= viewModel.maxTagSelection && !isSelected
+
+        return Button {
+            viewModel.toggleTag(tag)
+        } label: {
+            Text(tag.label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(isSelected ? Brand.primary : Brand.onSurfaceVariant)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? Brand.primary.opacity(0.08) : Color.clear)
+                        .overlay(
+                            Capsule().stroke(
+                                isSelected ? Brand.primary : Brand.outlineVariant,
+                                lineWidth: isSelected ? 1.2 : 1
+                            )
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(atCap)
+        .opacity(atCap ? 0.45 : 1)
+    }
+
+    // MARK: - Duration stepper
+
+    private var durationStepper: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Session Duration")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Brand.onSurfaceVariant)
+
+            Stepper(
+                value: $viewModel.durationMinutes,
+                in: viewModel.durationRange,
+                step: viewModel.durationStep
+            ) {
+                Text(formatDuration(viewModel.durationMinutes))
+                    .font(.system(size: 15))
+                    .foregroundColor(Brand.onSurface)
+            }
+            .tint(Brand.primary)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Brand.surfaceContainerLow)
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Brand.outlineVariant.opacity(0.6), lineWidth: 1))
+            )
+        }
+    }
+
+    private func formatDuration(_ minutes: Int) -> String {
+        let hours = minutes / 60
+        let mins = minutes % 60
+        if hours == 0 { return "\(mins) min" }
+        if mins == 0 { return hours == 1 ? "1 hour" : "\(hours) hours" }
+        return "\(hours) hr \(mins) min"
+    }
+
     // MARK: - Save
 
+    /// Validates locally, then hands the payload to `onSave`. On success
+    /// (`nil` return), fires `onDismiss()` so the parent can close the
+    /// cover. On failure, stashes the message in `saveError` — the
+    /// `.alert` bound to it fires ON this view, keeping the editor open
+    /// and giving the user a chance to correct and retry.
     private func attemptSave() {
-        guard let payload = viewModel.validate() else { return }
-        onSave(
-            payload.title,
-            payload.description,
-            payload.durationMinutes,
-            payload.hourlyRateAmount,
-            payload.currency,
-            payload.iconSlug
-        )
+        guard !isSaving, let payload = viewModel.validate() else { return }
+        isSaving = true
+        Task {
+            let error = await onSave(
+                payload.title,
+                payload.description,
+                payload.durationMinutes,
+                payload.hourlyRateAmount,
+                payload.currency,
+                payload.iconSlug,
+                payload.expertiseTagIds
+            )
+            isSaving = false
+            if let error {
+                saveError = error
+            } else {
+                onDismiss()
+            }
+        }
     }
 
     private func editorField(label: String, placeholder: String, text: Binding<String>, keyboard: UIKeyboardType) -> some View {
@@ -179,7 +372,7 @@ struct TopicEditorView: View {
 
             TextField(placeholder, text: text)
                 .keyboardType(keyboard)
-                .autocapitalization(.words)
+                .textInputAutocapitalization(.sentences)
                 .disableAutocorrection(true)
                 .font(.system(size: 15))
                 .foregroundColor(Brand.onSurface)
@@ -198,7 +391,7 @@ struct TopicEditorView: View {
 // MARK: - Previews
 
 #Preview("Add Topic") {
-    TopicEditorView(topic: nil, onSave: { _, _, _, _, _, _ in }, onDismiss: {})
+    TopicEditorView(topic: nil, onSave: { _, _, _, _, _, _, _ in nil }, onDismiss: {})
         .preferredColorScheme(.dark)
 }
 
@@ -209,11 +402,12 @@ struct TopicEditorView: View {
             title: "Go-to-Market Execution",
             durationMins: 60,
             description: "Positioning, GTM motions, ICP.",
-            price: .init(amount: 25000, currency: "USD", isFree: false, label: "$250 / hr"),
+            price: .init(amount: 25000, currency: "USD", isFree: false, label: "$250"),
             hourlyRate: .init(amount: 25000, currency: "USD"),
-            iconSlug: "business"
+            iconSlug: "business",
+            expertiseTags: nil
         ),
-        onSave: { _, _, _, _, _, _ in },
+        onSave: { _, _, _, _, _, _, _ in nil },
         onDismiss: {}
     )
     .preferredColorScheme(.dark)

@@ -56,12 +56,43 @@ struct MakeABookingTimeSlotsCard: View {
                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
                 .padding(.vertical, 4)
         } else {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(slots) { slot in
-                        chip(for: slot)
+            // ScrollViewReader lets us jump straight to the first
+            // still-bookable slot on first appear (and again whenever
+            // the user picks a different date) so they don't have to
+            // scroll past sold-out / past slots to see what's actually
+            // available.
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(slots) { slot in
+                            chip(for: slot)
+                                .id(slot.id)
+                        }
                     }
                 }
+                .onAppear { scrollToFirstAvailable(with: proxy) }
+                .onChange(of: viewModel.selectedDate) { _, _ in
+                    scrollToFirstAvailable(with: proxy)
+                }
+            }
+        }
+    }
+
+    /// Jump the horizontal slot list to the first slot that's still
+    /// bookable — i.e. flagged available AND not already past. Silent
+    /// no-op if no slot qualifies (leaves the list wherever it was).
+    /// A short delay lets the layout finish before we scroll, otherwise
+    /// on cold appear the proxy target hasn't been measured yet and the
+    /// call is dropped.
+    private func scrollToFirstAvailable(with proxy: ScrollViewProxy) {
+        let slots = viewModel.slotsForSelectedDate
+        let now = Date()
+        guard let target = slots.first(where: { $0.isAvailable && $0.startTime >= now }) else {
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                proxy.scrollTo(target.id, anchor: .leading)
             }
         }
     }

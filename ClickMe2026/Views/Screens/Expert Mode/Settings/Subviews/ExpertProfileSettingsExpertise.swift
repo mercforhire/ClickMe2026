@@ -67,8 +67,9 @@ struct ExpertProfileSettingsExpertise: View {
     }
 
     private func tagChip(_ entry: ExpertProfileData.ExpertiseTagEntry) -> some View {
-        HStack(spacing: 6) {
-            if entry.isPrimary {
+        let isPrimary = entry.isPrimary
+        return HStack(spacing: 6) {
+            if isPrimary {
                 Image(systemName: "star.fill")
                     .font(.system(size: 10))
                     .foregroundColor(Brand.primary)
@@ -86,7 +87,7 @@ struct ExpertProfileSettingsExpertise: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(
-                            entry.isPrimary
+                            isPrimary
                                 ? Brand.primary.opacity(0.55)
                                 : ExpertProfileSettingsTheme.tagBorder,
                             lineWidth: 1

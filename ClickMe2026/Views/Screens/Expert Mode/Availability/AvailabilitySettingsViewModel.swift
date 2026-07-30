@@ -189,6 +189,27 @@ final class AvailabilitySettingsViewModel {
         return h * 60 + m
     }
 
+    // MARK: - Validation
+
+    /// Day names whose enabled slots overlap. Empty when the schedule
+    /// is valid. Used to disable Save and to build the error banner.
+    ///
+    /// Overlap = any two slots on the same day with `a.start < b.end`
+    /// and `a.end > b.start`. Order-insensitive — we sort a copy first
+    /// so `[13:00-14:00, 09:00-10:00]` isn't mistaken for overlap.
+    var overlappingDayNames: [String] {
+        schedule.compactMap { day in
+            guard day.isEnabled, day.slots.count > 1 else { return nil }
+            let sorted = day.slots.sorted { $0.start < $1.start }
+            for i in 1..<sorted.count where sorted[i].start < sorted[i - 1].end {
+                return day.day
+            }
+            return nil
+        }
+    }
+
+    var hasOverlaps: Bool { !overlappingDayNames.isEmpty }
+
     // MARK: - Save
 
     /// Persist the current schedule + timezone via `PUT /expert/availability`.
@@ -201,6 +222,17 @@ final class AvailabilitySettingsViewModel {
     private func performSave() async {
         guard !isSaving else { return }
         saveError = nil
+
+        // Pre-flight: the server hard-rejects any day with overlapping
+        // slots with a per-day 422. Catch it locally so the user sees a
+        // targeted "Monday has overlaps" message instead of a generic
+        // network error, and so the write is never even attempted.
+        let overlaps = overlappingDayNames
+        if !overlaps.isEmpty {
+            saveError = Self.overlapMessage(for: overlaps)
+            return
+        }
+
         isSaving = true
         defer { isSaving = false }
 
@@ -217,15 +249,28 @@ final class AvailabilitySettingsViewModel {
         }
     }
 
+    private static func overlapMessage(for days: [String]) -> String {
+        if days.count == 1 {
+            return "Time slots on \(days[0]) overlap. Please adjust them before saving."
+        }
+        let joined = ListFormatter.localizedString(byJoining: days)
+        return "Time slots on \(joined) overlap. Please adjust them before saving."
+    }
+
     private func buildRequest() -> UpdateMyAvailabilityRequest {
         let dayLists = schedule.map { day -> [TimeSlot] in
             guard day.isEnabled else { return [] }
-            return day.slots.map { slot in
-                TimeSlot(
-                    startTime: Self.formatHHMM(slot.start),
-                    endTime: Self.formatHHMM(slot.end)
-                )
-            }
+            // Sort by start so out-of-order edits still hit the server
+            // in ascending order — cosmetic on the server side but
+            // matches what the day rows display.
+            return day.slots
+                .sorted { $0.start < $1.start }
+                .map { slot in
+                    TimeSlot(
+                        startTime: Self.formatHHMM(slot.start),
+                        endTime: Self.formatHHMM(slot.end)
+                    )
+                }
         }
         // Guard against a schedule that isn't exactly 7 days.
         let padded = dayLists + Array(repeating: [TimeSlot](), count: max(0, 7 - dayLists.count))

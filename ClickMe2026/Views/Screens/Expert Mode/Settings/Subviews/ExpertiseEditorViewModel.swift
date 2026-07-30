@@ -163,9 +163,12 @@ final class ExpertiseEditorViewModel: ObservableObject {
 
         let ordered = selectedTags
         let effectivePrimary = primaryId ?? ordered.first?.id
+        // Lowercase the UUID — Swift's `.uuidString` returns uppercase but
+        // the backend looks tags up case-sensitively and rejects
+        // uppercase strings with a validation error.
         let tags = ordered.map { tag in
             UpdateExpertProfileRequest.ExpertiseTag(
-                tagId: tag.id.uuidString,
+                tagId: tag.id.uuidString.lowercased(),
                 isPrimary: tag.id == effectivePrimary
             )
         }
@@ -175,8 +178,7 @@ final class ExpertiseEditorViewModel: ObservableObject {
             professionalDetails: nil,
             locationDetails: nil,
             languages: nil,
-            expertiseTags: tags,
-            hourlyRate: nil
+            expertiseTags: tags
         )
         do {
             _ = try await api.updateExpertProfile(body)

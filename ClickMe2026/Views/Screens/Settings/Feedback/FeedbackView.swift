@@ -56,6 +56,16 @@ struct FeedbackView: View {
         } message: { message in
             Text(message)
         }
+        .alert(
+            "Thanks for your feedback!",
+            isPresented: $viewModel.showThanks
+        ) {
+            Button("You're welcome", role: .cancel) {
+                viewModel.dismissThanks()
+            }
+        } message: {
+            Text("We really appreciate you taking the time to help us make ClickMe better.")
+        }
     }
 
     // MARK: - Form card

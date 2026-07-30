@@ -79,6 +79,18 @@ struct SignupTimezoneView: View {
         .toolbarBackground(bg, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .alert(
+            "Couldn't save",
+            isPresented: Binding(
+                get: { viewModel.saveError != nil },
+                set: { if !$0 { viewModel.saveError = nil } }
+            ),
+            presenting: viewModel.saveError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
     // MARK: - Sections
@@ -162,20 +174,31 @@ struct SignupTimezoneView: View {
 
     private var nextButton: some View {
         Button {
-            onNext()
+            Task {
+                if await viewModel.save() {
+                    onNext()
+                }
+            }
         } label: {
-            Text("Next")
-                .font(.system(size: 17, weight: .bold, design: .rounded))
-                .foregroundColor(onPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(
-                    Capsule()
-                        .fill(brandGreen)
-                        .shadow(color: brandGreen.opacity(0.45), radius: 14, x: 0, y: 4)
-                )
+            Group {
+                if viewModel.isSaving {
+                    ProgressView().progressViewStyle(.circular).tint(onPrimary)
+                } else {
+                    Text("Next")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundColor(onPrimary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 54)
+            .background(
+                Capsule()
+                    .fill(brandGreen)
+                    .shadow(color: brandGreen.opacity(0.45), radius: 14, x: 0, y: 4)
+            )
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(viewModel.isSaving)
     }
 }
 

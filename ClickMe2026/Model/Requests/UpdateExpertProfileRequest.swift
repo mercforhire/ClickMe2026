@@ -36,15 +36,9 @@ struct UpdateExpertProfileRequest: Encodable {
         let isPrimary: Bool
     }
 
-    struct HourlyRate: Encodable {
-        let amount: Int
-        let currency: String
-    }
-
     let personalInfo: PersonalInfo?
     let professionalDetails: ProfessionalDetails?
     let locationDetails: LocationDetails?
     let languages: [String]?
     let expertiseTags: [ExpertiseTag]?
-    let hourlyRate: HourlyRate?
 }

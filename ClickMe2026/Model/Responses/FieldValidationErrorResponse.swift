@@ -15,4 +15,16 @@ struct FieldValidationErrorResponse: Decodable {
     let status: String
     let code: ErrorCode?
     let errors: [FieldError]
+
+    // Lenient `code` decode — matches `StandardErrorResponse`. Unknown
+    // server codes decode to nil instead of failing the whole payload.
+    private enum CodingKeys: String, CodingKey { case status, code, errors }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.status = try container.decode(String.self, forKey: .status)
+        self.errors = try container.decode([FieldError].self, forKey: .errors)
+        let rawCode = try container.decodeIfPresent(String.self, forKey: .code)
+        self.code = rawCode.flatMap(ErrorCode.init(rawValue:))
+    }
 }

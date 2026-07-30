@@ -193,10 +193,12 @@ extension ClickMeAPI {
     func acceptExpertBooking(id: UUID, message: String? = nil) async throws -> SuccessMessageResponse {
         var params: [String: Any] = [:]
         if let message { params["message"] = message }
+        // Always send at least `{}` — server rejects a body-less POST with
+        // `VALIDATION_ERROR: "expected object, received undefined"`.
         return try await service.httpRequest(
             url: url(.acceptExpertBooking, id: id),
             method: .post,
-            parameters: params.isEmpty ? nil : params
+            parameters: params
         )
     }
 
@@ -225,10 +227,12 @@ extension ClickMeAPI {
     func acceptBookingRequest(id: UUID, message: String? = nil) async throws -> SuccessMessageResponse {
         var params: [String: Any] = [:]
         if let message { params["message"] = message }
+        // Always send at least `{}` — server rejects a body-less POST with
+        // `VALIDATION_ERROR: "expected object, received undefined"`.
         return try await service.httpRequest(
             url: url(.acceptBookingRequest, id: id),
             method: .post,
-            parameters: params.isEmpty ? nil : params
+            parameters: params
         )
     }
 

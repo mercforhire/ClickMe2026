@@ -113,6 +113,13 @@ final class ClickMeAPI {
         baseURL + endpoint.path.replacingOccurrences(of: ":id", with: id.uuidString)
     }
 
+    /// Non-UUID id variant — used by endpoints keyed on external
+    /// identifiers we don't control (e.g. Stripe `pm_...` payment method
+    /// ids on `/me/payment-methods/:id`).
+    func url(_ endpoint: APIRequestURLs, stringId: String) -> String {
+        baseURL + endpoint.path.replacingOccurrences(of: ":id", with: stringId)
+    }
+
     func url(_ endpoint: APIRequestURLs, deviceId: String) -> String {
         baseURL + endpoint.path.replacingOccurrences(of: ":device_id", with: deviceId)
     }

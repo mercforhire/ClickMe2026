@@ -21,8 +21,6 @@ struct ExpertSearchResultItem: Decodable {
     let experienceYears: Int?
     let avgRating: Double?
     let totalReviews: Int?
-    let hourlyRateAmount: Int?
-    let hourlyRateCurrency: String?
     let relevanceScore: Double?
     let expertiseTags: [String]?
     let isFavorite: Bool?

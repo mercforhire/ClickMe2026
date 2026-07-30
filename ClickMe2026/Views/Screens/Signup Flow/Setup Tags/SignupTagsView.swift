@@ -52,15 +52,25 @@ struct SignupTagsView: View {
             )
             .ignoresSafeArea()
 
-            content
+            // Fade the foreground only — background stays opaque so the
+            // push transition doesn't briefly reveal white.
+            Group {
+                content
 
-            if case .loaded = viewModel.loadState {
-                TagsDoneButton(action: { onDone(viewModel.selectedTags) })
+                if case .loaded = viewModel.loadState {
+                    TagsDoneButton(isLoading: viewModel.isSaving) {
+                        Task {
+                            if await viewModel.save() {
+                                onDone(viewModel.selectedTags)
+                            }
+                        }
+                    }
                     .padding(.horizontal, 20)
                     .padding(.bottom, 36)
+                }
             }
+            .opacity(contentOpacity)
         }
-        .opacity(contentOpacity)
         .task { await viewModel.load() }
         .onAppear {
             withAnimation(.easeOut(duration: 0.4)) { contentOpacity = 1 }
@@ -70,6 +80,18 @@ struct SignupTagsView: View {
         .toolbarBackground(TagsBrand.bgTop, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .alert(
+            "Couldn't save",
+            isPresented: Binding(
+                get: { viewModel.saveError != nil },
+                set: { if !$0 { viewModel.saveError = nil } }
+            ),
+            presenting: viewModel.saveError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
     // MARK: - Content router

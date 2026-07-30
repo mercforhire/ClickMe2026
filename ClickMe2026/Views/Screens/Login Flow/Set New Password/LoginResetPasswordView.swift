@@ -82,6 +82,9 @@ struct LoginResetPasswordView: View {
             )
             .ignoresSafeArea()
 
+            // opacity/offset applied to just the content so the
+            // gradient background stays opaque during the push
+            // (avoids a white flash before the fade-in kicks in).
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
@@ -164,11 +167,11 @@ struct LoginResetPasswordView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 36)
             }
+            .opacity(contentOpacity)
+            .offset(y: contentOffset)
         }
         .navigationTitle("Set New Password")
         .navigationBarTitleDisplayMode(.inline)
-        .opacity(contentOpacity)
-        .offset(y: contentOffset)
         .onAppear {
             withAnimation(.easeOut(duration: 0.45).delay(0.1)) {
                 contentOpacity = 1

@@ -53,9 +53,10 @@ final class SignupOverviewViewModel: ObservableObject {
         guard let accumulator else { return SignupOverviewViewModel.defaultChecklist }
         let c = accumulator.checklist
         return [
+            ChecklistItem(kind: .basicInfo,      title: "Personal details",    isComplete: c.basicInfo),
+            ChecklistItem(kind: .timezone,       title: "Confirm timezone",    isComplete: c.timezone),
             ChecklistItem(kind: .profilePicture, title: "Add profile picture", isComplete: c.profilePhoto),
             ChecklistItem(kind: .verifyEmail,    title: "Verify email",        isComplete: c.emailVerified),
-            ChecklistItem(kind: .hourlyRate,     title: "Set hourly rate",     isComplete: c.hourlyRate),
             ChecklistItem(kind: .expertise,      title: "Add expertise",       isComplete: c.expertise),
         ]
     }
@@ -69,9 +70,10 @@ final class SignupOverviewViewModel: ObservableObject {
     // MARK: - Defaults
 
     static let defaultChecklist = [
+        ChecklistItem(kind: .basicInfo,      title: "Personal details",    isComplete: true),
+        ChecklistItem(kind: .timezone,       title: "Confirm timezone",    isComplete: true),
         ChecklistItem(kind: .profilePicture, title: "Add profile picture", isComplete: true),
         ChecklistItem(kind: .verifyEmail,    title: "Verify email",        isComplete: true),
-        ChecklistItem(kind: .hourlyRate,     title: "Set hourly rate",     isComplete: true),
         ChecklistItem(kind: .expertise,      title: "Add expertise",       isComplete: false),
     ]
 
@@ -82,7 +84,5 @@ final class SignupOverviewViewModel: ObservableObject {
                    detail: "A clear, well-lit headshot with a simple background builds instant trust."),
         ProfileTip(title: "Clearly Define Your Expertise",
                    detail: "Pick focused tags over broad ones — specificity helps the right clients find you."),
-        ProfileTip(title: "Set Competitive Rates",
-                   detail: "Check what others in your field charge, then price for the value you deliver."),
     ]
 }

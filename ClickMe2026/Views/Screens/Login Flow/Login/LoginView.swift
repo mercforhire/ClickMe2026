@@ -33,7 +33,6 @@ private enum SignupRoute: Hashable {
     case overview
     case profilePhoto
     case verifyEmail
-    case hourlyRate
     case tags
     case review
 }
@@ -42,15 +41,19 @@ private enum SignupRoute: Hashable {
 
 struct LoginView: View {
     @StateObject private var viewModel: LoginViewModel
-    var onSuccess: (UserRole) -> Void
+    /// Fires when the user reaches a home destination. The mode passed
+    /// is the landing decision — either `.expert` (role=expert AND has
+    /// ≥1 topic) or `.client` (everyone else). The parent uses it to
+    /// pick the correct home route.
+    var onSuccess: (AppMode) -> Void
 
     // Navigation — heterogeneous stack across login / password-reset / signup flows
-    @State private var path = NavigationPath()
+    @State private var path: NavigationPath
 
     /// Shared payload store owned by the login screen for the duration of a
     /// signup flow. `@State` so the same instance is threaded through every
     /// pushed destination without re-initializing.
-    @State private var signupAccumulator = SignupAccumulator()
+    @State private var signupAccumulator: SignupAccumulator
 
     // UI-only animation state
     @State private var contentOpacity: Double = 0
@@ -58,10 +61,32 @@ struct LoginView: View {
 
     init(
         viewModel: LoginViewModel = LoginViewModel(),
-        onSuccess: @escaping (UserRole) -> Void = { _ in }
+        startAtSignupSetup: Bool = false,
+        hydrateFrom expertProfile: ExpertProfileData? = nil,
+        onSuccess: @escaping (AppMode) -> Void = { _ in }
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onSuccess = onSuccess
+
+        // Seed the accumulator BEFORE it gets wrapped in @State — each
+        // signup step's ViewModel snapshots the accumulator at init, so
+        // hydrating later (in .task / .onAppear) would be too late.
+        let accumulator = SignupAccumulator()
+        if let expertProfile {
+            accumulator.hydrate(from: expertProfile)
+        }
+        _signupAccumulator = State(initialValue: accumulator)
+
+        // Seed the nav stack so the first-rendered screen is the Overview
+        // checklist rather than the login form. Used when the splash
+        // detects an already-authed expert whose profile setup never
+        // completed — they land on the hub and can pick any remaining
+        // checklist item to finish.
+        var initialPath = NavigationPath()
+        if startAtSignupSetup {
+            initialPath.append(SignupRoute.overview)
+        }
+        _path = State(initialValue: initialPath)
     }
 
     var body: some View {
@@ -79,7 +104,16 @@ struct LoginView: View {
                     case .signUp:
                         SignupInitialView(
                             accumulator: signupAccumulator,
-                            onContinue: { path.append(SignupRoute.basicInfo) }
+                            onContinue: {
+                                // Account has been created on the backend at
+                                // this point — the user must NOT be able to
+                                // nav back to Create Account (a resubmit
+                                // would 409). Reset the path so Overview
+                                // sits directly under Login; back-chevron
+                                // takes them to the login screen instead.
+                                path = NavigationPath()
+                                path.append(SignupRoute.overview)
+                            }
                         )
                     }
                 }
@@ -99,14 +133,19 @@ struct LoginView: View {
                 .navigationDestination(for: SignupRoute.self) { route in
                     switch route {
                     case .basicInfo:
+                        // Overview → Basic Info → Overview. Pop back after
+                        // a successful save so the checklist re-renders
+                        // with the row ✓.
                         SignupBasicInfoView(
                             accumulator: signupAccumulator,
-                            onContinue: { _ in path.append(SignupRoute.timezone) }
+                            onContinue: { _ in path.removeLast() }
                         )
                     case .timezone:
+                        // Overview → Timezone → Overview. Same round-trip
+                        // as Basic Info.
                         SignupTimezoneView(
                             accumulator: signupAccumulator,
-                            onNext: { path.append(SignupRoute.overview) }
+                            onNext: { path.removeLast() }
                         )
                     case .overview:
                         SignupOverviewView(
@@ -114,36 +153,52 @@ struct LoginView: View {
                             onNext: { path.append(SignupRoute.review) },
                             onChecklistItemTap: { item in
                                 switch item.kind {
+                                case .basicInfo:
+                                    path.append(SignupRoute.basicInfo)
+                                case .timezone:
+                                    path.append(SignupRoute.timezone)
                                 case .profilePicture:
                                     path.append(SignupRoute.profilePhoto)
                                 case .verifyEmail:
                                     path.append(SignupRoute.verifyEmail)
-                                case .hourlyRate:
-                                    path.append(SignupRoute.hourlyRate)
                                 case .expertise:
                                     path.append(SignupRoute.tags)
                                 }
                             }
                         )
                     case .profilePhoto:
-                        SignupProfilePhotoView(accumulator: signupAccumulator)
+                        // Overview → Profile Photo → Overview. Pop back
+                        // after upload succeeds so the checklist re-renders
+                        // with the "Profile Picture" row ✓.
+                        SignupProfilePhotoView(
+                            accumulator: signupAccumulator,
+                            onSave: { _ in path.removeLast() }
+                        )
                     case .verifyEmail:
                         SignupVerifyEmailView(
                             accumulator: signupAccumulator,
                             onChangeEmail: { path.removeLast() },
                             onVerified: { path.removeLast() }
                         )
-                    case .hourlyRate:
-                        ClickMeSetHourlyRateView(accumulator: signupAccumulator)
                     case .tags:
-                        SignupTagsView(accumulator: signupAccumulator)
+                        // Overview → Tags → Overview. Pop back so the
+                        // checklist re-renders with the "Add expertise"
+                        // row ✓.
+                        SignupTagsView(
+                            accumulator: signupAccumulator,
+                            onDone: { _ in path.removeLast() }
+                        )
                     case .review:
                         SignupReviewView(
                             accumulator: signupAccumulator,
                             onPublish: {
-                                // Log the freshly-created expert in as their own client-of-record
-                                // so the app can transition into the main tab experience.
-                                onSuccess(.expert)
+                                // Fresh expert always lands on client home
+                                // — they haven't published any topics yet,
+                                // so the expert dashboard would be empty.
+                                // They can flip to expert mode manually from
+                                // the profile hub once they add a topic.
+                                UserManager.shared.setMode(.client)
+                                onSuccess(.client)
                             }
                         )
                     }
@@ -183,8 +238,34 @@ struct LoginView: View {
 
                     LoginButton(isLoading: viewModel.isLoading) {
                         Task {
-                            if let role = await viewModel.attemptLogin() {
-                                onSuccess(role)
+                            if let roles = await viewModel.attemptLogin() {
+                                let isExpert = roles.contains(.expert)
+                                if isExpert, await isExpertProfileIncomplete() {
+                                    // The account has the expert role but never
+                                    // completed expert-profile setup. Hydrate the
+                                    // accumulator from whatever the server has so
+                                    // far and drop the user on the Overview
+                                    // checklist so they can pick any remaining
+                                    // item to finish setup.
+                                    if let expertProfile = UserManager.shared.expertProfile {
+                                        signupAccumulator.hydrate(from: expertProfile)
+                                    }
+                                    path.append(SignupRoute.overview)
+                                } else {
+                                    // Landing decision: expert home only when
+                                    // roles.contains(.expert) AND ≥1 topic exists
+                                    // — a fresh expert with no topics lands on
+                                    // client home so they don't see an empty
+                                    // expert dashboard.
+                                    let mode: AppMode
+                                    if isExpert, await UserManager.shared.expertHasTopics() {
+                                        mode = .expert
+                                    } else {
+                                        mode = .client
+                                    }
+                                    UserManager.shared.setMode(mode)
+                                    onSuccess(mode)
+                                }
                             }
                         }
                     }
@@ -214,6 +295,20 @@ struct LoginView: View {
         } message: { message in
             Text(message)
         }
+    }
+
+    /// True when the freshly-authed expert has never completed the setup
+    /// flow. Reads the authoritative `setup_completed` flag from
+    /// `GET /expert/profile`. On a transient network failure we default
+    /// to `false` (i.e. treat as "complete") so we don't punt completed
+    /// users back into signup because of one flaky request.
+    private func isExpertProfileIncomplete() async -> Bool {
+        do {
+            try await UserManager.shared.refreshExpertProfile()
+        } catch {
+            return false
+        }
+        return UserManager.shared.expertProfile?.setupCompleted == false
     }
 
     /// Binding that's `true` while the given optional property is non-nil, and

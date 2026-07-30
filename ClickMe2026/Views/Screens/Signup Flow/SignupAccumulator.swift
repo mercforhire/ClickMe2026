@@ -10,15 +10,17 @@ import Observation
 
 /// Shared state model owned by the signup orchestrator (currently
 /// `LoginView`). Each signup step reads/writes fields on this instance
-/// instead of firing callbacks up to the parent — cleaner than
-/// initializer-chaining slices of payload from screen to screen.
+/// AND (via its ViewModel's `save()`) PATCHes just that step's slice to
+/// `/expert/profile/setup` before advancing — so a mid-flow quit leaves
+/// authoritative state on the server.
 ///
-/// The final `SignupReviewView` calls `buildSetupExpertProfileRequest()`
-/// and POSTs the result to `PATCH /expert/profile/setup`.
+/// The final `SignupReviewView` calls `PATCH /expert/profile/setup` one
+/// more time with `setup_completed: true` to flip the server's completion
+/// flag and unlock the expert dashboard.
 ///
-/// TODO: persist to `UserDefaults` on every mutation so a mid-signup
-/// app close doesn't wipe progress. Deferred until MVP feedback confirms
-/// that's a real user-facing problem.
+/// When the app auto-resumes a mid-setup expert (see `AppRoute.signupSetup`),
+/// `hydrate(from:)` seeds this instance from `GET /expert/profile` so any
+/// step that already saved pre-fills instead of forcing re-entry.
 @Observable
 @MainActor
 final class SignupAccumulator {
@@ -53,7 +55,12 @@ final class SignupAccumulator {
     /// `LanguageItem` (id + label) so the review screen can render
     /// labels without a second lookup and the request builder can extract
     /// ids without a lookup either.
-    var languages: [LanguageItem] = []
+    ///
+    /// Pre-seeded with English so the Basic Info step doesn't force the
+    /// user through a language picker if they only speak English. `id`
+    /// and `label` mirror the canonical entries in
+    /// `LanguageSelectionViewModel.masterList`.
+    var languages: [LanguageItem] = [LanguageItem(id: "en", label: "English")]
 
     // MARK: Timezone
 
@@ -71,25 +78,21 @@ final class SignupAccumulator {
     // MARK: Expertise tags
 
     /// Full tag records picked from `GET /meta/expertise-tags`. First
-    /// element is treated as the primary tag by the server. Storing the
-    /// items (id + label) avoids parallel-array drift and lets the
-    /// review screen render labels without re-looking-up.
+    /// element is treated as the primary tag by the server. On hydration
+    /// from `/expert/profile` the `categoryId` field is set to `""` — the
+    /// tag-picker view only needs `categoryId` for the master catalog
+    /// (which it re-fetches on load), so an empty value here is fine.
     var expertiseTags: [ExpertiseTagItem] = []
-
-    // MARK: Hourly rate
-
-    /// Minor units (cents). `nil` = not set. `0` is a valid "free
-    /// consultation" value once the user has explicitly chosen it, so
-    /// we can't use `0` as the sentinel.
-    var hourlyRateAmount: Int?
-    /// ISO 3-letter uppercase.
-    var hourlyRateCurrency: String = "USD"
 
     // MARK: - Derived
 
     /// True once every field required for `PATCH /expert/profile/setup`
-    /// is present. Drives the "Publish Profile" button on the review
-    /// screen.
+    /// with `setup_completed: true` is present. Drives the "Publish
+    /// Profile" button on the review screen.
+    ///
+    /// Hourly rate is intentionally NOT part of setup — clients aren't
+    /// experts yet, and any per-topic pricing is captured later on the
+    /// expert-side Topics screen.
     var isReadyToPublish: Bool {
         !firstName.isEmpty
             && !city.isEmpty
@@ -98,8 +101,6 @@ final class SignupAccumulator {
             && !timezone.isEmpty
             && !languages.isEmpty
             && !expertiseTags.isEmpty
-            && hourlyRateAmount != nil
-            && !hourlyRateCurrency.isEmpty
     }
 
     // MARK: - Checklist state
@@ -108,23 +109,89 @@ final class SignupAccumulator {
     /// derived from whether the corresponding field(s) have been filled
     /// in. Kept as a computed property so the checklist stays in sync
     /// as the user moves between steps.
+    ///
+    /// Basic Info requires every identity field (first name, city,
+    /// province/state, country, languages) — anything less and the
+    /// server can't render a useful expert card. Timezone always has
+    /// a value (auto-seeded from `TimeZone.current`), so its row is
+    /// considered complete as long as the string is non-empty.
     var checklist: SignupChecklist {
         SignupChecklist(
+            basicInfo: !firstName.isEmpty
+                && !city.isEmpty
+                && !provinceState.isEmpty
+                && !countryCode.isEmpty
+                && !languages.isEmpty,
+            timezone: !timezone.isEmpty,
             profilePhoto: avatarUrl != nil,
             emailVerified: emailVerified,
-            hourlyRate: hourlyRateAmount != nil,
             expertise: !expertiseTags.isEmpty
         )
     }
 
-    // MARK: - Request builder
+    // MARK: - Hydration
 
-    /// Assembles the payload for `PATCH /expert/profile/setup`. Requires
-    /// `isReadyToPublish` — callers guard on that before invoking. If
-    /// any required field is empty this returns nil so the caller can
-    /// route the user back to the appropriate step.
-    func buildSetupExpertProfileRequest() -> SetupExpertProfileRequest? {
-        guard isReadyToPublish, let amount = hourlyRateAmount else { return nil }
+    /// Seeds fields from a server `ExpertProfileData` snapshot returned by
+    /// `GET /expert/profile`. Covers every step of the signup flow —
+    /// basic info, avatar, location, timezone, languages, hourly rate,
+    /// expertise tags. Non-empty local values are preserved where the
+    /// server has nothing to say (e.g. the English default for
+    /// `languages` survives if the profile has an empty list).
+    ///
+    /// Note the input's `location_details` uses `stateProvince` (GET key
+    /// `state_province`), while the PATCH schema uses `province_state`.
+    /// The client normalizes to `provinceState` internally.
+    func hydrate(from profile: ExpertProfileData) {
+        if let name = profile.personalInfo.firstName, !name.isEmpty {
+            firstName = name
+        }
+        if let email = profile.personalInfo.email, !email.isEmpty {
+            self.email = email
+        }
+        if let avatar = profile.avatarUrl, !avatar.isEmpty {
+            avatarUrl = avatar
+        }
+        if let cityValue = profile.locationDetails.city, !cityValue.isEmpty {
+            city = cityValue
+        }
+        if let stateValue = profile.locationDetails.stateProvince, !stateValue.isEmpty {
+            provinceState = stateValue
+        }
+        if let country = profile.locationDetails.countryCode, !country.isEmpty {
+            countryCode = country
+        }
+        if let tz = profile.locationDetails.timezone, !tz.isEmpty {
+            timezone = tz
+        }
+        let hydratedLanguages: [LanguageItem] = profile.languages.compactMap { entry in
+            guard let id = entry.id, let label = entry.label else { return nil }
+            return LanguageItem(id: id, label: label)
+        }
+        if !hydratedLanguages.isEmpty {
+            languages = hydratedLanguages
+        }
+        if !profile.expertiseTags.isEmpty {
+            // Primary tag first — matches the server's `is_primary`
+            // ordering and mirrors how the review + publish payload
+            // treats element 0 as primary.
+            let sorted = profile.expertiseTags.sorted { lhs, rhs in
+                if lhs.isPrimary != rhs.isPrimary { return lhs.isPrimary }
+                return lhs.label.localizedCaseInsensitiveCompare(rhs.label) == .orderedAscending
+            }
+            expertiseTags = sorted.map {
+                ExpertiseTagItem(id: $0.id, label: $0.label, categoryId: "")
+            }
+        }
+    }
+
+    // MARK: - Request builders
+
+    /// Assembles the full payload for the final "publish" call — all
+    /// required fields plus `setup_completed: true`. Callers must guard
+    /// on `isReadyToPublish`; returns nil when any required field is
+    /// empty so the caller can route the user back.
+    func buildPublishRequest() -> SetupExpertProfileRequest? {
+        guard isReadyToPublish else { return nil }
         return SetupExpertProfileRequest(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             location: .init(
@@ -135,7 +202,7 @@ final class SignupAccumulator {
             timezone: timezone,
             languages: languages.map(\.id),
             expertiseTags: expertiseTags.map { $0.id.uuidString },
-            hourlyRate: .init(amount: amount, currency: hourlyRateCurrency)
+            setupCompleted: true
         )
     }
 }
@@ -143,9 +210,11 @@ final class SignupAccumulator {
 // MARK: - Checklist
 
 /// Bool flags mirrored to the Overview screen's checklist rows.
+/// Order here mirrors the order in the UI: identity → settings → polish.
 struct SignupChecklist {
+    let basicInfo: Bool
+    let timezone: Bool
     let profilePhoto: Bool
     let emailVerified: Bool
-    let hourlyRate: Bool
     let expertise: Bool
 }

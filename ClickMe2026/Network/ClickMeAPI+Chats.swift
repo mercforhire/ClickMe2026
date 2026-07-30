@@ -10,11 +10,15 @@ import Foundation
 
 extension ClickMeAPI {
 
-    func initiateChat(expertId: UUID) async throws -> SuccessDataResponse<InitiateChatPayload> {
+    /// `POST /chats/initiate` — get or create the 1:1 thread between the
+    /// caller and `peerId`. Works from either side of a booking (the
+    /// server treats it as a generic peer id, not role-specific).
+    /// Idempotent: repeat calls return the existing thread.
+    func initiateChat(peerId: UUID) async throws -> SuccessDataResponse<InitiateChatPayload> {
         try await service.httpRequest(
             url: url(.initiateChat),
             method: .post,
-            parameters: ["expert_id": expertId.uuidString]
+            parameters: ["peer_id": peerId.uuidString]
         )
     }
 
@@ -34,13 +38,18 @@ extension ClickMeAPI {
         )
     }
 
+    /// `POST /chats/:id/send` — returns a minimal ack (`ChatSendAckData`)
+    /// with just message id, status, and timestamp. The full `ChatMessageItem`
+    /// row is available via `GET /chats/:id/messages`; callers reconcile
+    /// a local optimistic insert against the ack rather than getting the
+    /// whole record back.
     func sendChatMessage(
         id: UUID,
         type: MessageType,
         content: String,
         clientMsgId: String,
         attachments: [String] = []
-    ) async throws -> SuccessDataResponse<ChatMessageItem> {
+    ) async throws -> SuccessDataResponse<ChatSendAckData> {
         try await service.httpRequest(
             url: url(.sendChatMessage, id: id),
             method: .post,

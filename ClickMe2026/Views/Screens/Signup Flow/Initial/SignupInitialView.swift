@@ -92,9 +92,12 @@ struct SignupInitialView: View {
                     Spacer().frame(height: 48)
                 }
             }
+            // Fade/slide the content only — keep the background opaque so
+            // the push transition doesn't briefly reveal the underlying
+            // window (white flash).
+            .opacity(contentOpacity)
+            .offset(y: contentOffset)
         }
-        .opacity(contentOpacity)
-        .offset(y: contentOffset)
         .onAppear {
             withAnimation(.easeOut(duration: 0.45).delay(0.1)) {
                 contentOpacity = 1

@@ -20,25 +20,33 @@ final class SignupTimezoneViewModel: ObservableObject {
     /// Human-readable label matching one of `Timezones.all`.
     @Published var timezoneLabel: String
 
+    // MARK: Save state
+    @Published var isSaving: Bool = false
+    @Published var saveError: String?
+
     // MARK: Dependencies
 
     private let accumulator: SignupAccumulator?
+    private let api: ClickMeAPI
 
     // MARK: Init
 
     /// Preview / test init.
     init(
         timezoneId: String = TimeZone.current.identifier,
-        timezoneLabel: String = Timezones.detected().label
+        timezoneLabel: String = Timezones.detected().label,
+        api: ClickMeAPI = .shared
     ) {
         self.accumulator = nil
+        self.api = api
         self.timezoneId = timezoneId
         self.timezoneLabel = timezoneLabel
     }
 
     /// Runtime init — hydrates from the accumulator and writes changes back.
-    init(accumulator: SignupAccumulator) {
+    init(accumulator: SignupAccumulator, api: ClickMeAPI = .shared) {
         self.accumulator = accumulator
+        self.api = api
         self.timezoneId = accumulator.timezone
         // Match the seed id to a display label from our curated list.
         // Falls back to the accumulator's raw id if the zone isn't listed
@@ -67,5 +75,30 @@ final class SignupTimezoneViewModel: ObservableObject {
             timezoneLabel = entry.label
         }
         accumulator?.timezone = entry.id
+    }
+
+    // MARK: - Save
+
+    /// Persists the current timezone to `/expert/profile/setup` as a
+    /// partial update. Returns `true` on success so the view can navigate
+    /// forward. Previews (no accumulator wired) short-circuit to `true`.
+    @discardableResult
+    func save() async -> Bool {
+        guard accumulator != nil, !timezoneId.isEmpty else {
+            return accumulator == nil
+        }
+
+        saveError = nil
+        isSaving = true
+        defer { isSaving = false }
+
+        let body = SetupExpertProfileRequest(timezone: timezoneId)
+        do {
+            _ = try await api.setupExpertProfile(body)
+            return true
+        } catch {
+            saveError = error.userMessage
+            return false
+        }
     }
 }

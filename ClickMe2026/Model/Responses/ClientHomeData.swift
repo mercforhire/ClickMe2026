@@ -20,11 +20,6 @@ struct ClientHomeData: Decodable {
     }
 
     struct RecommendedExpert: Decodable {
-        struct BaseHourlyRate: Decodable {
-            let amount: Double?
-            let currency: String?
-        }
-
         let expertId: UUID
         let fullName: String?
         let title: String?
@@ -33,10 +28,39 @@ struct ClientHomeData: Decodable {
         let reviewCount: Int?
         let yearsExperience: Int?
         let expertiseTags: [String]?
-        let baseHourlyRate: BaseHourlyRate?
         let isFavorite: Bool
+    }
+
+    /// Curated "Featured Topics" strip shown on the client Explore
+    /// screen. Server-picked from published topics (random per request,
+    /// deduped by expert). Optional so the client can decode responses
+    /// from older server versions before the field is deployed — an
+    /// absent or empty array hides the section on the UI.
+    struct FeaturedTopic: Decodable {
+        struct HourlyRate: Decodable {
+            /// Minor units (e.g. cents).
+            let amount: Int
+            /// ISO 4217, uppercase — e.g. "USD".
+            let currency: String
+        }
+
+        struct Expert: Decodable {
+            let expertId: UUID
+            let fullName: String?
+            let profileImageUrl: String?
+        }
+
+        let topicId: UUID
+        let title: String
+        /// Optional — some topics don't have a fixed duration.
+        let durationMins: Int?
+        let hourlyRate: HourlyRate?
+        let expert: Expert
     }
 
     let trendingCategories: [TrendingCategory]
     let recommendedExperts: [RecommendedExpert]
+    /// Nil / empty until the backend deploys the field or when there
+    /// are no eligible topics on the account.
+    let featuredTopics: [FeaturedTopic]?
 }

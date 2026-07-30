@@ -132,10 +132,12 @@ final class NetworkService {
 
     // MARK: - Send + decode
     private func send<T: Decodable>(_ request: URLRequest) async throws -> T {
+        logRequest(request)
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.invalidResponse
         }
+        logResponse(request: request, response: httpResponse, data: data)
         guard (200..<300).contains(httpResponse.statusCode) else {
             throw NetworkError.httpError(statusCode: httpResponse.statusCode, data: data)
         }
@@ -144,6 +146,43 @@ final class NetworkService {
         } catch {
             throw NetworkError.decodingFailed(error)
         }
+    }
+
+    // MARK: - Debug logging
+    //
+    // Compiled out of Release builds. Prints the outgoing request line +
+    // body and the raw response status + body to Xcode's console, so
+    // server-side validation errors can be inspected directly.
+
+    private func logRequest(_ request: URLRequest) {
+        #if DEBUG
+        let method = request.httpMethod ?? "?"
+        let url = request.url?.absoluteString ?? "?"
+        print("→ \(method) \(url)")
+        if let headers = request.allHTTPHeaderFields, !headers.isEmpty {
+            let redacted = headers.map { key, value in
+                key.lowercased() == "authorization" ? "\(key): Bearer …" : "\(key): \(value)"
+            }.joined(separator: ", ")
+            print("  headers: \(redacted)")
+        }
+        if let body = request.httpBody,
+           let string = String(data: body, encoding: .utf8),
+           !string.isEmpty
+        {
+            print("  body: \(string)")
+        }
+        #endif
+    }
+
+    private func logResponse(request: URLRequest, response: HTTPURLResponse, data: Data) {
+        #if DEBUG
+        let url = request.url?.absoluteString ?? "?"
+        print("← \(response.statusCode) \(url)")
+        if !data.isEmpty, let string = String(data: data, encoding: .utf8) {
+            let trimmed = string.count > 2000 ? "\(string.prefix(2000))… (truncated)" : string
+            print("  body: \(trimmed)")
+        }
+        #endif
     }
 
     // MARK: - Request builders

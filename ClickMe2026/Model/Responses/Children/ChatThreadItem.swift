@@ -15,7 +15,11 @@ import Foundation
 struct ChatThreadItem: Decodable {
 
     /// Public display info for the counterparty on this thread.
-    /// `role` distinguishes 1:1 client↔expert threads from support threads.
+    /// `roles` distinguishes 1:1 client↔expert threads from support
+    /// threads. Post-Phase-15 the server returns a role set (users can
+    /// hold both `client` and `expert` capabilities); check
+    /// `roles.contains(.support)` when deciding whether this is a
+    /// support thread.
     struct Partner: Decodable {
         enum Role: String, Decodable {
             case client, expert, support
@@ -23,7 +27,7 @@ struct ChatThreadItem: Decodable {
         let id: UUID
         let name: String?
         let avatarUrl: String?
-        let role: Role
+        let roles: [Role]
     }
 
     let threadId: UUID

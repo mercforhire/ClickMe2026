@@ -25,6 +25,7 @@ enum APIRequestURLs {
     case signup
     case resendVerificationEmail
     case checkEmailVerified
+    case verifyEmailCode
     case forgotPassword
     case resetPassword
 
@@ -32,6 +33,7 @@ enum APIRequestURLs {
     case getMe
 
     // MARK: Expert Profile
+    case getExpertProfile
     case setupExpertProfile
     case updateExpertProfile
 
@@ -45,6 +47,7 @@ enum APIRequestURLs {
     case getUserProfile
     case updateUserProfile
     case uploadAvatar
+    case deleteAvatar
     case updatePassword
 
     // MARK: Discovery
@@ -148,6 +151,12 @@ enum APIRequestURLs {
     case getFAQArticle
     case createSupportTicket
 
+    // MARK: Payment Methods (client-side saved cards)
+    case getPaymentMethods
+    case createPaymentMethodSetupIntent
+    case deletePaymentMethod
+    case setDefaultPaymentMethod
+
     // MARK: Media
     case uploadMedia
 
@@ -162,6 +171,7 @@ enum APIRequestURLs {
         case .signup:                  return "/auth/signup"
         case .resendVerificationEmail: return "/auth/email/resend"
         case .checkEmailVerified:      return "/auth/email/status"
+        case .verifyEmailCode:         return "/auth/email/verify"
         case .forgotPassword:          return "/auth/password/forgot"
         case .resetPassword:           return "/auth/password/reset"
 
@@ -169,6 +179,7 @@ enum APIRequestURLs {
         case .getMe: return "/me"
 
         // Expert Profile
+        case .getExpertProfile:    return "/expert/profile"
         case .setupExpertProfile:  return "/expert/profile/setup"
         case .updateExpertProfile: return "/expert/profile"
 
@@ -181,7 +192,8 @@ enum APIRequestURLs {
         // User Profile
         case .getUserProfile:    return "/user/profile"
         case .updateUserProfile: return "/user/profile"
-        case .uploadAvatar:      return "/user/profile/avatar"
+        case .uploadAvatar,
+             .deleteAvatar:      return "/user/profile/avatar"
         case .updatePassword:    return "/user/password"
 
         // Discovery
@@ -285,6 +297,12 @@ enum APIRequestURLs {
         case .getFAQArticle:      return "/help/faqs/articles/:id"
         case .createSupportTicket: return "/help/support/tickets"
 
+        // Payment Methods
+        case .getPaymentMethods:               return "/me/payment-methods"
+        case .createPaymentMethodSetupIntent:  return "/me/payment-methods/setup-intent"
+        case .deletePaymentMethod:             return "/me/payment-methods/:id"
+        case .setDefaultPaymentMethod:         return "/me/payment-methods/:id/default"
+
         // Media
         case .uploadMedia: return "/media/upload"
 
@@ -297,7 +315,7 @@ enum APIRequestURLs {
     func getHTTPMethod() -> HTTPMethod {
         switch self {
         // Auth
-        case .login, .signup, .resendVerificationEmail, .forgotPassword, .resetPassword:
+        case .login, .signup, .resendVerificationEmail, .forgotPassword, .resetPassword, .verifyEmailCode:
             return .post
         case .checkEmailVerified:
             return .get
@@ -307,6 +325,8 @@ enum APIRequestURLs {
             return .get
 
         // Expert Profile
+        case .getExpertProfile:
+            return .get
         case .setupExpertProfile, .updateExpertProfile:
             return .patch
 
@@ -321,6 +341,8 @@ enum APIRequestURLs {
             return .patch
         case .uploadAvatar:
             return .post
+        case .deleteAvatar:
+            return .delete
 
         // Discovery
         case .getClientHome, .searchExperts, .getDiscoveryFeed, .getRandomExperts,
@@ -422,6 +444,16 @@ enum APIRequestURLs {
             return .get
         case .createSupportTicket:
             return .post
+
+        // Payment Methods
+        case .getPaymentMethods:
+            return .get
+        case .createPaymentMethodSetupIntent:
+            return .post
+        case .deletePaymentMethod:
+            return .delete
+        case .setDefaultPaymentMethod:
+            return .patch
 
         // Media
         case .uploadMedia:

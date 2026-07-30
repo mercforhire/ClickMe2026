@@ -37,6 +37,10 @@ struct LoginForgetPassView: View {
 
     var body: some View {
         ZStack {
+            // Background stays fully opaque throughout — putting the
+            // fade-in animation on the whole ZStack (see git history)
+            // exposed the NavigationStack's default light background
+            // during the push. Only the content fades/slides in.
             LinearGradient(
                 colors: [ForgetPassBrand.bgTop, ForgetPassBrand.bgBottom],
                 startPoint: .top,
@@ -99,14 +103,14 @@ struct LoginForgetPassView: View {
                     Spacer().frame(height: 40)
                 }
             }
+            .opacity(contentOpacity)
+            .offset(y: contentOffset)
         }
         .navigationTitle("Reset Password")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(ForgetPassBrand.bgTop, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .opacity(contentOpacity)
-        .offset(y: contentOffset)
         .onAppear {
             withAnimation(.easeOut(duration: 0.45).delay(0.1)) {
                 contentOpacity = 1

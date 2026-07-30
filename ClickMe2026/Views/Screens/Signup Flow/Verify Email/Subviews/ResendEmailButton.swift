@@ -5,8 +5,12 @@
 
 import SwiftUI
 
-/// Filled brand-green pill that swaps between idle "Resend Email", spinner,
-/// "Resend in Ns" cooldown, and post-send "Email Sent!" confirmation.
+/// Filled brand-green pill that swaps between:
+///  - pre-send idle: "Send Verification Email"
+///  - during send: spinner
+///  - post-send: "Resend in Ns" cooldown → "Email Sent!" (once cooldown
+///    expires but the user hasn't tapped resend yet)
+///  - subsequent resends behave the same as the initial send.
 struct ResendEmailButton: View {
     let isResending: Bool
     let resendCooldown: Int
@@ -38,7 +42,10 @@ struct ResendEmailButton: View {
                     .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                 } else {
-                    Text("Resend Email")
+                    // First entry — nothing has been sent yet, so the
+                    // label reflects the primary action rather than
+                    // implying a resend.
+                    Text("Send Verification Email")
                         .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                 }

@@ -28,37 +28,26 @@ enum Timezones {
     ]
 
     /// Best-effort match of the device's current timezone to a bundled
-    /// entry. Tries exact IANA identifier first, then falls back to GMT
-    /// offset match, then to UTC.
+    /// entry. Tries exact IANA identifier first, then falls back to a
+    /// DST-aware offset match against each bundled zone's *current*
+    /// offset (so e.g. `America/Toronto` in summer maps to
+    /// `America/New_York`, which is also EDT). Falls through to UTC.
     static func detected(from device: TimeZone = .current) -> Entry {
         if let match = all.first(where: { $0.id == device.identifier }) {
             return match
         }
         let deviceOffset = device.secondsFromGMT()
-        return all.first { parseOffsetSeconds($0.label) == deviceOffset }
-            ?? all.first { $0.id == "UTC" }
-            ?? all[0]
+        if let match = all.first(where: {
+            TimeZone(identifier: $0.id)?.secondsFromGMT() == deviceOffset
+        }) {
+            return match
+        }
+        return all.first { $0.id == "UTC" } ?? all[0]
     }
 
     /// Look up a bundled entry by IANA id (used to hydrate from a server
     /// response). Returns nil for zones we don't have a UI label for.
     static func entry(forId id: String) -> Entry? {
         all.first { $0.id == id }
-    }
-
-    private static func parseOffsetSeconds(_ label: String) -> Int? {
-        guard let open = label.firstIndex(of: "("),
-              let close = label.firstIndex(of: ")"),
-              open < close else { return nil }
-        let inside = label[label.index(after: open)..<close]
-        guard inside.hasPrefix("GMT") else { return nil }
-        let offset = inside.dropFirst(3)
-        guard let sign = offset.first, sign == "+" || sign == "-" else { return 0 }
-        let parts = offset.dropFirst().split(separator: ":")
-        guard parts.count == 2,
-              let hours = Int(parts[0]),
-              let minutes = Int(parts[1]) else { return nil }
-        let magnitude = hours * 3600 + minutes * 60
-        return sign == "-" ? -magnitude : magnitude
     }
 }

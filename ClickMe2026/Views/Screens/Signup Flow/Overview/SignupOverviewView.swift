@@ -13,9 +13,10 @@ import SwiftUI
 // MARK: - Models
 
 enum ChecklistItemKind: Hashable {
+    case basicInfo
+    case timezone
     case profilePicture
     case verifyEmail
-    case hourlyRate
     case expertise
 }
 
@@ -119,9 +120,10 @@ private func checklist(completedCount: Int) -> [ChecklistItem] {
 
 private enum PreviewRoute: Hashable {
     case signupOverview
+    case basicInfo
+    case timezone
     case profilePhoto
     case verifyEmail
-    case hourlyRate
     case tags
     case review
 }
@@ -153,16 +155,18 @@ private struct PreviewOverview: View {
                         onNext: { path.append(.review) },
                         onChecklistItemTap: { item in
                             switch item.kind {
+                            case .basicInfo:      path.append(.basicInfo)
+                            case .timezone:       path.append(.timezone)
                             case .profilePicture: path.append(.profilePhoto)
                             case .verifyEmail:    path.append(.verifyEmail)
-                            case .hourlyRate:     path.append(.hourlyRate)
                             case .expertise:      path.append(.tags)
                             }
                         }
                     )
+                case .basicInfo:    SignupBasicInfoView()
+                case .timezone:     SignupTimezoneView()
                 case .profilePhoto: SignupProfilePhotoView()
                 case .verifyEmail:  SignupVerifyEmailView()
-                case .hourlyRate:   ClickMeSetHourlyRateView()
                 case .tags:         SignupTagsView()
                 case .review:       SignupReviewView()
                 }
@@ -173,36 +177,24 @@ private struct PreviewOverview: View {
 
 // MARK: - Previews
 
-#Preview("Default (3 of 4)") {
+#Preview("Default (4 of 5)") {
     PreviewOverview(viewModel: SignupOverviewViewModel())
 }
 
-#Preview("0 of 4 — Nothing done") {
+#Preview("0 of 5 — Nothing done") {
     PreviewOverview(viewModel: SignupOverviewViewModel(
         checklist: checklist(completedCount: 0)
     ))
 }
 
-#Preview("1 of 4 — Picture added") {
-    PreviewOverview(viewModel: SignupOverviewViewModel(
-        checklist: checklist(completedCount: 1)
-    ))
-}
-
-#Preview("2 of 4 — Email verified") {
+#Preview("2 of 5 — Identity done") {
     PreviewOverview(viewModel: SignupOverviewViewModel(
         checklist: checklist(completedCount: 2)
     ))
 }
 
-#Preview("3 of 4 — Rate set") {
+#Preview("5 of 5 — All complete") {
     PreviewOverview(viewModel: SignupOverviewViewModel(
-        checklist: checklist(completedCount: 3)
-    ))
-}
-
-#Preview("4 of 4 — All complete") {
-    PreviewOverview(viewModel: SignupOverviewViewModel(
-        checklist: checklist(completedCount: 4)
+        checklist: checklist(completedCount: 5)
     ))
 }

@@ -47,12 +47,19 @@ final class LoginViewModel: ObservableObject {
 
     // MARK: Validation
 
+    /// `POST /auth/login` accepts either an email or a username under the
+    /// `email` key. Client-side validation matches either format so we
+    /// don't gate valid identifiers behind an email-only rule.
     func validateEmail() {
-        let pattern = #"^[^@\s]+@[^@\s]+\.[^@\s]+$"#
-        if email.isEmpty {
-            emailError = "Email is required"
-        } else if email.range(of: pattern, options: .regularExpression) == nil {
-            emailError = "Invalid email format"
+        let emailPattern = #"^[^@\s]+@[^@\s]+\.[^@\s]+$"#
+        let usernamePattern = #"^[A-Za-z0-9_.]{3,30}$"#
+        let trimmed = email.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty {
+            emailError = "Email or username is required"
+        } else if trimmed.range(of: emailPattern, options: .regularExpression) == nil,
+                  trimmed.range(of: usernamePattern, options: .regularExpression) == nil
+        {
+            emailError = "Enter a valid email or username"
         } else {
             emailError = nil
         }
@@ -80,11 +87,11 @@ final class LoginViewModel: ObservableObject {
 
     // MARK: Login
 
-    /// Attempts a login. On success returns the authenticated user's role so
-    /// the caller can route to the appropriate home screen. On failure,
-    /// populates `apiError` (and `passwordError` for 401s).
+    /// Attempts a login. On success returns the authenticated user's roles
+    /// so the caller can route to the appropriate home screen. On
+    /// failure, populates `apiError` (and `passwordError` for 401s).
     @discardableResult
-    func attemptLogin() async -> UserRole? {
+    func attemptLogin() async -> [UserRole]? {
         didAttemptLogin = true
         validateEmail()
         validatePassword()
@@ -96,7 +103,7 @@ final class LoginViewModel: ObservableObject {
 
         do {
             let user = try await userManager.login(email: email, password: password)
-            return user.role
+            return user.roles
         } catch {
             handle(loginError: error)
             return nil
@@ -109,7 +116,7 @@ final class LoginViewModel: ObservableObject {
         // 401 → invalid credentials: surface both as an inline field error and
         // as the top-level alert.
         if case let NetworkError.httpError(statusCode, _) = error, statusCode == 401 {
-            passwordError = "Invalid email or password"
+            passwordError = "Invalid credentials"
         }
         apiError = Self.message(for: error)
     }

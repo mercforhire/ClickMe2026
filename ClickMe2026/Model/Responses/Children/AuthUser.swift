@@ -8,11 +8,15 @@
 
 import Foundation
 
-/// Authenticated user's profile snapshot returned at login.
+/// Authenticated user's profile snapshot returned at login/signup.
+///
+/// `roles` is a set — every account has `client` by default; experts
+/// additionally have `expert`. Check `roles.contains(.expert)` when
+/// deciding whether to expose expert-mode UI.
 struct AuthUser: Decodable {
     let id: UUID
     let firstName: String
     let lastName: String
-    let role: UserRole
+    let roles: [UserRole]
     let avatarUrl: String?
 }

@@ -8,23 +8,33 @@
 
 import Foundation
 
-/// Body for `PATCH /expert/profile/setup` — initial expert profile setup.
+/// Body for `PATCH /expert/profile/setup` — partial save for a single
+/// signup step, or the final "publish" call with `setupCompleted: true`.
+///
+/// Every top-level field is optional; the backend merges only what is
+/// sent. `location` is field-level partial (send only the subkeys you
+/// want to update).
+///
+/// `languages` and `expertiseTags` are destructive when sent: `[]` clears
+/// the record. Omit the key to leave existing values untouched.
+///
+/// `setupCompleted` is one-way — the server only honors `true`. Sending
+/// `false` is a no-op; the flag is server-managed the rest of the time.
+///
+/// Historical: an `hourly_rate` field previously lived here — dropped
+/// when the backend removed account-level rates in favor of per-topic
+/// pricing.
 struct SetupExpertProfileRequest: Encodable {
     struct Location: Encodable {
-        let city: String
-        let provinceState: String
-        let countryCode: String
+        var city: String?
+        var provinceState: String?
+        var countryCode: String?
     }
 
-    struct HourlyRate: Encodable {
-        let amount: Int
-        let currency: String
-    }
-
-    let firstName: String
-    let location: Location
-    let timezone: String
-    let languages: [String]
-    let expertiseTags: [String]
-    let hourlyRate: HourlyRate
+    var firstName: String?
+    var location: Location?
+    var timezone: String?
+    var languages: [String]?
+    var expertiseTags: [String]?
+    var setupCompleted: Bool?
 }

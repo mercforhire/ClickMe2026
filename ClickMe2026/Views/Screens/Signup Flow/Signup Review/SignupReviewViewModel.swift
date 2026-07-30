@@ -33,8 +33,12 @@ final class SignupReviewViewModel: ObservableObject {
         self.api = .shared
     }
 
-    /// Runtime init — reads display fields off the shared accumulator and
-    /// POSTs its `buildSetupExpertProfileRequest()` payload on publish.
+    /// Runtime init — reads display fields off the shared accumulator.
+    /// On publish, PATCHes `/expert/profile/setup` with the whole payload
+    /// AND `setup_completed: true` to flip the server's completion flag.
+    /// (The earlier signup steps have each already persisted their slice
+    /// via their own `save()` calls, so this final PATCH is idempotent
+    /// with respect to the field values — it exists to flip the flag.)
     init(accumulator: SignupAccumulator, api: ClickMeAPI = .shared) {
         self.accumulator = accumulator
         self.previewProfile = nil
@@ -58,17 +62,19 @@ final class SignupReviewViewModel: ObservableObject {
             ),
             spokenLanguages: accumulator.languages.map(\.label).joined(separator: ", "),
             avatarURL: accumulator.avatarUrl ?? "",
-            // Accumulator stores minor units — display as major.
-            hourlyRate: (accumulator.hourlyRateAmount ?? 0) / 100,
-            hourlyRateCurrency: accumulator.hourlyRateCurrency,
             skills: accumulator.expertiseTags.map(\.label)
         )
     }
 
     // MARK: - Publish
 
-    /// Builds the payload from the accumulator and POSTs `PATCH /expert/profile/setup`.
-    /// Returns `true` on success so the caller can navigate away.
+    /// Publishes the finished profile by PATCHing `/expert/profile/setup`
+    /// with the full payload plus `setup_completed: true`. The full
+    /// payload is sent (not just the flag) so the server's completeness
+    /// check has authoritative values in one atomic write — this defends
+    /// against the case where a partial-save call earlier in the flow
+    /// failed silently and the accumulator now knows a value the server
+    /// doesn't. Returns `true` on success so the caller can navigate away.
     @discardableResult
     func publish() async -> Bool {
         guard let accumulator else {
@@ -76,7 +82,7 @@ final class SignupReviewViewModel: ObservableObject {
             didPublish = true
             return true
         }
-        guard let body = accumulator.buildSetupExpertProfileRequest() else {
+        guard let body = accumulator.buildPublishRequest() else {
             publishError = "Please complete every profile section before publishing."
             return false
         }
@@ -112,8 +118,6 @@ final class SignupReviewViewModel: ObservableObject {
         location: "New York, NY, United States",
         spokenLanguages: "English, Spanish",
         avatarURL: "https://i.pravatar.cc/240?img=47",
-        hourlyRate: 80,
-        hourlyRateCurrency: "USD",
         skills: ["Social Media Strategy", "Content Creation", "SEO"]
     )
 }

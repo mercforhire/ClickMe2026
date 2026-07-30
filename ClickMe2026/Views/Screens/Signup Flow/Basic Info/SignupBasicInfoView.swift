@@ -94,8 +94,12 @@ struct SignupBasicInfoView: View {
                 }
             }
 
-            BasicInfoContinueButton {
-                onContinue(viewModel.payload)
+            BasicInfoContinueButton(isLoading: viewModel.isSaving) {
+                Task {
+                    if await viewModel.save() {
+                        onContinue(viewModel.payload)
+                    }
+                }
             }
         }
         .navigationTitle("Personal Details")
@@ -103,6 +107,18 @@ struct SignupBasicInfoView: View {
         .toolbarBackground(BasicInfoBrand.bg, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .alert(
+            "Couldn't save",
+            isPresented: Binding(
+                get: { viewModel.saveError != nil },
+                set: { if !$0 { viewModel.saveError = nil } }
+            ),
+            presenting: viewModel.saveError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
     // MARK: - Spoken Languages field

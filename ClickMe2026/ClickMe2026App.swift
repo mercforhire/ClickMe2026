@@ -21,9 +21,18 @@ struct ClickMe2026App: App {
                 // how `UserManager.logout()` becomes user-visible.
                 .onChange(of: userManager.isLoggedIn) { _, isLoggedIn in
                     guard !isLoggedIn else { return }
-                    if route == .clientHome || route == .expertHome {
+                    if route == .clientHome || route == .expertHome || route == .signupSetup {
                         route = .login
                     }
+                }
+                // Mirror `currentMode` onto the route so a switch from
+                // ModeSwitchView (or a background→resume) immediately
+                // re-renders the correct home. Only applies while the
+                // user is currently on a home route — splash / login /
+                // signup flows manage their own transitions.
+                .onChange(of: userManager.currentMode) { _, newMode in
+                    guard route == .clientHome || route == .expertHome else { return }
+                    route = newMode == .expert ? .expertHome : .clientHome
                 }
         }
     }
@@ -36,13 +45,29 @@ struct ClickMe2026App: App {
                 switch destination {
                 case .login:
                     route = .login
-                case let .dashboard(role):
-                    route = role == .expert ? .expertHome : .clientHome
+                case let .dashboard(mode):
+                    route = mode == .expert ? .expertHome : .clientHome
+                case .setupIncomplete:
+                    route = .signupSetup
                 }
             }
         case .login:
-            LoginView { role in
-                route = role == .expert ? .expertHome : .clientHome
+            LoginView { mode in
+                route = mode == .expert ? .expertHome : .clientHome
+            }
+        case .signupSetup:
+            // Auto-logged-in expert whose profile setup never finished —
+            // start LoginView already pushed into the signup flow at
+            // Overview so they can pick up where they left off.
+            // Pass the freshly-refreshed expert profile so every field
+            // already persisted server-side (basic info, avatar,
+            // languages, timezone, hourly rate, expertise tags)
+            // pre-fills instead of asking the user to redo them.
+            LoginView(
+                startAtSignupSetup: true,
+                hydrateFrom: userManager.expertProfile
+            ) { mode in
+                route = mode == .expert ? .expertHome : .clientHome
             }
         case .clientHome:
             HomeClientView()
@@ -55,6 +80,7 @@ struct ClickMe2026App: App {
 private enum AppRoute {
     case splash
     case login
+    case signupSetup
     case clientHome
     case expertHome
 }

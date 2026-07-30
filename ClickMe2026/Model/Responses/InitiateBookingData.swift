@@ -14,8 +14,6 @@ struct InitiateBookingData: Decodable {
         let id: UUID
         let name: String
         let avatarUrl: String?
-        let hourlyRate: Double?
-        let hourlyRateCurrency: String?
     }
 
     struct Topic: Decodable {

@@ -81,21 +81,26 @@ struct SignupProfilePhotoView: View {
                     }
                 }
             }
+            // Fade/slide the content only — background stays opaque so
+            // the push transition doesn't briefly reveal white.
+            .opacity(contentOpacity)
+            .offset(y: contentOffset)
         }
-        .opacity(contentOpacity)
-        .offset(y: contentOffset)
         .onAppear {
             withAnimation(.easeOut(duration: 0.45).delay(0.1)) {
                 contentOpacity = 1
                 contentOffset = 0
             }
         }
+        .task {
+            await viewModel.loadExistingAvatarIfNeeded()
+        }
         .onChange(of: viewModel.isSaved) { _, newValue in
             if newValue { onSave(viewModel.profileImage) }
         }
         .confirmationDialog("Remove photo?", isPresented: $showRemoveConfirm, titleVisibility: .visible) {
             Button("Remove", role: .destructive) {
-                viewModel.removePhoto()
+                Task { await viewModel.removePhoto() }
             }
             Button("Cancel", role: .cancel) {}
         }

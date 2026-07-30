@@ -12,8 +12,8 @@ import Foundation
 ///
 /// x-discrepancy #17: `location.country` holds the alpha-3 country_code value
 /// (e.g. "USA"), NOT a human-readable country name.
-struct UserProfileData: Decodable {
-    struct PersonalDetails: Decodable {
+struct UserProfileData: Codable {
+    struct PersonalDetails: Codable {
         let firstName: String?
         let lastName: String?
         let email: String?
@@ -22,13 +22,13 @@ struct UserProfileData: Decodable {
         let bio: String?
     }
 
-    struct ProfessionalDetails: Decodable {
+    struct ProfessionalDetails: Codable {
         let jobTitle: String?
         let company: String?
         let education: String?
     }
 
-    struct Location: Decodable {
+    struct Location: Codable {
         let city: String?
         let stateProvince: String?
         /// ⚠ x-discrepancy #17: key named `country` but holds alpha-3 code (e.g. "USA").
@@ -36,7 +36,7 @@ struct UserProfileData: Decodable {
         let timezone: String?
     }
 
-    struct LanguageEntry: Decodable {
+    struct LanguageEntry: Codable {
         let id: String?
         let label: String?
     }

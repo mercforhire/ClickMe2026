@@ -83,10 +83,17 @@ final class LoginResetPasswordViewModel: ObservableObject {
     }
 
     func validateNewPassword() {
+        // Backend rejects passwords that are too weak (needs numbers +
+        // symbols). Mirror the same rules client-side so the user sees
+        // the error before the round-trip.
         if newPassword.isEmpty {
             newPasswordError = "Please enter a new password"
         } else if newPassword.count < 8 {
             newPasswordError = "Password must be at least 8 characters"
+        } else if newPassword.range(of: "[0-9]", options: .regularExpression) == nil ||
+                  newPassword.range(of: "[^A-Za-z0-9]", options: .regularExpression) == nil
+        {
+            newPasswordError = "Password must include a number and a symbol"
         } else {
             newPasswordError = nil
         }
@@ -156,33 +163,47 @@ final class LoginResetPasswordViewModel: ObservableObject {
     // MARK: Helpers
 
     private func handle(resetError error: Error) {
-        if case let NetworkError.httpError(statusCode, data) = error {
-            // 400 EXPIRED_TOKEN — bad / expired / used / max-attempts / unknown email.
-            // Surface inline on the code field so the user knows to request a fresh one.
-            if statusCode == 400 {
-                codeError = "Invalid or expired code. Please request a new one."
-            }
+        guard case let NetworkError.httpError(statusCode, data) = error else {
+            apiError = Self.message(for: error)
+            return
+        }
 
-            // 422 VALIDATION_ERROR — surface any field errors returned by the server.
-            if statusCode == 422,
-               let response = try? JSONDecoder().decode(FieldValidationErrorResponse.self, from: data)
-            {
-                for fieldError in response.errors {
-                    switch fieldError.field {
-                    case "password":
-                        newPasswordError = fieldError.message
-                    case "password_confirmation":
-                        confirmPasswordError = fieldError.message
-                    case "code":
-                        codeError = fieldError.message
-                    case "email":
-                        apiError = fieldError.message
-                    default:
-                        break
-                    }
+        // 400 EXPIRED_TOKEN — bad / expired / used / max-attempts / unknown email.
+        // Surface inline on the code field so the user knows to request a fresh one.
+        if statusCode == 400 {
+            codeError = "Invalid or expired code. Please request a new one."
+            return
+        }
+
+        // 422 VALIDATION_ERROR — surface field errors on the matching input.
+        // If the server sends multiple messages for the same field (e.g.
+        // "too short" AND "too weak"), the last one wins — join them if
+        // you'd rather show both.
+        if statusCode == 422,
+           let response = try? JSONDecoder().decode(FieldValidationErrorResponse.self, from: data)
+        {
+            var handledAny = false
+            for fieldError in response.errors {
+                switch fieldError.field {
+                case "password":
+                    newPasswordError = fieldError.message
+                    handledAny = true
+                case "password_confirmation":
+                    confirmPasswordError = fieldError.message
+                    handledAny = true
+                case "code":
+                    codeError = fieldError.message
+                    handledAny = true
+                case "email":
+                    apiError = fieldError.message
+                    handledAny = true
+                default:
+                    break
                 }
             }
+            if handledAny { return }
         }
+
         apiError = Self.message(for: error)
     }
 

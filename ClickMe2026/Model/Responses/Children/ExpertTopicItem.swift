@@ -37,4 +37,9 @@ struct ExpertTopicItem: Decodable {
     /// `"finance"`). Client resolves it to an SF Symbol at render time;
     /// nil falls back to a decorative default.
     let iconSlug: String?
+    /// Tags attached to this specific topic (drives topic-level discovery
+    /// and the aggregated chip row on the expert's public profile).
+    /// Optional so decoding tolerates older payloads that predate the
+    /// per-topic tag rollout.
+    let expertiseTags: [ExpertiseTagItem]?
 }

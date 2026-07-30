@@ -13,6 +13,4 @@ struct RandomExpertItem: Decodable {
     let expertId: UUID
     let fullName: String?
     let avatarUrl: String?
-    let hourlyRateAmount: Int?
-    let hourlyRateCurrency: String?
 }

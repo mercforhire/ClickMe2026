@@ -16,8 +16,6 @@ struct DiscoveryFeedSection: Decodable {
         let fullName: String?
         let avatarUrl: String?
         let bioSnippet: String?
-        let hourlyRateAmount: Int?
-        let hourlyRateCurrency: String?
         let isFavorite: Bool?
     }
 

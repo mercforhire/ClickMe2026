@@ -29,6 +29,14 @@ extension ClickMeAPI {
         )
     }
 
+    /// `DELETE /user/profile/avatar` — nulls out `profiles.avatar_url` and
+    /// best-effort deletes the storage object. Idempotent — safe to call
+    /// on an account with no avatar. Backing state (`GET /expert/profile`,
+    /// `GET /user/profile`) reflects the removal on the next fetch.
+    func deleteAvatar() async throws -> SuccessStatusOnlyResponse {
+        try await service.httpRequest(url: url(.deleteAvatar), method: .delete)
+    }
+
     /// `PATCH /user/password`. Session-bound password change — the caller's
     /// existing access token stays valid after a 200. Server enforces
     /// `new_password` ≥ 8 chars + at least one digit + must differ from

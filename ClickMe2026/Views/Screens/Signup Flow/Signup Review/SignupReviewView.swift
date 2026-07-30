@@ -15,8 +15,6 @@ struct ProfileReviewData {
     var location: String
     var spokenLanguages: String
     var avatarURL: String
-    var hourlyRate: Int
-    var hourlyRateCurrency: String
     var skills: [String]
 }
 
@@ -136,13 +134,8 @@ struct SignupReviewView: View {
             title: "Profile Photo",
             onEdit: { onEdit(.profilePhoto) }
         ) {
-            VStack(spacing: 10) {
-                ReviewAvatar(url: viewModel.profile.avatarURL)
-                Text(formattedHourlyRate)
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
-                    .foregroundColor(Brand.onSurface)
-            }
-            .frame(maxWidth: .infinity)
+            ReviewAvatar(url: viewModel.profile.avatarURL)
+                .frame(maxWidth: .infinity)
         }
     }
 
@@ -156,17 +149,6 @@ struct SignupReviewView: View {
                 value: viewModel.profile.skills.joined(separator: ", ")
             )
         }
-    }
-
-    // MARK: Formatting
-
-    /// `$80 USD / hour`. Currency code is appended verbatim because we don't
-    /// have the symbol at this point in the flow — the hourly-rate step only
-    /// commits the ISO code onto the accumulator, not the CurrencyItem.
-    private var formattedHourlyRate: String {
-        let rate = viewModel.profile.hourlyRate
-        let currency = viewModel.profile.hourlyRateCurrency
-        return "$\(rate) \(currency) / hour"
     }
 }
 
@@ -186,8 +168,6 @@ struct SignupReviewView: View {
             location: "Berlin, Germany",
             spokenLanguages: "English, German, French",
             avatarURL: "https://i.pravatar.cc/240?img=12",
-            hourlyRate: 120,
-            hourlyRateCurrency: "EUR",
             skills: ["Swift", "iOS", "SwiftUI", "Combine", "Concurrency"]
         ))
     }

@@ -32,13 +32,16 @@ extension ClickMeAPI {
         )
     }
 
+    /// `GET /notifications` — paginated notification history for the
+    /// authenticated user. Server returns rows within TTL; expired rows
+    /// are pruned by a daily job. No `unread_only` filter — Phase 17
+    /// replaced `is_read` tracking with time-based expiration.
     func getNotifications(
         category: String? = nil,
-        unreadOnly: Bool = false,
         page: Int = 1,
         limit: Int = 20
     ) async throws -> SuccessDataResponse<NotificationsPayload> {
-        var params: [String: Any] = ["unread_only": unreadOnly, "page": page, "limit": limit]
+        var params: [String: Any] = ["page": page, "limit": limit]
         if let category { params["category"] = category }
         return try await service.httpRequest(url: url(.getNotifications), method: .get, parameters: params)
     }

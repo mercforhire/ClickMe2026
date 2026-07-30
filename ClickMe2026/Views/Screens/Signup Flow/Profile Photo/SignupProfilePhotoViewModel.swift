@@ -53,6 +53,24 @@ final class SignupProfilePhotoViewModel: ObservableObject {
 
     // MARK: - Photo handling
 
+    /// If the accumulator was hydrated from `GET /expert/profile` with a
+    /// previously-uploaded avatar URL, download the image so the ring
+    /// renders the same photo the user saw before quitting. No-op when
+    /// there's no URL (fresh flow) or when a local image is already set
+    /// (user just picked one this session).
+    func loadExistingAvatarIfNeeded() async {
+        guard profileImage == nil,
+              let urlString = accumulator?.avatarUrl,
+              let url = URL(string: urlString) else { return }
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let uiImage = UIImage(data: data) else { return }
+            profileImage = Image(uiImage: uiImage)
+        } catch {
+            // Silent — the user can still re-pick a photo if this fails.
+        }
+    }
+
     /// Loads the image data for the currently selected `PhotosPickerItem`.
     /// Re-encodes to JPEG so `save()` can hand a stable, compact byte
     /// buffer to `POST /user/profile/avatar`.
@@ -71,7 +89,32 @@ final class SignupProfilePhotoViewModel: ObservableObject {
         }
     }
 
-    func removePhoto() {
+    /// Removes the photo both locally AND server-side (`DELETE /user/profile/avatar`).
+    /// Server-side removal matters because `hydrate(from:)` on the next
+    /// launch would otherwise re-populate `accumulator.avatarUrl` from
+    /// `GET /expert/profile` and `loadExistingAvatarIfNeeded()` would
+    /// re-fetch the image — effectively undoing this action. Only
+    /// commits the local clear on 2xx. Preview path (no accumulator)
+    /// skips the network call and just clears local state so the
+    /// canvas still behaves.
+    func removePhoto() async {
+        guard accumulator != nil else {
+            performLocalRemove()
+            return
+        }
+
+        saveError = nil
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            _ = try await api.deleteAvatar()
+            performLocalRemove()
+        } catch {
+            saveError = error.userMessage
+        }
+    }
+
+    private func performLocalRemove() {
         withAnimation(.easeInOut(duration: 0.25)) {
             profileImage = nil
             selectedPhoto = nil

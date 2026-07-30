@@ -84,6 +84,10 @@ final class SignupInitialViewModel: ObservableObject {
             passwordError = "Password is required"
         } else if password.count < 8 {
             passwordError = "Password must be at least 8 characters"
+        } else if password.range(of: "[A-Za-z]", options: .regularExpression) == nil {
+            // Backend requires at least one letter — mirror the rule client-side
+            // so users see the error before the round trip.
+            passwordError = "Password must contain at least one letter"
         } else {
             passwordError = nil
         }
@@ -149,10 +153,14 @@ final class SignupInitialViewModel: ObservableObject {
     // MARK: Helpers
 
     private func handle(signupError error: Error) {
-        // 409 Conflict → username/email already taken. Surface as an inline
-        // field error so the user can correct it in place.
-        if case let NetworkError.httpError(statusCode, data) = error,
-           statusCode == 409,
+        guard case let NetworkError.httpError(statusCode, data) = error else {
+            apiError = Self.message(for: error)
+            return
+        }
+
+        // 409 Conflict → username/email already taken. `StandardErrorResponse`
+        // envelope with a human-authored message.
+        if statusCode == 409,
            let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
         {
             let message = response.message
@@ -163,6 +171,23 @@ final class SignupInitialViewModel: ObservableObject {
             }
             return
         }
+
+        // 422 Validation → per-field messages. Route each to the matching
+        // inline error so the user knows exactly what's wrong.
+        if statusCode == 422,
+           let response = try? JSONDecoder().decode(FieldValidationErrorResponse.self, from: data)
+        {
+            for fieldError in response.errors {
+                switch fieldError.field {
+                case "username": usernameError = fieldError.message
+                case "email":    emailError = fieldError.message
+                case "password": passwordError = fieldError.message
+                default:         apiError = fieldError.message
+                }
+            }
+            return
+        }
+
         apiError = Self.message(for: error)
     }
 

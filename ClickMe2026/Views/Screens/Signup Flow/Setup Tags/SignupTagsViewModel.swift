@@ -21,6 +21,10 @@ final class SignupTagsViewModel: ObservableObject {
     @Published var selectedIds: Set<UUID>
     @Published var loadState: LoadState = .idle
 
+    // MARK: Save state
+    @Published var isSaving: Bool = false
+    @Published var saveError: String?
+
     // MARK: Dependencies
 
     private let accumulator: SignupAccumulator?
@@ -122,6 +126,37 @@ final class SignupTagsViewModel: ObservableObject {
 
     private func syncToAccumulator() {
         accumulator?.expertiseTags = selectedTags
+    }
+
+    // MARK: - Save
+
+    /// Persists the current tag selection to `/expert/profile/setup` as
+    /// a partial update. Sends bare UUID strings — first element is the
+    /// primary tag. Guards against `[]` because the backend interprets an
+    /// empty array as "clear all tags" (destructive) rather than "skip."
+    @discardableResult
+    func save() async -> Bool {
+        syncToAccumulator()
+        guard accumulator != nil else { return true }
+        guard !selectedTags.isEmpty else {
+            saveError = "Pick at least one tag before continuing."
+            return false
+        }
+
+        saveError = nil
+        isSaving = true
+        defer { isSaving = false }
+
+        let body = SetupExpertProfileRequest(
+            expertiseTags: selectedTags.map { $0.id.uuidString }
+        )
+        do {
+            _ = try await api.setupExpertProfile(body)
+            return true
+        } catch {
+            saveError = error.userMessage
+            return false
+        }
     }
 
     // MARK: - Error mapping

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct ExpertReviewsOverallCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Overall Rating")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(ExpertReviewsBrand.onSurface)
 
             HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -28,7 +28,7 @@ struct ExpertReviewsOverallCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     ExpertReviewsStarRow(rating: overallRating, size: 24)
                     Text("\(totalReviews) Total Reviews")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
                 }
             }

@@ -7,23 +7,28 @@
 //
 
 import Foundation
+import Observation
+import UIKit
+import UserNotifications
 import Valet
+import FirebaseMessaging
 
 @MainActor
-final class UserManager: ObservableObject {
+@Observable
+final class UserManager {
 
-    static let shared = UserManager()
+    @MainActor static let shared = UserManager()
 
-    // MARK: Published state
+    // MARK: Observable state
 
-    @Published private(set) var authUser: AuthUser?
-    @Published private(set) var me: MeData?
-    @Published private(set) var profile: UserProfileData?
+    private(set) var authUser: AuthUser?
+    private(set) var me: MeData?
+    private(set) var profile: UserProfileData?
     /// Expert-scoped profile from `GET /expert/profile`. Carries the
     /// `setup_completed` flag and the rehydration payload for the
     /// mid-flow signup resume path. `nil` for clients and until first
     /// fetch succeeds.
-    @Published private(set) var expertProfile: ExpertProfileData?
+    private(set) var expertProfile: ExpertProfileData?
 
     /// Which home screen the app should render. Distinct from `role`
     /// (an immutable server-side attribute) — this reflects the user's
@@ -31,7 +36,7 @@ final class UserManager: ObservableObject {
     /// decision on first entry (a fresh expert with 0 topics lands here
     /// as `.client` until they publish at least one topic). Persisted so
     /// the switch survives cold launches.
-    @Published private(set) var currentMode: AppMode
+    private(set) var currentMode: AppMode
 
     var isLoggedIn: Bool { me != nil || authUser != nil }
 
@@ -42,8 +47,21 @@ final class UserManager: ObservableObject {
         accessibility: .whenUnlocked
     )
     private let tokenKey = "authToken"
+    /// Long-lived rotating credential (see `LoginData.refreshToken`).
+    /// Persisted alongside the access token so cold launches can
+    /// silently re-authenticate via `/auth/refresh`.
+    private let refreshTokenKey = "refreshToken"
+    /// Access-token expiry (unix epoch seconds, stored as a string).
+    /// Not consumed by the current reactive-only interceptor, but
+    /// persisted for the future proactive-refresh path.
+    private let tokenExpiresAtKey = "tokenExpiresAt"
     private let onboardingShownKey = "hasSeenOnboarding"
     private let currentModeKey = "currentMode"
+    /// UserDefaults key for the most recently registered APNs device
+    /// token (hex). Persisted so `logout()` can DELETE the same token
+    /// the server has on record, even if iOS hasn't re-issued one this
+    /// launch.
+    private let pushDeviceTokenKey = "pushDeviceTokenHex"
     /// UserDefaults key for the cached `UserProfileData` snapshot.
     /// Persisted so profile-hub screens render header content (name,
     /// email, avatar) instantly on view mount without waiting for a
@@ -92,6 +110,16 @@ final class UserManager: ObservableObject {
             api.bearerToken = token
             RealtimeService.shared.connect(token: token)
         }
+
+        // Wire the network layer's 401 interceptor to this manager.
+        // When any authed request 401s, `NetworkService` asks this
+        // closure to swap tokens; on success it retries once with the
+        // new bearer. `[weak self]` — singleton in practice, weak
+        // here just to avoid a self-referential retain when the type
+        // is used from tests.
+        api.service.authTokenRefresher = TokenRefresher { [weak self] in
+            await self?.performRefreshCycle() ?? false
+        }
     }
 
     // MARK: - Login
@@ -108,8 +136,20 @@ final class UserManager: ObservableObject {
     private func apply(loginData: LoginData) {
         api.bearerToken = loginData.token
         persist(token: loginData.token)
+        persist(refreshToken: loginData.refreshToken, expiresAt: loginData.expiresAt)
         authUser = loginData.user
         RealtimeService.shared.connect(token: loginData.token)
+        // Now that we have a bearer, ask for push permission and (if
+        // granted) register the device with APNs. First-time users see
+        // the OS prompt; repeat logins are silent because iOS caches
+        // the answer.
+        requestPushPermissionIfNeeded()
+        // Firebase caches the FCM token across launches. Its delegate
+        // fires exactly once at launch — often BEFORE this login lands.
+        // Actively fetch the current token now so we're guaranteed to
+        // upload it under the fresh bearer, closing the logout → login
+        // → no-push-token gap.
+        fetchAndUploadFCMToken()
     }
 
     // MARK: - Signup
@@ -128,8 +168,11 @@ final class UserManager: ObservableObject {
     private func apply(signupData: SignupResponse) {
         api.bearerToken = signupData.token
         persist(token: signupData.token)
+        persist(refreshToken: signupData.refreshToken, expiresAt: signupData.expiresAt)
         RealtimeService.shared.connect(token: signupData.token)
         authUser = signupData.user
+        requestPushPermissionIfNeeded()
+        fetchAndUploadFCMToken()
     }
 
     // MARK: - Auto-login
@@ -142,6 +185,15 @@ final class UserManager: ObservableObject {
         guard hasStoredToken else { return false }
         do {
             try await refreshMe()
+            // If the user has previously granted push, silently refresh
+            // the APNs token — the OS token can rotate across launches
+            // (backup restore, iOS update), so we re-upload every time.
+            // If they've denied or never been asked, this is a no-op.
+            reRegisterPushIfAuthorized()
+            // Same reason as `apply(loginData:)`: Firebase's delegate
+            // may have fired before this auto-login completed. Fetch
+            // and upload now to close the gap.
+            fetchAndUploadFCMToken()
             return true
         } catch {
             logout()
@@ -157,12 +209,19 @@ final class UserManager: ObservableObject {
     /// Also clears the onboarding-shown flag so the next login re-shows the
     /// welcome flow.
     func logout() {
+        // Unregister the device from push BEFORE we drop the bearer —
+        // otherwise the DELETE call 401s and this account keeps
+        // receiving pushes on this device forever. Best-effort; if the
+        // server refuses, still tear down the local session.
+        Task { [weak self] in await self?.unregisterPushTokenIfAny() }
+
         authUser = nil
         me = nil
         profile = nil
         expertProfile = nil
         api.bearerToken = nil
         persist(token: nil)
+        clearRefreshCredentials()
         RealtimeService.shared.disconnect()
         UserDefaults.standard.removeObject(forKey: onboardingShownKey)
         UserDefaults.standard.removeObject(forKey: currentModeKey)
@@ -264,5 +323,265 @@ final class UserManager: ObservableObject {
         } else {
             try? valet.removeObject(forKey: tokenKey)
         }
+    }
+
+    // MARK: - Refresh token storage
+
+    /// Persist the rotating refresh token and access-token expiry.
+    /// Both are wiped by `clearRefreshCredentials()` on logout or on
+    /// a fatal refresh failure. `expiresAt` is stored as a stringified
+    /// unix-epoch **seconds** value so the entire auth bundle stays in
+    /// Valet rather than split across UserDefaults.
+    private func persist(refreshToken: String, expiresAt: Int) {
+        try? valet.setString(refreshToken, forKey: refreshTokenKey)
+        try? valet.setString(String(expiresAt), forKey: tokenExpiresAtKey)
+    }
+
+    private func clearRefreshCredentials() {
+        try? valet.removeObject(forKey: refreshTokenKey)
+        try? valet.removeObject(forKey: tokenExpiresAtKey)
+    }
+
+    private func storedRefreshToken() -> String? {
+        try? valet.string(forKey: refreshTokenKey)
+    }
+
+    // MARK: - Refresh cycle
+
+    /// Called by `NetworkService`'s 401 interceptor (via
+    /// `TokenRefresher`). Reads the stored refresh token, calls
+    /// `/auth/refresh`, and stores the rotated pair. Returns `true`
+    /// only when the interceptor should retry the original request.
+    ///
+    /// On a 401 from the refresh endpoint the session is unrecoverable
+    /// — we log out here so the app snaps to login rather than leaving
+    /// the caller stranded in a retry loop. Any other error
+    /// (network / 429 / decoding) fails soft: we return `false`, the
+    /// original 401 propagates to the caller, and the stored refresh
+    /// token stays intact for the next attempt.
+    fileprivate func performRefreshCycle() async -> Bool {
+        guard let stored = storedRefreshToken() else {
+            // No refresh token on disk — nothing to try. Push the user
+            // back to login rather than letting them stew on a 401.
+            logout()
+            return false
+        }
+        do {
+            let response = try await api.refreshSession(refreshToken: stored)
+            applyRefreshed(response.data)
+            return true
+        } catch {
+            if case NetworkError.httpError(let status, _) = error, status == 401 {
+                logout()
+            }
+            return false
+        }
+    }
+
+    /// Swap the in-memory bearer token and persist the rotated
+    /// refresh credential. Also re-arms the realtime socket with the
+    /// new access token — the old one will start returning 401s the
+    /// moment the server rotates it.
+    private func applyRefreshed(_ data: RefreshTokenData) {
+        api.bearerToken = data.token
+        persist(token: data.token)
+        persist(refreshToken: data.refreshToken, expiresAt: data.expiresAt)
+        RealtimeService.shared.connect(token: data.token)
+    }
+
+    // MARK: - Push notifications
+
+    /// Fires the OS permission prompt if the user hasn't answered yet,
+    /// and calls `registerForRemoteNotifications()` on grant. Idempotent
+    /// — safe to call from every login / signup path. On subsequent
+    /// launches with a previously-granted permission, iOS silently
+    /// hands us a fresh device token via `AppDelegate.didRegister…`.
+    func requestPushPermissionIfNeeded() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            #if DEBUG
+            print("push: authorization status = \(Self.describe(settings.authorizationStatus))")
+            #endif
+            switch settings.authorizationStatus {
+            case .notDetermined:
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+                    #if DEBUG
+                    if let error {
+                        print("push: requestAuthorization error = \(error.localizedDescription)")
+                    }
+                    print("push: user \(granted ? "GRANTED" : "DENIED") notification permission")
+                    #endif
+                    guard granted else { return }
+                    DispatchQueue.main.async {
+                        #if DEBUG
+                        print("push: calling registerForRemoteNotifications() after grant")
+                        #endif
+                        UIApplication.shared.registerForRemoteNotifications()
+                    }
+                }
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async {
+                    #if DEBUG
+                    print("push: permission already granted — calling registerForRemoteNotifications()")
+                    #endif
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            case .denied:
+                #if DEBUG
+                print("push: DENIED at OS level — user must enable in Settings → Notifications → ClickMe")
+                #endif
+                break
+            @unknown default:
+                break
+            }
+        }
+    }
+
+    #if DEBUG
+    /// Human-readable name for `UNAuthorizationStatus`. Used only for
+    /// diagnostic logs.
+    private static func describe(_ status: UNAuthorizationStatus) -> String {
+        switch status {
+        case .notDetermined: return "notDetermined"
+        case .denied:        return "denied"
+        case .authorized:    return "authorized"
+        case .provisional:   return "provisional"
+        case .ephemeral:     return "ephemeral"
+        @unknown default:    return "unknown"
+        }
+    }
+    #endif
+
+    /// Same as above but silent when the user hasn't answered yet
+    /// (never triggers the prompt). Used by `tryAutoLogin` to refresh
+    /// the token on cold start without pestering users who declined.
+    private func reRegisterPushIfAuthorized() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    /// Called by `AppDelegate` (via the `MessagingDelegate` callback) or
+    /// `fetchAndUploadFCMToken` with the current FCM registration token.
+    /// POSTs to `/notifications/tokens` so the backend can push to this
+    /// device via Firebase. Persists the token locally so `logout()`
+    /// can DELETE the correct row on the server.
+    func registerPushToken(_ token: String) async {
+        UserDefaults.standard.set(token, forKey: pushDeviceTokenKey)
+        guard hasStoredToken else {
+            #if DEBUG
+            print("push: registerPushToken skipped — no bearer yet (will retry after login)")
+            #endif
+            return
+        }
+        let deviceId = Self.deviceIdentifier()
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+        #if DEBUG
+        print("push: POST /notifications/tokens { device_id: \(deviceId), token: \(token.prefix(24))…, platform: ios }")
+        #endif
+        do {
+            _ = try await api.registerDeviceToken(
+                deviceId: deviceId,
+                token: token,
+                platform: "ios",
+                appVersion: appVersion
+            )
+            #if DEBUG
+            print("push: /notifications/tokens SUCCESS")
+            #endif
+        } catch {
+            #if DEBUG
+            print("push: /notifications/tokens FAILED = \(error.localizedDescription)")
+            #endif
+        }
+    }
+
+    /// Force an immediate re-fetch + re-upload of the current FCM
+    /// registration token. Called from `applicationDidBecomeActive` on
+    /// every foreground (cold launch AND background→foreground) so the
+    /// backend's one-token-per-account binding always reflects the
+    /// currently-logged-in user.
+    ///
+    /// Motivation: on shared test devices, multiple accounts had
+    /// historically ended up sharing the same FCM token binding server
+    /// side — pushes could land on the wrong account. Backend now
+    /// enforces one binding per token (whoever POSTs last wins), so
+    /// this re-upload guarantees "whoever's currently logged in owns
+    /// the device's FCM token."
+    ///
+    /// No-op when not logged in (the underlying `registerPushToken`
+    /// guards on `hasStoredToken`) and when APNs hasn't delivered a
+    /// token yet (the underlying `fetchAndUploadFCMToken` guards on
+    /// `Messaging.apnsToken`).
+    func refreshPushTokenBinding() {
+        fetchAndUploadFCMToken()
+    }
+
+    /// Actively fetch the current FCM registration token from Firebase
+    /// and hand it to `registerPushToken`. Called from three places:
+    /// 1. `apply(loginData:)` / `apply(signupData:)` — closes the race
+    ///    where Firebase's `MessagingDelegate` fires before login lands.
+    /// 2. `tryAutoLogin()` — same reason on cold-launch restore.
+    /// 3. `refreshPushTokenBinding()` — every foreground, so a shared
+    ///    device re-asserts the current account's ownership of the
+    ///    token (one binding per token, backend-side).
+    ///
+    /// Guarded on `Messaging.apnsToken` because Firebase refuses to
+    /// issue a token until iOS has delivered the raw APNs token — on
+    /// first-ever launch (no cached APNs) we'd get a
+    /// `Declining request for FCM Token since no APNS Token specified`
+    /// log otherwise. That path is instead handled by the
+    /// `MessagingDelegate` firing naturally once APNs registration
+    /// completes.
+    private func fetchAndUploadFCMToken() {
+        guard Messaging.messaging().apnsToken != nil else {
+            #if DEBUG
+            print("push: fetchAndUploadFCMToken — apnsToken not set yet, waiting for MessagingDelegate")
+            #endif
+            return
+        }
+        #if DEBUG
+        print("push: fetchAndUploadFCMToken — apnsToken present, fetching FCM token…")
+        #endif
+        Messaging.messaging().token { [weak self] token, error in
+            if let error {
+                #if DEBUG
+                print("push: Messaging.token failed = \(error.localizedDescription)")
+                #endif
+                return
+            }
+            guard let self, let token else {
+                #if DEBUG
+                print("push: Messaging.token returned nil")
+                #endif
+                return
+            }
+            #if DEBUG
+            print("push: got FCM token via explicit fetch = \(token.prefix(24))…")
+            #endif
+            Task { await self.registerPushToken(token) }
+        }
+    }
+
+    /// Called during `logout()` (fire-and-forget). No-op when there's
+    /// no cached token or no bearer to authorize the DELETE.
+    private func unregisterPushTokenIfAny() async {
+        guard hasStoredToken else { return }
+        let deviceId = Self.deviceIdentifier()
+        _ = try? await api.unregisterDeviceToken(deviceId: deviceId)
+        UserDefaults.standard.removeObject(forKey: pushDeviceTokenKey)
+    }
+
+    /// Stable per-vendor device id. Same across launches, changes only
+    /// when every app from this vendor is uninstalled — good enough
+    /// to key APNs registrations against.
+    private static func deviceIdentifier() -> String {
+        UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
     }
 }

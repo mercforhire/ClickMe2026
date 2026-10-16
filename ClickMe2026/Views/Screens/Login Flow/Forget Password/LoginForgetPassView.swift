@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-13.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -51,7 +51,7 @@ struct LoginForgetPassView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Enter your email to receive a password reset code")
-                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(Color.white.opacity(0.55))
                         .padding(.top, 28)
                         .padding(.horizontal, 24)
@@ -91,9 +91,9 @@ struct LoginForgetPassView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.left")
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.subheadline.weight(.semibold))
                             Text("Back to Login")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                         }
                         .foregroundColor(ForgetPassBrand.green)
                     }
@@ -141,21 +141,19 @@ struct LoginForgetPassView: View {
 
     private func fieldLabel(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 15, weight: .semibold, design: .rounded))
+            .font(.brand(.subheadline, weight: .semibold))
             .foregroundColor(.white)
     }
 }
 
 // MARK: - Previews
 
-#if DEBUG
 private func forgetPassPreview<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View {
     PreviewNavHarness(parentText: "Login", navTitle: "Sign in", rowTitle: "Forgot password") {
         content()
     }
     .preferredColorScheme(.dark)
 }
-#endif
 
 #Preview("Default") {
     forgetPassPreview { LoginForgetPassView() }

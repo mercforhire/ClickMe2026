@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -67,7 +67,7 @@ struct PolicyCardTitle: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 22, weight: .bold, design: .rounded))
+            .font(.brand(.title2, weight: .bold))
             .foregroundColor(CancellationPoliciesBrand.onSurface)
     }
 }

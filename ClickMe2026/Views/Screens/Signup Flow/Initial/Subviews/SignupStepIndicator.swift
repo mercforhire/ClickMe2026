@@ -13,7 +13,7 @@ struct SignupStepIndicator: View {
     var body: some View {
         VStack(spacing: 10) {
             Text("\(currentStep) of \(totalSteps)")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(Color.white.opacity(0.45))
 
             HStack(spacing: 0) {

@@ -18,7 +18,7 @@
                BlueprintIdentifier = "D5284F2B2B57C6B600BB32E7"
                BuildableName = "ClickMe2026.app"
                BlueprintName = "ClickMe2026"
-               ReferencedContainer = "container:ClickMe2026.xcodeproj">
+               ReferencedContainer = "container:ClickMe.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -43,7 +43,7 @@
                BlueprintIdentifier = "D5284F3B2B57C6B700BB32E7"
                BuildableName = "ClickMe2026Tests.xctest"
                BlueprintName = "ClickMe2026Tests"
-               ReferencedContainer = "container:ClickMe2026.xcodeproj">
+               ReferencedContainer = "container:ClickMe.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -54,7 +54,7 @@
                BlueprintIdentifier = "D5284F452B57C6B700BB32E7"
                BuildableName = "ClickMe2026UITests.xctest"
                BlueprintName = "ClickMe2026UITests"
-               ReferencedContainer = "container:ClickMe2026.xcodeproj">
+               ReferencedContainer = "container:ClickMe.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -76,7 +76,7 @@
             BlueprintIdentifier = "D5284F2B2B57C6B600BB32E7"
             BuildableName = "ClickMe2026.app"
             BlueprintName = "ClickMe2026"
-            ReferencedContainer = "container:ClickMe2026.xcodeproj">
+            ReferencedContainer = "container:ClickMe.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -93,7 +93,7 @@
             BlueprintIdentifier = "D5284F2B2B57C6B600BB32E7"
             BuildableName = "ClickMe2026.app"
             BlueprintName = "ClickMe2026"
-            ReferencedContainer = "container:ClickMe2026.xcodeproj">
+            ReferencedContainer = "container:ClickMe.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

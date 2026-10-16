@@ -15,7 +15,7 @@ struct LoginHeaderSection: View {
                 .foregroundColor(.white)
 
             Text("Welcome back! Please enter your details.")
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Color.white.opacity(0.55))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)

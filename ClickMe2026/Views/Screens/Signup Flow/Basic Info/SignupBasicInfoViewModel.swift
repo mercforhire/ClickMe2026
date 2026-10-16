@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Combine
@@ -121,7 +121,10 @@ final class SignupBasicInfoViewModel: ObservableObject {
             location: SetupExpertProfileRequest.Location(
                 city: trimmedCity.isEmpty ? nil : trimmedCity,
                 provinceState: trimmedProvince.isEmpty ? nil : trimmedProvince,
-                countryCode: countryCode.isEmpty ? nil : countryCode
+                // Normalize before send: trims whitespace and coerces
+                // legacy alpha-2 values (e.g. "CA ") into the alpha-3
+                // form ("CAN") the backend validates against.
+                countryCode: Countries.normalize(countryCode)
             ),
             languages: languages.isEmpty ? nil : languages.map(\.id)
         )

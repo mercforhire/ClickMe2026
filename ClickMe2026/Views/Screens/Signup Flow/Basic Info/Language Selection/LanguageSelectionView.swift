@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -66,7 +66,7 @@ struct LanguageSelectionView: View {
                 .padding(.bottom, 14)
 
             Text("Select Spoken Languages")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(onSurface)
                 .padding(.bottom, 16)
 
@@ -83,6 +83,9 @@ struct LanguageSelectionView: View {
         }
         .background(bg.ignoresSafeArea())
         .task { await viewModel.load() }
+        // Sheet presentation context — app-root keyboard toolbar
+        // doesn't reach the search TextField.
+        .keyboardDismissToolbar()
     }
 
     // MARK: Drag indicator
@@ -98,16 +101,16 @@ struct LanguageSelectionView: View {
     private var searchBar: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 15))
+                .font(.subheadline)
                 .foregroundColor(onSurfaceVar)
 
             TextField("", text: $viewModel.searchText)
                 .placeholder(when: viewModel.searchText.isEmpty) {
                     Text("Search languages...")
                         .foregroundColor(onSurfaceVar)
-                        .font(.system(size: 15, design: .rounded))
+                        .font(.brand(.subheadline))
                 }
-                .font(.system(size: 15, design: .rounded))
+                .font(.brand(.subheadline))
                 .foregroundColor(onSurface)
                 .tint(brandGreen)
                 .autocapitalization(.words)
@@ -116,7 +119,7 @@ struct LanguageSelectionView: View {
             if !viewModel.searchText.isEmpty {
                 Button { viewModel.clearSearch() } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundColor(onSurfaceVar.opacity(0.65))
                 }
                 .buttonStyle(.plain)
@@ -152,7 +155,7 @@ struct LanguageSelectionView: View {
         VStack(spacing: 12) {
             ProgressView().tint(onSurface)
             Text("Loading languages…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -161,13 +164,13 @@ struct LanguageSelectionView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 26, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(onSurfaceVar)
             Text("Couldn't load languages")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -176,7 +179,7 @@ struct LanguageSelectionView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -213,7 +216,7 @@ struct LanguageSelectionView: View {
                 checkbox(isSelected: isSelected)
 
                 Text(language.label)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.brand(.callout, weight: .semibold))
                     .foregroundColor(onSurface)
 
                 Spacer()
@@ -240,7 +243,7 @@ struct LanguageSelectionView: View {
 
             if isSelected {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.caption.weight(.bold))
                     .foregroundColor(onPrimary)
             }
         }
@@ -255,7 +258,7 @@ struct LanguageSelectionView: View {
                 dismiss()
             } label: {
                 Text("Cancel")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.brand(.callout, weight: .semibold))
                     .foregroundColor(onSurface)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
@@ -270,7 +273,7 @@ struct LanguageSelectionView: View {
                 dismiss()
             } label: {
                 Text("Done")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.brand(.callout, weight: .semibold))
                     .foregroundColor(onPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)

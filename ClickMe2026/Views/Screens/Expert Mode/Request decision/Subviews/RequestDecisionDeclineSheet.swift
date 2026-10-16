@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -36,12 +36,12 @@ struct RequestDecisionDeclineSheet: View {
                     // Title + subtitle
                     VStack(spacing: 6) {
                         Text("Decline Booking Request?")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.brand(.title3, weight: .bold))
                             .foregroundColor(Brand.onSurface)
                             .multilineTextAlignment(.center)
 
                         Text("This action cannot be undone.")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(Brand.overlayWhite60)
                             .multilineTextAlignment(.center)
                     }
@@ -62,10 +62,10 @@ struct RequestDecisionDeclineSheet: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(spacing: 4) {
                             Text("Reason for declining")
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .font(.brand(.caption, weight: .semibold))
                                 .foregroundColor(Brand.onSurface)
                             Text("*")
-                                .font(.system(size: 13, weight: .bold))
+                                .font(.caption.weight(.bold))
                                 .foregroundColor(Brand.destructive)
                         }
 
@@ -79,10 +79,10 @@ struct RequestDecisionDeclineSheet: View {
                                     .foregroundColor(Brand.onSurface)
                                 Spacer()
                                 Image(systemName: "chevron.down")
-                                    .font(.system(size: 12, weight: .medium))
+                                    .font(.caption.weight(.medium))
                                     .foregroundColor(Brand.overlayWhite60)
                             }
-                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .font(.brand(.subheadline, weight: .medium))
                             .padding(.horizontal, 12)
                             .padding(.vertical, 12)
                             .background(
@@ -97,7 +97,7 @@ struct RequestDecisionDeclineSheet: View {
                     // Optional free text
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Optional note to the client")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.brand(.caption, weight: .semibold))
                             .foregroundColor(Brand.onSurface)
 
                         ZStack(alignment: .topLeading) {
@@ -111,7 +111,7 @@ struct RequestDecisionDeclineSheet: View {
 
                             if reasonText.isEmpty {
                                 Text("e.g. Sorry — booked solid that week.")
-                                    .font(.system(size: 13, design: .rounded))
+                                    .font(.brand(.caption))
                                     .foregroundColor(Color.white.opacity(0.35))
                                     .padding(.horizontal, 12)
                                     .padding(.top, 12)
@@ -121,7 +121,7 @@ struct RequestDecisionDeclineSheet: View {
                                 .scrollContentBackground(.hidden)
                                 .background(Color.clear)
                                 .foregroundColor(Brand.onSurface)
-                                .font(.system(size: 13, design: .rounded))
+                                .font(.brand(.caption))
                                 .frame(minHeight: 64)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 8)
@@ -132,7 +132,7 @@ struct RequestDecisionDeclineSheet: View {
                     HStack(spacing: 12) {
                         Button(action: onCancel) {
                             Text("Cancel")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                                 .foregroundColor(Brand.onSurface)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
@@ -145,7 +145,7 @@ struct RequestDecisionDeclineSheet: View {
                             onDecline(selectedReason.rawValue, reasonText)
                         } label: {
                             Text("Decline")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
@@ -174,11 +174,11 @@ struct RequestDecisionDeclineSheet: View {
     private func summaryRow(label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(Brand.overlayWhite60)
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
                 .multilineTextAlignment(.trailing)
         }

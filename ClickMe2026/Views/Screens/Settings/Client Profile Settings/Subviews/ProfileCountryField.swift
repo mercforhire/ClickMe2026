@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -44,18 +44,18 @@ struct ProfileCountryField: View {
                         .stroke(ProfileSettingsBrand.fieldBorder, lineWidth: 1))
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Country")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .font(.brand(.caption2, weight: .semibold))
                         .foregroundColor(ProfileSettingsBrand.labelColor)
                     HStack {
                         Text(selectedName)
-                            .font(.system(size: 15, design: .rounded))
+                            .font(.brand(.subheadline))
                             .foregroundColor(country.isEmpty
                                              ? ProfileSettingsBrand.onSurfaceVar
                                              : ProfileSettingsBrand.onSurface)
                             .lineLimit(1)
                         Spacer()
                         Image(systemName: "chevron.up.chevron.down")
-                            .font(.system(size: 11))
+                            .font(.caption2)
                             .foregroundColor(ProfileSettingsBrand.onSurfaceVar)
                     }
                 }

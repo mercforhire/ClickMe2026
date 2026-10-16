@@ -2,7 +2,7 @@
 //  HomeNavigationPath.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -95,6 +95,20 @@ enum HomeRoute: Hashable {
     /// values so the header renders instantly; the destination view then
     /// fetches the rest.
     case peerProfile(userId: UUID, name: String, avatarURL: String)
+    /// Expert-only. Pushed by `PushRouter` when a new booking-request
+    /// notification is tapped — lands on `IncomingRequestsView`.
+    /// Unreachable on the client shell; that path falls back to the
+    /// notifications list.
+    case incomingRequests
+    /// Expert-only. Pushed by `PushRouter` for `payout/paid`,
+    /// `payout/failed`, and `payout/kyc_action` notifications. Lands
+    /// on `PayoutsView` — the earnings + Stripe Connect onboarding
+    /// screen. Client shell falls back to the notifications list.
+    case expertPayouts
+    /// Both shells. Pushed by `PushRouter` for `account/*`
+    /// notifications (password changed, deletion requested). Lands on
+    /// `AccountSecurityView`.
+    case accountSecurity
 }
 
 // MARK: - Shell action: open a chat thread
@@ -118,4 +132,34 @@ extension EnvironmentValues {
     /// is rendered outside a shell (previews, tests); callers should
     /// short-circuit gracefully in that case.
     @Entry var openChatThread: OpenChatThreadAction? = nil
+}
+
+// MARK: - Shell action: void → void navigation shortcuts
+
+/// Simple env-injected closure the shell provides so leaf screens can
+/// invoke a tab-switch + path-reset without knowing the shell's internal
+/// state. Used by `BookingRequestSentView`'s "View My Bookings" and
+/// "Back to Home" buttons and any future single-shot nav shortcut of
+/// the same shape.
+///
+/// Same design as `OpenChatThreadAction` — a struct with a stored
+/// closure so we can use it with `@Entry` (which requires a `Sendable`
+/// value type) and drop it into `EnvironmentValues` as an Optional.
+struct HomeShellAction {
+    let action: () -> Void
+    func callAsFunction() { action() }
+}
+
+extension EnvironmentValues {
+    /// Switch to the client shell's Bookings tab, landing on the My
+    /// Bookings list root. Installed by `HomeClientView` only —
+    /// consumers on the expert shell get `nil` (they don't create
+    /// bookings). Fires cleanly outside a shell (previews) as a no-op.
+    @Entry var showMyBookings: HomeShellAction? = nil
+
+    /// Switch to the client shell's Explore tab and reset the current
+    /// tab's nav stack — used for "Back to home" affordances that want
+    /// to unwind the whole booking flow. Installed by
+    /// `HomeClientView` only.
+    @Entry var returnToHome: HomeShellAction? = nil
 }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -23,6 +23,7 @@ enum APIRequestURLs {
     // MARK: Auth
     case login
     case signup
+    case refreshToken
     case resendVerificationEmail
     case checkEmailVerified
     case verifyEmailCode
@@ -80,7 +81,10 @@ enum APIRequestURLs {
     case requestBooking
     case getClientBookings
     case getClientBookingDetail
+    case getClientTransactions
     case rescheduleClientBooking
+    case acceptClientReschedule
+    case declineClientReschedule
     case cancelClientBooking
     case getExpertBookings
     case getExpertBookingDetails
@@ -88,6 +92,8 @@ enum APIRequestURLs {
     case updateBookingTakeaways
     case updateBookingStatus
     case rescheduleExpertBooking
+    case acceptExpertReschedule
+    case declineExpertReschedule
     case cancelExpertBooking
     case acceptExpertBooking
     case declineExpertBooking
@@ -97,6 +103,8 @@ enum APIRequestURLs {
     case declineBookingRequest
     case getBookingNote
     case createBookingNote
+    case getClientBookingNote
+    case createClientBookingNote
 
     // MARK: Expert Topics
     case getMyTopics
@@ -110,7 +118,14 @@ enum APIRequestURLs {
     // MARK: Expert Payouts + Stripe Connect
     case getWeeklyEarnings
     case getPayoutSummary
+    case getEarningsTransactions
     case startConnectOnboarding
+    case getConnectStatus
+    case refreshConnectLink
+
+    // MARK: Expert Tax Profile
+    case getTaxProfile
+    case saveTaxProfile
 
     // MARK: Call
     case joinCall
@@ -169,6 +184,7 @@ enum APIRequestURLs {
         // Auth
         case .login:                   return "/auth/login"
         case .signup:                  return "/auth/signup"
+        case .refreshToken:            return "/auth/refresh"
         case .resendVerificationEmail: return "/auth/email/resend"
         case .checkEmailVerified:      return "/auth/email/status"
         case .verifyEmailCode:         return "/auth/email/verify"
@@ -226,7 +242,10 @@ enum APIRequestURLs {
         case .requestBooking:          return "/bookings/request"
         case .getClientBookings:       return "/client/bookings"
         case .getClientBookingDetail:  return "/client/bookings/:id"
+        case .getClientTransactions:   return "/client/transactions"
         case .rescheduleClientBooking: return "/client/bookings/:id/reschedule"
+        case .acceptClientReschedule:  return "/client/bookings/:id/accept-reschedule"
+        case .declineClientReschedule: return "/client/bookings/:id/decline-reschedule"
         case .cancelClientBooking:     return "/client/bookings/:id/cancel"
         case .getExpertBookings:       return "/expert/bookings"
         case .getExpertBookingDetails: return "/expert/bookings/:id/details"
@@ -234,6 +253,8 @@ enum APIRequestURLs {
         case .updateBookingTakeaways:  return "/expert/bookings/:id/takeaways"
         case .updateBookingStatus:     return "/expert/bookings/:id/status"
         case .rescheduleExpertBooking: return "/expert/bookings/:id/reschedule"
+        case .acceptExpertReschedule:  return "/expert/bookings/:id/accept-reschedule"
+        case .declineExpertReschedule: return "/expert/bookings/:id/decline-reschedule"
         case .cancelExpertBooking:     return "/expert/bookings/:id/cancel"
         case .acceptExpertBooking:     return "/expert/bookings/:id/accept"
         case .declineExpertBooking:    return "/expert/bookings/:id/decline"
@@ -243,6 +264,8 @@ enum APIRequestURLs {
         case .declineBookingRequest:   return "/expert/booking-requests/:id/decline"
         case .getBookingNote,
              .createBookingNote:       return "/bookings/:id/note"
+        case .getClientBookingNote,
+             .createClientBookingNote: return "/client/bookings/:id/note"
 
         // Expert Topics
         case .getMyTopics,
@@ -256,7 +279,14 @@ enum APIRequestURLs {
         // Expert Payouts + Stripe Connect
         case .getWeeklyEarnings:       return "/expert/earnings/weekly"
         case .getPayoutSummary:        return "/expert/payouts/summary"
+        case .getEarningsTransactions: return "/expert/earnings/transactions"
         case .startConnectOnboarding:  return "/expert/connect/onboard"
+        case .getConnectStatus:        return "/expert/connect/status"
+        case .refreshConnectLink:      return "/expert/connect/refresh-link"
+
+        // Expert Tax Profile
+        case .getTaxProfile,
+             .saveTaxProfile:          return "/expert/tax-profile"
 
         // Call
         case .joinCall:              return "/bookings/:id/join"
@@ -315,7 +345,7 @@ enum APIRequestURLs {
     func getHTTPMethod() -> HTTPMethod {
         switch self {
         // Auth
-        case .login, .signup, .resendVerificationEmail, .forgotPassword, .resetPassword, .verifyEmailCode:
+        case .login, .signup, .refreshToken, .resendVerificationEmail, .forgotPassword, .resetPassword, .verifyEmailCode:
             return .post
         case .checkEmailVerified:
             return .get
@@ -373,11 +403,14 @@ enum APIRequestURLs {
         case .initiateBooking, .createPaymentIntent, .confirmBooking, .requestBooking,
              .cancelClientBooking, .cancelExpertBooking, .acceptExpertBooking,
              .declineExpertBooking, .acceptBookingRequest, .declineBookingRequest,
-             .createBookingNote:
+             .createBookingNote, .createClientBookingNote,
+             .acceptClientReschedule, .declineClientReschedule,
+             .acceptExpertReschedule, .declineExpertReschedule:
             return .post
         case .getClientBookings, .getClientBookingDetail, .getExpertBookings,
              .getExpertBookingDetails, .getExpertBookingSummary,
-             .getBookingRequests, .getBookingRequest, .getBookingNote:
+             .getBookingRequests, .getBookingRequest, .getBookingNote,
+             .getClientBookingNote, .getClientTransactions:
             return .get
         case .rescheduleClientBooking, .updateBookingStatus, .rescheduleExpertBooking:
             return .patch
@@ -396,9 +429,18 @@ enum APIRequestURLs {
 
         // Expert Payouts + Stripe Connect
         case .getWeeklyEarnings,
-             .getPayoutSummary:
+             .getPayoutSummary,
+             .getEarningsTransactions,
+             .getConnectStatus:
             return .get
-        case .startConnectOnboarding:
+        case .startConnectOnboarding,
+             .refreshConnectLink:
+            return .post
+
+        // Expert Tax Profile
+        case .getTaxProfile:
+            return .get
+        case .saveTaxProfile:
             return .post
 
         // Call
@@ -473,6 +515,11 @@ enum APIRequestURLs {
     private static let publicPaths: Set<String> = [
         "/auth/login",
         "/auth/signup",
+        // Refresh must be public — it authorises itself via the
+        // `refresh_token` in the body, not a bearer header. Excluding
+        // it here also keeps `NetworkService`'s 401 interceptor from
+        // recursing into itself when the refresh call fails.
+        "/auth/refresh",
         "/auth/password/forgot",
         "/auth/password/reset",
     ]

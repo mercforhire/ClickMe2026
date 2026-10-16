@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct DeleteAccountReasonSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("What is your primary reason for leaving?")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(DeleteAccountBrand.onSurface)
 
             VStack(spacing: 8) {
@@ -35,7 +35,7 @@ struct DeleteAccountReasonSection: View {
         } label: {
             HStack {
                 Text(reason.label)
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(DeleteAccountBrand.onSurface)
                 Spacer()
                 ZStack {

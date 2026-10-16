@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -15,24 +15,24 @@ struct RequestDecisionDetailsCard: View {
         VStack(spacing: 0) {
             detailRow(label: "Date & Time") {
                 Text("\(request.date),\n\(request.timeRange)")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
                     .multilineTextAlignment(.trailing)
             }
             rowDivider
             detailRow(label: "Topic") {
                 Text(request.topic)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
             }
             rowDivider
             detailRow(label: "Meeting Type") {
                 HStack(spacing: 6) {
                     Image(systemName: request.meetingTypeIcon)
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundColor(Brand.onSurface)
                     Text(request.meetingTypeLabel)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(Brand.onSurface)
                 }
             }
@@ -45,7 +45,7 @@ struct RequestDecisionDetailsCard: View {
     private func detailRow<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
         HStack(alignment: .top) {
             Text(label)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Brand.overlayWhite60)
             Spacer()
             content()

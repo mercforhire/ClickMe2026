@@ -2,20 +2,22 @@
 //  ClickMe2026App.swift
 //  ClickMe2026
 //
-//  Copyright © 2024 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
+import UIKit
 
 @main
 struct ClickMe2026App: App {
     @UIApplicationDelegateAdaptor var appDelegate: ClickMe2026AppDelegate
-    @StateObject private var userManager = UserManager.shared
+    @State private var userManager = UserManager.shared
     @State private var route: AppRoute = .splash
 
     var body: some Scene {
         WindowGroup {
             content
+                .keyboardDismissToolbar()
                 // Whenever the auth state flips to logged-out from a
                 // logged-in screen, snap back to the login route. This is
                 // how `UserManager.logout()` becomes user-visible.

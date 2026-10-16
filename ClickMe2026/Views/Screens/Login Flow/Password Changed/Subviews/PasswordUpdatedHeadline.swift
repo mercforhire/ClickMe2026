@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-14.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -23,7 +23,7 @@ struct PasswordUpdatedHeadline: View {
                 .lineSpacing(2)
 
             Text("Your password has been successfully updated. You can now use your new password to log in.")
-                .font(.system(size: 16, weight: .regular, design: .rounded))
+                .font(.brand(.callout, weight: .regular))
                 .foregroundColor(PasswordUpdatedBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)

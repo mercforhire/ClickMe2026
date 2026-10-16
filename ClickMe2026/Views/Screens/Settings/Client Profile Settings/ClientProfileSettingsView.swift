@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -14,10 +14,12 @@ struct ClientProfileSettingsView: View {
 
     @StateObject private var viewModel: ClientProfileSettingsViewModel
 
-    /// Observed so the avatar refreshes reactively when
+    /// Read so the avatar refreshes reactively when
     /// `UserManager.refreshProfile` returns a new photo URL (or when the
     /// user uploads a new one from the signup flow / another device).
-    @ObservedObject private var userManager = UserManager.shared
+    /// `@Observable` tracks reads on this singleton automatically —
+    /// no property wrapper required.
+    private let userManager = UserManager.shared
 
     /// Tracks taps on the version footer. Reaching 5 consecutive taps clears
     /// the onboarding-shown flag (debug affordance for QA / demos).
@@ -117,6 +119,13 @@ struct ClientProfileSettingsView: View {
 
     private var fieldsStack: some View {
         VStack(spacing: 10) {
+            // Email is shown as a read-only row — identity is immutable
+            // from this screen (changing it is an account-security flow).
+            // Copyable via a trailing tap-icon and native long-press
+            // selection. Sourced from `/me`, not the profile endpoint.
+            if let email = userManager.me?.email, !email.isEmpty {
+                ProfileReadOnlyField(label: "Email", value: email)
+            }
             HStack(spacing: 10) {
                 ProfileLabeledField(label: "First Name", text: $viewModel.firstName)
                 ProfileLabeledField(label: "Last Name", text: $viewModel.lastName)
@@ -182,7 +191,7 @@ struct ClientProfileSettingsView: View {
     /// "tap the version to unlock developer mode" pattern.
     private var versionFooter: some View {
         Text(Self.versionString)
-            .font(.system(size: 12, weight: .regular, design: .rounded))
+            .font(.brand(.caption, weight: .regular))
             .foregroundColor(ProfileSettingsBrand.onSurface.opacity(0.35))
             .contentShape(Rectangle())
             .onTapGesture {

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -43,17 +43,17 @@ struct RefundEligibilityCard: View {
     private func refundRow(icon: String, iconColor: Color, title: String, body: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.callout.weight(.semibold))
                 .foregroundColor(iconColor)
                 .frame(width: 22, height: 22)
                 .padding(.top, 2)
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .bold))
                     .foregroundColor(CancellationPoliciesBrand.onSurface)
                 Text(body)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(CancellationPoliciesBrand.onSurfaceVar)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)

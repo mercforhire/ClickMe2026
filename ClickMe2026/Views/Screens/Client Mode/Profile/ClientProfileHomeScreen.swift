@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-09.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -23,6 +23,7 @@ private enum ClientProfileHomeRoute: Hashable {
     case security
     case notifications
     case payment
+    case paymentHistory
     case privacy
     case faq
     case feedback
@@ -62,10 +63,13 @@ struct ClientProfileHomeScreen: View {
             }
         }
         .task { await viewModel.loadHeader() }
-        .confirmationDialog(
+        // `.alert` (not `.confirmationDialog`) so the prompt always
+        // centers on-screen — confirmation dialogs render as popovers
+        // anchored to the source on iPad, which can appear pinned to
+        // the top rather than centered.
+        .alert(
             "Log out of ClickMe?",
-            isPresented: $showLogoutConfirmation,
-            titleVisibility: .visible
+            isPresented: $showLogoutConfirmation
         ) {
             Button("Log Out", role: .destructive) {
                 guard CallCenter.shared.attempt("log out") else { return }
@@ -99,6 +103,9 @@ struct ClientProfileHomeScreen: View {
                         }
                         row(icon: "creditcard.fill", title: "Payment") {
                             push(.payment)
+                        }
+                        row(icon: "list.bullet.rectangle.fill", title: "Payment History") {
+                            push(.paymentHistory)
                         }
                     }
 
@@ -173,7 +180,7 @@ struct ClientProfileHomeScreen: View {
     private func section<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title.uppercased())
-                .font(.system(size: 12, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .tracking(2)
                 .foregroundColor(ClientProfileHomeBrand.sectionHeader)
                 .opacity(0.80)
@@ -199,13 +206,18 @@ struct ClientProfileHomeScreen: View {
         case .savedExperts:
             FavoritesView()
         case .security:
-            placeholder(title: "Security & Password")
+            AccountSecurityView()
         case .notifications:
             NotificationSettingsView()
         case .payment:
             PaymentMethodsView()
+        case .paymentHistory:
+            ClientTransactionsView()
         case .privacy:
-            placeholder(title: "Privacy")
+            SafariView(url: AppLinks.privacyPolicy)
+                .ignoresSafeArea()
+                .navigationTitle("Privacy")
+                .navigationBarTitleDisplayMode(.inline)
         case .faq:
             HelpView()
         case .feedback:
@@ -228,10 +240,10 @@ struct ClientProfileHomeScreen: View {
             ClientProfileHomeBrand.bg.ignoresSafeArea()
             VStack(spacing: 10) {
                 Image(systemName: "hammer.fill")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
                 Text("\(title) — coming soon")
-                    .font(.system(size: 14, design: .rounded))
+                    .font(.brand(.subheadline))
                     .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
             }
         }
@@ -244,10 +256,10 @@ struct ClientProfileHomeScreen: View {
     private var versionFooter: some View {
         VStack(spacing: 6) {
             Text(Self.versionString)
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
             Text("© 2026 ClickMe Innovations")
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundColor(ClientProfileHomeBrand.onSurfaceVar.opacity(0.40))
         }
         .frame(maxWidth: .infinity)

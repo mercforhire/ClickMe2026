@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,14 +17,14 @@ struct ProfileAccountSettingsRow: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.title3.weight(.regular))
                     .foregroundColor(ProfileSettingsBrand.onSurface)
                 Text("Account Settings")
-                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                    .font(.brand(.callout, weight: .regular))
                     .foregroundColor(ProfileSettingsBrand.onSurface)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.caption.weight(.medium))
                     .foregroundColor(ProfileSettingsBrand.onSurfaceVar)
             }
             .padding(.horizontal, 16)

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -62,7 +62,7 @@ struct ChatView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { viewModel.showMenu = true } label: {
                     Image(systemName: "line.3.horizontal")
-                        .font(.system(size: 18, weight: .regular))
+                        .font(.title3.weight(.regular))
                         .foregroundColor(ChattingBrand.onSurface)
                 }
             }
@@ -155,7 +155,7 @@ struct ChatView: View {
     private var typingIndicator: some View {
         HStack(spacing: 6) {
             Text("\(viewModel.peerName) is typing…")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(ChattingBrand.onSurfaceVar)
             Spacer()
         }
@@ -168,7 +168,7 @@ struct ChatView: View {
         VStack(spacing: 12) {
             ProgressView().tint(ChattingBrand.onSurface)
             Text("Loading messages…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ChattingBrand.onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -177,13 +177,13 @@ struct ChatView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(ChattingBrand.onSurfaceVar)
             Text("Couldn't load messages")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ChattingBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ChattingBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -192,7 +192,7 @@ struct ChatView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(ChattingBrand.myText)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -261,10 +261,10 @@ struct ChatView: View {
                         .tint(ChattingBrand.onSurfaceVar)
                 } else {
                     Image(systemName: "arrow.up")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.caption.weight(.semibold))
                 }
                 Text(viewModel.isLoadingEarlier ? "Loading…" : "Load earlier")
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
             }
             .foregroundColor(ChattingBrand.onSurfaceVar)
             .padding(.vertical, 10)
@@ -283,7 +283,7 @@ struct ChatView: View {
                 .padding(.horizontal, 14)
         case let .timestamp(label):
             Text(label)
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(ChattingBrand.onSurfaceVar)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)

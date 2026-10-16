@@ -2,7 +2,7 @@
 //  OnboardingNextButton.swift
 //  ClickMe2026
 //
-//  Copyright © 2024 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,7 +24,7 @@ struct OnboardingNextButton: View {
 
                 // button-text: 16 / 700 / lineHeight 20
                 Text(title)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.callout.weight(.bold))
                     .foregroundColor(OnboardingBrand.onPrimary)
                     .animation(.none, value: pageIndex)
             }

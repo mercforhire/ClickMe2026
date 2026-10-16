@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -11,17 +11,17 @@ import SwiftUI
 struct ExploreExpertsSection: View {
     let experts: [Expert]
     var onSeeAll: () -> Void = {}
-    var onViewProfile: (Expert) -> Void = { _ in }
+    var onTapExpert: (Expert) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Recommended Experts")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()
                 Button("See all", action: onSeeAll)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(ExploreBrand.brandGreen)
             }
             .padding(.horizontal, 20)
@@ -30,7 +30,7 @@ struct ExploreExpertsSection: View {
                 ForEach(experts) { expert in
                     ExpertCard(
                         expert: expert,
-                        onViewProfile: { onViewProfile(expert) }
+                        onTap: { onTapExpert(expert) }
                     )
                 }
             }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-11.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -48,18 +48,26 @@ final class TopicEditorViewModel: ObservableObject {
     /// gets rejected as `VALIDATION_ERROR`.
     let maxTagSelection = 3
 
-    /// True when the last validate attempt failed. Cleared once the user
-    /// edits any field so the error banner doesn't linger.
-    @Published var showError: Bool
+    /// User-facing message for the last failed `validate()` attempt.
+    /// Nil when validation passes or hasn't run. Populated with either
+    /// the generic "Please fill in all required fields…" copy or a
+    /// specific message (e.g. the below-minimum-price copy). Cleared
+    /// by the caller as needed.
+    @Published var errorMessage: String?
 
     /// True when editing an existing topic, false when adding. Drives the
     /// nav title and any "Add" vs "Edit" copy.
     let isEditing: Bool
 
-    /// Default currency for new topics. Server accepts any ISO 4217 code,
-    /// but the editor doesn't (yet) offer a picker — most experts on the
-    /// platform bill in USD, so start there.
-    let defaultCurrency = "USD"
+    /// Default currency for new topics. Backend controls this now via
+    /// `PricingLimits.minSessionAmount.defaultCurrency` (per the Pricing
+    /// Limits spec §1). The hard-coded `"CAD"` is used only as an
+    /// absolute fallback when `/me` hasn't landed yet on cold launch —
+    /// the server rejects sub-minimum saves independently with
+    /// `PRICE_BELOW_MINIMUM`, so we're not authoritative here.
+    var defaultCurrency: String {
+        userManager.me?.pricingLimits?.minSessionAmount.defaultCurrency ?? "CAD"
+    }
 
     /// Curated slug set covering the most common expert topic
     /// categories, alphabetical for stable scan-ability.
@@ -109,7 +117,7 @@ final class TopicEditorViewModel: ObservableObject {
         self.selectedTagIds = Set(topic?.expertiseTags?.map(\.id) ?? [])
         self.availableTags = []
         self.isLoadingTags = false
-        self.showError = false
+        self.errorMessage = nil
         self.api = api
         self.userManager = userManager
     }
@@ -187,6 +195,20 @@ final class TopicEditorViewModel: ObservableObject {
         }
     }
 
+    /// Applies a fresh profile-tag list from `ExpertiseEditorSheet` after
+    /// the user adds/removes tags on their profile from inside the topic
+    /// editor. The sheet already saved via `PATCH /expert/profile` and
+    /// refreshed `UserManager.expertProfile`; we just mirror the new
+    /// list into `availableTags` and drop any topic-level selections that
+    /// aren't on the profile anymore (same invariant as `loadTags`).
+    func applyProfileTagsUpdate(_ tags: [ExpertiseTagItem]) {
+        availableTags = tags.sorted {
+            $0.label.localizedCaseInsensitiveCompare($1.label) == .orderedAscending
+        }
+        let validIds = Set(availableTags.map(\.id))
+        selectedTagIds.formIntersection(validIds)
+    }
+
     /// Toggle tag selection. Honors the `maxTagSelection` cap on the way
     /// in — removals always succeed.
     func toggleTag(_ tag: ExpertiseTagItem) {
@@ -202,7 +224,7 @@ final class TopicEditorViewModel: ObservableObject {
     // MARK: Validation
 
     /// Parsed, validated payload ready to hand to the parent's save
-    /// closure. Returns nil and flips `showError` on any failure.
+    /// closure. Returns nil and populates `errorMessage` on any failure.
     struct ValidatedTopic {
         let title: String
         let description: String?
@@ -217,23 +239,115 @@ final class TopicEditorViewModel: ObservableObject {
     func validate() -> ValidatedTopic? {
         let trimmedTitle = title.trimmingCharacters(in: .whitespaces)
         let trimmedDescription = descriptionText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedTitle.isEmpty,
-              let rateMajor = Int(rate.trimmingCharacters(in: .whitespaces)), rateMajor > 0
-        else {
-            withAnimation { showError = true }
+        let trimmedRate = rate.trimmingCharacters(in: .whitespaces)
+
+        guard !trimmedTitle.isEmpty else {
+            withAnimation { errorMessage = "Please fill in all required fields with valid values." }
             return nil
         }
+
+        // Rate parsing: empty OR explicit "0" = free session (allowed).
+        // Positive int = paid, subject to the min-price check below.
+        // Anything else (non-numeric, negative) = invalid.
+        let rateMajor: Int
+        if trimmedRate.isEmpty {
+            rateMajor = 0
+        } else if let parsed = Int(trimmedRate), parsed >= 0 {
+            rateMajor = parsed
+        } else {
+            withAnimation { errorMessage = "Please fill in all required fields with valid values." }
+            return nil
+        }
+
+        // Server-authoritative floor (per PRICING-LIMITS spec §4) —
+        // we validate client-side only for UX, and let the server 422
+        // `PRICE_BELOW_MINIMUM` catch anything that slips past
+        // (offline cold-launch before `/me` lands, stale cache, etc).
+        // Fall through when `pricingLimits` is nil rather than blocking
+        // — the server is the authority. Skip entirely for free
+        // (`rateMinor == 0`) — the floor doesn't apply to free sessions
+        // per spec §4.
+        let rateMinor = rateMajor * 100
+        let currency = defaultCurrency
+        if rateMinor > 0, let limit = userManager.me?.pricingLimits?.minSessionAmount {
+            let floor = limit.minMinorUnits(for: currency)
+            if rateMinor < floor {
+                withAnimation {
+                    errorMessage = Self.minPriceMessage(floorMinorUnits: floor, currency: currency)
+                }
+                return nil
+            }
+        }
+
+        errorMessage = nil
         return ValidatedTopic(
             title: trimmedTitle,
             description: trimmedDescription.isEmpty ? nil : trimmedDescription,
             durationMinutes: durationMinutes,
-            hourlyRateAmount: rateMajor * 100,
-            currency: defaultCurrency,
+            hourlyRateAmount: rateMinor,
+            currency: currency,
             iconSlug: iconSlug,
             // Backend validator is case-sensitive; `UUID.uuidString`
             // uppercases hex, so lowercase before sending or the server
             // rejects with "One or more expertise tag ids are not recognized".
             expertiseTagIds: selectedTagIds.map { $0.uuidString.lowercased() }
         )
+    }
+
+    /// True while the current typed rate is below the min for the
+    /// current currency, non-empty, and non-free. Drives the inline
+    /// caption under the price field so the expert sees the constraint
+    /// before hitting Save. Returns `false` when `pricingLimits` hasn't
+    /// loaded (silent rather than misleading), and for the free case
+    /// (empty or `0`) which is exempt from the floor per spec §4.
+    var isRateBelowMinimum: Bool {
+        guard let limit = userManager.me?.pricingLimits?.minSessionAmount else { return false }
+        let trimmed = rate.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, let rateMajor = Int(trimmed), rateMajor > 0 else { return false }
+        return rateMajor * 100 < limit.minMinorUnits(for: defaultCurrency)
+    }
+
+    /// Inline helper caption. Calls out that free is a valid choice so
+    /// experts don't assume the min-price applies when they leave the
+    /// field blank. `nil` while `pricingLimits` is loading so we don't
+    /// render a placeholder that later shifts.
+    var minPriceHint: String? {
+        guard let limit = userManager.me?.pricingLimits?.minSessionAmount else { return nil }
+        let currency = defaultCurrency
+        let floor = limit.minMinorUnits(for: currency)
+        return "Leave blank or enter 0 for a free session — otherwise min \(Self.formatMinorUnits(floor, currency: currency))."
+    }
+
+    // MARK: - Money formatting
+
+    /// User-facing "below the minimum" message shown after a failed
+    /// `validate()`. Backend also ships a display-ready message on the
+    /// `PRICE_BELOW_MINIMUM` 422 (see spec §4) — save handlers should
+    /// prefer the server message when it arrives; this local variant is
+    /// for the pre-save (client-side) check.
+    private static func minPriceMessage(floorMinorUnits: Int, currency: String) -> String {
+        "A paid session must be at least \(formatMinorUnits(floorMinorUnits, currency: currency))."
+    }
+
+    /// Formats an integer minor-units value in the given ISO-4217
+    /// currency, driving fraction digits off `NumberFormatter.currency`
+    /// so zero-decimal currencies (JPY, KRW etc — where a `500` value
+    /// really is ¥500, not ¥5.00) render correctly.
+    ///
+    /// The Pricing Limits spec §5 says symbols and decimals officially
+    /// live on `GET /meta/currencies`; this helper is a local
+    /// approximation using `NumberFormatter`'s built-in metadata so the
+    /// pre-save UX doesn't have to wait on a second fetch. Server
+    /// 422 messages are already correctly formatted and should be
+    /// preferred on the failure path.
+    private static func formatMinorUnits(_ minorUnits: Int, currency: String) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currency
+        let digits = formatter.maximumFractionDigits
+        let divisor: Double = pow(10.0, Double(digits))
+        let major = Double(minorUnits) / divisor
+        return formatter.string(from: NSNumber(value: major))
+            ?? "\(currency) \(major)"
     }
 }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-13.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -229,7 +229,7 @@ struct LoginView: View {
                         Button("Forgot Password?") {
                             path.append(LoginRoute.forgotPassword)
                         }
-                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .font(.brand(.subheadline, weight: .medium))
                         .foregroundColor(LoginBrand.green)
                     }
                     .padding(.horizontal, 24)

@@ -79,7 +79,7 @@ struct ProfileAvatarRing: View {
                     .font(.system(size: 68))
                     .foregroundColor(Color.white.opacity(0.15))
                 Text("Add Photo")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.brand(.subheadline, weight: .medium))
                     .foregroundColor(Color.white.opacity(0.25))
             }
         }

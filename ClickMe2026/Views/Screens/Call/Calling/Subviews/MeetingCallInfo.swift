@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -32,7 +32,7 @@ struct MeetingCallInfo: View {
 
             if !topic.isEmpty {
                 Text(topic)
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(MeetingCallBrand.onSurfaceVar)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -42,18 +42,18 @@ struct MeetingCallInfo: View {
 
             if let scheduledRangeLabel {
                 Text(scheduledRangeLabel)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(MeetingCallBrand.onSurfaceVar.opacity(0.75))
             }
 
             Text(timerString)
-                .font(.system(size: 22, weight: .regular, design: .monospaced))
+                .font(.system(.title2, design: .monospaced))
                 .foregroundColor(isNearOrPastEnd ? .orange : MeetingCallBrand.onSurfaceVar)
                 .padding(.top, 4)
 
             if let remainingLabel {
                 Text(remainingLabel)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(.orange)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -65,7 +65,7 @@ struct MeetingCallInfo: View {
             }
 
             Text(statusLabel)
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(MeetingCallBrand.onSurfaceVar)
         }
     }

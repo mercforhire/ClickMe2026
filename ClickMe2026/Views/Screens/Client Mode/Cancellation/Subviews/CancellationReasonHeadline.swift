@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -14,11 +14,11 @@ struct CancellationReasonHeadline: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Why are you cancelling?")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.brand(.title, weight: .bold))
                 .foregroundColor(CancellationBrand.onSurface)
 
             Text("We're sorry to see you go. Please let us know the reason so we can improve our service.")
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(CancellationBrand.onSurfaceVar)
                 .lineSpacing(4)
         }

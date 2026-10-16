@@ -2,7 +2,7 @@
 //  PastBooking.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -17,4 +17,8 @@ struct PastBooking: Identifiable, Hashable {
     let date: String
     let timeRange: String
     let status: PastBookingStatus
+    /// Truncated preview of the client's private note on this booking,
+    /// surfaced from `ClientBookingItem.private_note_preview`. `nil` when
+    /// no note has been written.
+    let privateNotePreview: String?
 }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,7 +22,7 @@ struct ExpertProfileSettingsExpertise: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Expertise")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.brand(.callout, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
 
                 Spacer()
@@ -32,9 +32,9 @@ struct ExpertProfileSettingsExpertise: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "pencil")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.caption.weight(.semibold))
                         Text(viewModel.expertiseEntries.isEmpty ? "Add" : "Edit")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.brand(.caption, weight: .semibold))
                     }
                     .foregroundColor(Brand.primary)
                     .padding(.horizontal, 12)
@@ -71,11 +71,11 @@ struct ExpertProfileSettingsExpertise: View {
         return HStack(spacing: 6) {
             if isPrimary {
                 Image(systemName: "star.fill")
-                    .font(.system(size: 10))
+                    .font(.caption2)
                     .foregroundColor(Brand.primary)
             }
             Text(entry.label)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(Brand.onSurface)
                 .lineLimit(1)
         }
@@ -99,10 +99,10 @@ struct ExpertProfileSettingsExpertise: View {
     private var emptyState: some View {
         HStack(spacing: 10) {
             Image(systemName: "sparkles")
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundColor(Brand.primary.opacity(0.7))
             Text("Pick expertise so clients can find you.")
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(Brand.onSurfaceVariant)
             Spacer()
         }

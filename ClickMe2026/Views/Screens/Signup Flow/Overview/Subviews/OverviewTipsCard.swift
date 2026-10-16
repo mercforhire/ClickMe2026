@@ -13,10 +13,10 @@ struct OverviewTipsCard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "lightbulb.fill")
-                    .font(.system(size: 20))
+                    .font(.title3)
                     .foregroundColor(Brand.primary)
                 Text("Tips for a Great Profile")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.title3.weight(.bold))
                     .foregroundColor(Brand.onSurface)
             }
             .padding(.bottom, 18)

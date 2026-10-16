@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -30,9 +30,12 @@ struct ExpertReviewsView: View {
 
     /// Runtime init — pass the expert's server UUID so the view can fetch
     /// `GET /experts/:id/reviews` on appear. Nil is acceptable but the
-    /// screen will render empty content.
-    init(expertId: UUID?) {
-        _viewModel = StateObject(wrappedValue: ExpertReviewsViewModel(expertId: expertId))
+    /// screen will render empty content. `expertName` personalizes the
+    /// nav-bar title ("Sophia's Reviews"); empty falls back to "Reviews".
+    init(expertId: UUID?, expertName: String = "") {
+        _viewModel = StateObject(
+            wrappedValue: ExpertReviewsViewModel(expertId: expertId, expertName: expertName)
+        )
     }
 
     /// Preview / test seam — inject a pre-populated view model. Skips the
@@ -55,7 +58,7 @@ struct ExpertReviewsView: View {
             }
             .refreshable { await viewModel.reload() }
         }
-        .navigationTitle("Expert Reviews")
+        .navigationTitle(viewModel.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(ExpertReviewsBrand.bg, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -111,13 +114,13 @@ struct ExpertReviewsView: View {
     private var emptyView: some View {
         VStack(spacing: 8) {
             Image(systemName: "text.bubble")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
             Text("No reviews yet")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ExpertReviewsBrand.onSurface)
             Text("Client reviews will appear here after their sessions.")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -129,13 +132,13 @@ struct ExpertReviewsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
             Text("Couldn't load reviews")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ExpertReviewsBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -144,7 +147,7 @@ struct ExpertReviewsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -223,21 +226,22 @@ extension ExpertReview {
 /// the generic `PreviewNavHarness` closure.
 private struct LiveFetchReviewsBootstrap: View {
     @State private var expertId: UUID?
+    @State private var expertName: String = ""
     @State private var errorMessage: String?
 
     var body: some View {
         if let expertId {
-            ExpertReviewsView(expertId: expertId)
+            ExpertReviewsView(expertId: expertId, expertName: expertName)
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text("Preview bootstrap failed")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.white)
                 Text(errorMessage)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -260,6 +264,7 @@ private struct LiveFetchReviewsBootstrap: View {
                 errorMessage = "No recommended experts in the home feed to preview."
                 return
             }
+            expertName = re.fullName ?? ""
             expertId = re.expertId
         } catch {
             errorMessage = error.localizedDescription
@@ -273,6 +278,7 @@ private struct LiveFetchReviewsBootstrap: View {
     PreviewNavHarness(parentText: "About", navTitle: "Expert profile", rowTitle: "All reviews") {
         ExpertReviewsView(
             viewModel: ExpertReviewsViewModel(
+                expertName: "Sophia Carter",
                 overallRating: 4.9,
                 totalReviews: 128,
                 reviews: ExpertReview.samples

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -29,6 +29,7 @@ struct Expert: Identifiable, Hashable {
     let title: String
     let tags: [String]
     let rating: Double
+    var reviewCount: Int = 0
     /// URL from the server (`profile_image_url` / `avatar_url`). May be empty
     /// when the server omitted the field; the card renders a gradient
     /// placeholder in that case.
@@ -186,10 +187,18 @@ struct ExploreClientView: View {
                         peerImageURL: booking.imageURL,
                         topic: booking.topic,
                         scheduledStart: booking.startTime,
-                        scheduledEnd: booking.endTime
+                        scheduledEnd: booking.endTime,
+                        meetingType: booking.meetingType,
+                        isRejoin: booking.status == .completed
                     )
                 },
-                onTapCard: { _ in }
+                onTapCard: { booking in
+                    // Mirror the My Bookings tab — tapping an upcoming
+                    // card pushes `UpcomingBookingView`, the actionable
+                    // detail with reschedule/cancel + join. `bookingSummary`
+                    // is read-only and used for terminal bookings.
+                    navPath?.push(HomeRoute.upcomingBooking(bookingId: booking.id))
+                }
             )
             .padding(.bottom, 32)
         }
@@ -250,7 +259,7 @@ struct ExploreClientView: View {
         case .idle, .loading:
             ExploreExpertsSection(
                 experts: Self.placeholderExperts,
-                onViewProfile: { _ in }
+                onTapExpert: { _ in }
             )
             .redacted(reason: .placeholder)
 
@@ -258,7 +267,7 @@ struct ExploreClientView: View {
             ExploreExpertsSection(
                 experts: viewModel.experts,
                 onSeeAll: onSeeAllExperts,
-                onViewProfile: { expert in push(expert) }
+                onTapExpert: { expert in push(expert) }
             )
 
         case .failed(let message):
@@ -269,16 +278,16 @@ struct ExploreClientView: View {
     private func sectionError(title: String, message: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
 
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 24, weight: .light))
+                    .font(.title2.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text(message)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.55))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -287,7 +296,7 @@ struct ExploreClientView: View {
                     Task { await viewModel.reload() }
                 } label: {
                     Text("Retry")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.brand(.caption, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 18)
                         .padding(.vertical, 8)
@@ -331,7 +340,7 @@ private extension PublicExpertProfile {
             name: expert.name,
             title: expert.title,
             rating: expert.rating,
-            reviewCount: 0,
+            reviewCount: expert.reviewCount,
             yearsExp: "",
             bookings: "",
             isOnline: true,

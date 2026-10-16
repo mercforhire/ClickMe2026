@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -18,7 +18,7 @@ struct BookingRequestSentHeadline: View {
     var body: some View {
         VStack(spacing: 14) {
             Text("Request Sent!")
-                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .font(.brand(.title, weight: .bold))
                 .foregroundColor(BookingRequestSentBrand.onSurface)
 
             (
@@ -30,7 +30,7 @@ struct BookingRequestSentHeadline: View {
                     + Text(". They will review it and respond shortly. You'll be notified as soon as it's confirmed.")
                     .foregroundColor(BookingRequestSentBrand.onSurfaceVar)
             )
-            .font(.system(size: 16, weight: .regular, design: .rounded))
+            .font(.brand(.callout, weight: .regular))
             .multilineTextAlignment(.center)
             .lineSpacing(4)
         }

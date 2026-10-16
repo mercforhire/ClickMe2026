@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-27.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -37,10 +37,38 @@ final class BookingSummaryViewModel: ObservableObject {
     @Published var feedbackStars: Int
     @Published var feedbackText: String?
 
+    /// Session outcome collapsed to the 3-case UI enum
+    /// (completed / cancelled / missed). Drives the status badge on the
+    /// expert card. Nil until the fetch resolves or the server returns
+    /// a status the past-bucket mapping doesn't recognize — in that
+    /// case the badge is hidden rather than lying with a stale label.
+    @Published var status: PastBookingStatus?
+
     /// True when the caller has already left a review for this booking.
     /// Drives whether the "Your Feedback" section shows the star + comment
     /// summary or a "Leave a review" CTA.
     @Published var hasSubmittedReview: Bool
+
+    /// Full text of the client's private note on this booking, surfaced
+    /// from `ClientBookingDetail.privateNote`. `nil` while loading or
+    /// when no note has been written — the "My Note" card renders an
+    /// empty-state ghost in that case.
+    @Published var privateNote: String?
+
+    /// Pending reschedule proposal on this booking, or `nil` when the
+    /// booking isn't in the `pending_reschedule` state. Drives the
+    /// reschedule banner + accept/decline actions on the summary.
+    @Published var reschedule: RescheduleProposal?
+
+    /// End of the Stripe authorization window on this booking, or
+    /// `nil` for free / long-lead / captured / terminal bookings.
+    /// Non-gating (Phase 27.1) — used only to decide whether accepting
+    /// the reschedule needs the payment-conversion disclosure copy.
+    @Published var authorizationExpiresAt: Date?
+
+    /// In-flight flag for accept/decline reschedule.
+    @Published var isSubmittingReschedule: Bool = false
+    @Published var rescheduleError: String?
 
     // MARK: Load state
     @Published var loadState: LoadState
@@ -69,7 +97,10 @@ final class BookingSummaryViewModel: ObservableObject {
         self.pricePaid = nil
         self.feedbackStars = 0
         self.feedbackText = nil
+        self.status = nil
         self.hasSubmittedReview = false
+        self.privateNote = nil
+        self.reschedule = nil
         self.loadState = .idle
         self.api = api
 
@@ -96,6 +127,8 @@ final class BookingSummaryViewModel: ObservableObject {
         feedbackStars: Int = 5,
         feedbackText: String? = "David is truly an expert in his field. The way he broke down complex GAN concepts was incredible. Already seeing performance improvements in our dev environment. Highly recommended!",
         hasSubmittedReview: Bool = true,
+        status: PastBookingStatus? = .completed,
+        privateNote: String? = nil,
         loadState: LoadState = .loaded
     ) {
         self.bookingId = nil
@@ -108,7 +141,11 @@ final class BookingSummaryViewModel: ObservableObject {
         self.pricePaid = pricePaid
         self.feedbackStars = feedbackStars
         self.feedbackText = feedbackText
+        self.status = status
         self.hasSubmittedReview = hasSubmittedReview
+        self.privateNote = privateNote
+        self.reschedule = nil
+        self.currentStartTime = nil
         self.loadState = loadState
         self.api = .shared
     }
@@ -159,6 +196,148 @@ final class BookingSummaryViewModel: ObservableObject {
         topic = detail.topic.title
         dateTime = Self.formatDateTime(start: detail.startTime, end: detail.endTime)
         pricePaid = Self.formatPrice(topic: detail.topic)
+        status = Self.mapStatus(detail.status)
+        privateNote = detail.privateNote
+        reschedule = detail.reschedule
+        currentStartTime = detail.startTime
+        authorizationExpiresAt = detail.authorizationExpiresAt
+    }
+
+    /// The booking's *current* scheduled start — used by the reschedule
+    /// banner to render the "From" side of the moving-from → moving-to
+    /// row. Nil in preview seeds; the banner only shows when
+    /// `reschedule` is set, and that only happens after `apply(detail:)`
+    /// has run.
+    @Published var currentStartTime: Date?
+
+    // MARK: - Payment-conversion disclosure (Phase 27.1)
+
+    /// True when accepting the pending reschedule would push the
+    /// session past this booking's authorization window — in which
+    /// case the server voids the current hold and re-schedules the
+    /// charge to ~24h before the new session. Drives the accept-
+    /// reschedule confirmation dialog's copy.
+    var requiresAcceptRescheduleDisclosure: Bool {
+        guard let expiresAt = authorizationExpiresAt,
+              let proposal = reschedule
+        else { return false }
+        return proposal.proposedEnd > expiresAt
+    }
+
+    /// True when the T-24h charge would fire within the next ~24 hours
+    /// (proposed session start under 48h from now). Used to append the
+    /// near-term caveat to the disclosure copy. Sub-24h proposals are
+    /// refused server-side, so this only fires in the 24–48h band.
+    var acceptRescheduleChargesSoon: Bool {
+        guard let proposal = reschedule else { return false }
+        return proposal.proposedStart.timeIntervalSinceNow < 48 * 3600
+    }
+
+    // MARK: - Reschedule actions
+
+    /// Accept an expert-initiated reschedule. Rolls the booking
+    /// forward server-side, then reloads detail so the banner clears
+    /// and the times update. No-op when there's no booking id
+    /// (preview seed) or a submission is already in flight.
+    ///
+    /// **PAYMENT_METHOD_REQUIRED recovery (Phase 27.1):** the check on
+    /// this endpoint is DB-only — a 422 does not mean "user has no
+    /// cards." Fetch the vault and retry with a `stripe_payment_method_id`
+    /// when possible. See `RESCHEDULE-PAYMENT-CONVERSION.md` §3.1.
+    func acceptReschedule() async {
+        guard !isSubmittingReschedule, let bookingId else { return }
+        isSubmittingReschedule = true
+        defer { isSubmittingReschedule = false }
+
+        do {
+            _ = try await api.acceptClientReschedule(id: bookingId)
+            await forceLoad(bookingId: bookingId)
+            return
+        } catch {
+            guard Self.errorCode(for: error) == .paymentMethodRequired else {
+                rescheduleError = error.userMessage
+                return
+            }
+            // Fall through to pm-recovery below.
+        }
+
+        let vault: [PaymentMethodItem]
+        do {
+            vault = try await api.getPaymentMethods().data.paymentMethods
+        } catch {
+            rescheduleError = "Couldn't check your saved payment methods. Please try again."
+            return
+        }
+
+        let preferredId = vault.first(where: { $0.isDefault })?.id ?? vault.first?.id
+        guard let pmId = preferredId else {
+            rescheduleError = "Please add a payment method in Settings > Payment before accepting this reschedule."
+            return
+        }
+
+        do {
+            _ = try await api.acceptClientReschedule(id: bookingId, stripePaymentMethodId: pmId)
+            await forceLoad(bookingId: bookingId)
+        } catch {
+            // Second failure is terminal — including a repeat
+            // PAYMENT_METHOD_REQUIRED (the chosen card can't be
+            // prepared for future billing either).
+            if Self.errorCode(for: error) == .paymentMethodRequired {
+                rescheduleError = "The card on file can't be used for this reschedule. Please add a new payment method in Settings > Payment and try again."
+            } else {
+                rescheduleError = error.userMessage
+            }
+        }
+    }
+
+    private static func errorCode(for error: Error) -> ErrorCode? {
+        guard case let NetworkError.httpError(_, data) = error,
+              let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
+        else { return nil }
+        return response.code
+    }
+
+    /// Decline an expert-initiated reschedule with an optional reason.
+    func declineReschedule(reason: String?) async {
+        guard !isSubmittingReschedule, let bookingId else { return }
+        isSubmittingReschedule = true
+        defer { isSubmittingReschedule = false }
+        let trimmed = reason?.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            _ = try await api.declineClientReschedule(
+                id: bookingId,
+                reason: (trimmed?.isEmpty ?? true) ? nil : trimmed
+            )
+            await forceLoad(bookingId: bookingId)
+        } catch {
+            rescheduleError = error.userMessage
+        }
+    }
+
+    /// "Wed, Jul 10 · 10:00 AM" — used by the from/to row on the
+    /// reschedule banner.
+    func formatSlot(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "EEE, MMM d · h:mm a"
+        return f.string(from: date)
+    }
+
+    /// Collapse the raw wire status to the 3-case badge enum. Same rule
+    /// used by `MyBookingsViewModel.mapPastIfApplicable`. Returns nil
+    /// for statuses that don't belong on the summary badge (e.g.
+    /// `pending_approval / confirmed / in_progress` — the summary
+    /// screen is only ever pushed for terminal bookings, but we
+    /// silently hide rather than lie if the caller opens it early).
+    private static func mapStatus(_ raw: String) -> PastBookingStatus? {
+        guard let status = BookingStatus(rawValue: raw) else { return nil }
+        switch status {
+        case .completed:                      return .completed
+        case .cancelled, .declined:           return .cancelled
+        case .missed, .expired:               return .missed
+        case .pendingApproval, .confirmed,
+             .pendingReschedule, .inProgress: return nil
+        }
     }
 
     /// Returns `nil` for free topics or when the server didn't send both an

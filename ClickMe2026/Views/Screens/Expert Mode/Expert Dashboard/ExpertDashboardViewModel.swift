@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-24.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -18,6 +18,12 @@ final class ExpertDashboardViewModel: ObservableObject {
     @Published var expertFirstName: String
     @Published var expertLastName: String
     @Published var pendingCount: Int
+    /// Count of upcoming bookings whose `status.code == .pendingReschedule`
+    /// AND whose `reschedule.initiatedBy == .client` — i.e. the client
+    /// proposed a new time and the expert (this user) needs to act.
+    /// Excludes expert-initiated proposals that are waiting on the
+    /// client, since those aren't the expert's move.
+    @Published var rescheduleRequestCount: Int
     /// All confirmed bookings whose `startTime` falls within today (client
     /// local timezone). Multiple cards render for accounts with multiple
     /// sessions in a day.
@@ -40,6 +46,12 @@ final class ExpertDashboardViewModel: ObservableObject {
     /// of the balance block.
     @Published var payoutOnboardingRequired: Bool
 
+    /// `GET /expert/connect/status` snapshot. Nil until fetched or on
+    /// 404 (no connected account yet — that's the "start onboarding"
+    /// path). `chargesEnabled == false` OR `currentlyDue` non-empty
+    /// means the expert can't accept bookings yet.
+    @Published var connectStatus: ConnectStatusData?
+
     /// Fresh Stripe Account Link URL — set by `startOnboarding()` for the
     /// view to open in a browser. Consumed immediately; the URL is
     /// single-use and expires in ~5 min.
@@ -47,6 +59,13 @@ final class ExpertDashboardViewModel: ObservableObject {
 
     /// Alert text for Stripe Connect onboarding failures.
     @Published var connectError: String?
+
+    /// True while `startOnboarding()` is minting a fresh Stripe
+    /// Account Link. Drives the "Complete payout setup" CTA's spinner
+    /// and disables repeat presses — the mint call sometimes takes a
+    /// few seconds on Stripe's side and users otherwise re-tap
+    /// thinking nothing happened.
+    @Published var isMintingOnboarding: Bool = false
 
     @Published var loadState: LoadState
 
@@ -65,10 +84,12 @@ final class ExpertDashboardViewModel: ObservableObject {
         self.expertFirstName = ""
         self.expertLastName = ""
         self.pendingCount = 0
+        self.rescheduleRequestCount = 0
         self.todaysSessions = []
         self.weeklyEarnings = nil
         self.payoutSummary = nil
         self.payoutOnboardingRequired = false
+        self.connectStatus = nil
         self.connectOnboardingURL = nil
         self.connectError = nil
         self.loadState = .idle
@@ -80,6 +101,7 @@ final class ExpertDashboardViewModel: ObservableObject {
         expertFirstName: String = "Ethan",
         expertLastName: String = "Carter",
         pendingCount: Int = 3,
+        rescheduleRequestCount: Int = 0,
         todaysSessions: [ExpertBookingItem] = [],
         weeklyEarnings: WeeklyEarningsData? = WeeklyEarningsData(
             weekStart: "2026-07-06",
@@ -102,6 +124,7 @@ final class ExpertDashboardViewModel: ObservableObject {
         vm.expertFirstName = expertFirstName
         vm.expertLastName = expertLastName
         vm.pendingCount = pendingCount
+        vm.rescheduleRequestCount = rescheduleRequestCount
         vm.todaysSessions = todaysSessions
         vm.weeklyEarnings = weeklyEarnings
         vm.payoutSummary = payoutSummary
@@ -129,6 +152,38 @@ final class ExpertDashboardViewModel: ObservableObject {
         await forceLoad()
     }
 
+    /// Background refresh on tab-return — updates today's sessions,
+    /// reschedule + pending counts, and the soft financial sections
+    /// without touching `loadState` so the visible dashboard doesn't
+    /// blank to a spinner. Guarded on `.loaded` to avoid racing the
+    /// initial `.task { load() }`. Failure is intentionally swallowed;
+    /// stale data is preferable to a full-screen flash on a transient
+    /// network blip.
+    func silentReload() async {
+        guard case .loaded = loadState else { return }
+        do {
+            let bookingResponse = try await api.getExpertBookings(type: .upcoming, page: 1, limit: 50)
+            todaysSessions = bookingResponse.data.bookings
+                .filter { isToday($0.session.startTime) && Self.isJoinable($0.status.code) }
+                .sorted { $0.session.startTime < $1.session.startTime }
+
+            rescheduleRequestCount = bookingResponse.data.bookings.filter { item in
+                item.status.code == .pendingReschedule
+                    && item.reschedule?.initiatedBy == .client
+            }.count
+
+            let requestResponse = try await api.getBookingRequests(page: 1, limit: 20)
+            pendingCount = requestResponse.data.pagination?.totalCount
+                ?? requestResponse.data.requests.count
+        } catch {
+            // Swallow — see docblock.
+        }
+
+        // Soft dependencies — already fail silently.
+        await fetchWeeklyEarnings()
+        await fetchPayoutSummary()
+    }
+
     private func forceLoad() async {
         loadState = .loading
 
@@ -146,10 +201,20 @@ final class ExpertDashboardViewModel: ObservableObject {
         // Sequential — parallel `async let` decoding trips Swift 6's
         // main-actor-isolated-Decodable check.
         do {
-            let bookingResponse = try await api.getExpertBookings(page: 1, limit: 50)
+            let bookingResponse = try await api.getExpertBookings(type: .upcoming, page: 1, limit: 50)
             todaysSessions = bookingResponse.data.bookings
                 .filter { isToday($0.session.startTime) && Self.isJoinable($0.status.code) }
                 .sorted { $0.session.startTime < $1.session.startTime }
+
+            // Client-initiated reschedule proposals awaiting this
+            // expert's decision. Expert-initiated proposals (where the
+            // expert is waiting on the client) are intentionally
+            // excluded — nudging the expert about their own proposal
+            // would be noise.
+            rescheduleRequestCount = bookingResponse.data.bookings.filter { item in
+                item.status.code == .pendingReschedule
+                    && item.reschedule?.initiatedBy == .client
+            }.count
 
             let requestResponse = try await api.getBookingRequests(page: 1, limit: 20)
             pendingCount = requestResponse.data.pagination?.totalCount
@@ -177,23 +242,48 @@ final class ExpertDashboardViewModel: ObservableObject {
         }
     }
 
-    /// Fetches the live payout balance. Server returns 400 with codes
-    /// `NO_PAYOUT_METHOD` / `KYC_INCOMPLETE` when the expert hasn't
-    /// completed Stripe Connect onboarding — the view swaps the balance
-    /// block for a "Complete payout setup" CTA in that case.
+    /// Fetches the live payout balance + connect status.
+    ///
+    /// Connect status is the authoritative signal for
+    /// `payoutOnboardingRequired`: a Stripe-cleared account
+    /// (`charges_enabled: true`) can still 400 on the payout summary
+    /// call transiently when its balance object isn't initialized —
+    /// letting the summary alone drive the CTA left the "Complete
+    /// payout setup" prompt on screen after onboarding was actually
+    /// complete.
     private func fetchPayoutSummary() async {
+        // Fetch connect status first — authoritative.
+        connectStatus = try? await api.getConnectStatus().data
+
+        // Payout summary — soft dependency. 400 is treated as "no
+        // balance yet"; other errors are just silent (Financial
+        // Summary card degrades but doesn't blank the dashboard).
+        var summary400 = false
         do {
             let response = try await api.getPayoutSummary()
             payoutSummary = response.data
-            payoutOnboardingRequired = false
         } catch {
             payoutSummary = nil
             if case let NetworkError.httpError(status, _) = error, status == 400 {
-                payoutOnboardingRequired = true
-            } else {
-                payoutOnboardingRequired = false
+                summary400 = true
             }
         }
+
+        // Prefer connect status when we have it; fall back to the
+        // legacy 400-based heuristic only when status was unavailable.
+        if let status = connectStatus {
+            payoutOnboardingRequired = !status.chargesEnabled || !status.currentlyDue.isEmpty
+        } else {
+            payoutOnboardingRequired = summary400
+        }
+    }
+
+    /// True when the expert has a Connect account with outstanding
+    /// requirements — controls whether the CTA calls refresh-link or
+    /// start-onboarding.
+    var hasIncompleteConnectAccount: Bool {
+        guard let status = connectStatus else { return false }
+        return !status.chargesEnabled || !status.currentlyDue.isEmpty
     }
 
     // MARK: - Stripe Connect onboarding
@@ -201,10 +291,23 @@ final class ExpertDashboardViewModel: ObservableObject {
     /// Fetches a fresh Stripe Account Link URL and hands it to the view
     /// via `connectOnboardingURL`. The URL is single-use with a ~5-minute
     /// expiry, so we never cache it.
+    ///
+    /// Uses `refresh-link` when the expert already has a Connect
+    /// account with outstanding requirements, otherwise the initial
+    /// `onboard` call. Both return the same shape.
     func startOnboarding() async {
+        // Re-entry guard — the mint call is server-side + Stripe, and
+        // a double-tap during that window used to fire the request
+        // twice with no UI feedback in between.
+        guard !isMintingOnboarding else { return }
+        isMintingOnboarding = true
+        defer { isMintingOnboarding = false }
+
         connectError = nil
         do {
-            let response = try await api.startConnectOnboarding()
+            let response: SuccessDataResponse<ConnectOnboardData> = hasIncompleteConnectAccount
+                ? try await api.refreshConnectLink()
+                : try await api.startConnectOnboarding()
             connectOnboardingURL = URL(string: response.data.url)
         } catch {
             connectError = error.userMessage

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -107,6 +107,22 @@ struct BookingRequestSentView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 28)
 
+                // Payment-lifecycle explainer. Suppressed for free
+                // bookings — no card was authorized, so the "hold /
+                // capture" narrative doesn't apply. Reuses the same
+                // card component the pre-payment sheet mounts, so the
+                // language is identical on both sides of the flow.
+                if !viewModel.isFree {
+                    PaymentLifecycleCard(
+                        currentStep: .holdPlaced,
+                        sessionWhen: viewModel.sessionWhenLabel
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 28)
+                    .opacity(viewModel.cardOpacity)
+                    .offset(y: viewModel.cardOffset)
+                }
+
                 BookingRequestSentActions(
                     onViewBookings: onViewBookings,
                     onBackToHome: onBackToHome,
@@ -124,7 +140,7 @@ struct BookingRequestSentView: View {
             ProgressView()
                 .tint(BookingRequestSentBrand.onSurface)
             Text("Sending your booking…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(BookingRequestSentBrand.onSurface.opacity(0.6))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -133,13 +149,13 @@ struct BookingRequestSentView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(BookingRequestSentBrand.onSurface.opacity(0.6))
             Text("Couldn't load your booking")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(BookingRequestSentBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(BookingRequestSentBrand.onSurface.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -153,7 +169,7 @@ struct BookingRequestSentView: View {
                 }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -178,13 +194,13 @@ private struct LiveFetchBookingRequestSentBootstrap: View {
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text("Preview bootstrap failed")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.white)
                 Text(errorMessage)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)

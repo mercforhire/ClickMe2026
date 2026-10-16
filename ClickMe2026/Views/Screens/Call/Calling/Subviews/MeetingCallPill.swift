@@ -2,7 +2,7 @@
 //  MeetingCallPill.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -20,7 +20,7 @@ struct MeetingCallPill: View {
             HStack(spacing: 10) {
                 avatar
                 Text(viewModel.timerString)
-                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .font(.system(.subheadline, design: .monospaced).weight(.semibold))
                     .foregroundColor(MeetingCallBrand.onSurface)
             }
             .padding(.horizontal, 12)
@@ -48,7 +48,7 @@ struct MeetingCallPill: View {
                     ZStack {
                         MeetingCallBrand.avatarFallback
                         Image(systemName: "person.fill")
-                            .font(.system(size: 10))
+                            .font(.caption2)
                             .foregroundColor(.white.opacity(0.25))
                     }
                 }

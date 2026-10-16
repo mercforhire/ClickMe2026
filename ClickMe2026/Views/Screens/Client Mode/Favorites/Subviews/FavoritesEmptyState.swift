@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -26,11 +26,11 @@ struct FavoritesEmptyState: View {
 
                 VStack(spacing: 12) {
                     Text("No favorites yet")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .font(.brand(.title, weight: .bold))
                         .foregroundColor(FavoritesBrand.onSurface)
 
                     Text("Start exploring and save your favorite experts\nto find them easily later.")
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
+                        .font(.brand(.callout, weight: .regular))
                         .foregroundColor(FavoritesBrand.onSurfaceVar)
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
@@ -41,7 +41,7 @@ struct FavoritesEmptyState: View {
                 VStack(spacing: 14) {
                     Button(action: onExplore) {
                         Text("Explore Experts")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .font(.brand(.body, weight: .bold))
                             .foregroundColor(FavoritesBrand.onPrimary)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
@@ -55,7 +55,7 @@ struct FavoritesEmptyState: View {
 
                     Button(action: onViewHistory) {
                         Text("View My History")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .font(.brand(.body, weight: .bold))
                             .foregroundColor(FavoritesBrand.onSurface)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)

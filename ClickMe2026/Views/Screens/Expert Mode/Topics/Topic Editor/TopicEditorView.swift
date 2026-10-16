@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -36,6 +36,12 @@ struct TopicEditorView: View {
     /// True while an async `onSave` is in flight. Blocks the Save button
     /// from being tapped twice.
     @State private var isSaving: Bool = false
+    /// Presents `ExpertiseEditorSheet` inline so the expert can add
+    /// profile-level expertise tags without having to bounce out to
+    /// Settings first. The sheet writes through to `UserManager` on
+    /// save; we mirror the fresh list back into the editor via
+    /// `viewModel.applyProfileTagsUpdate`.
+    @State private var showExpertiseEditor: Bool = false
 
     // MARK: Init
 
@@ -89,18 +95,25 @@ struct TopicEditorView: View {
 
                         durationStepper
 
-                        editorField(
-                            label: "Price per Session ($)",
-                            placeholder: "e.g. 150",
-                            text: $viewModel.rate,
-                            keyboard: .numberPad
-                        )
+                        VStack(alignment: .leading, spacing: 6) {
+                            editorField(
+                                label: "Price per Session ($)",
+                                placeholder: "e.g. 150",
+                                text: $viewModel.rate,
+                                keyboard: .numberPad
+                            )
+                            if let hint = viewModel.minPriceHint {
+                                Text(hint)
+                                    .font(.caption.weight(.regular))
+                                    .foregroundColor(viewModel.isRateBelowMinimum ? Brand.error : Brand.overlayWhite60)
+                            }
+                        }
 
                         tagPicker
 
-                        if viewModel.showError {
-                            Text("Please fill in all required fields with valid values.")
-                                .font(.system(size: 13, weight: .medium))
+                        if let message = viewModel.errorMessage {
+                            Text(message)
+                                .font(.caption.weight(.medium))
                                 .foregroundColor(Brand.error)
                                 .transition(.opacity)
                         }
@@ -121,12 +134,12 @@ struct TopicEditorView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save", action: attemptSave)
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                         .foregroundColor(Brand.primary)
                         .disabled(isSaving)
                 }
             }
-            .animation(.easeInOut(duration: 0.2), value: viewModel.showError)
+            .animation(.easeInOut(duration: 0.2), value: viewModel.errorMessage)
             // Alert lives on the editor's own state, not on the parent
             // view model — SwiftUI's `.alert` bound to state outside the
             // cover only rendered after the cover dismissed, which was
@@ -145,6 +158,21 @@ struct TopicEditorView: View {
             } message: { message in
                 Text(message)
             }
+            // `.fullScreenCover` presents in a separate context so the
+            // app-root keyboard toolbar doesn't reach the title / rate
+            // TextFields — especially the number-pad rate field, which
+            // has no Return key.
+            .keyboardDismissToolbar()
+            // Profile-tag editor — same sheet used from Settings, so
+            // adds saved here appear everywhere expertise tags render.
+            // The `onSaved` closure hands the fresh selection back so
+            // the topic editor's tag picker updates in place, no
+            // reload needed.
+            .sheet(isPresented: $showExpertiseEditor) {
+                ExpertiseEditorSheet { tags in
+                    viewModel.applyProfileTagsUpdate(tags)
+                }
+            }
         }
     }
 
@@ -153,16 +181,38 @@ struct TopicEditorView: View {
     private var iconPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Icon")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundColor(Brand.onSurfaceVariant)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(viewModel.pickableSlugs, id: \.self) { slug in
-                        iconChip(slug: slug)
+            // ScrollViewReader lets us jump the horizontal strip to
+            // whichever chip is pre-selected on entry (edit mode) so
+            // the user sees the highlighted icon without having to
+            // scroll to find it. `.id(slug)` on the chip is what
+            // `proxy.scrollTo` targets.
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(viewModel.pickableSlugs, id: \.self) { slug in
+                            iconChip(slug: slug)
+                                .id(slug)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                .onAppear {
+                    // Only in edit mode — add mode has no selection to
+                    // scroll to, so leave the strip anchored at the
+                    // start (Ai, Business, …) as it renders today.
+                    guard let selected = viewModel.iconSlug, !selected.isEmpty else { return }
+                    // One-run delay so the ScrollView has finished its
+                    // initial layout pass; scrolling before that lands
+                    // at the wrong offset (SwiftUI quirk).
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            proxy.scrollTo(selected, anchor: .center)
+                        }
                     }
                 }
-                .padding(.vertical, 2)
             }
         }
     }
@@ -173,7 +223,7 @@ struct TopicEditorView: View {
             viewModel.toggleIcon(slug)
         } label: {
             Image(systemName: CategoryIconMap.sfSymbol(forSlug: slug))
-                .font(.system(size: 17, weight: .semibold))
+                .font(.body.weight(.semibold))
                 .foregroundColor(selected ? Brand.primary : Brand.onSurfaceVariant)
                 .frame(width: 44, height: 44)
                 .background(
@@ -195,35 +245,33 @@ struct TopicEditorView: View {
 
     private var tagPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(spacing: 10) {
                 Text("Expertise Tags")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundColor(Brand.onSurfaceVariant)
                 Spacer()
                 Text("Select up to \(viewModel.maxTagSelection)")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.caption2.weight(.medium))
                     .foregroundColor(Brand.onSurfaceVariant)
+                addExpertiseButton
             }
 
             if viewModel.isLoadingTags {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small).tint(Brand.onSurfaceVariant)
                     Text("Loading tags…")
-                        .font(.system(size: 13))
+                        .font(.caption)
                         .foregroundColor(Brand.onSurfaceVariant)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 4)
             } else if viewModel.availableTags.isEmpty {
-                Text("Add expertise on your profile to tag topics with them.")
-                    .font(.system(size: 13))
-                    .foregroundColor(Brand.onSurfaceVariant)
-                    .fixedSize(horizontal: false, vertical: true)
+                emptyExpertiseState
             } else {
                 tagFilterField
                 if viewModel.filteredTags.isEmpty {
                     Text("No tags match \"\(viewModel.tagFilter)\"")
-                        .font(.system(size: 13))
+                        .font(.caption)
                         .foregroundColor(Brand.onSurfaceVariant)
                         .padding(.top, 4)
                 } else {
@@ -237,22 +285,71 @@ struct TopicEditorView: View {
         }
     }
 
+    /// Compact affordance in the section header. Always visible so a
+    /// user with tags can still add more without leaving the editor.
+    private var addExpertiseButton: some View {
+        Button {
+            showExpertiseEditor = true
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "plus")
+                    .font(.caption2.weight(.bold))
+                Text("Add")
+                    .font(.caption.weight(.semibold))
+            }
+            .foregroundColor(Brand.primary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add expertise")
+    }
+
+    /// Shown when the expert has no profile expertise tags yet. Prompts
+    /// them to add some without having to navigate to Settings first —
+    /// same underlying `ExpertiseEditorSheet` as the header "+ Add" affordance.
+    private var emptyExpertiseState: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("You don't have any expertise tags on your profile yet.")
+                .font(.caption)
+                .foregroundColor(Brand.onSurfaceVariant)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button {
+                showExpertiseEditor = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Add Expertise")
+                        .font(.subheadline.weight(.semibold))
+                }
+                .foregroundColor(Brand.primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule().stroke(Brand.primary, lineWidth: 1.2)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 4)
+    }
+
     private var tagFilterField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 13))
+                .font(.caption)
                 .foregroundColor(Brand.onSurfaceVariant)
             TextField("Filter tags", text: $viewModel.tagFilter)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundColor(Brand.onSurface)
             if !viewModel.tagFilter.isEmpty {
                 Button {
                     viewModel.tagFilter = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundColor(Brand.onSurfaceVariant)
                 }
                 .buttonStyle(.plain)
@@ -278,7 +375,7 @@ struct TopicEditorView: View {
             viewModel.toggleTag(tag)
         } label: {
             Text(tag.label)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundColor(isSelected ? Brand.primary : Brand.onSurfaceVariant)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
@@ -303,7 +400,7 @@ struct TopicEditorView: View {
     private var durationStepper: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Session Duration")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundColor(Brand.onSurfaceVariant)
 
             Stepper(
@@ -312,7 +409,7 @@ struct TopicEditorView: View {
                 step: viewModel.durationStep
             ) {
                 Text(formatDuration(viewModel.durationMinutes))
-                    .font(.system(size: 15))
+                    .font(.subheadline)
                     .foregroundColor(Brand.onSurface)
             }
             .tint(Brand.primary)
@@ -367,14 +464,14 @@ struct TopicEditorView: View {
     private func editorField(label: String, placeholder: String, text: Binding<String>, keyboard: UIKeyboardType) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .foregroundColor(Brand.onSurfaceVariant)
 
             TextField(placeholder, text: text)
                 .keyboardType(keyboard)
                 .textInputAutocapitalization(.sentences)
                 .disableAutocorrection(true)
-                .font(.system(size: 15))
+                .font(.subheadline)
                 .foregroundColor(Brand.onSurface)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)

@@ -45,3 +45,10 @@ struct AppEnvironment {
         )
     }()
 }
+
+/// Public marketing / policy URLs. Not env-switched — same hosted
+/// pages for Dev / Staging / Production. Force-unwrapped because the
+/// strings are compile-time constants under our control.
+enum AppLinks {
+    static let privacyPolicy = URL(string: "https://www.uptrendinvestments.net/clickme/privacy.html")!
+}

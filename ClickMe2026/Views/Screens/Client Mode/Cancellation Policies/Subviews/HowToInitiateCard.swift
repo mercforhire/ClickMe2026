@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -32,7 +32,7 @@ struct HowToInitiateCard: View {
             PolicyCardTitle("How to Initiate a Cancellation")
 
             Text("To cancel a booking, follow the steps below. You can initiate a cancellation directly from the Bookings tab at any time before the session starts.")
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(CancellationPoliciesBrand.onSurfaceVar)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
@@ -55,12 +55,12 @@ struct HowToInitiateCard: View {
                     .shadow(color: CancellationPoliciesBrand.brandGreen.opacity(0.35), radius: 4)
                     .frame(width: 28, height: 28)
                 Text("\(index)")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(.brand(.caption, weight: .bold))
                     .foregroundColor(CancellationPoliciesBrand.brandGreen)
             }
 
             Text(text)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(CancellationPoliciesBrand.onSurface)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)

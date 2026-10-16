@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-30.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -29,6 +29,32 @@ final class RescheduleViewModel: ObservableObject {
     @Published var selectedDate: Date?
     @Published var selectedTime: BookingTimeSlot?
     @Published var message: String
+
+    /// The booking's *current* scheduled start. Seeded from the detail
+    /// fetch and used to (a) pre-select the current day on the calendar
+    /// so the screen opens on the right month, and (b) block the user
+    /// from picking the identical slot as their "new" time.
+    @Published var currentSessionStart: Date?
+
+    /// End of the Stripe authorization window for this booking
+    /// (`authorized_at + 6d`), or `nil` for free / long-lead /
+    /// captured / terminal bookings.
+    ///
+    /// **Non-gating as of Phase 27.1** — the previous "reject slots
+    /// whose session end exceeds this" rule was withdrawn (following
+    /// it produced a live bug where the picker showed zero slots for
+    /// bookings past the boundary). The field is retained solely to
+    /// drive the confirm-step disclosure: moving the session past this
+    /// instant converts the booking to the charge-at-T-24h model
+    /// rather than being refused.
+    @Published var authorizationExpiresAt: Date?
+
+    /// Duration of the current session, in seconds. Populated from the
+    /// booking detail's `endTime - startTime`. Fallback for the
+    /// disclosure computation when the picker slot omits its own
+    /// `endTime`, so `slot.startTime + duration` still lands on a
+    /// realistic session end.
+    private var originalSessionDuration: TimeInterval?
 
     // MARK: Availability cache — keyed by "yyyy-MM-dd" in client's timezone
     @Published var availabilityByDate: [String: [BookingTimeSlot]]
@@ -74,6 +100,9 @@ final class RescheduleViewModel: ObservableObject {
         self.availabilityError = nil
         self.isSubmitting = false
         self.submitError = nil
+        self.currentSessionStart = nil
+        self.authorizationExpiresAt = nil
+        self.originalSessionDuration = nil
         self.api = api
     }
 
@@ -86,7 +115,8 @@ final class RescheduleViewModel: ObservableObject {
         selectedDate: Date? = RescheduleViewModel.defaultSelectedDate,
         selectedTime: BookingTimeSlot? = nil,
         message: String = "",
-        availabilityByDate: [String: [BookingTimeSlot]] = [:]
+        availabilityByDate: [String: [BookingTimeSlot]] = [:],
+        currentSessionStart: Date? = nil
     ) {
         self.bookingId = nil
         self.booking = booking
@@ -101,6 +131,9 @@ final class RescheduleViewModel: ObservableObject {
         self.availabilityError = nil
         self.isSubmitting = false
         self.submitError = nil
+        self.currentSessionStart = currentSessionStart
+        self.authorizationExpiresAt = nil
+        self.originalSessionDuration = nil
         self.api = .shared
     }
 
@@ -129,6 +162,21 @@ final class RescheduleViewModel: ObservableObject {
             booking = Self.map(detail: response.data)
             expertId = response.data.expert.id
             self.expertId = expertId
+
+            // Seed the calendar to the booking's current day so the
+            // user lands on the month they're actually rescheduling
+            // from. Time slot stays unselected — the current slot
+            // itself is what we're moving away from.
+            let startTime = response.data.startTime
+            currentSessionStart = startTime
+            originalSessionDuration = response.data.endTime.timeIntervalSince(startTime)
+            authorizationExpiresAt = response.data.authorizationExpiresAt
+            if let monthStart = calendar.date(
+                from: calendar.dateComponents([.year, .month], from: startTime)
+            ) {
+                currentMonth = monthStart
+            }
+            selectedDate = startTime
         } catch {
             loadState = .failed(error.userMessage)
             return
@@ -178,7 +226,31 @@ final class RescheduleViewModel: ObservableObject {
     }
 
     func select(time: BookingTimeSlot) {
+        // Guard against picking the same slot as the current session —
+        // the UI already disables the "Current" chip, but this closes
+        // the loop if a caller pushes selection programmatically.
+        guard !isCurrentSlot(time) else { return }
         selectedTime = time
+    }
+
+    /// True when `slot` corresponds to the booking's *current* scheduled
+    /// start. Compared to the second (slot start times are minute-aligned
+    /// in practice, but sub-second tolerance guards against timezone
+    /// round-tripping introducing microsecond drift).
+    func isCurrentSlot(_ slot: BookingTimeSlot) -> Bool {
+        guard let current = currentSessionStart else { return false }
+        return abs(slot.startTime.timeIntervalSince(current)) < 1
+    }
+
+    /// Human-readable current-session label surfaced above the time-slot
+    /// list — e.g. `"Wed, Jul 10 · 10:00 AM"`. Nil until the detail
+    /// fetch resolves.
+    var currentSessionLabel: String? {
+        guard let start = currentSessionStart else { return nil }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "EEE, MMM d · h:mm a"
+        return f.string(from: start)
     }
 
     func shiftMonth(_ delta: Int) {
@@ -189,6 +261,14 @@ final class RescheduleViewModel: ObservableObject {
 
     /// Runs the real `PATCH /client/bookings/:id/reschedule`. On success
     /// invokes `onSuccess()` so the parent can pop the NavigationStack.
+    ///
+    /// **PAYMENT_METHOD_REQUIRED recovery (Phase 27.1):** the server's
+    /// check for this code is DB-only — it does NOT mean the user has
+    /// no saved cards. On this specific 422, fetch
+    /// `GET /me/payment-methods`; if the caller has any saved card,
+    /// resend the request with `stripe_payment_method_id` populated.
+    /// Only fall through with an "add a card" prompt when the vault
+    /// itself is empty. See `RESCHEDULE-PAYMENT-CONVERSION.md` §3.1.
     func submit(onSuccess: @escaping () -> Void) async {
         guard !isSubmitting else { return }
         guard let bookingId, let slot = selectedTime else {
@@ -196,25 +276,95 @@ final class RescheduleViewModel: ObservableObject {
             return
         }
 
+        if isCurrentSlot(slot) {
+            submitError = "Please choose a different time than the current session."
+            return
+        }
+
         submitError = nil
         isSubmitting = true
         defer { isSubmitting = false }
 
+        let proposedStart = Self.iso8601String(from: slot.startTime)
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        let note = trimmed.isEmpty ? nil : trimmed
+        let timezone = TimeZone.current.identifier
+
         do {
-            let proposedStart = Self.iso8601String(from: slot.startTime)
-            let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
             _ = try await api.rescheduleClientBooking(
                 id: bookingId,
                 proposedStart: proposedStart,
-                timezone: TimeZone.current.identifier,
-                note: trimmed.isEmpty ? nil : trimmed
+                timezone: timezone,
+                note: note
+            )
+            onSuccess()
+            return
+        } catch {
+            guard Self.errorCode(for: error) == .paymentMethodRequired else {
+                submitError = Self.rescheduleErrorMessage(for: error)
+                return
+            }
+            // Fall through to the pm-recovery block below.
+        }
+
+        // PAYMENT_METHOD_REQUIRED — fetch the caller's vault and retry
+        // with the preferred pm_ if one exists. An empty vault is the
+        // only case where the app truly can't recover on its own.
+        let vault: [PaymentMethodItem]
+        do {
+            vault = try await api.getPaymentMethods().data.paymentMethods
+        } catch {
+            submitError = "Couldn't check your saved payment methods. Please try again."
+            return
+        }
+
+        let preferredId = vault.first(where: { $0.isDefault })?.id ?? vault.first?.id
+        guard let pmId = preferredId else {
+            submitError = "Please add a payment method in Settings > Payment before rescheduling this session."
+            return
+        }
+
+        do {
+            _ = try await api.rescheduleClientBooking(
+                id: bookingId,
+                proposedStart: proposedStart,
+                timezone: timezone,
+                note: note,
+                stripePaymentMethodId: pmId
             )
         } catch {
-            submitError = error.userMessage
+            submitError = Self.rescheduleErrorMessage(for: error)
             return
         }
 
         onSuccess()
+    }
+
+    /// Maps reschedule submit failures to user-visible copy. Special
+    /// cases:
+    /// - `RESCHEDULE_OUTSIDE_AUTH_WINDOW` (Phase 27.1, now rare) — the
+    ///   move is genuinely unconvertible (e.g. proposed <24h out); the
+    ///   user must re-book.
+    /// - `PAYMENT_METHOD_REQUIRED` on a retry — the picked card can't
+    ///   be prepared for future billing (typically a one-off
+    ///   PaymentSheet card); the user needs to add a reusable card.
+    /// Everything else falls through to the server message.
+    private static func rescheduleErrorMessage(for error: Error) -> String {
+        switch errorCode(for: error) {
+        case .rescheduleOutsideAuthWindow:
+            return "This time is past the payment hold on your original booking. Please cancel and book again to authorize a new payment."
+        case .paymentMethodRequired:
+            return "The card on file can't be used for this reschedule. Please add a new payment method in Settings > Payment and try again."
+        default:
+            return error.userMessage
+        }
+    }
+
+    private static func errorCode(for error: Error) -> ErrorCode? {
+        guard case let NetworkError.httpError(_, data) = error,
+              let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
+        else { return nil }
+        return response.code
     }
 
     // MARK: - Derived
@@ -223,7 +373,14 @@ final class RescheduleViewModel: ObservableObject {
     /// picked or the day has no available slots.
     var slotsForSelectedDate: [BookingTimeSlot] {
         guard let selectedDate else { return [] }
-        return availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? []
+        // Drop slots whose start time has already passed — if today is
+        // the selected day, the morning grid should trim itself as the
+        // day progresses so the user never sees a 9am chip at 11am.
+        // Server should also reject these, but filtering here keeps the
+        // grid honest without waiting for a submit round-trip.
+        let now = Date()
+        return (availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? [])
+            .filter { $0.startTime > now }
     }
 
     /// Whether a calendar day has at least one selectable slot. Used to
@@ -232,7 +389,38 @@ final class RescheduleViewModel: ObservableObject {
     func hasSlots(on day: Date) -> Bool {
         if calendar.startOfDay(for: day) < calendar.startOfDay(for: Date()) { return false }
         let slots = availabilityByDate[Self.dateKey(day, calendar: calendar)] ?? []
-        return slots.contains(where: { $0.isAvailable })
+        return slots.contains { $0.isAvailable }
+    }
+
+    // MARK: - Payment-conversion disclosure (Phase 27.1)
+
+    /// True when `slot`'s session END falls past the current booking's
+    /// authorization window. In that case, submitting the reschedule
+    /// converts the booking to the charge-at-T-24h model (server voids
+    /// the live hold), so the view must present the disclosure copy
+    /// before the user confirms. Free / long-lead / captured bookings
+    /// have `authorizationExpiresAt == nil` and never trigger this.
+    func requiresPaymentConversionDisclosure(for slot: BookingTimeSlot) -> Bool {
+        guard let expiresAt = authorizationExpiresAt else { return false }
+        return sessionEnd(for: slot) > expiresAt
+    }
+
+    /// True when the proposed slot lands close enough to now that the
+    /// scheduled `new_session_start - 24h` charge will fire in under
+    /// ~24 hours. Used to append the "your card may be charged sooner
+    /// than 24 hours from now" caveat to the disclosure copy. `<24h`
+    /// proposals are refused by the server up front, so this only
+    /// covers the 24–48h band.
+    func chargeWillFireSoon(for slot: BookingTimeSlot) -> Bool {
+        slot.startTime.timeIntervalSinceNow < 48 * 3600
+    }
+
+    private func sessionEnd(for slot: BookingTimeSlot) -> Date {
+        if let end = slot.endTime { return end }
+        if let duration = originalSessionDuration {
+            return slot.startTime.addingTimeInterval(duration)
+        }
+        return slot.startTime
     }
 
     // MARK: - Calendar derivation

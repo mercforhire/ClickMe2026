@@ -2,7 +2,7 @@
 //  BasicInfoCountryPicker.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -37,7 +37,7 @@ struct BasicInfoCountryPicker: View {
         } label: {
             HStack(spacing: 8) {
                 Text(selectedName)
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
                     .foregroundColor(countryCode.isEmpty
                                      ? BasicInfoBrand.onSurfaceVar
                                      : BasicInfoBrand.onSurface)
@@ -46,7 +46,7 @@ struct BasicInfoCountryPicker: View {
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundColor(BasicInfoBrand.onSurfaceVar)
             }
             .padding(.horizontal, 16)

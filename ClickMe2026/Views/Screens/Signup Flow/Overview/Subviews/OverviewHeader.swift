@@ -10,11 +10,11 @@ struct OverviewHeader: View {
         VStack(spacing: 16) {
             VStack(spacing: 8) {
                 Text("Complete Your Profile!")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title.weight(.bold))
                     .foregroundColor(Brand.onSurface)
 
                 Text("A complete profile helps you get more bookings.")
-                    .font(.system(size: 16))
+                    .font(.callout)
                     .foregroundColor(Brand.onSurfaceMuted)
                     .multilineTextAlignment(.center)
             }

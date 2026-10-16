@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-24.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -136,7 +136,10 @@ final class ExploreClientViewModel: ObservableObject {
             imageURL: item.expert.avatarUrl ?? "",
             startTime: item.startTime,
             endTime: item.endTime,
-            status: status
+            status: status,
+            meetingType: item.meetingType,
+            privateNotePreview: item.privateNotePreview,
+            reschedule: item.reschedule
         )
     }
 
@@ -228,6 +231,7 @@ final class ExploreClientViewModel: ObservableObject {
             title: re.title ?? "",
             tags: re.expertiseTags ?? [],
             rating: re.rating ?? 0,
+            reviewCount: re.reviewCount ?? 0,
             imageURL: re.profileImageUrl ?? ""
         )
     }

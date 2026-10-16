@@ -8,10 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		723D79B92FFD5F0900C5C101 /* StripePaymentSheet in Frameworks */ = {isa = PBXBuildFile; productRef = 723D79B82FFD5F0900C5C101 /* StripePaymentSheet */; };
+		724591593023D1540092C434 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 724591583023D1540092C434 /* FirebaseAnalytics */; };
+		7245915B3023D1540092C434 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 7245915A3023D1540092C434 /* FirebaseMessaging */; };
 		728382E02FE76C73005E6400 /* RtcBasic in Frameworks */ = {isa = PBXBuildFile; productRef = 728382DF2FE76C73005E6400 /* RtcBasic */; };
 		728382E62FE78D45005E6400 /* Valet in Frameworks */ = {isa = PBXBuildFile; productRef = 728382E52FE78D45005E6400 /* Valet */; };
 		7291E31930118ADA001DC06B /* SocketIO in Frameworks */ = {isa = PBXBuildFile; productRef = 7291E31830118ADA001DC06B /* SocketIO */; };
-		D58BA4CE2BEE6501000D8420 /* Factory in Frameworks */ = {isa = PBXBuildFile; productRef = D58BA4CD2BEE6501000D8420 /* Factory */; };
 		D5F745F52BEE48BC0064F06A /* Salad in Frameworks */ = {isa = PBXBuildFile; productRef = D5F745F42BEE48BC0064F06A /* Salad */; };
 /* End PBXBuildFile section */
 
@@ -80,7 +81,8 @@
 			isa = PBXFrameworksBuildPhase;
 			files = (
 				728382E62FE78D45005E6400 /* Valet in Frameworks */,
-				D58BA4CE2BEE6501000D8420 /* Factory in Frameworks */,
+				7245915B3023D1540092C434 /* FirebaseMessaging in Frameworks */,
+				724591593023D1540092C434 /* FirebaseAnalytics in Frameworks */,
 				728382E02FE76C73005E6400 /* RtcBasic in Frameworks */,
 				7291E31930118ADA001DC06B /* SocketIO in Frameworks */,
 				723D79B92FFD5F0900C5C101 /* StripePaymentSheet in Frameworks */,
@@ -150,11 +152,12 @@
 			);
 			name = ClickMe2026;
 			packageProductDependencies = (
-				D58BA4CD2BEE6501000D8420 /* Factory */,
 				728382DF2FE76C73005E6400 /* RtcBasic */,
 				728382E52FE78D45005E6400 /* Valet */,
 				723D79B82FFD5F0900C5C101 /* StripePaymentSheet */,
 				7291E31830118ADA001DC06B /* SocketIO */,
+				724591583023D1540092C434 /* FirebaseAnalytics */,
+				7245915A3023D1540092C434 /* FirebaseMessaging */,
 			);
 			productName = ClickMe2026;
 			productReference = D5284F2C2B57C6B600BB32E7 /* ClickMe2026.app */;
@@ -214,7 +217,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1510;
 				LastUpgradeCheck = 2600;
-				ORGANIZATIONNAME = Q42;
+				ORGANIZATIONNAME = "Uptrend Investments Inc.";
 				TargetAttributes = {
 					D5284F2B2B57C6B600BB32E7 = {
 						CreatedOnToolsVersion = 15.1;
@@ -229,7 +232,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D5284F272B57C6B600BB32E7 /* Build configuration list for PBXProject "ClickMe2026" */;
+			buildConfigurationList = D5284F272B57C6B600BB32E7 /* Build configuration list for PBXProject "ClickMe" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -239,11 +242,11 @@
 			mainGroup = D5284F232B57C6B600BB32E7;
 			packageReferences = (
 				D5F745F32BEE48BC0064F06A /* XCRemoteSwiftPackageReference "Salad" */,
-				D58BA4CC2BEE6501000D8420 /* XCRemoteSwiftPackageReference "Factory" */,
 				728382DE2FE76C73005E6400 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */,
 				728382E32FE78D1C005E6400 /* XCRemoteSwiftPackageReference "Valet" */,
 				723D79B52FFD5E9500C5C101 /* XCRemoteSwiftPackageReference "stripe-ios-spm" */,
 				7291E31730118ADA001DC06B /* XCRemoteSwiftPackageReference "socket" */,
+				724591573023D1540092C434 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = D5284F2D2B57C6B600BB32E7 /* Products */;
@@ -307,7 +310,7 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		D5284F4E2B57C6B700BB32E7 /* Debug configuration for PBXProject "ClickMe2026" */ = {
+		D5284F4E2B57C6B700BB32E7 /* Debug configuration for PBXProject "ClickMe" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -360,7 +363,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -373,7 +376,7 @@
 			};
 			name = Debug;
 		};
-		D5284F4F2B57C6B700BB32E7 /* Release configuration for PBXProject "ClickMe2026" */ = {
+		D5284F4F2B57C6B700BB32E7 /* Release configuration for PBXProject "ClickMe" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -420,7 +423,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -441,23 +444,24 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ClickMe2026/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = V68J585TK5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ClickMe2026/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ClickMe;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Add your ClickMe sessions to your calendar so you don't miss them.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ClickMe needs microphone access so you can talk to your session partner.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.leonchen.ClickMe2026;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.clickmeapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -467,7 +471,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -480,23 +484,24 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"ClickMe2026/Preview Content\"";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = V68J585TK5;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ClickMe2026/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ClickMe;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Add your ClickMe sessions to your calendar so you don't miss them.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ClickMe needs microphone access so you can talk to your session partner.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.leonchen.ClickMe2026;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.clickmeapp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -506,7 +511,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -519,10 +524,10 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.q42.ClickMe2026.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.ClickMe2026.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClickMe2026.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ClickMe2026";
 			};
 			name = Debug;
@@ -536,10 +541,10 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.q42.ClickMe2026.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.ClickMe2026.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClickMe2026.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ClickMe2026";
 			};
 			name = Release;
@@ -552,11 +557,11 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.q42.ClickMe2026.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.ClickMe2026.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_TARGET_NAME = ClickMe2026;
 			};
 			name = Debug;
@@ -569,11 +574,11 @@
 				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.q42.ClickMe2026.uitests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.ClickMe2026.uitests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 				TEST_TARGET_NAME = ClickMe2026;
 			};
 			name = Release;
@@ -581,11 +586,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D5284F272B57C6B600BB32E7 /* Build configuration list for PBXProject "ClickMe2026" */ = {
+		D5284F272B57C6B600BB32E7 /* Build configuration list for PBXProject "ClickMe" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				D5284F4E2B57C6B700BB32E7 /* Debug configuration for PBXProject "ClickMe2026" */,
-				D5284F4F2B57C6B700BB32E7 /* Release configuration for PBXProject "ClickMe2026" */,
+				D5284F4E2B57C6B700BB32E7 /* Debug configuration for PBXProject "ClickMe" */,
+				D5284F4F2B57C6B700BB32E7 /* Release configuration for PBXProject "ClickMe" */,
 			);
 			defaultConfigurationName = Release;
 		};
@@ -624,6 +629,14 @@
 				minimumVersion = 26.2.0;
 			};
 		};
+		724591573023D1540092C434 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.17.0;
+			};
+		};
 		728382DE2FE76C73005E6400 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/AgoraIO/AgoraRtcEngine_iOS";
@@ -648,14 +661,6 @@
 				kind = branch;
 			};
 		};
-		D58BA4CC2BEE6501000D8420 /* XCRemoteSwiftPackageReference "Factory" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/hmlongco/Factory.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.5.3;
-			};
-		};
 		D5F745F32BEE48BC0064F06A /* XCRemoteSwiftPackageReference "Salad" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/Q42/Salad.git";
@@ -672,6 +677,16 @@
 			package = 723D79B52FFD5E9500C5C101 /* XCRemoteSwiftPackageReference "stripe-ios-spm" */;
 			productName = StripePaymentSheet;
 		};
+		724591583023D1540092C434 /* FirebaseAnalytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 724591573023D1540092C434 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAnalytics;
+		};
+		7245915A3023D1540092C434 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 724591573023D1540092C434 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
 		728382DF2FE76C73005E6400 /* RtcBasic */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 728382DE2FE76C73005E6400 /* XCRemoteSwiftPackageReference "AgoraRtcEngine_iOS" */;
@@ -686,11 +701,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 7291E31730118ADA001DC06B /* XCRemoteSwiftPackageReference "socket" */;
 			productName = SocketIO;
-		};
-		D58BA4CD2BEE6501000D8420 /* Factory */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = D58BA4CC2BEE6501000D8420 /* XCRemoteSwiftPackageReference "Factory" */;
-			productName = Factory;
 		};
 		D5F745F42BEE48BC0064F06A /* Salad */ = {
 			isa = XCSwiftPackageProductDependency;

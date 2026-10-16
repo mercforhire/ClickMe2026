@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -105,6 +105,10 @@ struct UpcomingBookingView: View {
                     timezoneRow(timezone: timezone)
                 }
 
+                if let pill = paymentStatusPill {
+                    pill
+                }
+
                 if viewModel.isPendingExpertApproval {
                     pendingApprovalBanner
                 } else {
@@ -142,15 +146,15 @@ struct UpcomingBookingView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 Image(systemName: "hourglass")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.title3.weight(.semibold))
                     .foregroundColor(.orange)
                 Text("Waiting for expert to accept")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .bold))
                     .foregroundColor(UpcomingBookingBrand.onSurface)
                 Spacer()
             }
             Text("You'll get a notification once \(viewModel.expertName.isEmpty ? "the expert" : viewModel.expertName) confirms this session. The Join Call option unlocks then.")
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -166,13 +170,61 @@ struct UpcomingBookingView: View {
 
     // MARK: Small info rows
 
+    /// Renders a small pill reflecting the server's `payment_status`:
+    /// - `held` → amber "Hold placed — charged after your session" (Phase 27
+    ///   lifecycle: auth exists, capture runs post-session).
+    /// - `captured` → green "Paid".
+    /// - `refunded` → muted "Refunded".
+    /// - `none` / `nil` → renders nothing (free sessions, non-financial
+    ///   bookings).
+    private var paymentStatusPill: AnyView? {
+        switch viewModel.paymentStatus {
+        case "held":
+            return AnyView(pillRow(
+                iconName: "lock.fill",
+                text: "Hold placed — charged after your session",
+                tint: .orange
+            ))
+        case "captured":
+            return AnyView(pillRow(
+                iconName: "checkmark.seal.fill",
+                text: "Paid",
+                tint: UpcomingBookingBrand.brandGreen
+            ))
+        case "refunded":
+            return AnyView(pillRow(
+                iconName: "arrow.uturn.backward",
+                text: "Refunded",
+                tint: UpcomingBookingBrand.onSurfaceVar
+            ))
+        default:
+            return nil
+        }
+    }
+
+    private func pillRow(iconName: String, text: String, tint: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: iconName)
+                .font(.caption.weight(.semibold))
+                .foregroundColor(tint)
+            Text(text)
+                .font(.brand(.caption, weight: .semibold))
+                .foregroundColor(tint)
+            Spacer()
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Capsule().fill(tint.opacity(0.12)))
+        .padding(.horizontal, 4)
+    }
+
     private func timezoneRow(timezone: String) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "globe")
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
             Text("Expert timezone: \(timezone)")
-                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
             Spacer()
         }
@@ -186,7 +238,7 @@ struct UpcomingBookingView: View {
             ProgressView()
                 .tint(UpcomingBookingBrand.onSurface)
             Text("Loading booking…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -195,13 +247,13 @@ struct UpcomingBookingView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
             Text("Couldn't load booking")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(UpcomingBookingBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -210,7 +262,7 @@ struct UpcomingBookingView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -235,13 +287,13 @@ private struct LiveFetchUpcomingBookingBootstrap: View {
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text("Preview bootstrap failed")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.white)
                 Text(errorMessage)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)

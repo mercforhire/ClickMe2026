@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,7 +16,7 @@ struct ExpertProfileExpertiseSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Expertise")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.brand(.body, weight: .semibold))
                 .foregroundColor(ExpertProfileBrand.onSurface)
 
             ExpertFlowLayoutView(spacing: 8) {
@@ -29,7 +29,7 @@ struct ExpertProfileExpertiseSection: View {
 
     private func tagPill(_ tag: PublicExpertTag) -> some View {
         Text(tag.label)
-            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .font(.brand(.caption, weight: .medium))
             .foregroundColor(tag.isHighlighted ? ExpertProfileBrand.brandGreen : ExpertProfileBrand.onSurfaceVar)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)

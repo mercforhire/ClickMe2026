@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -79,6 +79,7 @@ struct WriteReviewView: View {
         } message: { message in
             Text(message)
         }
+        .keyboardDismissToolbar()
     }
 
     // MARK: Content router
@@ -117,7 +118,7 @@ struct WriteReviewView: View {
 
                     if let topic = viewModel.sessionTopic {
                         Text(topic)
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .font(.brand(.caption, weight: .medium))
                             .foregroundColor(WriteReviewBrand.onSurfaceVar)
                             .padding(.bottom, 24)
                     }
@@ -138,7 +139,7 @@ struct WriteReviewView: View {
 
                     WriteReviewTextField(text: $viewModel.reviewText)
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 20)
                 }
             }
 
@@ -148,7 +149,7 @@ struct WriteReviewView: View {
                 action: { viewModel.submit(onSuccess: onSubmit) }
             )
             .padding(.horizontal, 20)
-            .padding(.bottom, 36)
+            .padding(.bottom, 20)
         }
     }
 
@@ -157,7 +158,7 @@ struct WriteReviewView: View {
             Image(systemName: "checkmark.seal.fill")
                 .foregroundColor(WriteReviewBrand.brandGreen)
             Text("You've reviewed this session before. Submitting again will update your existing review.")
-                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(WriteReviewBrand.onSurfaceVar)
         }
         .padding(12)
@@ -172,13 +173,13 @@ struct WriteReviewView: View {
     private var ineligibleContent: some View {
         VStack(spacing: 14) {
             Image(systemName: "lock.fill")
-                .font(.system(size: 32, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(WriteReviewBrand.onSurfaceVar.opacity(0.6))
             Text("Review not available")
-                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .font(.brand(.body, weight: .semibold))
                 .foregroundColor(WriteReviewBrand.onSurface)
             Text(ineligibleMessage)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(WriteReviewBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -202,7 +203,7 @@ struct WriteReviewView: View {
             ProgressView()
                 .tint(WriteReviewBrand.onSurface)
             Text("Loading review…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(WriteReviewBrand.onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -211,13 +212,13 @@ struct WriteReviewView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(WriteReviewBrand.onSurfaceVar)
             Text("Couldn't load review")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(WriteReviewBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(WriteReviewBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -226,7 +227,7 @@ struct WriteReviewView: View {
                 Task { await viewModel.onAppear() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -277,13 +278,13 @@ private struct LiveFetchWriteReviewBootstrap: View {
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text("Preview bootstrap failed")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.white)
                 Text(errorMessage)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -319,14 +320,12 @@ private struct LiveFetchWriteReviewBootstrap: View {
 
 // MARK: - Previews
 
-#if DEBUG
 private func writeReviewPreview<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View {
     PreviewNavHarness(parentText: "Past sessions", navTitle: "My Bookings", rowTitle: "Leave a review") {
         content()
     }
     .preferredColorScheme(.dark)
 }
-#endif
 
 #Preview("Default — 5 stars") {
     writeReviewPreview { WriteReviewView(viewModel: .previewSeed()) }

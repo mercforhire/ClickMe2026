@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-27.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -49,7 +49,7 @@ struct ExpertCancellationClientBox: View {
                     ZStack {
                         ExpertCancellationBrand.avatarFallback
                         Image(systemName: "person.fill")
-                            .font(.system(size: 18))
+                            .font(.title3)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }
@@ -60,10 +60,10 @@ struct ExpertCancellationClientBox: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(clientName)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(ExpertCancellationBrand.onSurface)
                 Text(sessionTopic)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(ExpertCancellationBrand.brandGreen)
             }
             Spacer()
@@ -77,17 +77,17 @@ struct ExpertCancellationClientBox: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "calendar")
-                    .font(.system(size: 17, weight: .regular))
+                    .font(.body.weight(.regular))
                     .foregroundColor(ExpertCancellationBrand.onSurfaceVar)
                     .frame(width: 20)
                 Text(dateTime)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(ExpertCancellationBrand.onSurface)
             }
 
             HStack(alignment: .top, spacing: 12) {
                 Image(systemName: "creditcard")
-                    .font(.system(size: 17, weight: .regular))
+                    .font(.body.weight(.regular))
                     .foregroundColor(ExpertCancellationBrand.onSurfaceVar)
                     .frame(width: 20)
                 (
@@ -99,7 +99,7 @@ struct ExpertCancellationClientBox: View {
                         + Text(" will be processed to the client according to our policy.")
                         .foregroundColor(ExpertCancellationBrand.onSurface)
                 )
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
             }

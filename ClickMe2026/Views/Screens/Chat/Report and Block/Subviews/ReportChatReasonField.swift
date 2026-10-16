@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,7 +19,7 @@ struct ReportChatReasonField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Reason for reporting")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ReportChatBrand.onSurface)
 
             Menu {
@@ -29,13 +29,13 @@ struct ReportChatReasonField: View {
             } label: {
                 HStack {
                     Text(selectedReason.isEmpty ? "Select a reason" : selectedReason)
-                        .font(.system(size: 15, design: .rounded))
+                        .font(.brand(.subheadline))
                         .foregroundColor(selectedReason.isEmpty
                                          ? ReportChatBrand.onSurfaceVar
                                          : ReportChatBrand.onSurface)
                     Spacer()
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.caption.weight(.medium))
                         .foregroundColor(ReportChatBrand.onSurfaceVar)
                 }
                 .padding(.horizontal, 16)
@@ -57,7 +57,7 @@ struct ReportChatReasonField: View {
 
             if showError {
                 Text("Please select a reason before submitting.")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(ReportChatBrand.errorRed)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }

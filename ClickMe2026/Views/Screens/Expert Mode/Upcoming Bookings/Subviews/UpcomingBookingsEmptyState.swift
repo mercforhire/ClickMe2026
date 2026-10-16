@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,12 +21,12 @@ struct UpcomingBookingsEmptyState: View {
 
             VStack(spacing: 14) {
                 Text("No Upcoming Sessions Yet")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.brand(.title2, weight: .bold))
                     .foregroundColor(Brand.onSurface)
                     .multilineTextAlignment(.center)
 
                 Text("Once a client books a session with you, it will appear here. In the meantime, ensure your availability is up to date.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(Brand.onSurfaceVariant)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
@@ -37,7 +37,7 @@ struct UpcomingBookingsEmptyState: View {
             VStack(spacing: 16) {
                 Button(action: onUpdateAvailability) {
                     Text("Update Availability")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(Brand.onPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
@@ -49,7 +49,7 @@ struct UpcomingBookingsEmptyState: View {
 
                 Button(action: onViewPastHistory) {
                     Text("View Past History")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(Brand.primary)
                         .underline()
                 }

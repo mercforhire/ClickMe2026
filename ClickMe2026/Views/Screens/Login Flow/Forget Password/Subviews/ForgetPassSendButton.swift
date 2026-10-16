@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-13.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,9 +24,9 @@ struct ForgetPassSendButton: View {
                 if isSent {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.title3.weight(.semibold))
                         Text("Code Sent!")
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
+                            .font(.brand(.title3, weight: .semibold))
                     }
                     .foregroundColor(.white)
                 } else if isLoading {
@@ -34,7 +34,7 @@ struct ForgetPassSendButton: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     Text("Send Reset Code")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.brand(.title3, weight: .bold))
                         .foregroundColor(.white)
                 }
             }

@@ -2,7 +2,7 @@
 //  SignupResponse.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -14,6 +14,14 @@ struct SignupResponse: Decodable {
     let token: String
     let user: AuthUser
     let emailVerified: Bool
+    /// Rotating refresh credential — GoTrue issues one even for
+    /// unconfirmed accounts, so signup + unverified users can still
+    /// keep their session alive via `/auth/refresh`.
+    let refreshToken: String
+    /// Access-token expiry as unix epoch **seconds**.
+    let expiresAt: Int
+    /// Seconds until the access token expires.
+    let expiresIn: Int
 }
 
 /// Response payload for `GET /auth/email/status` — polled by the verify

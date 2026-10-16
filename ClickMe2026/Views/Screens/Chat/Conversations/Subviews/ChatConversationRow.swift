@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,7 +22,7 @@ struct ChatConversationRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(chat.name)
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.brand(.callout, weight: .bold))
                             .foregroundColor(ChatConversationsBrand.onSurface)
                             .lineLimit(1)
 
@@ -36,13 +36,13 @@ struct ChatConversationRow: View {
                                     .shadow(color: ChatConversationsBrand.brandGreen.opacity(0.70), radius: 4)
                             }
                             Text(chat.timeLabel)
-                                .font(.system(size: 13, weight: .regular, design: .rounded))
+                                .font(.brand(.caption, weight: .regular))
                                 .foregroundColor(chat.isOnline ? ChatConversationsBrand.onSurface : ChatConversationsBrand.onSurfaceVar)
                         }
                     }
 
                     Text(chat.lastMessage)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(ChatConversationsBrand.onSurfaceVar)
                         .lineLimit(2)
                         .lineSpacing(2)

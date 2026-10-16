@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -35,12 +35,12 @@ struct ChattingMessageBubble: View {
 
             VStack(alignment: isMe ? .trailing : .leading, spacing: 2) {
                 Text(isMe ? myName : message.senderName)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.brand(.caption2, weight: .medium))
                     .foregroundColor(ChattingBrand.senderLabel)
                     .padding(.horizontal, 4)
 
                 Text(message.body)
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(isMe ? ChattingBrand.myText : ChattingBrand.onSurface)
                     .lineSpacing(3)
                     .padding(.horizontal, 14)
@@ -63,7 +63,7 @@ struct ChattingMessageBubble: View {
                             .transition(.opacity)
                     }
                 }
-                .font(.system(size: 10, weight: .regular, design: .rounded))
+                .font(.brand(.caption2, weight: .regular))
                 .foregroundColor(ChattingBrand.onSurfaceVar)
                 .padding(.horizontal, 4)
                 .animation(.easeInOut(duration: 0.2), value: message.status)

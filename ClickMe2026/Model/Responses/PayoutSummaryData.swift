@@ -2,7 +2,7 @@
 //  PayoutSummaryData.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -12,10 +12,13 @@ import Foundation
 /// Live Stripe Connect balance — fetched from Stripe on every request,
 /// never cached. Server returns 400 `NO_PAYOUT_METHOD` when the expert
 /// has no Stripe Connect account yet, and 400 `KYC_INCOMPLETE` when
-/// verification hasn't been completed. Amounts are integer minor units.
+/// verification hasn't been completed. Amounts are integer minor units
+/// and may be **negative** (e.g. residual dispute debit on the connected
+/// account) — the app must never assume `>= 0` when formatting.
 struct PayoutSummaryData: Decodable {
     /// Live Stripe available balance in minor units — will be paid out
-    /// automatically on the next scheduled date.
+    /// automatically on the next scheduled date. May be **negative**
+    /// (dispute residue etc); the currency formatter handles the sign.
     let availableAmount: Int
     /// Live Stripe pending balance in minor units — captured but in the
     /// hold/dispute window; not yet available for payout.

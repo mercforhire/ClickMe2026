@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,16 +16,16 @@ struct SearchExpertSearchBar: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 16))
+                .font(.callout)
                 .foregroundColor(SearchExpertBrand.onSurfaceVar)
 
             TextField("", text: $text)
                 .placeholder(when: text.isEmpty) {
                     Text("Search for experts")
                         .foregroundColor(SearchExpertBrand.onSurfaceVar)
-                        .font(.system(size: 16, design: .rounded))
+                        .font(.brand(.callout))
                 }
-                .font(.system(size: 16, design: .rounded))
+                .font(.brand(.callout))
                 .foregroundColor(SearchExpertBrand.onSurface)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
@@ -35,7 +35,7 @@ struct SearchExpertSearchBar: View {
                 Button { text = "" } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(SearchExpertBrand.onSurfaceVar.opacity(0.60))
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                 }
             }
         }

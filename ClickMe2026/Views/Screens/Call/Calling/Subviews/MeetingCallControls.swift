@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -103,7 +103,7 @@ struct MeetingCallControlButton: View {
                             .tint(MeetingCallBrand.onSurface)
                     } else {
                         Image(systemName: icon)
-                            .font(.system(size: 26, weight: .regular))
+                            .font(.title.weight(.regular))
                             .foregroundColor(isActive ? MeetingCallBrand.brandGreen : MeetingCallBrand.onSurface)
                     }
                 }
@@ -112,7 +112,7 @@ struct MeetingCallControlButton: View {
             .disabled(isBusy)
 
             Text(label)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(MeetingCallBrand.onSurfaceVar)
         }
     }

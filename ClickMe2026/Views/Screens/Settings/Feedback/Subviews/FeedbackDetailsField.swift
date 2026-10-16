@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -26,7 +26,7 @@ struct FeedbackDetailsField: View {
 
                 if text.isEmpty {
                     Text("Describe your experience...")
-                        .font(.system(size: 16, design: .rounded))
+                        .font(.brand(.callout))
                         .foregroundColor(FeedbackBrand.onSurfaceVar.opacity(0.55))
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -36,7 +36,7 @@ struct FeedbackDetailsField: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .foregroundColor(FeedbackBrand.onSurface)
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
                     .tint(FeedbackBrand.brandGreen)
                     .frame(minHeight: 180)
                     .padding(.horizontal, 12)
@@ -47,7 +47,7 @@ struct FeedbackDetailsField: View {
 
             if showError {
                 Text("Please describe your experience before submitting.")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(FeedbackBrand.errorRed)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }

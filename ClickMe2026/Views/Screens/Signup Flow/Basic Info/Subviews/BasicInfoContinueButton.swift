@@ -27,7 +27,7 @@ struct BasicInfoContinueButton: View {
                             .tint(BasicInfoBrand.onPrimary)
                     } else {
                         Text("Continue")
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .font(.brand(.body, weight: .bold))
                             .foregroundColor(BasicInfoBrand.onPrimary)
                     }
                 }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,16 +16,16 @@ struct AllCategoriesSearchBar: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 15))
+                .font(.subheadline)
                 .foregroundColor(AllCategoriesBrand.brandGreen)
 
             TextField("", text: $text)
                 .placeholder(when: text.isEmpty) {
                     Text("Search categories...")
                         .foregroundColor(AllCategoriesBrand.onSurfaceVar)
-                        .font(.system(size: 15, design: .rounded))
+                        .font(.brand(.subheadline))
                 }
-                .font(.system(size: 15, design: .rounded))
+                .font(.brand(.subheadline))
                 .foregroundColor(AllCategoriesBrand.onSurface)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
@@ -35,7 +35,7 @@ struct AllCategoriesSearchBar: View {
                 Button { text = "" } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(AllCategoriesBrand.onSurfaceVar.opacity(0.60))
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                 }
             }
         }

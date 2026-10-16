@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-24.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -25,6 +25,14 @@ final class MyBookingsViewModel: ObservableObject {
     // MARK: Dependencies
     private let api: ClickMeAPI
 
+    /// Retains our `booking.update` subscription. Dropped on `deinit` —
+    /// see `RealtimeService.RealtimeSubscription`. Silent-refreshes the
+    /// list whenever any booking's status changes server-side, so a
+    /// server-driven `BOOKING_COMPLETED` (fired ~15 min after `end_time`
+    /// per `docs/ios/CALL-END-SEMANTICS.md`) moves the row from
+    /// Upcoming to Past without requiring a manual pull-to-refresh.
+    private var bookingUpdateSubscription: RealtimeSubscription?
+
     // MARK: Inits
 
     /// Runtime init — starts empty; `.task { load() }` populates from
@@ -36,6 +44,17 @@ final class MyBookingsViewModel: ObservableObject {
         self.pastBookings = []
         self.state = .idle
         self.api = api
+
+        // Any server-side status transition (BOOKING_COMPLETED, cancel,
+        // decline, etc.) fires a `booking.update` event. Silent-refresh
+        // both lists so the affected row lands in the right bucket.
+        // The list VMs previously only re-fetched on appear or pull-to-
+        // refresh, which meant a session that server-completed while
+        // this screen was mounted sat in the Upcoming list until the
+        // user manually scrolled.
+        self.bookingUpdateSubscription = RealtimeService.shared.onBookingUpdate { [weak self] _ in
+            Task { @MainActor in await self?.silentReload() }
+        }
     }
 
     /// Preview seam — installs canned data and marks state as `.loaded` so
@@ -80,7 +99,14 @@ final class MyBookingsViewModel: ObservableObject {
             let upResponse = try await api.getClientBookings(type: .upcoming)
             let pastResponse = try await api.getClientBookings(type: .past)
 
-            self.upcomingBookings = upResponse.data.bookings
+            // Rejoinable completeds live in the past payload (server
+            // flipped status on early hang-up), but their scheduled
+            // end hasn't passed — surface them under Upcoming so the
+            // user can rejoin.
+            let rejoinable = pastResponse.data.bookings.filter(Self.isRejoinableCompleted)
+            let upcomingRaw = upResponse.data.bookings + rejoinable
+
+            self.upcomingBookings = upcomingRaw
                 .sorted { $0.startTime < $1.startTime }
                 .map(Self.mapUpcoming)
 
@@ -103,7 +129,10 @@ final class MyBookingsViewModel: ObservableObject {
             let upResponse = try await api.getClientBookings(type: .upcoming)
             let pastResponse = try await api.getClientBookings(type: .past)
 
-            self.upcomingBookings = upResponse.data.bookings
+            let rejoinable = pastResponse.data.bookings.filter(Self.isRejoinableCompleted)
+            let upcomingRaw = upResponse.data.bookings + rejoinable
+
+            self.upcomingBookings = upcomingRaw
                 .sorted { $0.startTime < $1.startTime }
                 .map(Self.mapUpcoming)
 
@@ -120,16 +149,33 @@ final class MyBookingsViewModel: ObservableObject {
     /// Server-past bookings map to the 3-case UI enum:
     /// `completed → .completed`, `cancelled / declined → .cancelled`,
     /// `missed / expired → .missed`. Unknown statuses are dropped.
+    ///
+    /// **Completed-but-not-past exclusion**: if the session was ended
+    /// early (status flipped to `.completed`) but its scheduled
+    /// `endTime` hasn't passed yet, we treat it as *still upcoming*
+    /// so the user can rejoin. `mapPastIfApplicable` returns nil in
+    /// that case; the caller promotes those rows into the upcoming
+    /// list via `mapUpcoming`.
     private static func mapPastIfApplicable(_ item: ClientBookingItem) -> PastBooking? {
         guard let status = BookingStatus(rawValue: item.status) else { return nil }
         let uiStatus: PastBookingStatus
         switch status {
-        case .completed:              uiStatus = .completed
+        case .completed:
+            if item.endTime > Date() { return nil }  // still rejoinable
+            uiStatus = .completed
         case .cancelled, .declined:   uiStatus = .cancelled
         case .missed, .expired:       uiStatus = .missed
         default:                      return nil
         }
         return mapPast(item, status: uiStatus)
+    }
+
+    /// Filter matching `mapPastIfApplicable`'s "still-rejoinable"
+    /// exclusion — the caller uses this to pluck those rows out of
+    /// the past payload and promote them into the upcoming list.
+    private static func isRejoinableCompleted(_ item: ClientBookingItem) -> Bool {
+        guard BookingStatus(rawValue: item.status) == .completed else { return false }
+        return item.endTime > Date()
     }
 
     // MARK: - Mapping
@@ -149,7 +195,10 @@ final class MyBookingsViewModel: ObservableObject {
             imageURL: item.expert.avatarUrl ?? "",
             startTime: item.startTime,
             endTime: item.endTime,
-            status: status
+            status: status,
+            meetingType: item.meetingType,
+            privateNotePreview: item.privateNotePreview,
+            reschedule: item.reschedule
         )
     }
 
@@ -160,7 +209,8 @@ final class MyBookingsViewModel: ObservableObject {
             topic: item.topic ?? "Consultation",
             date: dateString(item.startTime),
             timeRange: timeRangeString(from: item.startTime, to: item.endTime),
-            status: status
+            status: status,
+            privateNotePreview: item.privateNotePreview
         )
     }
 
@@ -196,30 +246,40 @@ final class MyBookingsViewModel: ObservableObject {
                         imageURL: "https://randomuser.me/api/portraits/women/44.jpg",
                         startTime: Date().addingTimeInterval(30 * 60),
                         endTime: Date().addingTimeInterval(90 * 60),
-                        status: .confirmed),
+                        status: .confirmed, meetingType: .inAppVoice,
+                        privateNotePreview: "Prep: ask about pricing tiers vs current plan.",
+                        reschedule: nil),
         // Second sample — pending expert approval. Renders the awaiting banner.
         UpcomingBooking(id: UUID(), expertId: UUID(), expertName: "David Miller", topic: "Machine Learning Consultation",
                         date: "Oct 18, 2024", timeRange: "2:30 PM - 3:30 PM",
                         imageURL: "https://randomuser.me/api/portraits/men/32.jpg",
                         startTime: Date().addingTimeInterval(3 * 3600),
                         endTime: Date().addingTimeInterval(4 * 3600),
-                        status: .pendingApproval),
+                        status: .pendingApproval, meetingType: .inAppVoice,
+                        privateNotePreview: nil,
+                        reschedule: nil),
         UpcomingBooking(id: UUID(), expertId: UUID(), expertName: "Emily Davis", topic: "UX Research Plan Feedback",
                         date: "Oct 22, 2024", timeRange: "9:00 AM - 10:00 AM",
                         imageURL: "https://randomuser.me/api/portraits/women/68.jpg",
                         startTime: Date().addingTimeInterval(7 * 24 * 3600),
                         endTime: Date().addingTimeInterval(7 * 24 * 3600 + 3600),
-                        status: .confirmed),
+                        status: .confirmed, meetingType: .skypeZoom,
+                        privateNotePreview: nil,
+                        reschedule: nil),
     ]
 
     static let samplePast: [PastBooking] = [
         PastBooking(id: UUID(), expertName: "Sarah Johnson", topic: "Advanced Marketing Strategy",
-                    date: "Oct 25, 2024", timeRange: "2:00 PM - 3:00 PM", status: .completed),
+                    date: "Oct 25, 2024", timeRange: "2:00 PM - 3:00 PM", status: .completed,
+                    privateNotePreview: "Loved the funnel breakdown. Follow up on the retargeting playbook."),
         PastBooking(id: UUID(), expertName: "David Miller", topic: "Product Launch Consultation",
-                    date: "Oct 20, 2024", timeRange: "10:00 AM - 11:00 AM", status: .cancelled),
+                    date: "Oct 20, 2024", timeRange: "10:00 AM - 11:00 AM", status: .cancelled,
+                    privateNotePreview: nil),
         PastBooking(id: UUID(), expertName: "Emily Roberts", topic: "User Experience Audit",
-                    date: "Oct 15, 2024", timeRange: "4:00 PM - 5:30 PM", status: .missed),
+                    date: "Oct 15, 2024", timeRange: "4:00 PM - 5:30 PM", status: .missed,
+                    privateNotePreview: nil),
         PastBooking(id: UUID(), expertName: "Michael Brown", topic: "Financial Planning Session",
-                    date: "Oct 10, 2024", timeRange: "1:00 PM - 2:00 PM", status: .completed),
+                    date: "Oct 10, 2024", timeRange: "1:00 PM - 2:00 PM", status: .completed,
+                    privateNotePreview: nil),
     ]
 }

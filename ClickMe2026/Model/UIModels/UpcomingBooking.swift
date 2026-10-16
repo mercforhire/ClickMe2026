@@ -2,7 +2,7 @@
 //  UpcomingBooking.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -33,14 +33,35 @@ struct UpcomingBooking: Identifiable, Hashable {
     /// the Join Call button (hidden when `pendingApproval`) and to
     /// surface a "Waiting for expert to accept" affordance instead.
     let status: BookingStatus
+    /// Whether this booking runs on Agora voice (`.inAppVoice`) or an
+    /// external Skype/Zoom link (`.skypeZoom`). Plumbed into the call
+    /// container as an initial hint so the correct call surface
+    /// (in-app voice UI vs. external-link UI) renders immediately when
+    /// Join Call is tapped, before `POST /join` returns.
+    let meetingType: MeetingType
+    /// Truncated preview of the client's private note on this booking,
+    /// surfaced from `ClientBookingItem.private_note_preview`. `nil` when
+    /// no note has been written. Drives the note footer on the card and
+    /// the pencil-vs-plus glyph on the Private Note button.
+    let privateNotePreview: String?
+    /// Slim reschedule payload — set when `status == .pendingReschedule`.
+    /// Drives the amber "Reschedule requested / proposed" badge on the
+    /// card so the user notices without drilling into the summary.
+    let reschedule: ReschedulePreview?
 
     /// True when `now` is within one hour of `startTime` AND the booking
     /// has been accepted by the expert. Symmetric window so the button
     /// remains available for an hour after start too (bookings can run
     /// late). `pendingApproval` bookings never open the join window —
     /// the expert hasn't accepted yet, there's no channel to join.
+    ///
+    /// Completed sessions whose scheduled end is still in the future are
+    /// re-joinable: someone may have hung up early and want to resume.
+    /// The client shows the button; the server has the final say on
+    /// whether `POST /join` succeeds.
     var isWithinJoinWindow: Bool {
-        guard status != .pendingApproval else { return false }
+        if status == .pendingApproval { return false }
+        if status == .completed { return endTime > Date() }
         let delta = startTime.timeIntervalSinceNow
         return delta <= 3600 && delta >= -3600
     }

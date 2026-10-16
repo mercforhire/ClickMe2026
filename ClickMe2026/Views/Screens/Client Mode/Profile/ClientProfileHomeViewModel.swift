@@ -2,11 +2,11 @@
 //  ClientProfileHomeViewModel.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
-import Combine
 import Foundation
+import Observation
 import SwiftUI
 
 @MainActor
@@ -23,13 +23,12 @@ final class ClientProfileHomeViewModel: ObservableObject {
 
     private let api: ClickMeAPI
     private let userManager: UserManager
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: Inits
 
     /// Runtime init — seeds immediately from `UserManager.profile`
     /// (which restores from the on-disk cache on cold launch), then
-    /// subscribes so subsequent `refreshProfile()` calls or edits from
+    /// observes so subsequent `refreshProfile()` calls or edits from
     /// other screens propagate in real time.
     init(userManager: UserManager = .shared, api: ClickMeAPI = .shared) {
         self.userManager = userManager
@@ -40,10 +39,24 @@ final class ClientProfileHomeViewModel: ObservableObject {
         self.isOnline = true
 
         apply(profile: userManager.profile)
-        userManager.$profile
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.apply(profile: $0) }
-            .store(in: &cancellables)
+        observeProfileChanges()
+    }
+
+    /// Observation-framework equivalent of the old Combine `sink` on
+    /// `userManager.$profile`. `withObservationTracking` fires its
+    /// `onChange` exactly once per read tracked in `apply`, so we
+    /// re-arm from inside the callback to keep the subscription live
+    /// for the ViewModel's lifetime.
+    private func observeProfileChanges() {
+        withObservationTracking {
+            _ = userManager.profile
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                apply(profile: userManager.profile)
+                observeProfileChanges()
+            }
+        }
     }
 
     /// Preview seam — seeds header content so the canvas can render without

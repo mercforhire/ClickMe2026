@@ -2,7 +2,7 @@
 //  ClientProfileHomeListItem.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,7 +22,7 @@ struct ClientProfileHomeListItem: View {
                 iconBadge
 
                 Text(title)
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.callout.weight(.regular))
                     .foregroundColor(isDestructive
                                      ? ClientProfileHomeBrand.error
                                      : ClientProfileHomeBrand.onSurface)
@@ -30,7 +30,7 @@ struct ClientProfileHomeListItem: View {
                 Spacer()
 
                 Image(systemName: isDestructive ? "rectangle.portrait.and.arrow.right" : "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(isDestructive
                                      ? ClientProfileHomeBrand.error.opacity(0.40)
                                      : ClientProfileHomeBrand.onSurfaceVar)
@@ -59,7 +59,7 @@ struct ClientProfileHomeListItem: View {
                 .fill(isDestructive ? ClientProfileHomeBrand.errorBg : ClientProfileHomeBrand.iconBg)
                 .frame(width: 40, height: 40)
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.title3.weight(.semibold))
                 .foregroundColor(isDestructive
                                  ? ClientProfileHomeBrand.error
                                  : ClientProfileHomeBrand.primary)

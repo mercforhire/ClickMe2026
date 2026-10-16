@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -20,21 +20,21 @@ struct ExpertReviewsCard: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(review.reviewerName)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(ExpertReviewsBrand.onSurface)
 
                     HStack(spacing: 4) {
                         Text("Topic:")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
                         Text(review.topic)
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
                     }
 
                     if let date = review.dateLabel {
                         Text(date)
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(ExpertReviewsBrand.onSurfaceVar.opacity(0.70))
                     }
                 }
@@ -45,7 +45,7 @@ struct ExpertReviewsCard: View {
             }
 
             Text(review.body)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(ExpertReviewsBrand.onSurface)
                 .lineLimit(2)
                 .lineSpacing(3)
@@ -78,7 +78,7 @@ struct ExpertReviewsCard: View {
                     ZStack {
                         ExpertReviewsBrand.avatarFallback
                         Image(systemName: "person.fill")
-                            .font(.system(size: 20))
+                            .font(.title3)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }

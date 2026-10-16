@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct CancellationCommentField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Additional Comments (Optional)")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(CancellationBrand.onSurfaceVar)
                 .padding(.leading, 4)
 
@@ -31,7 +31,7 @@ struct CancellationCommentField: View {
 
                 if comment.isEmpty {
                     Text("Help us understand better...")
-                        .font(.system(size: 15, design: .rounded))
+                        .font(.brand(.subheadline))
                         .foregroundColor(CancellationBrand.onSurfaceVar.opacity(0.55))
                         .padding(.horizontal, 14)
                         .padding(.top, 13)
@@ -41,7 +41,7 @@ struct CancellationCommentField: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .foregroundColor(CancellationBrand.onSurface)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.brand(.subheadline))
                     .tint(CancellationBrand.brandGreen)
                     .frame(minHeight: 110)
                     .padding(.horizontal, 10)

@@ -3,13 +3,13 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 import SwiftUI
 
 // MARK: - Display model
 
-struct UpcomingSession: Identifiable {
+struct UpcomingSession: Identifiable, Hashable {
     let id = UUID()
     /// Server `booking_id`. Used to look up the detail record when the
     /// card is tapped (pushes `ExpertBookingSummaryView`).
@@ -31,6 +31,23 @@ struct UpcomingSession: Identifiable {
     /// the call screen can drive its "5 min remaining" warning and
     /// soft "scheduled time complete" banner.
     let endTime: Date
+    /// Whether the session runs on Agora voice or an external Skype/
+    /// Zoom link. Used as an initial hint for the call container so it
+    /// renders the right surface immediately (before `POST /join`).
+    let meetingType: MeetingType
+    /// Wire booking status. Only meaningful hint the expert side needs
+    /// to know: `.completed` means this is a rejoin (early hang-up,
+    /// scheduled end still ahead) — the call container skips
+    /// `confirm-connection` and `end` on that path.
+    let status: BookingStatus
+    /// Truncated preview of the expert's private note on this booking,
+    /// surfaced from `ExpertBookingItem.private_note_preview`. `nil` when
+    /// no note has been written.
+    let privateNotePreview: String?
+    /// Slim reschedule payload — set when `status == .pendingReschedule`.
+    /// Drives the amber "Reschedule requested / proposed" badge on the
+    /// upcoming card.
+    let reschedule: ReschedulePreview?
 
     /// True when `now` is within one hour of `startTime`. Symmetric so
     /// the button remains available for an hour after start too
@@ -39,10 +56,34 @@ struct UpcomingSession: Identifiable {
     /// server's `actions.canJoin` is tighter (~5 min), which was
     /// causing the expert-side button to hide even when the client
     /// side was showing it.
+    ///
+    /// Note: this struct doesn't carry the booking status, so a
+    /// completed-but-not-past session shows the button too — the
+    /// server rejects `POST /join` on genuinely-terminal sessions,
+    /// which surfaces via CallCenter's join-error alert.
     var isWithinJoinWindow: Bool {
         let delta = startTime.timeIntervalSinceNow
         return delta <= 3600 && delta >= -3600
     }
+}
+
+// MARK: - Local routes
+
+/// Push targets scoped to this tab (bookings). Registered locally on
+/// the view via `.navigationDestination(for: SessionRoute.self)` so
+/// bookings-only destinations don't have to bloat the shell-wide
+/// `HomeRoute` enum. Shared shell routes (e.g. `.expertBookingSummary`)
+/// still flow through `HomeRoute` — the two coexist on the same stack.
+private enum SessionRoute: Hashable {
+    /// Pushed from the "Private Note" tap on a `PastSessionCard`.
+    /// Renders `ExpertBookingNoteView` which loads / saves the
+    /// expert's private note via `/bookings/:id/note`.
+    case privateNote(PastSession)
+    /// Same editor, pushed from the note zone on an upcoming card.
+    /// Kept separate so we can seed the header from the upcoming-side
+    /// fields (client name / topic / date label) without projecting
+    /// into a `PastSession` shape.
+    case privateNoteUpcoming(UpcomingSession)
 }
 
 // MARK: - Upcoming Sessions View
@@ -89,11 +130,29 @@ struct UpcomingBookingsView: View {
         ZStack {
             Brand.surface.ignoresSafeArea()
             GreenGlowBlobLayer().ignoresSafeArea()
-            content
+
+            VStack(spacing: 0) {
+                UpcomingBookingsSegmentPicker(
+                    selectedTab: Binding(
+                        get: { viewModel.selectedTab },
+                        set: { viewModel.selectedTab = $0 }
+                    )
+                )
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .padding(.bottom, 16)
+
+                content
+            }
         }
         .task { await viewModel.load() }
+        // Silent refresh on tab-return / navigation-pop — see the
+        // `silentReload` docblock for why chrome flicker is worth
+        // avoiding here in particular.
+        .onAppear { Task { await viewModel.silentReload() } }
         .refreshable { await viewModel.reload() }
         .animation(.easeInOut(duration: 0.28), value: viewModel.sessions.isEmpty)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.selectedTab)
         // Call surface is hosted globally by `CallOverlayHost` on
         // `HomeExpertView`. This screen just surfaces a join-failure
         // alert bound to CallCenter's shared error field.
@@ -111,6 +170,24 @@ struct UpcomingBookingsView: View {
         }
         .navigationTitle("Upcoming Sessions")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: SessionRoute.self) { route in
+            switch route {
+            case let .privateNote(session):
+                ExpertBookingNoteView(
+                    bookingId: session.bookingId,
+                    clientName: session.clientName,
+                    topic: session.topic,
+                    dateLabel: "\(session.date), \(session.timeRange)"
+                )
+            case let .privateNoteUpcoming(session):
+                ExpertBookingNoteView(
+                    bookingId: session.bookingId,
+                    clientName: session.clientName,
+                    topic: session.topic,
+                    dateLabel: session.dateLabel
+                )
+            }
+        }
     }
 
     // MARK: - Content router
@@ -127,30 +204,84 @@ struct UpcomingBookingsView: View {
         }
     }
 
+    @ViewBuilder
     private var loadedContent: some View {
-        Group {
-            if viewModel.sessions.isEmpty {
-                UpcomingBookingsEmptyState(
-                    onUpdateAvailability: viewModel.onUpdateAvailability,
-                    onViewPastHistory: viewModel.onViewPastHistory
-                )
-            } else {
-                UpcomingBookingsPopulatedList(
-                    sessions: viewModel.sessions,
-                    onJoinSession: handleJoinSession(for:),
-                    onMessage: handleMessage(for:),
-                    onReschedule: viewModel.onReschedule,
-                    onCardTap: handleCardTap(for:)
-                )
+        if viewModel.selectedTab == 0 {
+            upcomingContent
+        } else {
+            pastContent
+        }
+    }
+
+    @ViewBuilder
+    private var upcomingContent: some View {
+        if viewModel.sessions.isEmpty {
+            UpcomingBookingsEmptyState(
+                onUpdateAvailability: viewModel.onUpdateAvailability,
+                // "View Past History" now switches to the Past tab
+                // inline instead of pushing a separate screen — the
+                // Past tab holds those sessions right here.
+                onViewPastHistory: {
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        viewModel.selectedTab = 1
+                    }
+                }
+            )
+        } else {
+            UpcomingBookingsPopulatedList(
+                sessions: viewModel.sessions,
+                onJoinSession: handleJoinSession(for:),
+                onMessage: handleMessage(for:),
+                onReschedule: viewModel.onReschedule,
+                onCardTap: handleCardTap(for:),
+                onPrivateNote: handleUpcomingPrivateNoteTap(for:)
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var pastContent: some View {
+        if viewModel.pastSessions.isEmpty {
+            pastEmptyState
+        } else {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 12) {
+                    ForEach(viewModel.pastSessions) { session in
+                        PastSessionCard(
+                            session: session,
+                            onTap: { handlePastCardTap(for: session) },
+                            onPrivateNote: { handlePrivateNoteTap(for: session) }
+                        )
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 40)
             }
         }
+    }
+
+    private var pastEmptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "clock.badge.checkmark")
+                .font(.title.weight(.light))
+                .foregroundColor(Brand.onSurfaceVariant)
+            Text("No past sessions yet")
+                .font(.brand(.subheadline, weight: .semibold))
+                .foregroundColor(Brand.onSurface)
+            Text("Completed and cancelled sessions will appear here.")
+                .font(.brand(.caption))
+                .foregroundColor(Brand.onSurfaceVariant)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var loadingContent: some View {
         VStack(spacing: 12) {
             ProgressView().tint(Brand.onSurface)
             Text("Loading sessions…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -168,7 +299,9 @@ struct UpcomingBookingsView: View {
             peerImageURL: session.clientImageURL,
             topic: session.topic,
             scheduledStart: session.startTime,
-            scheduledEnd: session.endTime
+            scheduledEnd: session.endTime,
+            meetingType: session.meetingType,
+            isRejoin: session.status == .completed
         )
     }
 
@@ -178,6 +311,28 @@ struct UpcomingBookingsView: View {
     private func handleCardTap(for session: UpcomingSession) {
         guard let homeNavigationPath else { return }
         homeNavigationPath.push(HomeRoute.expertBookingSummary(bookingId: session.bookingId))
+    }
+
+    /// Same destination as the upcoming card — the summary view
+    /// renders read-only for terminal statuses on its own.
+    private func handlePastCardTap(for session: PastSession) {
+        guard let homeNavigationPath else { return }
+        homeNavigationPath.push(HomeRoute.expertBookingSummary(bookingId: session.bookingId))
+    }
+
+    /// Push the expert-side private-note editor. Same shell nav path
+    /// as the summary tap, but keyed to the local `SessionRoute` enum
+    /// so this destination stays scoped to the bookings tab.
+    private func handlePrivateNoteTap(for session: PastSession) {
+        guard let homeNavigationPath else { return }
+        homeNavigationPath.push(SessionRoute.privateNote(session))
+    }
+
+    /// Same editor, upcoming variant. `UpcomingSession` doesn't project
+    /// into `PastSession`, so we route it via the dedicated case.
+    private func handleUpcomingPrivateNoteTap(for session: UpcomingSession) {
+        guard let homeNavigationPath else { return }
+        homeNavigationPath.push(SessionRoute.privateNoteUpcoming(session))
     }
 
     /// Look up (or create) the chat thread with this session's client and
@@ -199,13 +354,13 @@ struct UpcomingBookingsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant)
             Text("Couldn't load sessions")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -214,7 +369,7 @@ struct UpcomingBookingsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -238,7 +393,11 @@ extension UpcomingSession {
             dateLabel: "Today • 10:30 AM",
             earnings: "",
             startTime: Date().addingTimeInterval(30 * 60), // in-window
-            endTime: Date().addingTimeInterval(60 * 60)
+            endTime: Date().addingTimeInterval(60 * 60),
+            meetingType: .inAppVoice,
+            status: .confirmed,
+            privateNotePreview: nil,
+            reschedule: nil
         ),
         UpcomingSession(
             bookingId: UUID(),
@@ -249,7 +408,11 @@ extension UpcomingSession {
             dateLabel: "Thu, Jul 11 • 2:00 PM",
             earnings: "",
             startTime: Date().addingTimeInterval(3 * 24 * 3600),
-            endTime: Date().addingTimeInterval(3 * 24 * 3600 + 3600)
+            endTime: Date().addingTimeInterval(3 * 24 * 3600 + 3600),
+            meetingType: .skypeZoom,
+            status: .confirmed,
+            privateNotePreview: "Discuss H2 hiring plan and headcount ramp.",
+            reschedule: nil
         ),
         UpcomingSession(
             bookingId: UUID(),
@@ -260,7 +423,51 @@ extension UpcomingSession {
             dateLabel: "Fri, Jul 12 • 9:00 AM",
             earnings: "",
             startTime: Date().addingTimeInterval(4 * 24 * 3600),
-            endTime: Date().addingTimeInterval(4 * 24 * 3600 + 3600)
+            endTime: Date().addingTimeInterval(4 * 24 * 3600 + 3600),
+            meetingType: .inAppVoice,
+            status: .confirmed,
+            privateNotePreview: nil,
+            reschedule: nil
+        ),
+    ]
+}
+
+// MARK: - Sample past-session data
+
+extension PastSession {
+    static let samples: [PastSession] = [
+        PastSession(
+            bookingId: UUID(),
+            clientId: UUID(),
+            clientName: "Priya Nair",
+            clientImageURL: "https://randomuser.me/api/portraits/women/71.jpg",
+            topic: "Product-market fit review",
+            date: "Jul 12, 2026",
+            timeRange: "3:00 PM – 4:00 PM",
+            status: .completed,
+            privateNotePreview: "Great conversation — send the ICP deck she asked about."
+        ),
+        PastSession(
+            bookingId: UUID(),
+            clientId: UUID(),
+            clientName: "Dan Whitby",
+            clientImageURL: "https://randomuser.me/api/portraits/men/12.jpg",
+            topic: "SaaS pricing coaching",
+            date: "Jul 08, 2026",
+            timeRange: "11:00 AM – 12:00 PM",
+            status: .cancelled,
+            privateNotePreview: nil
+        ),
+        PastSession(
+            bookingId: UUID(),
+            clientId: UUID(),
+            clientName: "Anya Petrov",
+            clientImageURL: "https://randomuser.me/api/portraits/women/32.jpg",
+            topic: "Executive coaching intro",
+            date: "Jul 03, 2026",
+            timeRange: "9:00 AM – 9:30 AM",
+            status: .missed,
+            privateNotePreview: nil
         ),
     ]
 }

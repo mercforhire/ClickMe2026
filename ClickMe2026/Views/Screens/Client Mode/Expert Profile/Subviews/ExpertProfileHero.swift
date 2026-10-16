@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,11 +24,11 @@ struct ExpertProfileHero: View {
                 .frame(width: 120, height: 120)
 
             Text(expert.name)
-                .font(.system(size: 26, weight: .bold, design: .rounded))
+                .font(.brand(.title, weight: .bold))
                 .foregroundColor(ExpertProfileBrand.onSurface)
 
             Text(expert.title)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ExpertProfileBrand.brandGreen)
                 .tracking(0.3)
 
@@ -92,13 +92,13 @@ struct ExpertProfileHero: View {
     private var ratingRow: some View {
         HStack(spacing: 5) {
             Image(systemName: "star.fill")
-                .font(.system(size: 14))
+                .font(.subheadline)
                 .foregroundColor(ExpertProfileBrand.starYellow)
             Text(summaryLoaded ? String(format: "%.1f", expert.rating) : "—")
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .font(.brand(.subheadline, weight: .bold))
                 .foregroundColor(ExpertProfileBrand.onSurface)
             Text(summaryLoaded ? "(\(expert.reviewCount) reviews)" : "(— reviews)")
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(ExpertProfileBrand.onSurfaceVar)
         }
     }

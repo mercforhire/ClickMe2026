@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -42,7 +42,7 @@ struct CancellationBookingSummary: View {
                     ZStack {
                         Color(red: 0.12, green: 0.18, blue: 0.14)
                         Image(systemName: "person.fill")
-                            .font(.system(size: 22))
+                            .font(.title2)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }
@@ -54,10 +54,10 @@ struct CancellationBookingSummary: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(booking.expertName)
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.brand(.body, weight: .bold))
                     .foregroundColor(CancellationBrand.onSurface)
                 Text(booking.expertTitle)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(CancellationBrand.brandGreen)
             }
             Spacer()
@@ -68,25 +68,25 @@ struct CancellationBookingSummary: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Image(systemName: "calendar")
-                    .font(.system(size: 15))
+                    .font(.subheadline)
                     .foregroundColor(CancellationBrand.onSurfaceVar)
                     .frame(width: 18)
                 Text(booking.dateString)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(CancellationBrand.onSurface)
             }
 
             if let refundAmount = booking.refundAmount {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "creditcard")
-                        .font(.system(size: 15))
+                        .font(.subheadline)
                         .foregroundColor(CancellationBrand.onSurfaceVar)
                         .frame(width: 18)
                     Text(refundAmount)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(CancellationBrand.brandGreen)
                         + Text(" will be refunded according to our policy.")
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(CancellationBrand.onSurfaceVar)
                 }
             }

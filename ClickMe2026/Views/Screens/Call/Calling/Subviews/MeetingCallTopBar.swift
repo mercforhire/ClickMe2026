@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,7 +21,7 @@ struct MeetingCallTopBar: View {
         HStack {
             Button(action: onMinimizeTap) {
                 Image(systemName: "chevron.compact.down")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.title2.weight(.semibold))
                     .foregroundColor(MeetingCallBrand.onSurface)
                     .frame(width: 44, height: 44)
                     .background(Circle().fill(MeetingCallBrand.surfaceHigh))

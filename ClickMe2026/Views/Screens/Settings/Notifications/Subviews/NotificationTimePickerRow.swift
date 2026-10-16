@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,17 +22,17 @@ struct NotificationTimePickerRow: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
-                        .font(.system(size: 15, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(isEnabled
                                          ? NotificationSettingsBrand.onSurface
                                          : NotificationSettingsBrand.onSurfaceVar)
                     Text(subtitle)
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(NotificationSettingsBrand.onSurfaceVar.opacity(0.60))
                 }
                 Spacer()
                 Text(value)
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(isEnabled
                                      ? NotificationSettingsBrand.brandGreen
                                      : NotificationSettingsBrand.onSurfaceVar)

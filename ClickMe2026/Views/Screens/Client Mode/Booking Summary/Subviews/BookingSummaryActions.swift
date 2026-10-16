@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,9 +25,9 @@ struct BookingSummaryActions: View {
         Button(action: onBookAgain) {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.clockwise.circle")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.title3.weight(.regular))
                 Text("Book Again")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
             }
             .foregroundColor(BookingSummaryBrand.onPrimary)
             .frame(maxWidth: .infinity)
@@ -45,9 +45,9 @@ struct BookingSummaryActions: View {
         Button(action: onMessageExpert) {
             HStack(spacing: 8) {
                 Image(systemName: "bubble.left")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.title3.weight(.regular))
                 Text("Message Expert")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
             }
             .foregroundColor(BookingSummaryBrand.brandGreen)
             .frame(maxWidth: .infinity)

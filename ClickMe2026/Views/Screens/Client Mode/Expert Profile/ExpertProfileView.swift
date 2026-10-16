@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -27,6 +27,11 @@ struct PublicExpertProfile {
     let topics: [PublicTopic]
     let reviews: [PublicReview]
     let imageURL: String
+    /// Server flag mirroring `charges_enabled` for this expert. Defaults
+    /// to true so we don't hide the Book button before the backend
+    /// starts populating the field. When false, the profile view swaps
+    /// the Book CTA for a "not accepting bookings" state.
+    var isBookable: Bool = true
 }
 
 struct PublicExpertTag {
@@ -76,6 +81,13 @@ struct ExpertProfileView: View {
     var onFavorite: () -> Void
     var onSeeAllReviews: () -> Void
 
+    /// True when the current user IS the expert being displayed —
+    /// i.e. the expert is viewing their own profile. Hides the CTAs
+    /// (Book Session, Message, Favorite heart) that don't make sense
+    /// against oneself, while keeping bio / topics / reviews visible
+    /// so the expert can see how their profile appears to clients.
+    var isSelfView: Bool
+
     /// Shortcut for the expert model exposed by the view model.
     private var expert: PublicExpertProfile { viewModel.expert }
 
@@ -86,13 +98,15 @@ struct ExpertProfileView: View {
         onBookSession: @escaping () -> Void = {},
         onMessage: @escaping () -> Void = {},
         onFavorite: @escaping () -> Void = {},
-        onSeeAllReviews: @escaping () -> Void = {}
+        onSeeAllReviews: @escaping () -> Void = {},
+        isSelfView: Bool = false
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBookSession = onBookSession
         self.onMessage = onMessage
         self.onFavorite = onFavorite
         self.onSeeAllReviews = onSeeAllReviews
+        self.isSelfView = isSelfView
     }
 
     /// Convenience init mirroring the original signature so existing call sites
@@ -102,14 +116,16 @@ struct ExpertProfileView: View {
         onBookSession: @escaping () -> Void = {},
         onMessage: @escaping () -> Void = {},
         onFavorite: @escaping () -> Void = {},
-        onSeeAllReviews: @escaping () -> Void = {}
+        onSeeAllReviews: @escaping () -> Void = {},
+        isSelfView: Bool = false
     ) {
         self.init(
             viewModel: ExpertProfileViewModel(expert: expert),
             onBookSession: onBookSession,
             onMessage: onMessage,
             onFavorite: onFavorite,
-            onSeeAllReviews: onSeeAllReviews
+            onSeeAllReviews: onSeeAllReviews,
+            isSelfView: isSelfView
         )
     }
 
@@ -136,12 +152,17 @@ struct ExpertProfileView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 20)
 
-                    ExpertProfileActionButtons(
-                        onBookSession: handleBookSession,
-                        onMessage: handleMessage
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 28)
+                    // Book / Message CTAs are for clients — hide when
+                    // the expert is viewing their own profile.
+                    if !isSelfView {
+                        ExpertProfileActionButtons(
+                            onBookSession: handleBookSession,
+                            onMessage: handleMessage,
+                            isBookable: expert.isBookable
+                        )
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 28)
+                    }
 
                     ExpertProfileAboutCard(bio: expert.bio)
                         .padding(.horizontal, 20)
@@ -173,25 +194,29 @@ struct ExpertProfileView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    Task {
-                        await viewModel.toggleFavorite()
-                        onFavorite()
+            // Favorite (heart) is a client action — hide when the
+            // expert is viewing their own profile.
+            if !isSelfView {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            await viewModel.toggleFavorite()
+                            onFavorite()
+                        }
+                    } label: {
+                        Image(systemName: viewModel.isFavorited ? "heart.fill" : "heart")
+                            .font(.title3.weight(.regular))
+                            .foregroundColor(viewModel.isFavorited ? .red : ExpertProfileBrand.onSurface)
                     }
-                } label: {
-                    Image(systemName: viewModel.isFavorited ? "heart.fill" : "heart")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundColor(viewModel.isFavorited ? .red : ExpertProfileBrand.onSurface)
+                    .disabled(viewModel.isFavoriteInFlight)
+                    .accessibilityLabel(viewModel.isFavorited ? "Remove from favorites" : "Add to favorites")
                 }
-                .disabled(viewModel.isFavoriteInFlight)
-                .accessibilityLabel(viewModel.isFavorited ? "Remove from favorites" : "Add to favorites")
             }
         }
         .onAppear { viewModel.glowPulse = true }
         .task { await viewModel.loadProfileDetails() }
         .navigationDestination(isPresented: $showReviews) {
-            ExpertReviewsView(expertId: expert.expertId)
+            ExpertReviewsView(expertId: expert.expertId, expertName: expert.name)
         }
         // "Book Session" pushes the booking flow onto the same NavStack.
         // Reuses `BookAgainSeed` since its four fields match exactly what
@@ -333,13 +358,13 @@ private struct LiveFetchProfileBootstrap: View {
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text("Preview bootstrap failed")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.white)
                 Text(errorMessage)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)

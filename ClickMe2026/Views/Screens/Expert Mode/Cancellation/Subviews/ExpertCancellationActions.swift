@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-27.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,7 +19,7 @@ struct ExpertCancellationActions: View {
         VStack(spacing: 14) {
             Button(action: onKeepBooking) {
                 Text("Keep Booking")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(ExpertCancellationBrand.onPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
@@ -38,9 +38,9 @@ struct ExpertCancellationActions: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: ExpertCancellationBrand.errorColor))
                     } else {
                         Image(systemName: "xmark.circle")
-                            .font(.system(size: 17, weight: .regular))
+                            .font(.body.weight(.regular))
                         Text("Confirm Cancellation")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.brand(.callout, weight: .bold))
                     }
                 }
                 .foregroundColor(ExpertCancellationBrand.errorColor)

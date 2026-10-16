@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -36,25 +36,25 @@ struct ChattingSystemEventRow: View {
                         .frame(width: 36, height: 36)
 
                     Image(systemName: event.icon)
-                        .font(.system(size: 16, weight: event.isAccepted ? .semibold : .regular))
+                        .font(.system(.body).weight(event.isAccepted ? .semibold : .regular))
                         .foregroundColor(event.isAccepted ? ChattingBrand.brandGreen : ChattingBrand.onSurface)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(event.title)
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .bold))
                         .foregroundColor(ChattingBrand.onSurface)
 
                     if let topic = event.topicTitle, !topic.isEmpty {
                         Text(bookingSubtitle(topic: topic))
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(ChattingBrand.onSurfaceVar)
                             .lineLimit(2)
                     } else if let sub = event.subtitle {
                         // Legacy path — pre-enrichment events fall back
                         // to the server-provided content string.
                         Text(sub)
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(ChattingBrand.onSurfaceVar)
                     }
                 }

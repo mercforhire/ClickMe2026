@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -44,7 +44,7 @@ struct BookingRequestSentDetailsCard: View {
 
     private var sectionLabel: some View {
         Text("BOOKING DETAILS")
-            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .font(.brand(.caption2, weight: .semibold))
             .foregroundColor(BookingRequestSentBrand.onSurfaceVar)
             .tracking(1.5)
             .padding(.horizontal, 18)
@@ -56,10 +56,10 @@ struct BookingRequestSentDetailsCard: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Topic")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(BookingRequestSentBrand.onSurfaceVar)
                 Text(topic)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(.brand(.title3, weight: .semibold))
                     .foregroundColor(BookingRequestSentBrand.onSurface)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -71,7 +71,7 @@ struct BookingRequestSentDetailsCard: View {
                     .fill(BookingRequestSentBrand.iconBoxBg)
                     .frame(width: 44, height: 44)
                 Image(systemName: "square.3.layers.3d")
-                    .font(.system(size: 20, weight: .regular))
+                    .font(.title3.weight(.regular))
                     .foregroundColor(BookingRequestSentBrand.brandGreen)
             }
         }
@@ -83,15 +83,15 @@ struct BookingRequestSentDetailsCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Date & Time")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(BookingRequestSentBrand.onSurfaceVar)
                 Text(dateTime)
-                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                    .font(.brand(.callout, weight: .regular))
                     .foregroundColor(BookingRequestSentBrand.onSurface)
             }
             Spacer()
             Image(systemName: "calendar")
-                .font(.system(size: 20, weight: .regular))
+                .font(.title3.weight(.regular))
                 .foregroundColor(BookingRequestSentBrand.onSurfaceVar)
         }
         .padding(.horizontal, 18)
@@ -101,7 +101,7 @@ struct BookingRequestSentDetailsCard: View {
     private var statusRow: some View {
         HStack {
             Text("Status")
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(BookingRequestSentBrand.onSurfaceVar)
             Spacer()
             statusPill
@@ -124,7 +124,7 @@ struct BookingRequestSentDetailsCard: View {
                 .frame(width: 8, height: 8)
                 .shadow(color: BookingRequestSentBrand.amberDot.opacity(0.70), radius: 4)
             Text("Awaiting Approval")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(BookingRequestSentBrand.onSurfaceVar)
         }
         .padding(.horizontal, 12)

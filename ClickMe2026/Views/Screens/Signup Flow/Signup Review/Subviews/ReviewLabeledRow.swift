@@ -13,10 +13,10 @@ struct ReviewLabeledRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Text("\(label):")
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Brand.onSurfaceMuted)
             Text(value)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
                 .fixedSize(horizontal: false, vertical: true)
         }

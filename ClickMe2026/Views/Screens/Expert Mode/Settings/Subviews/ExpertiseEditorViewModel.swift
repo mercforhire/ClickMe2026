@@ -2,7 +2,7 @@
 //  ExpertiseEditorViewModel.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -138,6 +138,22 @@ final class ExpertiseEditorViewModel: ObservableObject {
         if primaryId == tag.id {
             primaryId = selectedIds.first
         }
+        didSave = false
+    }
+
+    /// True when `tag` is the currently-flagged primary — the one the
+    /// server will save as `is_primary: true` and other screens will
+    /// surface first.
+    func isPrimary(_ tag: ExpertiseTagItem) -> Bool {
+        tag.id == primaryId
+    }
+
+    /// Promote `tag` to primary. No-op if it isn't in the current
+    /// selection (defensive — the UI only offers the action on
+    /// already-selected chips) or if it's already primary.
+    func makePrimary(_ tag: ExpertiseTagItem) {
+        guard selectedIds.contains(tag.id), primaryId != tag.id else { return }
+        primaryId = tag.id
         didSave = false
     }
 

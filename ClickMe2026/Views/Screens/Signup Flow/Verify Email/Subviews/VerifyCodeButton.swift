@@ -2,7 +2,7 @@
 //  VerifyCodeButton.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -27,7 +27,7 @@ struct VerifyCodeButton: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     Text("Verify")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(.white)
                 }
             }

@@ -3,11 +3,11 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-24.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
-import Combine
 import Foundation
+import Observation
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -78,12 +78,11 @@ final class ClientProfileSettingsViewModel: ObservableObject {
 
     private let api: ClickMeAPI
     private let userManager: UserManager
-    private var cancellables = Set<AnyCancellable>()
 
     // MARK: Init
 
-    /// Runtime init — starts with empty fields, then sinks
-    /// `UserManager.$profile` to populate them the moment the cached (or
+    /// Runtime init — starts with empty fields, then observes
+    /// `UserManager.profile` to populate them the moment the cached (or
     /// freshly-fetched) profile arrives. Field edits after that trigger
     /// the auto-save debounce as usual.
     init(
@@ -108,12 +107,26 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         self.api = api
 
         // Seed immediately from the on-disk cache (if any), then
-        // subscribe so revalidation writes propagate.
+        // observe so revalidation writes propagate.
         apply(profile: userManager.profile)
-        userManager.$profile
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.apply(profile: $0) }
-            .store(in: &cancellables)
+        observeProfileChanges()
+    }
+
+    /// Observation-framework equivalent of the old Combine `sink` on
+    /// `userManager.$profile`. `withObservationTracking` fires its
+    /// `onChange` exactly once per read tracked in `apply`, so we
+    /// re-arm from inside the callback to keep the subscription live
+    /// for the ViewModel's lifetime.
+    private func observeProfileChanges() {
+        withObservationTracking {
+            _ = userManager.profile
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                apply(profile: userManager.profile)
+                observeProfileChanges()
+            }
+        }
     }
 
     /// Preview / test seam — installs canned data without hitting
@@ -263,7 +276,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         body.location = .init(
             city: city.trimmingCharacters(in: .whitespaces),
             stateProvince: state.trimmingCharacters(in: .whitespaces),
-            countryCode: country.isEmpty ? nil : country
+            countryCode: Countries.normalize(country)
         )
         body.professional = .init(
             jobTitle: jobTitle.trimmingCharacters(in: .whitespaces),

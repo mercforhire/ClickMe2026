@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -39,7 +39,7 @@ struct HelpSectionHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 24, weight: .bold, design: .rounded))
+            .font(.brand(.title2, weight: .bold))
             .foregroundColor(HelpBrand.onSurface)
             .fixedSize(horizontal: false, vertical: true)
     }

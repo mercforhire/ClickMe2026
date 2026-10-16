@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -20,9 +20,9 @@ struct RequestDecisionActionFooter: View {
             Button(action: onMessage) {
                 HStack(spacing: 8) {
                     Image(systemName: "bubble.left")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.subheadline.weight(.medium))
                     Text("Message User")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                 }
                 .foregroundColor(Brand.onSurface)
                 .frame(maxWidth: .infinity)
@@ -35,7 +35,7 @@ struct RequestDecisionActionFooter: View {
             HStack(spacing: 12) {
                 Button(action: onDeclineTap) {
                     Text(isDeclined ? "Declined" : "Decline")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(isDeclined ? Brand.overlayWhite60 : Brand.onSurface)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
@@ -56,14 +56,14 @@ struct RequestDecisionActionFooter: View {
                         if isAccepted {
                             HStack(spacing: 6) {
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 14, weight: .semibold))
+                                    .font(.subheadline.weight(.semibold))
                                 Text("Accepted!")
-                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .font(.brand(.subheadline, weight: .semibold))
                             }
                             .foregroundColor(Brand.onPrimary)
                         } else {
                             Text("Accept")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                                 .foregroundColor(Brand.onPrimary)
                         }
                     }

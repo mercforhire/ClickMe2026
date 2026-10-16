@@ -2,7 +2,7 @@
 //  Countries.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -25,21 +25,8 @@ enum Countries {
     /// picker, sorted alphabetically. Names are pulled from Foundation's
     /// localized region strings so they match the user's system locale.
     ///
-    /// The alpha-2 → alpha-3 mapping is a standards-body value — extend the
-    /// dictionary below to add more countries.
+    /// Extend `alpha2ToAlpha3` below to add more countries.
     static let all: [Country] = {
-        let alpha2ToAlpha3: [String: String] = [
-            "AR": "ARG", "AU": "AUS", "AT": "AUT", "BE": "BEL", "BR": "BRA",
-            "CA": "CAN", "CH": "CHE", "CL": "CHL", "CN": "CHN", "CO": "COL",
-            "CZ": "CZE", "DE": "DEU", "DK": "DNK", "EG": "EGY", "ES": "ESP",
-            "FI": "FIN", "FR": "FRA", "GB": "GBR", "GR": "GRC", "HK": "HKG",
-            "HU": "HUN", "ID": "IDN", "IE": "IRL", "IL": "ISR", "IN": "IND",
-            "IT": "ITA", "JP": "JPN", "KR": "KOR", "MX": "MEX", "MY": "MYS",
-            "NG": "NGA", "NL": "NLD", "NO": "NOR", "NZ": "NZL", "PE": "PER",
-            "PH": "PHL", "PL": "POL", "PT": "PRT", "RO": "ROU", "RU": "RUS",
-            "SA": "SAU", "SE": "SWE", "SG": "SGP", "TH": "THA", "TR": "TUR",
-            "TW": "TWN", "UA": "UKR", "US": "USA", "VN": "VNM", "ZA": "ZAF"
-        ]
         let locale = Locale(identifier: "en_US")
         return alpha2ToAlpha3.compactMap { alpha2, alpha3 -> Country? in
             let name = locale.localizedString(forRegionCode: alpha2) ?? alpha2
@@ -52,5 +39,38 @@ enum Countries {
     /// isn't in the curated list.
     static func find(byCode code: String) -> Country? {
         all.first { $0.code == code }
+    }
+
+    /// Reverse map from ISO-3166-1 alpha-2 → alpha-3 for legacy /
+    /// mis-seeded values on the wire. Same source-of-truth as `all`.
+    private static let alpha2ToAlpha3: [String: String] = [
+        "AR": "ARG", "AU": "AUS", "AT": "AUT", "BE": "BEL", "BR": "BRA",
+        "CA": "CAN", "CH": "CHE", "CL": "CHL", "CN": "CHN", "CO": "COL",
+        "CZ": "CZE", "DE": "DEU", "DK": "DNK", "EG": "EGY", "ES": "ESP",
+        "FI": "FIN", "FR": "FRA", "GB": "GBR", "GR": "GRC", "HK": "HKG",
+        "HU": "HUN", "ID": "IDN", "IE": "IRL", "IL": "ISR", "IN": "IND",
+        "IT": "ITA", "JP": "JPN", "KR": "KOR", "MX": "MEX", "MY": "MYS",
+        "NG": "NGA", "NL": "NLD", "NO": "NOR", "NZ": "NZL", "PE": "PER",
+        "PH": "PHL", "PL": "POL", "PT": "PRT", "RO": "ROU", "RU": "RUS",
+        "SA": "SAU", "SE": "SWE", "SG": "SGP", "TH": "THA", "TR": "TUR",
+        "TW": "TWN", "UA": "UKR", "US": "USA", "VN": "VNM", "ZA": "ZAF"
+    ]
+
+    /// Normalizes a raw country code from the UI / a pre-fill / a
+    /// legacy stored value into the alpha-3 uppercase form the backend
+    /// requires. Strips whitespace, uppercases, and converts alpha-2 →
+    /// alpha-3. Returns nil when the input is empty or unrecognized so
+    /// callers can decide between omitting the field and surfacing an
+    /// error.
+    static func normalize(_ raw: String) -> String? {
+        let cleaned = raw.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard !cleaned.isEmpty else { return nil }
+        if cleaned.count == 3, find(byCode: cleaned) != nil {
+            return cleaned
+        }
+        if cleaned.count == 2, let mapped = alpha2ToAlpha3[cleaned] {
+            return mapped
+        }
+        return nil
     }
 }

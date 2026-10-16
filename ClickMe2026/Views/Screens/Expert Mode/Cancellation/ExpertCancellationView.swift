@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-27.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -169,7 +169,7 @@ private struct LiveFetchExpertCancellationBootstrap: View {
 
     private func resolveBooking() async {
         do {
-            let response = try await ClickMeAPI.shared.getExpertBookings(page: 1, limit: 5)
+            let response = try await ClickMeAPI.shared.getExpertBookings(type: .upcoming, page: 1, limit: 5)
             let now = Date()
             let upcoming = response.data.bookings.first(where: {
                 $0.session.endTime > now &&

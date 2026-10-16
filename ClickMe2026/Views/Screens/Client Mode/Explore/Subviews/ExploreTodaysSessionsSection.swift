@@ -2,7 +2,7 @@
 //  ExploreTodaysSessionsSection.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,7 +21,7 @@ struct ExploreTodaysSessionsSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Today's Sessions")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
 
@@ -41,10 +41,10 @@ struct ExploreTodaysSessionsSection: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(session.expertName)
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .bold))
                         .foregroundColor(.white)
                     Text(session.topic)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(.white.opacity(0.65))
                         .lineLimit(1)
                 }
@@ -53,7 +53,7 @@ struct ExploreTodaysSessionsSection: View {
 
                 if isStartingNow(session) {
                     Text("STARTING NOW")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .font(.brand(.caption2, weight: .bold))
                         .foregroundColor(.black)
                         .tracking(0.5)
                         .padding(.horizontal, 10)
@@ -67,10 +67,10 @@ struct ExploreTodaysSessionsSection: View {
 
             HStack(spacing: 8) {
                 Image(systemName: "clock")
-                    .font(.system(size: 14, weight: .regular))
+                    .font(.subheadline.weight(.regular))
                     .foregroundColor(.white.opacity(0.65))
                 Text(session.timeRange)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(.white)
             }
 
@@ -84,9 +84,9 @@ struct ExploreTodaysSessionsSection: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "video.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                     Text("Join Call")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                 }
                 .foregroundColor(.black)
                 .frame(maxWidth: .infinity)
@@ -124,7 +124,7 @@ struct ExploreTodaysSessionsSection: View {
                 ZStack {
                     Color(red: 0.12, green: 0.18, blue: 0.14)
                     Image(systemName: "person.fill")
-                        .font(.system(size: 16))
+                        .font(.callout)
                         .foregroundColor(.white.opacity(0.15))
                 }
             }

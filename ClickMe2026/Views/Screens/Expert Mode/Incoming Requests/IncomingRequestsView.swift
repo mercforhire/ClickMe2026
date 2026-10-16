@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 import SwiftUI
 
@@ -61,6 +61,12 @@ struct IncomingRequestsView: View {
         .navigationTitle("Incoming requests")
         .navigationBarTitleDisplayMode(.inline)
         .task { await viewModel.load() }
+        // Silent background refresh whenever the screen re-appears
+        // (returning from `RequestDecisionView`, tab switch, etc.) so
+        // the list reflects the latest server state without flashing
+        // the spinner. `.task` still owns the first-open fetch;
+        // `silentReload` early-returns until that lands.
+        .onAppear { Task { await viewModel.silentReload() } }
         .refreshable { await viewModel.reload() }
         .navigationDestination(item: $pushedRequest) { pushed in
             RequestDecisionView(requestId: pushed.id, isExpired: pushed.isExpired)
@@ -113,7 +119,7 @@ struct IncomingRequestsView: View {
         VStack(spacing: 12) {
             ProgressView().tint(Brand.onSurface)
             Text("Loading requests…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -122,13 +128,13 @@ struct IncomingRequestsView: View {
     private var emptyContent: some View {
         VStack(spacing: 10) {
             Image(systemName: "tray")
-                .font(.system(size: 30, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant)
             Text("No pending requests")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text("New bookings will show up here.")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -137,13 +143,13 @@ struct IncomingRequestsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant)
             Text("Couldn't load requests")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -152,7 +158,7 @@ struct IncomingRequestsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)

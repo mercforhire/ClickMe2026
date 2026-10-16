@@ -3,49 +3,57 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
 
 struct ExpertCard: View {
     let expert: Expert
-    var onViewProfile: () -> Void = {}
+    var onTap: () -> Void = {}
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            avatar
-                .frame(width: 96, height: 96)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        Button(action: onTap) {
+            HStack(alignment: .top, spacing: 14) {
+                avatar
+                    .frame(width: 96, height: 96)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(expert.name)
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .font(.brand(.body, weight: .semibold))
                         .foregroundColor(.white)
                         .lineLimit(1)
-                    Spacer(minLength: 8)
-                    StarRatingRow(rating: expert.rating)
+
+                    ratingRow
+
+                    if !expert.title.isEmpty {
+                        Text(expert.title)
+                            .font(.brand(.subheadline, weight: .regular))
+                            .foregroundColor(.white.opacity(0.72))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    if !expert.tags.isEmpty {
+                        tagsRow
+                            .padding(.top, 2)
+                    }
                 }
-
-                if !expert.tags.isEmpty {
-                    tagsRow
-                }
-
-                Spacer(minLength: 0)
-
-                viewProfileButton
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(ExploreBrand.cardBg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    )
+            )
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(ExploreBrand.cardBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color.white.opacity(0.06), lineWidth: 1)
-                )
-        )
+        .buttonStyle(.plain)
     }
 
     // MARK: Avatar
@@ -81,6 +89,22 @@ struct ExpertCard: View {
         }
     }
 
+    // MARK: Rating row
+
+    private var ratingRow: some View {
+        HStack(spacing: 6) {
+            StarRatingRow(rating: expert.rating)
+            Text(String(format: "%.1f", expert.rating))
+                .font(.brand(.caption, weight: .semibold))
+                .foregroundColor(.white.opacity(0.85))
+            if expert.reviewCount > 0 {
+                Text("· \(expert.reviewCount) review\(expert.reviewCount == 1 ? "" : "s")")
+                    .font(.brand(.caption, weight: .regular))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+        }
+    }
+
     // MARK: Tags
 
     private var tagsRow: some View {
@@ -89,27 +113,6 @@ struct ExpertCard: View {
                 ExpertTagChip(text: tag)
             }
         }
-    }
-
-    // MARK: View Profile button (outlined secondary)
-
-    private var viewProfileButton: some View {
-        Button(action: onViewProfile) {
-            Text("View Profile")
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                .foregroundColor(ExploreBrand.brandGreen)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule()
-                        .fill(Color.black.opacity(0.35))
-                        .overlay(
-                            Capsule()
-                                .stroke(ExploreBrand.brandGreen.opacity(0.55), lineWidth: 1)
-                        )
-                )
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: Placeholder gradient helper
@@ -140,7 +143,7 @@ private struct StarRatingRow: View {
         HStack(spacing: 2) {
             ForEach(0 ..< 5, id: \.self) { i in
                 Image(systemName: "star.fill")
-                    .font(.system(size: 11))
+                    .font(.caption2)
                     .foregroundColor(i < filled ? Color(red: 1.00, green: 0.80, blue: 0.20)
                                                 : Color.white.opacity(0.18))
             }

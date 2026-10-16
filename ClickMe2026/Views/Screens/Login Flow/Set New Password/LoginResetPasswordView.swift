@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-14.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -206,7 +206,7 @@ struct LoginResetPasswordView: View {
 
     private func fieldLabel(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 15, weight: .semibold, design: .rounded))
+            .font(.brand(.subheadline, weight: .semibold))
             .foregroundColor(.white)
     }
 
@@ -214,7 +214,7 @@ struct LoginResetPasswordView: View {
     private var strengthBadge: some View {
         if !viewModel.newPassword.isEmpty && viewModel.strength != .empty {
             Text(viewModel.strength.label)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(viewModel.strength.color)
         }
     }
@@ -223,7 +223,7 @@ struct LoginResetPasswordView: View {
     private var confirmMatchBadge: some View {
         if viewModel.passwordsMatch {
             Image(systemName: "checkmark.circle")
-                .font(.system(size: 18, weight: .medium))
+                .font(.title3.weight(.medium))
                 .foregroundColor(NewPasswordBrand.green)
         }
     }
@@ -231,14 +231,12 @@ struct LoginResetPasswordView: View {
 
 // MARK: - Previews
 
-#if DEBUG
 private func newPasswordPreview(_ vm: LoginResetPasswordViewModel) -> some View {
     PreviewNavHarness(parentText: "Reset password link", navTitle: "Reset password", rowTitle: "Set new password") {
         LoginResetPasswordView(viewModel: vm)
     }
     .preferredColorScheme(.dark)
 }
-#endif
 
 #Preview("Default") {
     newPasswordPreview(LoginResetPasswordViewModel(email: "john.doe@example.com"))

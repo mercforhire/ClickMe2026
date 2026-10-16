@@ -32,21 +32,21 @@ struct ResendEmailButton: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else if resendCooldown > 0 {
                     Text("Resend in \(resendCooldown)s")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(.white.opacity(0.75))
                 } else if didResend {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
                         Text("Email Sent!")
                     }
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.brand(.body, weight: .bold))
                     .foregroundColor(.white)
                 } else {
                     // First entry — nothing has been sent yet, so the
                     // label reflects the primary action rather than
                     // implying a resend.
                     Text("Send Verification Email")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(.white)
                 }
             }

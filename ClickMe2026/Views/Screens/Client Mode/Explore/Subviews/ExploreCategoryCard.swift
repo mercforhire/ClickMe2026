@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -18,7 +18,7 @@ struct ExploreCategoryCard: View {
                 iconBadge
 
                 Text(category.name)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(category.isSelected ? .white : Color.white.opacity(0.75))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -46,7 +46,7 @@ struct ExploreCategoryCard: View {
                 )
 
             Image(systemName: category.icon)
-                .font(.system(size: 16, weight: .medium))
+                .font(.callout.weight(.medium))
                 .foregroundColor(category.isSelected ? ExploreBrand.brandGreen : Color.white.opacity(0.75))
         }
     }

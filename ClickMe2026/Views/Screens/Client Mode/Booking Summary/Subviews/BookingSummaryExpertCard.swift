@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,6 +19,13 @@ struct BookingSummaryExpertCard: View {
     /// Formatted total the client paid (e.g. `"$45.00"`). Hidden when nil
     /// — used for free sessions or when the server omitted price fields.
     var pricePaid: String? = nil
+    /// Session outcome — drives the status badge in the top-right of
+    /// the card. Nil hides the badge (used while loading, or when the
+    /// server returns a non-terminal status the summary shouldn't have
+    /// been opened for). This replaces the previous hardcoded
+    /// "Completed" label, which lied when the booking was actually
+    /// missed / cancelled.
+    var status: PastBookingStatus? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -53,7 +60,7 @@ struct BookingSummaryExpertCard: View {
                         ZStack {
                             Color(red: 0.12, green: 0.16, blue: 0.14)
                             Image(systemName: "person.fill")
-                                .font(.system(size: 26))
+                                .font(.title)
                                 .foregroundColor(.white.opacity(0.15))
                         }
                     }
@@ -64,25 +71,27 @@ struct BookingSummaryExpertCard: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(expertName)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(BookingSummaryBrand.onSurface)
                 Text(expertTitle)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(BookingSummaryBrand.onSurfaceVar)
             }
 
             Spacer()
 
-            Text("Completed")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(BookingSummaryBrand.brandGreen)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(BookingSummaryBrand.brandGreen.opacity(0.10))
-                        .overlay(Capsule().stroke(BookingSummaryBrand.brandGreen.opacity(0.25), lineWidth: 1))
-                )
+            if let status {
+                Text(status.label)
+                    .font(.brand(.caption, weight: .semibold))
+                    .foregroundColor(status.color)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(status.color.opacity(0.10))
+                            .overlay(Capsule().stroke(status.color.opacity(0.30), lineWidth: 1))
+                    )
+            }
         }
     }
 
@@ -91,24 +100,24 @@ struct BookingSummaryExpertCard: View {
     private var topicSection: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("TOPIC")
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .font(.brand(.caption2, weight: .semibold))
                 .foregroundColor(BookingSummaryBrand.onSurfaceVar)
                 .tracking(1.4)
             Text(topic)
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(BookingSummaryBrand.brandGreen)
             Text(dateTime)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(BookingSummaryBrand.onSurfaceVar)
 
             if let pricePaid {
                 HStack(spacing: 6) {
                     Text("PAID")
-                        .font(.system(size: 10, weight: .semibold, design: .rounded))
+                        .font(.brand(.caption2, weight: .semibold))
                         .foregroundColor(BookingSummaryBrand.onSurfaceVar)
                         .tracking(1.4)
                     Text(pricePaid)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(BookingSummaryBrand.onSurface)
                 }
                 .padding(.top, 4)

@@ -33,17 +33,17 @@ struct NewPasswordCodeField: View {
                     .placeholder(when: text.isEmpty) {
                         Text(placeholder)
                             .foregroundColor(Color.white.opacity(0.28))
-                            .font(.system(size: 16, design: .rounded))
+                            .font(.brand(.callout))
                     }
                     .foregroundColor(.white)
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
                     .kerning(2)
                     .padding(.horizontal, 16)
             }
 
             if let msg = error {
                 Text(msg)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(NewPasswordBrand.errorRed)
                     .padding(.leading, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))

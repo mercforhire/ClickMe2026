@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,11 +17,11 @@ struct ExploreCategoriesSection: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("Trending Categories")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()
                 Button("View all", action: onViewAll)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(ExploreBrand.brandGreen)
             }
             .padding(.horizontal, 20)

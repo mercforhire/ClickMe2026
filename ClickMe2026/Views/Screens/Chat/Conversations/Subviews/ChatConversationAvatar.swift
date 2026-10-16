@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,7 +24,7 @@ struct ChatConversationAvatar: View {
                     ZStack {
                         Color(red: 0.14, green: 0.20, blue: 0.16)
                         Image(systemName: "person.fill")
-                            .font(.system(size: 22))
+                            .font(.title2)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }

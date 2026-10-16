@@ -15,9 +15,9 @@ struct BasicInfoTextField: View {
             .placeholder(when: text.isEmpty) {
                 Text(placeholder)
                     .foregroundColor(BasicInfoBrand.onSurfaceVar)
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
             }
-            .font(.system(size: 16, design: .rounded))
+            .font(.brand(.callout))
             .foregroundColor(BasicInfoBrand.onSurface)
             .tint(BasicInfoBrand.brandGreen)
             .padding(.horizontal, 16)

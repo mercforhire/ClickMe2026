@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,7 +25,7 @@ struct CancellationActionButtons: View {
     private var keepBookingButton: some View {
         Button(action: onKeepBooking) {
             Text("Keep Booking")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(.brand(.callout, weight: .bold))
                 .foregroundColor(CancellationBrand.onPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 54)
@@ -46,9 +46,9 @@ struct CancellationActionButtons: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: CancellationBrand.errorColor))
                 } else {
                     Image(systemName: "xmark.circle")
-                        .font(.system(size: 17, weight: .regular))
+                        .font(.body.weight(.regular))
                     Text("Confirm Cancellation")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                 }
             }
             .foregroundColor(CancellationBrand.errorColor)

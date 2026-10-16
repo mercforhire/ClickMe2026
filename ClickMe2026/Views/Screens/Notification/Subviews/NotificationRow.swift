@@ -2,7 +2,7 @@
 //  NotificationRow.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -14,41 +14,47 @@ import SwiftUI
 struct NotificationRow: View {
     let item: NotificationItem
     var now: Date = Date()
+    var onTap: () -> Void = {}
 
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            iconBadge
+        Button(action: onTap) {
+            HStack(alignment: .top, spacing: 16) {
+                iconBadge
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(item.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .kerning(0.28)
-                    .foregroundColor(Brand.onSurface)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(.subheadline.weight(.semibold))
+                        .kerning(0.28)
+                        .foregroundColor(Brand.onSurface)
+                        .multilineTextAlignment(.leading)
 
-                bodyText
-                    .font(.system(size: 14))
-                    .foregroundColor(Brand.onSurfaceVariant)
-                    .lineSpacing(2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    bodyText
+                        .font(.subheadline)
+                        .foregroundColor(Brand.onSurfaceVariant)
+                        .lineSpacing(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .multilineTextAlignment(.leading)
 
-                Text(NotificationRow.timestampLabel(for: item.createdAt, now: now))
-                    .font(.system(size: 12, weight: .medium))
-                    .kerning(0.24)
-                    .foregroundColor(Brand.onSurfaceVariant.opacity(0.60))
-                    .padding(.top, 4)
+                    Text(NotificationRow.timestampLabel(for: item.createdAt, now: now))
+                        .font(.caption.weight(.medium))
+                        .kerning(0.24)
+                        .foregroundColor(Brand.onSurfaceVariant.opacity(0.60))
+                        .padding(.top, 4)
+                }
+
+                Spacer(minLength: 0)
             }
-
-            Spacer(minLength: 0)
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Brand.surfaceContainerLow)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Brand.surfaceContainerHigh, lineWidth: 1)
+                    )
+            )
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Brand.surfaceContainerLow)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Brand.surfaceContainerHigh, lineWidth: 1)
-                )
-        )
+        .buttonStyle(.plain)
     }
 
     // MARK: - Icon badge
@@ -60,7 +66,7 @@ struct NotificationRow: View {
                 .overlay(Circle().stroke(Brand.outlineVariant, lineWidth: 1))
 
             Image(systemName: iconName)
-                .font(.system(size: 18, weight: iconIsPrimary ? .semibold : .regular))
+                .font(.system(.title3).weight(iconIsPrimary ? .semibold : .regular))
                 .foregroundColor(iconIsPrimary ? Brand.primary : Brand.onSurfaceVariant)
         }
         .frame(width: 48, height: 48)
@@ -158,12 +164,12 @@ struct NotificationRow: View {
 
 // MARK: - Preview
 
-#if DEBUG
 #Preview("Booking Request") {
     NotificationRow(item: NotificationItem(
         id: UUID(),
         userId: UUID(),
         category: .booking,
+        subCategory: "requests",
         title: "Booking Request",
         body: "**Sarah Chen** sent you a booking request for UI Design.",
         metaData: nil,
@@ -181,6 +187,7 @@ struct NotificationRow: View {
         id: UUID(),
         userId: UUID(),
         category: .session,
+        subCategory: "reminder",
         title: "Session Reminder",
         body: "Your session with **Marcus Chen** starts in 30 minutes.",
         metaData: nil,
@@ -192,4 +199,3 @@ struct NotificationRow: View {
     .background(Brand.surface)
     .preferredColorScheme(.dark)
 }
-#endif

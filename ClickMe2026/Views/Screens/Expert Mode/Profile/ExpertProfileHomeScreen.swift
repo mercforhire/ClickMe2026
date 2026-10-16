@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-12.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,10 +16,16 @@ import SwiftUI
 private enum ExpertProfileHomeRoute: Hashable {
     /// Edit-profile route — reached via the pencil on the user card.
     case personalInfo
+    /// Read-only view of the expert's own public profile — same layout
+    /// clients see when browsing them, including reviews.
+    case myPublicProfile
     // Professional
     case expertiseTopics
     case availability
     case payouts
+    /// Stripe Connect / CRA tax information — legal identity, address,
+    /// DOB, TIN, financial account identifier. Backend: `/expert/tax-profile`.
+    case taxProfile
     // Account
     case security
     // Preferences
@@ -68,10 +74,15 @@ struct ExpertProfileHomeScreen: View {
             }
         }
         .task { await viewModel.loadHeader() }
-        .confirmationDialog(
+        // `.alert` (not `.confirmationDialog`) so the prompt centers
+        // on-screen everywhere. Confirmation dialogs render as
+        // bottom action sheets on iPhone and as popovers anchored to
+        // the source view on iPad — the latter can appear pinned to
+        // the top or side of the screen depending on where the tap
+        // originated. Alerts always render centered.
+        .alert(
             "Log out of ClickMe?",
-            isPresented: $showLogoutConfirmation,
-            titleVisibility: .visible
+            isPresented: $showLogoutConfirmation
         ) {
             Button("Log Out", role: .destructive) {
                 guard CallCenter.shared.attempt("log out") else { return }
@@ -94,6 +105,9 @@ struct ExpertProfileHomeScreen: View {
                     )
 
                     section(title: "Professional") {
+                        row(icon: "person.crop.circle.fill", title: "View My Public Profile") {
+                            push(.myPublicProfile)
+                        }
                         row(icon: "brain.head.profile", title: "Expertise & Topics") {
                             push(.expertiseTopics)
                         }
@@ -102,6 +116,9 @@ struct ExpertProfileHomeScreen: View {
                         }
                         row(icon: "banknote.fill", title: "Payouts & Earnings") {
                             push(.payouts)
+                        }
+                        row(icon: "doc.text.fill", title: "Tax & Payout Info") {
+                            push(.taxProfile)
                         }
                     }
 
@@ -182,7 +199,7 @@ struct ExpertProfileHomeScreen: View {
     private func section<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title.uppercased())
-                .font(.system(size: 12, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .tracking(2)
                 .foregroundColor(ClientProfileHomeBrand.sectionHeader)
                 .opacity(0.80)
@@ -205,18 +222,25 @@ struct ExpertProfileHomeScreen: View {
         switch route {
         case .personalInfo:
             ExpertProfileSettingsView()
+        case .myPublicProfile:
+            myPublicProfileDestination
         case .expertiseTopics:
             TopicsSetupView()
         case .availability:
             AvailabilitySettingsView()
         case .payouts:
             PayoutsView()
+        case .taxProfile:
+            ExpertTaxProfileView()
         case .security:
             AccountSecurityView()
         case .notifications:
             NotificationSettingsView()
         case .privacy:
-            placeholder(title: "Privacy")
+            SafariView(url: AppLinks.privacyPolicy)
+                .ignoresSafeArea()
+                .navigationTitle("Privacy")
+                .navigationBarTitleDisplayMode(.inline)
         case .faq:
             HelpView()
         case .feedback:
@@ -234,15 +258,61 @@ struct ExpertProfileHomeScreen: View {
         }
     }
 
+    /// Push destination for "View My Public Profile" — reuses the
+    /// client-side `ExpertProfileView` in self-view mode.
+    ///
+    /// Expert id source cascades: `me.id` (refreshed on cold launch)
+    /// → `authUser.id` (only set during same-session login/signup).
+    /// Everything else (name, avatar) comes from the same VM that
+    /// already renders the user card above, so a hard fallback to
+    /// the placeholder is only reached if the auth state is genuinely
+    /// unusable — which shouldn't happen for a logged-in expert.
+    @ViewBuilder
+    private var myPublicProfileDestination: some View {
+        let expertId = UserManager.shared.me?.id
+            ?? UserManager.shared.authUser?.id
+        let displayName = viewModel.name.isEmpty
+            ? UserManager.shared.authUser.map {
+                "\($0.firstName) \($0.lastName)".trimmingCharacters(in: .whitespaces)
+              } ?? ""
+            : viewModel.name
+        let avatarURL = viewModel.avatarURL.isEmpty
+            ? (UserManager.shared.authUser?.avatarUrl ?? "")
+            : viewModel.avatarURL
+
+        if let expertId {
+            ExpertProfileView(
+                expert: PublicExpertProfile(
+                    expertId: expertId,
+                    name: displayName,
+                    title: "",
+                    rating: 0,
+                    reviewCount: 0,
+                    yearsExp: "",
+                    bookings: "",
+                    isOnline: viewModel.isOnline,
+                    bio: "",
+                    expertiseTags: [],
+                    topics: [],
+                    reviews: [],
+                    imageURL: avatarURL
+                ),
+                isSelfView: true
+            )
+        } else {
+            placeholder(title: "My Profile")
+        }
+    }
+
     private func placeholder(title: String) -> some View {
         ZStack {
             ClientProfileHomeBrand.bg.ignoresSafeArea()
             VStack(spacing: 10) {
                 Image(systemName: "hammer.fill")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
                 Text("\(title) — coming soon")
-                    .font(.system(size: 14, design: .rounded))
+                    .font(.brand(.subheadline))
                     .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
             }
         }
@@ -255,10 +325,10 @@ struct ExpertProfileHomeScreen: View {
     private var versionFooter: some View {
         VStack(spacing: 6) {
             Text(Self.versionString)
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
             Text("© 2026 ClickMe Innovations")
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundColor(ClientProfileHomeBrand.onSurfaceVar.opacity(0.40))
         }
         .frame(maxWidth: .infinity)

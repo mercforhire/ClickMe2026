@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,10 +21,10 @@ struct IncomingRequestCard: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(request.clientName)
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.brand(.title3, weight: .bold))
                             .foregroundColor(Brand.onSurface)
                         Text(request.topic)
-                            .font(.system(size: 14, weight: .regular, design: .rounded))
+                            .font(.brand(.subheadline, weight: .regular))
                             .foregroundColor(Brand.onSurfaceVariant)
                     }
 
@@ -32,10 +32,10 @@ struct IncomingRequestCard: View {
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("Earnings")
-                            .font(.system(size: 12, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(Brand.onSurfaceVariant)
                         Text(request.earnings)
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.brand(.title3, weight: .bold))
                             .foregroundColor(Brand.onSurface)
                     }
                 }
@@ -52,21 +52,21 @@ struct IncomingRequestCard: View {
                 // ── Date + expiry ──
                 VStack(spacing: 6) {
                     Text(request.dateTime)
-                        .font(.system(size: 16, weight: .regular, design: .rounded))
+                        .font(.brand(.callout, weight: .regular))
                         .foregroundColor(Brand.onSurface)
 
                     if request.isExpired {
                         Text("EXPIRED")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(.brand(.subheadline, weight: .bold))
                             .tracking(1.2)
                             .foregroundColor(Brand.onSurfaceVariant)
                     } else {
                         HStack(spacing: 0) {
                             Text("Expires in: ")
-                                .font(.system(size: 15, weight: .regular, design: .rounded))
+                                .font(.brand(.subheadline, weight: .regular))
                                 .foregroundColor(IncomingRequestsTheme.amberColor)
                             Text("\(request.expiresInHours)h")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .font(.brand(.title2, weight: .bold))
                                 .foregroundColor(IncomingRequestsTheme.amberColor)
                         }
                     }

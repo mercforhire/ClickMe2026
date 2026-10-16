@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -40,14 +40,14 @@ struct WriteReviewSubmitButton: View {
                 } else if didSubmit {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.title3.weight(.semibold))
                         Text("Review Submitted!")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.brand(.callout, weight: .bold))
                     }
                     .foregroundColor(WriteReviewBrand.onPrimary)
                 } else {
                     Text("Submit Review")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(WriteReviewBrand.onPrimary)
                 }
             }

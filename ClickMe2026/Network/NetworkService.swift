@@ -43,6 +43,13 @@ final class NetworkService {
     /// Bearer token used for authenticated requests.
     var bearerToken: String?
 
+    /// Coordinator for the `/auth/refresh` cycle. Assigned by
+    /// `UserManager` on construction. When non-nil, a 401 on any
+    /// authed request triggers refresh-then-retry-once instead of
+    /// bubbling straight to the caller. Nil disables the interceptor
+    /// (used by tests / previews that don't wire an auth manager).
+    var authTokenRefresher: TokenRefresher?
+
     init(session: URLSession? = nil) {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 60
@@ -131,7 +138,39 @@ final class NetworkService {
     }
 
     // MARK: - Send + decode
+
+    /// Public entry point. Runs `sendRaw`, and on a 401 from an
+    /// authed endpoint triggers a single `authTokenRefresher.refresh()`
+    /// before retrying the same request once with the freshened
+    /// bearer. The refresh endpoint itself is exempt (it's on the
+    /// public-paths list), so no recursion is possible.
     private func send<T: Decodable>(_ request: URLRequest) async throws -> T {
+        do {
+            return try await sendRaw(request)
+        } catch let error {
+            guard case NetworkError.httpError(401, _) = error,
+                  shouldAttemptRefresh(for: request),
+                  let refresher = authTokenRefresher
+            else { throw error }
+
+            let refreshed = await refresher.refresh()
+            guard refreshed else { throw error }
+
+            // Re-apply auth so the retry picks up the rotated token.
+            // `applyAuth` reads the current `bearerToken` — which the
+            // refresher's completion callback (in `UserManager`) has
+            // already swapped in — and injects it fresh onto a copy of
+            // the original request.
+            var retry = request
+            retry.setValue(nil, forHTTPHeaderField: "Authorization")
+            applyAuth(&retry)
+            return try await sendRaw(retry)
+        }
+    }
+
+    /// Fires the URL request, checks status, decodes. No refresh
+    /// awareness — the interceptor lives one level up in `send`.
+    private func sendRaw<T: Decodable>(_ request: URLRequest) async throws -> T {
         logRequest(request)
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -146,6 +185,16 @@ final class NetworkService {
         } catch {
             throw NetworkError.decodingFailed(error)
         }
+    }
+
+    /// Whether a 401 on this request warrants a refresh attempt.
+    /// Public endpoints (login / signup / `/auth/refresh` / password
+    /// reset) never get bearer headers in the first place — a 401
+    /// from those is a genuine credential failure, not an expired
+    /// token, so retrying would just loop.
+    private func shouldAttemptRefresh(for request: URLRequest) -> Bool {
+        guard let urlString = request.url?.absoluteString else { return false }
+        return APIRequestURLs.needAuthToken(url: urlString)
     }
 
     // MARK: - Debug logging
@@ -282,5 +331,50 @@ final class NetworkService {
 private extension Data {
     mutating func appendString(_ string: String) {
         append(Data(string.utf8))
+    }
+}
+
+// MARK: - Token refresher (single-flight)
+
+/// Serialises the `/auth/refresh` cycle so concurrent 401s coalesce
+/// into a single in-flight refresh call. Multiple callers awaiting
+/// `refresh()` share the same `Task`; the actor's serial execution
+/// guarantees only one refresh attempt is dispatched per token
+/// generation.
+///
+/// This matters because the backend enables refresh-token reuse
+/// detection — replaying an old refresh token (as would happen if N
+/// concurrent 401s each fired their own POST) is treated as a stolen
+/// credential and the whole session is revoked. Single-flighting is
+/// therefore not a nice-to-have; it's a correctness requirement.
+actor TokenRefresher {
+
+    /// The in-flight refresh task, if any. Retained until the
+    /// underlying work completes so late arrivals can await the same
+    /// result rather than firing a duplicate call.
+    private var inFlight: Task<Bool, Never>?
+
+    /// Closure that performs the actual refresh (typically
+    /// `UserManager.performRefreshCycle`). Returns `true` when the
+    /// caller should retry the original request, `false` otherwise
+    /// (dead session, network error, etc.).
+    private let perform: @Sendable () async -> Bool
+
+    init(perform: @escaping @Sendable () async -> Bool) {
+        self.perform = perform
+    }
+
+    func refresh() async -> Bool {
+        if let task = inFlight {
+            return await task.value
+        }
+        let task = Task<Bool, Never> { [perform] in await perform() }
+        inFlight = task
+        let result = await task.value
+        // Clear so a *future* 401 (e.g. after the freshly-refreshed
+        // token also expires later in the day) starts its own cycle
+        // rather than replaying this task's cached result.
+        inFlight = nil
+        return result
     }
 }

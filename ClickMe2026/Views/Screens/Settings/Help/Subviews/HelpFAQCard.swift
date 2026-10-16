@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -33,13 +33,13 @@ struct HelpFAQCard: View {
                     }
 
                     Text(category.title)
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.brand(.title3, weight: .bold))
                         .foregroundColor(HelpBrand.onSurface)
 
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundColor(HelpBrand.onSurfaceVar)
                         .rotationEffect(.degrees(isExpanded ? 180 : 0))
                         .animation(.easeInOut(duration: 0.2), value: isExpanded)
@@ -59,11 +59,11 @@ struct HelpFAQCard: View {
                     ForEach(category.featuredArticles, id: \.id) { article in
                         VStack(alignment: .leading, spacing: 6) {
                             Text(article.question)
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                                 .foregroundColor(HelpBrand.onSurface)
                             if let snippet = article.snippet, !snippet.isEmpty {
                                 Text(snippet)
-                                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                                    .font(.brand(.subheadline, weight: .regular))
                                     .foregroundColor(HelpBrand.onSurfaceVar)
                                     .lineSpacing(2)
                                     .fixedSize(horizontal: false, vertical: true)

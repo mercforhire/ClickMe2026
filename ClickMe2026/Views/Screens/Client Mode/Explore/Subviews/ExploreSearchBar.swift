@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -15,18 +15,18 @@ struct ExploreSearchBar: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 15))
+                .font(.subheadline)
                 .foregroundColor(Color.white.opacity(0.38))
 
             TextField("", text: $text)
                 .placeholder(when: text.isEmpty) {
                     Text("Search for experts, skills, or topics")
                         .foregroundColor(Color.white.opacity(0.28))
-                        .font(.system(size: 14, design: .rounded))
+                        .font(.brand(.subheadline))
                         .lineLimit(1)
                 }
                 .foregroundColor(.white)
-                .font(.system(size: 14, design: .rounded))
+                .font(.brand(.subheadline))
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
 
@@ -34,7 +34,7 @@ struct ExploreSearchBar: View {
 
             Button(action: onFilter) {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.subheadline.weight(.medium))
                     .foregroundColor(Color.white.opacity(0.55))
             }
         }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -29,6 +29,15 @@ private enum BookingRoute: Hashable {
     /// Loads booking detail + expert availability and calls
     /// `PATCH /client/bookings/:id/reschedule` on confirm.
     case rescheduleBooking(UpcomingBooking)
+    /// Pushed from the "Private Note" CTA on a past booking card.
+    /// Renders `ClientBookingNoteView` which loads / saves the
+    /// client's private note via `/client/bookings/:id/note`.
+    case privateNote(PastBooking)
+    /// Same editor, pushed from the note zone on an upcoming card.
+    /// Kept as a separate case so we can seed the header with the
+    /// upcoming-side fields (expert name / topic / date) without
+    /// having to project the row into a `PastBooking` shape.
+    case privateNoteUpcoming(UpcomingBooking)
 }
 
 // MARK: - My Bookings View
@@ -111,7 +120,8 @@ struct MyBookingsView: View {
                         onBookAgain: { seed in
                             if let seed { push(.makeBooking(seed)) }
                         },
-                        onLeaveReview: { push(.writeReview(booking)) }
+                        onLeaveReview: { push(.writeReview(booking)) },
+                        onOpenPrivateNote: { push(.privateNote(booking)) }
                     )
                 case let .writeReview(booking):
                     WriteReviewView(
@@ -142,6 +152,20 @@ struct MyBookingsView: View {
                     RescheduleView(
                         bookingId: booking.id,
                         onRescheduled: { popToRoot() }
+                    )
+                case let .privateNote(booking):
+                    ClientBookingNoteView(
+                        bookingId: booking.id,
+                        expertName: booking.expertName,
+                        topic: booking.topic,
+                        dateLabel: "\(booking.date), \(booking.timeRange)"
+                    )
+                case let .privateNoteUpcoming(booking):
+                    ClientBookingNoteView(
+                        bookingId: booking.id,
+                        expertName: booking.expertName,
+                        topic: booking.topic,
+                        dateLabel: "\(booking.date), \(booking.timeRange)"
                     )
                 }
             }
@@ -275,13 +299,13 @@ struct MyBookingsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(MyBookingsBrand.onSurface.opacity(0.6))
             Text("Couldn't load bookings")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(MyBookingsBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(MyBookingsBrand.onSurface.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -290,7 +314,7 @@ struct MyBookingsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -317,12 +341,15 @@ struct MyBookingsView: View {
                             peerImageURL: booking.imageURL,
                             topic: booking.topic,
                             scheduledStart: booking.startTime,
-                            scheduledEnd: booking.endTime
+                            scheduledEnd: booking.endTime,
+                            meetingType: booking.meetingType,
+                            isRejoin: booking.status == .completed
                         )
                     },
                     onReschedule: { push(.rescheduleBooking(booking)) },
                     onMessage: { handleMessage(for: booking) },
-                    onCardTap: { push(.upcoming(booking)) }
+                    onCardTap: { push(.upcoming(booking)) },
+                    onPrivateNote: { push(.privateNoteUpcoming(booking)) }
                 )
             }
         }
@@ -336,8 +363,13 @@ struct MyBookingsView: View {
                 PastBookingCard(
                     booking: booking,
                     onViewSummary: { push(.past(booking)) },
-                    onPrivateNote: { onPrivateNote(booking) },
-                    onLeaveReview: { onLeaveReview(booking) }
+                    // Both actions push directly on this tab's nav
+                    // stack — the shell-level `onPrivateNote` /
+                    // `onLeaveReview` callbacks were never wired by
+                    // `HomeClientView`, so routing through them was a
+                    // silent no-op.
+                    onPrivateNote: { push(.privateNote(booking)) },
+                    onLeaveReview: { push(.writeReview(booking)) }
                 )
             }
         }
@@ -359,7 +391,10 @@ struct MyBookingsView: View {
         imageURL: "",
         startTime: Date(),
         endTime: Date().addingTimeInterval(30 * 60),
-        status: .confirmed
+        status: .confirmed,
+        meetingType: .inAppVoice,
+        privateNotePreview: nil,
+        reschedule: nil
     )
 }
 

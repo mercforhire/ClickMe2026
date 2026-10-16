@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -32,10 +32,10 @@ struct BookingSummarySectionHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .regular))
+                .font(.subheadline.weight(.regular))
                 .foregroundColor(BookingSummaryBrand.brandGreen)
             Text(label)
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(BookingSummaryBrand.onSurfaceVar)
                 .tracking(1.2)
         }

@@ -37,14 +37,14 @@ struct AsyncSaveButton: View {
                 case .saved:
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.body.weight(.semibold))
                         Text(savedTitle)
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .font(.brand(.body, weight: .bold))
                     }
                     .foregroundColor(Brand.onPrimary)
                 case .idle:
                     Text(title)
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(Brand.onPrimary)
                 }
             }

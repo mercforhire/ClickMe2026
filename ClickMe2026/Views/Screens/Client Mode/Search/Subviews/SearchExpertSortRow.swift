@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,16 +17,16 @@ struct SearchExpertSortRow: View {
     var body: some View {
         HStack {
             Text("Sort by")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(.brand(.callout, weight: .bold))
                 .foregroundColor(SearchExpertBrand.onSurface)
             Spacer()
             Button(action: onTap) {
                 HStack(spacing: 4) {
                     Text(sortOption)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(SearchExpertBrand.onSurfaceVar)
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.caption.weight(.medium))
                         .foregroundColor(SearchExpertBrand.onSurfaceVar)
                 }
             }

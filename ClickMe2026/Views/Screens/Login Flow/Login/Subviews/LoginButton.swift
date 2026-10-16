@@ -24,7 +24,7 @@ struct LoginButton: View {
                             .scaleEffect(0.9)
                     }
                     Text("Login")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .font(.brand(.title3, weight: .semibold))
                         .foregroundColor(.white)
                 }
             }

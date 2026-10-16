@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-26.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -119,6 +119,7 @@ struct SignupBasicInfoView: View {
         } message: { message in
             Text(message)
         }
+        .keyboardDismissToolbar()
     }
 
     // MARK: - Spoken Languages field
@@ -126,7 +127,7 @@ struct SignupBasicInfoView: View {
     private var languagesField: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Spoken Languages")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(BasicInfoBrand.onSurfaceVar)
 
             VStack(alignment: .leading, spacing: 8) {

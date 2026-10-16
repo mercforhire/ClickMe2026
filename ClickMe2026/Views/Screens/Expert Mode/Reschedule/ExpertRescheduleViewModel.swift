@@ -2,7 +2,7 @@
 //  ExpertRescheduleViewModel.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -41,6 +41,23 @@ final class ExpertRescheduleViewModel: ObservableObject {
     @Published var selectedDate: Date?
     @Published var selectedTime: BookingTimeSlot?
     @Published var message: String
+
+    /// The booking's *current* scheduled start. Same purpose as its
+    /// client-side twin: seed the calendar to the right day, and block
+    /// picking the identical slot as the "new" time.
+    @Published var currentSessionStart: Date?
+
+    /// End of the Stripe authorization window on the client's live hold
+    /// (`authorized_at + 6d`), or `nil` for free / long-lead / captured
+    /// / terminal bookings.
+    ///
+    /// **Non-gating as of Phase 27.1** — the previous "reject slots
+    /// whose session end exceeds this" rule was withdrawn. On the
+    /// expert side there's currently no user-visible use for the
+    /// field (the client is the one whose card is affected), but it's
+    /// retained here mirroring the DTO in case an expert-facing
+    /// advisory is added later.
+    @Published var authorizationExpiresAt: Date?
 
     // MARK: Availability cache — keyed by "yyyy-MM-dd" in client's timezone
     @Published var availabilityByDate: [String: [BookingTimeSlot]]
@@ -83,6 +100,8 @@ final class ExpertRescheduleViewModel: ObservableObject {
         self.availabilityError = nil
         self.isSubmitting = false
         self.submitError = nil
+        self.currentSessionStart = nil
+        self.authorizationExpiresAt = nil
         self.api = api
         self.userManager = userManager
     }
@@ -95,7 +114,8 @@ final class ExpertRescheduleViewModel: ObservableObject {
         selectedDate: Date? = nil,
         selectedTime: BookingTimeSlot? = nil,
         message: String = "",
-        availabilityByDate: [String: [BookingTimeSlot]] = [:]
+        availabilityByDate: [String: [BookingTimeSlot]] = [:],
+        currentSessionStart: Date? = nil
     ) {
         self.bookingId = nil
         self.booking = booking
@@ -110,6 +130,8 @@ final class ExpertRescheduleViewModel: ObservableObject {
         self.availabilityError = nil
         self.isSubmitting = false
         self.submitError = nil
+        self.currentSessionStart = currentSessionStart
+        self.authorizationExpiresAt = nil
         self.api = .shared
         self.userManager = .shared
     }
@@ -149,6 +171,21 @@ final class ExpertRescheduleViewModel: ObservableObject {
         do {
             let response = try await api.getExpertBookingDetails(id: bookingId)
             booking = Self.map(detail: response.data)
+
+            // Land the calendar on the booking's current day so the
+            // expert opens the screen already looking at the month
+            // they're rescheduling from. Time slot stays empty — the
+            // current slot is what we're moving away from.
+            let schedule = response.data.session.schedule
+            let startTime = schedule.startTime
+            currentSessionStart = startTime
+            authorizationExpiresAt = response.data.authorizationExpiresAt
+            if let monthStart = calendar.date(
+                from: calendar.dateComponents([.year, .month], from: startTime)
+            ) {
+                currentMonth = monthStart
+            }
+            selectedDate = startTime
         } catch {
             loadState = .failed(error.userMessage)
             return
@@ -194,7 +231,21 @@ final class ExpertRescheduleViewModel: ObservableObject {
     }
 
     func select(time: BookingTimeSlot) {
+        guard !isCurrentSlot(time) else { return }
         selectedTime = time
+    }
+
+    func isCurrentSlot(_ slot: BookingTimeSlot) -> Bool {
+        guard let current = currentSessionStart else { return false }
+        return abs(slot.startTime.timeIntervalSince(current)) < 1
+    }
+
+    var currentSessionLabel: String? {
+        guard let start = currentSessionStart else { return nil }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "EEE, MMM d · h:mm a"
+        return f.string(from: start)
     }
 
     func shiftMonth(_ delta: Int) {
@@ -212,6 +263,11 @@ final class ExpertRescheduleViewModel: ObservableObject {
             return
         }
 
+        if isCurrentSlot(slot) {
+            submitError = "Please choose a different time than the current session."
+            return
+        }
+
         submitError = nil
         isSubmitting = true
         defer { isSubmitting = false }
@@ -226,24 +282,46 @@ final class ExpertRescheduleViewModel: ObservableObject {
                 note: trimmed.isEmpty ? nil : trimmed
             )
         } catch {
-            submitError = error.userMessage
+            submitError = Self.rescheduleErrorMessage(for: error)
             return
         }
 
         onSuccess()
     }
 
+    /// Maps reschedule submit failures to user-visible copy. Special-cases
+    /// `RESCHEDULE_OUTSIDE_AUTH_WINDOW` (Phase 27): the client's Stripe
+    /// authorization can no longer cover a slot past its ~6-day window,
+    /// so the counterparty must re-book. Expert-side surface tells the
+    /// expert to ask the client to re-book (the expert can't do it for
+    /// them). Everything else falls through to the server message.
+    private static func rescheduleErrorMessage(for error: Error) -> String {
+        if case let NetworkError.httpError(_, data) = error,
+           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data),
+           response.code == .rescheduleOutsideAuthWindow
+        {
+            return "This time is past the payment hold on the original booking. Please cancel and ask the client to book a new session."
+        }
+        return error.userMessage
+    }
+
     // MARK: - Derived
 
     var slotsForSelectedDate: [BookingTimeSlot] {
         guard let selectedDate else { return [] }
-        return availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? []
+        // Drop slots that have already started. Keeps today's grid
+        // honest as the day rolls forward — server rejects past-time
+        // proposals anyway, so trimming client-side avoids a confusing
+        // submit failure.
+        let now = Date()
+        return (availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? [])
+            .filter { $0.startTime > now }
     }
 
     func hasSlots(on day: Date) -> Bool {
         if calendar.startOfDay(for: day) < calendar.startOfDay(for: Date()) { return false }
         let slots = availabilityByDate[Self.dateKey(day, calendar: calendar)] ?? []
-        return slots.contains(where: { $0.isAvailable })
+        return slots.contains { $0.isAvailable }
     }
 
     // MARK: - Calendar derivation

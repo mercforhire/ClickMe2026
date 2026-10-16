@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-09.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -158,6 +158,7 @@ struct AccountSecurityView: View {
         } message: {
             Text("Your password has been changed.")
         }
+        .keyboardDismissToolbar()
     }
 
     // MARK: - Header
@@ -165,10 +166,10 @@ struct AccountSecurityView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Change Password")
-                .font(.system(size: 24, weight: .bold))
+                .font(.title2.weight(.bold))
                 .foregroundColor(ChangePasswordBrand.onSurface)
             Text("Your new password must be at least 8 characters long and include numbers.")
-                .font(.system(size: 13, weight: .regular))
+                .font(.caption.weight(.regular))
                 .foregroundColor(ChangePasswordBrand.onSurfaceVar)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -189,11 +190,11 @@ struct AccountSecurityView: View {
                 .padding(.bottom, 12)
 
             Text("Delete Account")
-                .font(.system(size: 24, weight: .bold))
+                .font(.title2.weight(.bold))
                 .foregroundColor(ChangePasswordBrand.onSurface)
 
             Text("Once you delete your account, there is no going back. Please be certain.")
-                .font(.system(size: 13, weight: .regular))
+                .font(.caption.weight(.regular))
                 .foregroundColor(ChangePasswordBrand.onSurfaceVar)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -209,9 +210,9 @@ struct AccountSecurityView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "trash")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                     Text("Delete Account")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                 }
                 .foregroundColor(ChangePasswordBrand.dangerRed)
                 .frame(maxWidth: .infinity)
@@ -241,7 +242,7 @@ struct AccountSecurityView: View {
                         .tint(ChangePasswordBrand.onPrimary)
                 }
             }
-            .font(.system(size: 15, weight: .bold))
+            .font(.subheadline.weight(.bold))
             .foregroundColor(ChangePasswordBrand.onPrimary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 13)
@@ -284,7 +285,7 @@ private struct PasswordField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.caption.weight(.semibold))
                 .kerning(0.26)
                 .foregroundColor(ChangePasswordBrand.onSurfaceVar)
                 .padding(.leading, 4)
@@ -300,7 +301,7 @@ private struct PasswordField: View {
                     }
                 }
                 .focused($isFocused)
-                .font(.system(size: 15, weight: .regular))
+                .font(.subheadline.weight(.regular))
                 .foregroundColor(ChangePasswordBrand.onSurface)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
@@ -309,7 +310,7 @@ private struct PasswordField: View {
                     isVisible.toggle()
                 } label: {
                     Image(systemName: isVisible ? "eye.slash" : "eye")
-                        .font(.system(size: 16, weight: .regular))
+                        .font(.callout.weight(.regular))
                         .foregroundColor(ChangePasswordBrand.onSurfaceVar)
                         .frame(width: 40, height: 40)
                         .contentShape(Rectangle())
@@ -328,7 +329,7 @@ private struct PasswordField: View {
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.caption.weight(.medium))
                     .foregroundColor(ChangePasswordBrand.error)
                     .padding(.leading, 4)
                     .fixedSize(horizontal: false, vertical: true)
@@ -346,7 +347,7 @@ private struct StrengthIndicator: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(strength.label)
-                .font(.system(size: 12, weight: .medium))
+                .font(.caption.weight(.medium))
                 .foregroundColor(isEmpty ? ChangePasswordBrand.onSurfaceVar : strength.color)
 
             GeometryReader { proxy in

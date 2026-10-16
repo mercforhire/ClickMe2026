@@ -14,7 +14,7 @@ struct BasicInfoIconField: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)
-                .font(.system(size: 16, weight: .regular))
+                .font(.callout.weight(.regular))
                 .foregroundColor(BasicInfoBrand.onSurfaceVar)
                 .frame(width: 20)
 
@@ -22,9 +22,9 @@ struct BasicInfoIconField: View {
                 .placeholder(when: text.isEmpty) {
                     Text(placeholder)
                         .foregroundColor(BasicInfoBrand.onSurfaceVar)
-                        .font(.system(size: 16, design: .rounded))
+                        .font(.brand(.callout))
                 }
-                .font(.system(size: 16, design: .rounded))
+                .font(.brand(.callout))
                 .foregroundColor(BasicInfoBrand.onSurface)
                 .tint(BasicInfoBrand.brandGreen)
         }

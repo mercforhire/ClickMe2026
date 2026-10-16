@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -31,14 +31,14 @@ struct ReportChatSubmitButton: View {
                 } else if didSubmit {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(.body.weight(.semibold))
                         Text("Report Submitted")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.brand(.callout, weight: .bold))
                     }
                     .foregroundColor(ReportChatBrand.onPrimary)
                 } else {
                     Text("Submit Report")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(ReportChatBrand.onPrimary)
                 }
             }

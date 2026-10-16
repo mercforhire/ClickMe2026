@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,7 +25,7 @@ struct ClientProfilePersonalInfo: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("About")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.brand(.title2, weight: .bold))
                 .foregroundColor(ClientProfileBrand.onSurface)
 
             VStack(spacing: 10) {
@@ -70,14 +70,14 @@ struct ClientProfilePersonalInfo: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Image(systemName: "text.quote")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundColor(ClientProfileBrand.brandGreen)
                 Text("Bio")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(ClientProfileBrand.onSurfaceVar)
             }
             Text(bio)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(ClientProfileBrand.onSurface)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -89,16 +89,16 @@ struct ClientProfilePersonalInfo: View {
     private func infoRow(icon: String, label: String, value: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(ClientProfileBrand.brandGreen)
                 .frame(width: 22)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(ClientProfileBrand.onSurfaceVar)
                 Text(value)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(ClientProfileBrand.onSurface)
                     .fixedSize(horizontal: false, vertical: true)
             }

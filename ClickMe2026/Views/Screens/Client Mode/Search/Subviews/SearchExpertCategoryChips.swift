@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -38,7 +38,7 @@ struct SearchExpertCategoryChips: View {
             }
         } label: {
             Text(label)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(isSelected ? SearchExpertBrand.onPrimary : SearchExpertBrand.onSurface)
                 .padding(.horizontal, 18)
                 .padding(.vertical, 10)

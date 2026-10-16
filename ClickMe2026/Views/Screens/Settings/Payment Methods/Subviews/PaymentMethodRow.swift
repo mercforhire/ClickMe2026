@@ -2,7 +2,7 @@
 //  PaymentMethodRow.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -37,7 +37,7 @@ struct PaymentMethodRow: View {
                 .fill(PaymentMethodsBrand.cardBg)
                 .frame(width: 44, height: 30)
             Image(systemName: PaymentMethodBrandDisplay.systemImage(paymentMethod.brand))
-                .font(.system(size: 16, weight: .semibold))
+                .font(.callout.weight(.semibold))
                 .foregroundColor(PaymentMethodsBrand.onSurface)
         }
     }
@@ -46,21 +46,21 @@ struct PaymentMethodRow: View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
                 Text("\(PaymentMethodBrandDisplay.name(paymentMethod.brand)) ···· \(paymentMethod.last4)")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(PaymentMethodsBrand.onSurface)
                 if paymentMethod.isDefault {
                     defaultBadge
                 }
             }
             Text(expiryText)
-                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
         }
     }
 
     private var defaultBadge: some View {
         Text("Default")
-            .font(.system(size: 10, weight: .semibold, design: .rounded))
+            .font(.brand(.caption2, weight: .semibold))
             .foregroundColor(PaymentMethodsBrand.onPrimary)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -91,7 +91,7 @@ struct PaymentMethodRow: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                     .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
                     .frame(width: 32, height: 32)
                     .contentShape(Rectangle())

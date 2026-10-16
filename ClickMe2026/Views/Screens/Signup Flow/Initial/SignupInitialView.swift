@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-14.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -75,7 +75,7 @@ struct SignupInitialView: View {
                             .foregroundColor(.white)
 
                         Text("Start your journey with us.")
-                            .font(.system(size: 16, weight: .regular, design: .rounded))
+                            .font(.brand(.callout, weight: .regular))
                             .foregroundColor(Color.white.opacity(0.50))
                     }
                     .padding(.bottom, 36)
@@ -98,6 +98,16 @@ struct SignupInitialView: View {
             .opacity(contentOpacity)
             .offset(y: contentOffset)
         }
+        // Push destination — the parent `LoginView` hides its own
+        // nav bar, but that doesn't propagate. Without this the
+        // default opaque nav bar chrome draws a solid black band on
+        // top of the gradient's safe area. Hiding just the
+        // background lets the gradient extend edge-to-edge while
+        // keeping the system back button functional and legible
+        // (`.dark` scheme tints its chevron against the dark
+        // gradient).
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
             withAnimation(.easeOut(duration: 0.45).delay(0.1)) {
                 contentOpacity = 1

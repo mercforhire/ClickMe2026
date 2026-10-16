@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Observation
@@ -281,7 +281,7 @@ final class ExpertProfileSettingsViewModel {
         body.location = .init(
             city: city.trimmingCharacters(in: .whitespaces),
             stateProvince: state.trimmingCharacters(in: .whitespaces),
-            countryCode: country.isEmpty ? nil : country
+            countryCode: Countries.normalize(country)
         )
         body.professional = .init(
             jobTitle: jobTitle.trimmingCharacters(in: .whitespaces),
@@ -290,6 +290,14 @@ final class ExpertProfileSettingsViewModel {
 
         let snapshotAtSaveTime = currentSnapshot
         let trimmedMeetingUrl = meetingUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Coerce empty → nil so the key is dropped from the JSON body.
+        // The server URL-validates this field and 422s on `""` — every
+        // expert who hasn't yet set a Skype/Zoom link (which is most of
+        // them) previously saw a "Couldn't save changes" alert on the
+        // very first field edit because the expert PATCH always
+        // carried `meeting_url: ""`. Omitting the key relies on the
+        // partial-merge contract ("missing key = leave untouched").
+        let meetingUrlForPatch: String? = trimmedMeetingUrl.isEmpty ? nil : trimmedMeetingUrl
 
         isAutoSaving = true
         defer { isAutoSaving = false }
@@ -306,7 +314,7 @@ final class ExpertProfileSettingsViewModel {
                     jobTitle: nil,
                     company: nil,
                     education: nil,
-                    meetingUrl: trimmedMeetingUrl
+                    meetingUrl: meetingUrlForPatch
                 ),
                 locationDetails: nil,
                 languages: nil,

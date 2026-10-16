@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -18,6 +18,12 @@ struct NotificationItem: Decodable {
     let id: UUID
     let userId: UUID
     let category: NotificationCategory
+    /// Fine-grained event within the category — e.g. `"requests"`,
+    /// `"reminder"`, `"ended"`, `"new_message"`, `"nudge"`,
+    /// `"kyc_action"`, `"password_changed"`. Optional because older
+    /// server versions don't emit it; when nil the client falls back
+    /// to coarse category-only routing.
+    let subCategory: String?
     let title: String
     let body: String
     /// Arbitrary payload the server attaches — typically carries the

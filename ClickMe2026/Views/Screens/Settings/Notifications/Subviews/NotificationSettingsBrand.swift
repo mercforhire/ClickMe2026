@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -64,7 +64,7 @@ struct NotificationCardTitle: View {
     var body: some View {
         HStack {
             Text(title)
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(NotificationSettingsBrand.onSurface)
             Spacer()
         }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,7 +16,7 @@ struct ClientProfileBookingHistory: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Booking History")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.brand(.title2, weight: .bold))
                 .foregroundColor(ClientProfileBrand.onSurface)
 
             VStack(spacing: 12) {

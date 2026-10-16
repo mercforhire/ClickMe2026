@@ -2,7 +2,7 @@
 //  OnboardingTextSection.swift
 //  ClickMe2026
 //
-//  Copyright © 2024 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -18,7 +18,7 @@ struct OnboardingTextSection: View {
         VStack(spacing: 16) {
             // headline-xl: 32 / 700 / -0.02em
             Text(title)
-                .font(.system(size: 32, weight: .bold))
+                .font(.title.weight(.bold))
                 .tracking(-0.64)
                 .foregroundColor(OnboardingBrand.onSurface)
                 .multilineTextAlignment(.center)
@@ -26,7 +26,7 @@ struct OnboardingTextSection: View {
 
             // body-lg: 16 / 400 / lineHeight 24
             Text(subtitle)
-                .font(.system(size: 16, weight: .regular))
+                .font(.callout.weight(.regular))
                 .foregroundColor(OnboardingBrand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .lineSpacing(8)

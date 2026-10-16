@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,7 +22,7 @@ struct BookingSummaryFeedback: View {
                 HStack(spacing: 6) {
                     ForEach(1 ... 5, id: \.self) { i in
                         Image(systemName: i <= feedbackStars ? "star.fill" : "star")
-                            .font(.system(size: 22, weight: .regular))
+                            .font(.title2.weight(.regular))
                             .foregroundColor(
                                 i <= feedbackStars
                                     ? BookingSummaryBrand.brandGreen
@@ -33,7 +33,7 @@ struct BookingSummaryFeedback: View {
 
                 if let text = feedbackText {
                     Text(text)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(BookingSummaryBrand.onSurfaceVar)
                         .italic()
                         .lineSpacing(4)

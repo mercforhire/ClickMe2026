@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,15 +17,15 @@ struct ExpertProfileAboutCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: "info.circle")
-                    .font(.system(size: 17, weight: .regular))
+                    .font(.body.weight(.regular))
                     .foregroundColor(ExpertProfileBrand.brandGreen)
                 Text("About")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.brand(.body, weight: .semibold))
                     .foregroundColor(ExpertProfileBrand.onSurface)
             }
 
             Text(bio)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(ExpertProfileBrand.onSurfaceVar)
                 .lineSpacing(5)
                 .fixedSize(horizontal: false, vertical: true)

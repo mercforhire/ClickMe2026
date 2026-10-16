@@ -2,7 +2,7 @@
 //  SignupTimezoneView.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -62,7 +62,7 @@ struct SignupTimezoneView: View {
                     .padding(.horizontal, 20)
 
                 Text("We use this to convert booking times to your local time and to align payouts with your day.")
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(onSurfaceVar)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -98,11 +98,11 @@ struct SignupTimezoneView: View {
     private var header: some View {
         VStack(spacing: 8) {
             Text("Confirm your timezone")
-                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .font(.brand(.title2, weight: .bold))
                 .foregroundColor(onSurface)
                 .multilineTextAlignment(.center)
             Text("We auto-detected this from your device.\nChange it if it's wrong.")
-                .font(.system(size: 14, design: .rounded))
+                .font(.brand(.subheadline))
                 .foregroundColor(onSurfaceVar)
                 .multilineTextAlignment(.center)
         }
@@ -127,18 +127,18 @@ struct SignupTimezoneView: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "clock")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.callout.weight(.regular))
                     .foregroundColor(brandGreen)
 
                 Text(viewModel.timezoneLabel)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(.brand(.subheadline, weight: .medium))
                     .foregroundColor(onSurface)
                     .lineLimit(1)
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundColor(onSurfaceVar)
             }
             .padding(.horizontal, 16)
@@ -161,9 +161,9 @@ struct SignupTimezoneView: View {
         } label: {
             HStack(spacing: 6) {
                 Image(systemName: "location.fill")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                 Text("Auto-detect from device")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .font(.brand(.subheadline, weight: .medium))
             }
             .foregroundColor(brandGreen)
             .padding(.leading, 4)
@@ -185,7 +185,7 @@ struct SignupTimezoneView: View {
                     ProgressView().progressViewStyle(.circular).tint(onPrimary)
                 } else {
                     Text("Next")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(onPrimary)
                 }
             }

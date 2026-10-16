@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,9 +19,9 @@ struct UpcomingBookingSecondaryActions: View {
             Button(action: onReschedule) {
                 HStack(spacing: 8) {
                     Image(systemName: "arrow.clockwise.circle")
-                        .font(.system(size: 16, weight: .regular))
+                        .font(.callout.weight(.regular))
                     Text("Reschedule")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .bold))
                 }
                 .foregroundColor(UpcomingBookingBrand.onSurface)
                 .frame(maxWidth: .infinity)
@@ -40,9 +40,9 @@ struct UpcomingBookingSecondaryActions: View {
             Button(action: onCancel) {
                 HStack(spacing: 8) {
                     Image(systemName: "xmark.circle")
-                        .font(.system(size: 16, weight: .regular))
+                        .font(.callout.weight(.regular))
                     Text("Cancel")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .bold))
                 }
                 .foregroundColor(UpcomingBookingBrand.errorColor)
                 .frame(maxWidth: .infinity)

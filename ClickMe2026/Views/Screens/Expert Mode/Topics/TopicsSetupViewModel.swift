@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -32,17 +32,19 @@ final class TopicsSetupViewModel: ObservableObject {
     // MARK: Dependencies
 
     private let api: ClickMeAPI
+    private let userManager: UserManager
 
     // MARK: Init
 
     /// Runtime init — data hydrates on `load()`.
-    init(api: ClickMeAPI = .shared) {
+    init(api: ClickMeAPI = .shared, userManager: UserManager = .shared) {
         self.topics = []
         self.loadState = .idle
         self.editingTopic = nil
         self.showTopicEditor = false
         self.apiError = nil
         self.api = api
+        self.userManager = userManager
     }
 
     /// Preview seam — installs canned data as if the fetch had succeeded.
@@ -119,14 +121,33 @@ final class TopicsSetupViewModel: ObservableObject {
         iconSlug: String?,
         expertiseTagIds: [String]
     ) async -> String? {
+        // The editor lets an expert save a free session by entering 0
+        // (or leaving the price blank). Derive `isFree` from the
+        // amount so the server sees a consistent flag — the two are
+        // kept in lockstep here rather than surfaced as a separate
+        // toggle in the UI.
+        let isFree = hourlyRateAmount == 0
+
+        // Server validates `hourly_rate.amount > 0` unconditionally,
+        // even for `is_free: true` (422 VALIDATION_ERROR: "Too small:
+        // expected number to be >0"). Substitute the currency's
+        // min-price floor as a wire-side placeholder — semantically
+        // "the amount we'd charge if it weren't free" — and let
+        // `is_free: true` drive the actual server behavior. Falls
+        // back to 100 minor units when pricing limits haven't loaded
+        // (safely > 0).
+        let wireAmount: Int = isFree
+            ? (userManager.me?.pricingLimits?.minSessionAmount.minMinorUnits(for: currency) ?? 100)
+            : hourlyRateAmount
+
         do {
             if let existing = editingTopic {
                 let body = UpdateExpertTopicRequest(
                     title: title,
                     description: description,
                     durationMins: durationMins,
-                    hourlyRate: .init(amount: hourlyRateAmount, currency: currency),
-                    isFree: false,
+                    hourlyRate: .init(amount: wireAmount, currency: currency),
+                    isFree: isFree,
                     iconSlug: iconSlug,
                     expertiseTagIds: expertiseTagIds
                 )
@@ -139,8 +160,8 @@ final class TopicsSetupViewModel: ObservableObject {
                     title: title,
                     description: description,
                     durationMins: durationMins,
-                    hourlyRate: .init(amount: hourlyRateAmount, currency: currency),
-                    isFree: false,
+                    hourlyRate: .init(amount: wireAmount, currency: currency),
+                    isFree: isFree,
                     iconSlug: iconSlug,
                     expertiseTagIds: expertiseTagIds
                 )

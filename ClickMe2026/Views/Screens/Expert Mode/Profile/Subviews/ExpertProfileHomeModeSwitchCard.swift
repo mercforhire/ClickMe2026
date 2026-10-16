@@ -2,7 +2,7 @@
 //  ExpertProfileHomeModeSwitchCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -20,17 +20,17 @@ struct ExpertProfileHomeModeSwitchCard: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Switch to Client Mode")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(ClientProfileHomeBrand.onSurface)
                     Text("Browse and book other experts")
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.caption.weight(.semibold))
                     .foregroundColor(ClientProfileHomeBrand.primary)
             }
             .padding(.horizontal, 16)
@@ -54,7 +54,7 @@ struct ExpertProfileHomeModeSwitchCard: View {
                 .fill(ClientProfileHomeBrand.primary.opacity(0.16))
                 .frame(width: 44, height: 44)
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 18, weight: .semibold))
+                .font(.title3.weight(.semibold))
                 .foregroundColor(ClientProfileHomeBrand.primary)
         }
     }

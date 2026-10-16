@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,11 +25,11 @@ struct ReportChatReportCard: View {
         VStack(alignment: .leading, spacing: 20) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Report User")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.brand(.title2, weight: .bold))
                     .foregroundColor(ReportChatBrand.onSurface)
 
                 Text("If this user is violating our terms of service, please let us know. Your report is anonymous.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(ReportChatBrand.onSurfaceVar)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)

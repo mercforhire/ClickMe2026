@@ -2,7 +2,7 @@
 //  MakeABookingExpertCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,7 +24,7 @@ struct MakeABookingExpertCard: View {
                         ZStack {
                             Color(red: 0.14, green: 0.18, blue: 0.15)
                             Image(systemName: "person.fill")
-                                .font(.system(size: 24))
+                                .font(.title2)
                                 .foregroundColor(.white.opacity(0.15))
                         }
                     }
@@ -34,10 +34,10 @@ struct MakeABookingExpertCard: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(expertName)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(MakeABookingBrand.onSurface)
                     Text(expertTitle)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(MakeABookingBrand.onSurfaceVar)
                 }
                 Spacer()

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -36,7 +36,7 @@ struct MyBookingsSegmentPicker: View {
         } label: {
             ZStack(alignment: .bottom) {
                 Text(label)
-                    .font(.system(size: 15, weight: isActive ? .semibold : .regular, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded).weight(isActive ? .semibold : .regular))
                     .foregroundColor(isActive ? MyBookingsBrand.onSurface : MyBookingsBrand.onSurfaceVar)
                     .frame(maxWidth: .infinity)
                     .frame(height: 48)

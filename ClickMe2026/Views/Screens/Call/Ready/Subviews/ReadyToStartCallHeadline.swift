@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,12 +17,12 @@ struct ReadyToStartCallHeadline: View {
     var body: some View {
         VStack(spacing: 10) {
             Text("Ready to join your call")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.brand(.title, weight: .bold))
                 .foregroundColor(ReadyToStartCallBrand.onSurface)
                 .multilineTextAlignment(.center)
 
             Text("Click the button below to open Skype.")
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(ReadyToStartCallBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
         }

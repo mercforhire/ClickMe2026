@@ -13,7 +13,7 @@ struct OrDivider: View {
                 .frame(height: 1)
 
             Text("OR")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(Color.white.opacity(0.40))
                 .fixedSize()
 

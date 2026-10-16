@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyAiKZzGVbnOvEGlBwZ4n1TU2YFM1sN_ep0</string>
+	<key>GCM_SENDER_ID</key>
+	<string>790325957439</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.uptrendinvestments.clickme2026</string>
+	<key>PROJECT_ID</key>
+	<string>clickme-a006b</string>
+	<key>STORAGE_BUCKET</key>
+	<string>clickme-a006b.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:790325957439:ios:f8e482ee229a5d417a798a</string>
+</dict>
+</plist>

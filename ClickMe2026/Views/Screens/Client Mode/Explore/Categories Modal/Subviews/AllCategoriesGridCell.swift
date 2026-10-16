@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,7 +25,7 @@ struct AllCategoriesGridCell: View {
                     .frame(height: 44)
 
                 Text(category.name)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .font(.brand(.subheadline, weight: .medium))
                     .foregroundColor(isSelected ? AllCategoriesBrand.brandGreen : AllCategoriesBrand.onSurface)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -146,7 +146,7 @@ struct ClientProfileView: View {
         VStack(spacing: 12) {
             ProgressView().tint(ClientProfileBrand.onSurface)
             Text("Loading profile…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ClientProfileBrand.onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -155,13 +155,13 @@ struct ClientProfileView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(ClientProfileBrand.onSurfaceVar)
             Text("Couldn't load profile")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ClientProfileBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ClientProfileBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -170,7 +170,7 @@ struct ClientProfileView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -201,9 +201,9 @@ private struct LiveFetchClientProfileBootstrap: View {
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Text("Couldn't resolve a client ID")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                 Text(errorMessage)
-                    .font(.system(size: 12))
+                    .font(.caption)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -221,7 +221,7 @@ private struct LiveFetchClientProfileBootstrap: View {
 
     private func resolveClientId() async {
         do {
-            let response = try await ClickMeAPI.shared.getExpertBookings(page: 1, limit: 5)
+            let response = try await ClickMeAPI.shared.getExpertBookings(type: .upcoming, page: 1, limit: 5)
             guard let clientId = response.data.bookings.first?.client.id else {
                 errorMessage = "No bookings on this account — can't derive a client ID for the live fetch."
                 return

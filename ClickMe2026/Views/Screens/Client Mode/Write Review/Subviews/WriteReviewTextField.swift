@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,7 +25,7 @@ struct WriteReviewTextField: View {
 
             if text.isEmpty {
                 Text("Share your experience...")
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
                     .foregroundColor(WriteReviewBrand.onSurfaceVar.opacity(0.55))
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
@@ -35,7 +35,7 @@ struct WriteReviewTextField: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
                 .foregroundColor(WriteReviewBrand.onSurface)
-                .font(.system(size: 16, design: .rounded))
+                .font(.brand(.callout))
                 .frame(minHeight: 160)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)

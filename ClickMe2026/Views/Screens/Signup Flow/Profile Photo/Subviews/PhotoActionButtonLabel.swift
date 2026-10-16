@@ -22,10 +22,10 @@ struct PhotoActionButtonLabel: View {
 
             HStack(spacing: 10) {
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.callout.weight(.regular))
                     .foregroundColor(Color.white.opacity(0.75))
                 Text(title)
-                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .font(.brand(.callout, weight: .medium))
                     .foregroundColor(.white)
             }
         }

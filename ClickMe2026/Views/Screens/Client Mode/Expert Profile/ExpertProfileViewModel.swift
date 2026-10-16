@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-24.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -120,7 +120,9 @@ final class ExpertProfileViewModel: ObservableObject {
             expertiseTags: existing.expertiseTags,
             topics: details.topicsOfDiscussion.map(Self.mapTopic),
             reviews: existing.reviews,
-            imageURL: existing.imageURL
+            imageURL: existing.imageURL,
+            // Backend flag — nil (not shipped yet) defaults to bookable.
+            isBookable: details.isBookable ?? existing.isBookable
         )
     }
 
@@ -155,7 +157,8 @@ final class ExpertProfileViewModel: ObservableObject {
             expertiseTags: existing.expertiseTags,
             topics: existing.topics,
             reviews: mapped,
-            imageURL: existing.imageURL
+            imageURL: existing.imageURL,
+            isBookable: existing.isBookable
         )
     }
 

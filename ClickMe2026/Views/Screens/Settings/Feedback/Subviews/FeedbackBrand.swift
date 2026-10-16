@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -42,7 +42,7 @@ struct FeedbackFieldLabel: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 14, weight: .medium, design: .rounded))
+            .font(.brand(.subheadline, weight: .medium))
             .foregroundColor(FeedbackBrand.onSurfaceVar)
     }
 }

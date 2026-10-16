@@ -17,11 +17,11 @@ struct OverviewTipRow: View {
             } label: {
                 HStack {
                     Text(tip.title)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.body.weight(.semibold))
                         .foregroundColor(Brand.onSurface)
                     Spacer()
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundColor(Brand.onSurfaceMuted)
                         .rotationEffect(.degrees(expanded ? 180 : 0))
                 }
@@ -31,7 +31,7 @@ struct OverviewTipRow: View {
 
             if expanded {
                 Text(tip.detail)
-                    .font(.system(size: 15))
+                    .font(.subheadline)
                     .foregroundColor(Brand.onSurfaceMuted)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.bottom, 16)

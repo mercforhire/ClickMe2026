@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -23,7 +23,7 @@ struct ChattingInputBar: View {
 
             HStack(alignment: .bottom, spacing: 8) {
                 TextField("Message", text: $text, axis: .vertical)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.brand(.subheadline))
                     .foregroundColor(ChattingBrand.onSurface)
                     .tint(ChattingBrand.brandGreen)
                     .lineLimit(1 ... 5)
@@ -39,7 +39,7 @@ struct ChattingInputBar: View {
                 } else if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button(action: onSend) {
                         Image(systemName: "paperplane.fill")
-                            .font(.system(size: 16, weight: .regular))
+                            .font(.callout.weight(.regular))
                             .foregroundColor(ChattingBrand.brandGreen)
                     }
                     .transition(.scale.combined(with: .opacity))

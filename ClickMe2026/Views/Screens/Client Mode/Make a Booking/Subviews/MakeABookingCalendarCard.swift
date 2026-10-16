@@ -2,7 +2,7 @@
 //  MakeABookingCalendarCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -34,7 +34,7 @@ struct MakeABookingCalendarCard: View {
                 viewModel.goToPreviousMonth()
             } label: {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                     .foregroundColor(MakeABookingBrand.brandGreen)
                     .frame(width: 32, height: 32)
             }
@@ -42,7 +42,7 @@ struct MakeABookingCalendarCard: View {
             Spacer()
 
             Text(viewModel.monthYearString(viewModel.displayedMonth))
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(MakeABookingBrand.onSurface)
 
             Spacer()
@@ -51,7 +51,7 @@ struct MakeABookingCalendarCard: View {
                 viewModel.goToNextMonth()
             } label: {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                     .foregroundColor(MakeABookingBrand.brandGreen)
                     .frame(width: 32, height: 32)
             }
@@ -65,7 +65,7 @@ struct MakeABookingCalendarCard: View {
         HStack(spacing: 0) {
             ForEach(viewModel.dayHeaders, id: \.self) { d in
                 Text(d)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(MakeABookingBrand.onSurfaceVar)
                     .frame(maxWidth: .infinity)
             }
@@ -107,7 +107,7 @@ struct MakeABookingCalendarCard: View {
                 }
 
                 Text(item.label)
-                    .font(.system(size: 14, weight: isSelected ? .bold : .regular, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded).weight(isSelected ? .bold : .regular))
                     .foregroundColor(
                         isSelected ? MakeABookingBrand.onPrimary :
                             (!isCurrentMonth || isPast) ? MakeABookingBrand.onSurfaceVar.opacity(0.35) :

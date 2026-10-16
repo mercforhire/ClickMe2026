@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-14.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -146,7 +146,7 @@ struct SignupTagsView: View {
         VStack(spacing: 12) {
             ProgressView().tint(.white)
             Text("Loading tags…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(.white.opacity(0.6))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -155,13 +155,13 @@ struct SignupTagsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 26, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(.white.opacity(0.6))
             Text("Couldn't load tags")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(.white)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -170,7 +170,7 @@ struct SignupTagsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -184,7 +184,7 @@ struct SignupTagsView: View {
 
     private func sectionLabel(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .font(.brand(.caption, weight: .medium))
             .foregroundColor(Color.white.opacity(0.40))
     }
 
@@ -226,14 +226,12 @@ struct SignupTagsView: View {
 
 // MARK: - Previews
 
-#if DEBUG
 private func tagsPreview<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View {
     PreviewNavHarness(parentText: "Complete your profile", navTitle: "Profile setup", rowTitle: "Add expertise") {
         content()
     }
     .preferredColorScheme(.dark)
 }
-#endif
 
 #Preview("Default — 2 selected") {
     tagsPreview {

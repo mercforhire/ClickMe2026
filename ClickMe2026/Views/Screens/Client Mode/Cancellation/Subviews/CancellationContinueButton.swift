@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,9 +17,9 @@ struct CancellationContinueButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Text("Continue")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.brand(.body, weight: .bold))
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.subheadline.weight(.bold))
             }
             .foregroundColor(CancellationBrand.onPrimary)
             .frame(maxWidth: .infinity)

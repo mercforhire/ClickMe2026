@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -28,11 +28,15 @@ struct BookingRequestItem: Decodable {
     let requestId: UUID
     let client: Client
     let topic: String?
-    /// Potential earnings in major currency units (amount_paid_minor_units / 100).
+    /// **Legacy — gross.** What the client pays, in major currency units.
+    /// Read `earningsBreakdown.netAmount` for the expert's take-home.
     let earnings: Double?
     let currency: String?
     let timeSlot: TimeSlotInterval
     let expiresAt: Date?
     /// `pending_approval` or `expired`.
     let status: String
+    /// Post-commission breakdown — see `EarningsBreakdown`. Optional so
+    /// pre-rollout cached list responses still decode.
+    let earningsBreakdown: EarningsBreakdown?
 }

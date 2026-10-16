@@ -29,7 +29,7 @@
 			<key>BaseURL</key>
 			<string>https://clickme-backend-production.up.railway.app/api/v1</string>
 			<key>StripePublishableKey</key>
-			<string>pk_live_REPLACE_ME</string>
+			<string>pk_live_51U8OTJENKN7xExknds5a5qHfLfajVnkJQ8lli0GmQYVcP6VoT8tDLjBpXqBtqO5Bv1ijaVwTm5d3MSKhI7Vl4fSm009vGo9aEa</string>
 			<key>AgoraAppId</key>
 			<string>483eaa4d11fb44b6acc91bf5ceae36c7</string>
 		</dict>

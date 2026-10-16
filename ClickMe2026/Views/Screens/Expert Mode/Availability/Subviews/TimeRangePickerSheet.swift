@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -27,7 +27,7 @@ struct TimeRangePickerSheet: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("Select Time Range")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(onSurface)
                 .padding(.top, 8)
 
@@ -41,7 +41,7 @@ struct TimeRangePickerSheet: View {
                 )
 
                 Text("-")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.title3.weight(.bold))
                     .foregroundColor(onSurfaceVar)
                     .padding(.top, 24)
 
@@ -59,7 +59,7 @@ struct TimeRangePickerSheet: View {
             HStack(spacing: 12) {
                 Button { onCancel() } label: {
                     Text("Cancel")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.brand(.callout, weight: .semibold))
                         .foregroundColor(onSurface)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
@@ -71,7 +71,7 @@ struct TimeRangePickerSheet: View {
 
                 Button { onDone() } label: {
                     Text("Done")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(onPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
@@ -95,7 +95,7 @@ struct TimeRangePickerSheet: View {
     ) -> some View {
         VStack(spacing: 8) {
             Text(label)
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(onSurfaceVar)
 
             let validTimes = isStart
@@ -120,7 +120,7 @@ struct TimeRangePickerSheet: View {
                                             .shadow(color: brandGreen.opacity(0.45), radius: 5)
                                     }
                                     Text(minutesToAMPM(t))
-                                        .font(.system(size: 16, weight: isSelected ? .bold : .regular, design: .rounded))
+                                        .font(.system(.body, design: .rounded).weight(isSelected ? .bold : .regular))
                                         .foregroundColor(isSelected ? brandGreen : onSurface)
                                 }
                                 .frame(height: 44)

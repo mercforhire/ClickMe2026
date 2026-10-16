@@ -2,7 +2,7 @@
 //  ClientProfileHomeUserCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -23,11 +23,11 @@ struct ClientProfileHomeUserCard: View {
             avatar
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.title3.weight(.semibold))
                     .foregroundColor(ClientProfileHomeBrand.onSurface)
                     .lineLimit(1)
                 Text(email)
-                    .font(.system(size: 14, weight: .regular))
+                    .font(.subheadline.weight(.regular))
                     .foregroundColor(ClientProfileHomeBrand.onSurfaceVar)
                     .lineLimit(1)
             }
@@ -38,7 +38,7 @@ struct ClientProfileHomeUserCard: View {
                         .fill(ClientProfileHomeBrand.iconBg)
                         .frame(width: 40, height: 40)
                     Image(systemName: "pencil")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                         .foregroundColor(ClientProfileHomeBrand.primary)
                 }
             }
@@ -72,7 +72,7 @@ struct ClientProfileHomeUserCard: View {
                         ZStack {
                             ClientProfileHomeBrand.iconBg
                             Image(systemName: "person.fill")
-                                .font(.system(size: 26))
+                                .font(.title)
                                 .foregroundColor(.white.opacity(0.15))
                         }
                     }

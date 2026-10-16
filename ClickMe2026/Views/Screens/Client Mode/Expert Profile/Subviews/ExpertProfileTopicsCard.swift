@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct ExpertProfileTopicsCard: View {
         VStack(spacing: 0) {
             HStack {
                 Text("Topics of Discussion")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.brand(.callout, weight: .semibold))
                     .foregroundColor(ExpertProfileBrand.onSurface)
                 Spacer()
             }
@@ -46,15 +46,15 @@ struct ExpertProfileTopicsCard: View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
                 Text(topic.title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .bold))
                     .foregroundColor(ExpertProfileBrand.onSurface)
                 Text("\(topic.duration) • \(topic.description)")
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(ExpertProfileBrand.onSurfaceVar)
             }
             Spacer()
             Text(topic.price)
-                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .font(.brand(.subheadline, weight: .bold))
                 .foregroundColor(topic.isFree ? ExpertProfileBrand.brandGreen : ExpertProfileBrand.onSurface)
         }
         .padding(.horizontal, 16)

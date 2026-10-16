@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-13.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -31,7 +31,7 @@ struct ForgetPassEmailField: View {
 
                 HStack(spacing: 12) {
                     Image(systemName: "envelope")
-                        .font(.system(size: 16))
+                        .font(.callout)
                         .foregroundColor(hasError ? ForgetPassBrand.errorRed : Color.white.opacity(0.40))
                         .frame(width: 20)
 
@@ -42,10 +42,10 @@ struct ForgetPassEmailField: View {
                         .placeholder(when: email.isEmpty) {
                             Text("Email")
                                 .foregroundColor(Color.white.opacity(0.30))
-                                .font(.system(size: 16, design: .rounded))
+                                .font(.brand(.callout))
                         }
                         .foregroundColor(.white)
-                        .font(.system(size: 16, design: .rounded))
+                        .font(.brand(.callout))
                         .onChange(of: email) { onChange() }
                 }
                 .padding(.horizontal, 18)
@@ -53,7 +53,7 @@ struct ForgetPassEmailField: View {
 
             if let msg = error {
                 Text(msg)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(ForgetPassBrand.errorRed)
                     .padding(.leading, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))

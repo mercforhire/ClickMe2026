@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -38,12 +38,12 @@ struct DeleteAccountFarewell: View {
 
                     VStack(spacing: 12) {
                         Text("We're sorry to see\nyou go!")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .font(.brand(.title, weight: .bold))
                             .foregroundColor(DeleteAccountBrand.onSurface)
                             .multilineTextAlignment(.center)
 
                         Text("Your account has been successfully deleted.\nWe hope to see you again soon.")
-                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .font(.brand(.subheadline, weight: .regular))
                             .foregroundColor(DeleteAccountBrand.onSurfaceVar)
                             .multilineTextAlignment(.center)
                             .lineSpacing(4)
@@ -69,7 +69,7 @@ struct DeleteAccountFarewell: View {
 
             Button(action: onBackToLogin) {
                 Text("Back to Login")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)

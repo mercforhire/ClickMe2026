@@ -42,10 +42,10 @@ struct NewPasswordField<Trailing: View>: View {
                     .placeholder(when: text.isEmpty) {
                         Text(placeholder)
                             .foregroundColor(Color.white.opacity(0.28))
-                            .font(.system(size: 16, design: .rounded))
+                            .font(.brand(.callout))
                     }
                     .foregroundColor(.white)
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
 
                     Spacer()
 
@@ -56,7 +56,7 @@ struct NewPasswordField<Trailing: View>: View {
                             isVisible.toggle()
                         } label: {
                             Image(systemName: isVisible ? "eye" : "eye.slash")
-                                .font(.system(size: 16))
+                                .font(.callout)
                                 .foregroundColor(Color.white.opacity(0.40))
                         }
                     }
@@ -66,7 +66,7 @@ struct NewPasswordField<Trailing: View>: View {
 
             if let msg = error {
                 Text(msg)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(NewPasswordBrand.errorRed)
                     .padding(.leading, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))

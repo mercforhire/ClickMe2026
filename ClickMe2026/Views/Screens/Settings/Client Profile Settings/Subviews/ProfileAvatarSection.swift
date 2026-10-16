@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import PhotosUI
@@ -65,7 +65,7 @@ struct ProfileAvatarSection: View {
                         .frame(width: 38, height: 38)
                         .shadow(color: ProfileSettingsBrand.brandGreen.opacity(0.55), radius: 6)
                     Image(systemName: "camera.fill")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.callout.weight(.medium))
                         .foregroundColor(ProfileSettingsBrand.onPrimary)
                 }
             }

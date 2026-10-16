@@ -2,7 +2,7 @@
 //  ExampleUITests.swift
 //  ClickMe2026UITests
 //
-//  Copyright © 2024 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Salad
@@ -32,7 +32,7 @@ final class ExampleUITests: XCTestCase {
             .when(RefreshHomeView())
             .then { homeView in
                 XCTAssertTrue(homeView.userEmailLabel.waitForExist(timeout: .fastNetworkCall))
-                XCTAssertEqual(homeView.userEmailLabel.label, "example@q42.com")
+                XCTAssertEqual(homeView.userEmailLabel.label, "example@uptrendinvestments.com")
             }
     }
 }

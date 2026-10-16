@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -18,18 +18,18 @@ struct ReadyToStartCallSupportRow: View {
     var body: some View {
         VStack(spacing: 32) {
             Text("If you don't have Skype installed, you can join from your browser. Clicking the link will give you this option.")
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(ReadyToStartCallBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
 
             HStack(spacing: 4) {
                 Text("Having trouble?")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(ReadyToStartCallBrand.onSurfaceVar)
                 Button(action: onContactSupport) {
                     Text("Contact support.")
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(ReadyToStartCallBrand.brandGreen)
                 }
                 .buttonStyle(.plain)

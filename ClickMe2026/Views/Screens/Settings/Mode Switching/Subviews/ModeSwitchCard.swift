@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-16.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,15 +22,15 @@ struct ModeSwitchCard: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(mode.title)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(ModeSwitchBrand.textPrimary)
 
                     Text(mode.subtitle)
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.brand(.subheadline, weight: .medium))
                         .foregroundColor(ModeSwitchBrand.textSub)
 
                     Text(mode.description)
-                        .font(.system(size: 12, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(ModeSwitchBrand.textMuted)
                         .lineSpacing(3)
                         .fixedSize(horizontal: false, vertical: true)
@@ -69,7 +69,7 @@ struct ModeSwitchCard: View {
                 ZStack {
                     Color(red: 0.14, green: 0.18, blue: 0.15)
                     Image(systemName: "person.2.fill")
-                        .font(.system(size: 28))
+                        .font(.title)
                         .foregroundColor(.white.opacity(0.15))
                 }
             }
@@ -86,7 +86,7 @@ struct ModeSwitchCard: View {
                 .fill(ModeSwitchBrand.brandGreen)
                 .frame(width: 10, height: 10)
             Text("Active")
-                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .font(.brand(.caption, weight: .bold))
                 .foregroundColor(ModeSwitchBrand.brandGreen)
         }
         .padding(.horizontal, 10)

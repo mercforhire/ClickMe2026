@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -38,7 +38,7 @@ struct AvailabilityDayRow: View {
                             .frame(width: 22, height: 22)
                         if day.isEnabled {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
+                                .font(.caption.weight(.bold))
                                 .foregroundColor(Brand.onPrimary)
                         }
                     }
@@ -46,7 +46,7 @@ struct AvailabilityDayRow: View {
                 .buttonStyle(.plain)
 
                 Text(day.shortDay)
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.brand(.callout, weight: .semibold))
                     .foregroundColor(day.isEnabled ? Brand.onSurface : Brand.onSurfaceVariant)
                     .frame(width: 36, alignment: .leading)
 
@@ -54,7 +54,7 @@ struct AvailabilityDayRow: View {
 
                 if !day.isEnabled {
                     Text("Unavailable")
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(Brand.onSurfaceVariant.opacity(0.60))
                 }
             }
@@ -68,42 +68,68 @@ struct AvailabilityDayRow: View {
                         }
 
                         Text("-")
-                            .font(.system(size: 14, weight: .regular))
+                            .font(.subheadline.weight(.regular))
                             .foregroundColor(Brand.onSurfaceVariant)
 
                         timeButton(label: minutesToString(day.slots[si].end)) {
                             onEditSlot(si)
                         }
+
+                        // Delete this slot. Sits inline with the two
+                        // time buttons so the row's tap targets stay
+                        // grouped. No confirmation — deleted slots are
+                        // trivially re-addable via "Add hours" below.
+                        // Removed by id (not index) so a mid-animation
+                        // re-index of the surrounding `ForEach` can't
+                        // point at the wrong row.
+                        Button {
+                            let slotId = day.slots[si].id
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                day.slots.removeAll { $0.id == slotId }
+                            }
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .font(.title3)
+                                .foregroundColor(Brand.error.opacity(0.85))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Delete time slot")
                     }
                     .frame(maxWidth: .infinity)
                 }
 
-                // "Add hours" link when there's already at least one slot
-                if !day.slots.isEmpty {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            // Anchor to the latest end across ALL slots,
-                            // not just `last` — the user may have edited
-                            // an earlier slot to run later, so `last`
-                            // isn't necessarily the max. Prevents the
-                            // fresh add from overlapping.
-                            let maxEnd = day.slots.map(\.end).max() ?? 0
+                // "Add hours" — always visible while the day is enabled
+                // so an expert who deletes every slot (or lands in the
+                // enabled-but-empty state) can add one back without
+                // having to uncheck / recheck the day.
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        // Anchor to the latest end across ALL slots,
+                        // not just `last` — the user may have edited
+                        // an earlier slot to run later, so `last`
+                        // isn't necessarily the max. Prevents the
+                        // fresh add from overlapping. Falls back to
+                        // 9 AM – 5 PM when there are no slots at all
+                        // (mirrors the auto-seed on day-enable).
+                        if let maxEnd = day.slots.map(\.end).max() {
                             let newStart = min(maxEnd + 30, 23 * 60)
                             let newEnd = min(newStart + 60, 24 * 60)
                             day.slots.append(AvailabilityTimeSlot(start: newStart, end: newEnd))
+                        } else {
+                            day.slots.append(AvailabilityTimeSlot(start: 9 * 60, end: 17 * 60))
                         }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 14, weight: .bold))
-                            Text("Add hours")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        }
-                        .foregroundColor(Brand.primary)
-                        .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                            .font(.subheadline.weight(.bold))
+                        Text("Add hours")
+                            .font(.brand(.subheadline, weight: .semibold))
+                    }
+                    .foregroundColor(Brand.primary)
+                    .frame(maxWidth: .infinity)
                 }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -111,7 +137,7 @@ struct AvailabilityDayRow: View {
     private func timeButton(label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(label)
-                .font(.system(size: 16, weight: .regular, design: .monospaced))
+                .font(.system(.body, design: .monospaced))
                 .foregroundColor(Brand.onSurface)
                 .frame(width: 88, height: 40)
                 .background(

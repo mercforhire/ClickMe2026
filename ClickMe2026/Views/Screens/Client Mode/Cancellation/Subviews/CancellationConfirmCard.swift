@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,10 +19,10 @@ struct CancellationConfirmCard: View {
 
             VStack(spacing: 8) {
                 Text("Confirm Cancellation?")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.brand(.title2, weight: .bold))
                     .foregroundColor(CancellationBrand.onSurface)
                 Text("Please review the booking details below before confirming.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(CancellationBrand.onSurfaceVar)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
@@ -31,7 +31,7 @@ struct CancellationConfirmCard: View {
             CancellationBookingSummary(booking: booking)
 
             Text("Refunds typically appear in your account within 3–5 business days.")
-                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(CancellationBrand.outlineVar)
                 .italic()
                 .multilineTextAlignment(.center)
@@ -52,7 +52,7 @@ struct CancellationConfirmCard: View {
                 .overlay(Circle().stroke(CancellationBrand.brandGreen.opacity(0.30), lineWidth: 1))
                 .frame(width: 64, height: 64)
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 30, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(CancellationBrand.brandGreen)
                 .shadow(color: CancellationBrand.brandGreen.opacity(0.50), radius: 8)
         }

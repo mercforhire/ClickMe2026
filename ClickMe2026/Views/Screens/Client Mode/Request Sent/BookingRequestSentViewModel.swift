@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-29.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -22,6 +22,15 @@ final class BookingRequestSentViewModel: ObservableObject {
     @Published var expertName: String
     @Published var topic: String
     @Published var dateTime: String
+    /// True when the booking's topic is free — hides the payment
+    /// lifecycle card (no card was authorized) and swaps the headline
+    /// tone. Populated on `apply(_:)`; defaults to `false` so the
+    /// paid-flow UI is the initial state.
+    @Published var isFree: Bool
+    /// Human "Aug 15 · 2:00 PM" label passed to `PaymentLifecycleCard`
+    /// so step 2 ("Your session runs on …") shows the concrete session
+    /// time instead of the generic fallback copy.
+    @Published var sessionWhenLabel: String
 
     // MARK: Load state
 
@@ -51,6 +60,8 @@ final class BookingRequestSentViewModel: ObservableObject {
         self.expertName = ""
         self.topic = ""
         self.dateTime = ""
+        self.isFree = false
+        self.sessionWhenLabel = ""
         self.state = .idle
         self.api = api
     }
@@ -61,12 +72,16 @@ final class BookingRequestSentViewModel: ObservableObject {
         bookingId: UUID = UUID(),
         expertName: String = "Sarah Jenkins",
         topic: String = "Advanced UI Architecture",
-        dateTime: String = "Oct 24, 2023 | 2:00 PM - 3:00 PM"
+        dateTime: String = "Oct 24, 2023 | 2:00 PM - 3:00 PM",
+        isFree: Bool = false,
+        sessionWhenLabel: String = "Oct 24 · 2:00 PM"
     ) -> BookingRequestSentViewModel {
         let vm = BookingRequestSentViewModel(bookingId: bookingId)
         vm.expertName = expertName
         vm.topic = topic
         vm.dateTime = dateTime
+        vm.isFree = isFree
+        vm.sessionWhenLabel = sessionWhenLabel
         vm.state = .loaded
         return vm
     }
@@ -101,6 +116,18 @@ final class BookingRequestSentViewModel: ObservableObject {
         expertName = data.expert.fullName ?? "Expert"
         topic = data.topic.title
         dateTime = Self.dateTimeString(from: data.startTime, to: data.endTime)
+        isFree = data.topic.isFree
+        sessionWhenLabel = Self.whenLabel(from: data.startTime)
+    }
+
+    /// Short "Aug 15 · 2:00 PM" label — surfaced as the concrete step-2
+    /// time on `PaymentLifecycleCard`. Distinct from the fuller
+    /// `dateTime` label used in the details card.
+    private static func whenLabel(from start: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "MMM d · h:mm a"
+        return f.string(from: start)
     }
 
     // MARK: - Formatting

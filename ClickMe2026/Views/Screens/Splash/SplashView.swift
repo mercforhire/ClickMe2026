@@ -48,7 +48,7 @@ struct SplashScreenView: View {
                         .kerning(0.5)
 
                     Text("Book time with the best minds.")
-                        .font(.system(size: 19, weight: .regular))
+                        .font(.system(.title3, weight: .regular))
                         .foregroundColor(Brand.onSurfaceMuted)
                 }
                 .opacity(textOpacity)

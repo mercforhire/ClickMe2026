@@ -2,7 +2,7 @@
 //  PaymentMethodsView.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -101,7 +101,7 @@ struct PaymentMethodsView: View {
     private var savedCardsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Saved cards")
-                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
                 .padding(.horizontal, 4)
 
@@ -122,10 +122,10 @@ struct PaymentMethodsView: View {
                 .font(.system(size: 40, weight: .light))
                 .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
             Text("No saved cards yet")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(PaymentMethodsBrand.onSurface)
             Text("Add your first card to book faster next time.")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -149,10 +149,10 @@ struct PaymentMethodsView: View {
                         .tint(PaymentMethodsBrand.onPrimary)
                 } else {
                     Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                 }
                 Text("Add Payment Method")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
             }
             .foregroundColor(PaymentMethodsBrand.onPrimary)
             .frame(maxWidth: .infinity)
@@ -165,7 +165,7 @@ struct PaymentMethodsView: View {
 
     private var trustCopy: some View {
         Text("Cards are securely stored by Stripe. ClickMe never sees your full card number.")
-            .font(.system(size: 11, weight: .regular, design: .rounded))
+            .font(.brand(.caption2, weight: .regular))
             .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
             .multilineTextAlignment(.center)
             .padding(.horizontal, 24)
@@ -177,7 +177,7 @@ struct PaymentMethodsView: View {
             ProgressView()
                 .tint(PaymentMethodsBrand.onSurface)
             Text("Loading payment methods…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -186,13 +186,13 @@ struct PaymentMethodsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
             Text("Couldn't load payment methods")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(PaymentMethodsBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(PaymentMethodsBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -200,7 +200,7 @@ struct PaymentMethodsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(PaymentMethodsBrand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)

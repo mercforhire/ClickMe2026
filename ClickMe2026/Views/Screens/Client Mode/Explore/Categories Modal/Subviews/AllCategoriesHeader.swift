@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -23,7 +23,7 @@ struct AllCategoriesHeader: View {
 
             HStack {
                 Text("All Categories")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .font(.brand(.title, weight: .bold))
                     .foregroundColor(AllCategoriesBrand.onSurface)
 
                 Spacer()
@@ -34,7 +34,7 @@ struct AllCategoriesHeader: View {
                             .fill(Color.white.opacity(0.10))
                             .frame(width: 32, height: 32)
                         Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .bold))
+                            .font(.caption.weight(.bold))
                             .foregroundColor(AllCategoriesBrand.onSurface)
                     }
                 }

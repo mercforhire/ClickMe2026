@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,11 +16,11 @@ struct ClientProfileNameBadge: View {
     var body: some View {
         VStack(spacing: 10) {
             Text(name)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.brand(.title, weight: .bold))
                 .foregroundColor(ClientProfileBrand.onSurface)
 
             Text("Client")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ClientProfileBrand.onSurfaceVar)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 6)

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,7 +24,7 @@ struct SearchExpertCard: View {
                         ZStack {
                             Color(red: 0.12, green: 0.18, blue: 0.14)
                             Image(systemName: "person.fill")
-                                .font(.system(size: 32))
+                                .font(.title)
                                 .foregroundColor(.white.opacity(0.15))
                         }
                     }
@@ -35,26 +35,26 @@ struct SearchExpertCard: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(expert.name)
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
+                            .font(.brand(.body, weight: .bold))
                             .foregroundColor(SearchExpertBrand.onSurface)
                         Spacer()
                         HStack(spacing: 4) {
                             Image(systemName: "star.fill")
-                                .font(.system(size: 13))
+                                .font(.caption)
                                 .foregroundColor(SearchExpertBrand.starYellow)
                             Text(String(format: "%.1f", expert.rating))
-                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .bold))
                                 .foregroundColor(SearchExpertBrand.onSurface)
                         }
                     }
 
                     Text(expert.title)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(SearchExpertBrand.onSurfaceVar)
 
                     if !expert.bio.isEmpty {
                         Text(expert.bio)
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(SearchExpertBrand.onSurface.opacity(0.75))
                             .lineLimit(2)
                             .lineSpacing(2)
@@ -83,7 +83,7 @@ struct SearchExpertCard: View {
         HStack(spacing: 6) {
             ForEach(expert.tags.prefix(3), id: \.self) { tag in
                 Text(tag)
-                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .font(.brand(.caption2, weight: .medium))
                     .foregroundColor(SearchExpertBrand.onSurface.opacity(0.75))
                     .lineLimit(1)
                     .padding(.horizontal, 8)

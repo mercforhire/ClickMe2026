@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -39,12 +39,12 @@ struct ExpertProfileReviewsCard: View {
     private var header: some View {
         HStack {
             Text("Recent Reviews")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(ExpertProfileBrand.onSurface)
             Spacer()
             Button(action: onSeeAllReviews) {
                 Text("See all")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(ExpertProfileBrand.brandGreen)
             }
         }
@@ -56,13 +56,13 @@ struct ExpertProfileReviewsCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(review.reviewer)
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .bold))
                     .foregroundColor(ExpertProfileBrand.onSurface)
                 Spacer()
                 starRow(review.stars)
             }
             Text(review.body)
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(ExpertProfileBrand.onSurfaceVar)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
@@ -75,7 +75,7 @@ struct ExpertProfileReviewsCard: View {
         HStack(spacing: 2) {
             ForEach(1 ... 5, id: \.self) { i in
                 Image(systemName: i <= count ? "star.fill" : "star")
-                    .font(.system(size: 12))
+                    .font(.caption)
                     .foregroundColor(ExpertProfileBrand.starYellow)
             }
         }

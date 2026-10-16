@@ -11,11 +11,11 @@ struct SignUpFooter: View {
     var body: some View {
         HStack(spacing: 4) {
             Text("Don't have an account?")
-                .font(.system(size: 15, design: .rounded))
+                .font(.brand(.subheadline))
                 .foregroundColor(Color.white.opacity(0.50))
 
             Button("Sign Up", action: onSignUp)
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(LoginBrand.green)
         }
     }

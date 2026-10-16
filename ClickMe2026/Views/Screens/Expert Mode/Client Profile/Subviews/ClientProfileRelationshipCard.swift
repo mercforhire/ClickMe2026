@@ -2,7 +2,7 @@
 //  ClientProfileRelationshipCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,7 +19,7 @@ struct ClientProfileRelationshipCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Your Sessions Together")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.brand(.title2, weight: .bold))
                 .foregroundColor(ClientProfileBrand.onSurface)
 
             HStack(spacing: 12) {
@@ -56,12 +56,12 @@ struct ClientProfileRelationshipCard: View {
     private func statCell(value: String, label: String) -> some View {
         VStack(spacing: 6) {
             Text(value)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(ClientProfileBrand.brandGreen)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(label)
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.brand(.caption2, weight: .medium))
                 .foregroundColor(ClientProfileBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .lineLimit(1)

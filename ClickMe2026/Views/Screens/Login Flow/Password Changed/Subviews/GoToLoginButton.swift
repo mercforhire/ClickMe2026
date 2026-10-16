@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-14.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,7 +16,7 @@ struct GoToLoginButton: View {
     var body: some View {
         Button(action: action) {
             Text("Go to Login")
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .font(.brand(.title3, weight: .semibold))
                 .foregroundColor(PasswordUpdatedBrand.onPrimary)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)

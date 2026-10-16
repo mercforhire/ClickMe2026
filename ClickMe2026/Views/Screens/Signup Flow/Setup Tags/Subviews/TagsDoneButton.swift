@@ -22,7 +22,7 @@ struct TagsDoneButton: View {
                     ProgressView().progressViewStyle(.circular).tint(.white)
                 } else {
                     Text("Done")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.brand(.title3, weight: .bold))
                         .foregroundColor(.white)
                 }
             }

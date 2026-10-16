@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -184,6 +184,7 @@ struct RequestDecisionView: View {
         } message: { message in
             Text(message)
         }
+        .keyboardDismissToolbar()
     }
 
     // MARK: - Content router
@@ -213,7 +214,11 @@ struct RequestDecisionView: View {
                         expiredBanner
                     } else {
                         RequestDecisionMessageSection(clientMessage: viewModel.clientMessage)
-                        RequestDecisionEarningsSection(potentialEarnings: viewModel.potentialEarnings)
+                        RequestDecisionEarningsSection(
+                            breakdown: viewModel.earningsBreakdown,
+                            fallbackGross: viewModel.potentialEarnings,
+                            fallbackCurrency: viewModel.currency
+                        )
                     }
                 }
                 .padding(16)
@@ -260,13 +265,13 @@ struct RequestDecisionView: View {
     private var expiredBanner: some View {
         VStack(spacing: 6) {
             Image(systemName: "clock.badge.xmark")
-                .font(.system(size: 26, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.overlayWhite60)
             Text("This request has expired")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text("You can no longer accept or decline this booking.")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.overlayWhite60)
                 .multilineTextAlignment(.center)
         }
@@ -282,7 +287,7 @@ struct RequestDecisionView: View {
         VStack(spacing: 12) {
             ProgressView().tint(Brand.onSurface)
             Text("Loading request…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.overlayWhite60)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -291,13 +296,13 @@ struct RequestDecisionView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.overlayWhite60)
             Text("Couldn't load request")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.overlayWhite60)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -306,7 +311,7 @@ struct RequestDecisionView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -329,7 +334,15 @@ struct RequestDecisionView: View {
             sheet()
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
-        .ignoresSafeArea()
+        // Ignore the container safe area (notch / home indicator) so
+        // the scrim + sheet extend edge-to-edge, but DO respect the
+        // keyboard safe area — otherwise SwiftUI's automatic
+        // keyboard-avoidance can't shift the sheet above the keyboard
+        // when the message TextEditor is focused. Was previously
+        // `.ignoresSafeArea()` with no arguments, which opted out of
+        // all regions including `.keyboard` and let the keyboard cover
+        // the text field.
+        .ignoresSafeArea(.container)
         .animation(.spring(response: 0.38, dampingFraction: 0.82), value: viewModel.showAcceptSheet)
         .animation(.spring(response: 0.38, dampingFraction: 0.82), value: viewModel.showDeclineSheet)
     }
@@ -389,6 +402,54 @@ private struct LiveFetchRequestDecisionBootstrap: View {
 #Preview("Expired") {
     PreviewNavHarness(parentText: "Dashboard", navTitle: "Incoming requests", rowTitle: "Booking request") {
         RequestDecisionView(viewModel: RequestDecisionViewModel(isExpired: true))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Earnings — Long-lead (estimated)") {
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Incoming requests", rowTitle: "Booking request") {
+        RequestDecisionView(viewModel: RequestDecisionViewModel(
+            earningsBreakdown: EarningsBreakdown(
+                grossAmount: 75,
+                platformFee: 15,
+                netAmount: 60,
+                commissionPct: 20,
+                currency: "USD",
+                feeSource: .expertDefault
+            )
+        ))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Earnings — Payout pending") {
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Incoming requests", rowTitle: "Booking request") {
+        RequestDecisionView(viewModel: RequestDecisionViewModel(
+            earningsBreakdown: EarningsBreakdown(
+                grossAmount: 75,
+                platformFee: nil,
+                netAmount: nil,
+                commissionPct: nil,
+                currency: "USD",
+                feeSource: .unavailable
+            )
+        ))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Earnings — Zero commission") {
+    PreviewNavHarness(parentText: "Dashboard", navTitle: "Incoming requests", rowTitle: "Booking request") {
+        RequestDecisionView(viewModel: RequestDecisionViewModel(
+            earningsBreakdown: EarningsBreakdown(
+                grossAmount: 75,
+                platformFee: 0,
+                netAmount: 75,
+                commissionPct: 0,
+                currency: "USD",
+                feeSource: .booking
+            )
+        ))
     }
     .preferredColorScheme(.dark)
 }

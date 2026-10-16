@@ -2,7 +2,7 @@
 //  MakeABookingViewModel.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -14,11 +14,17 @@ final class MakeABookingViewModel: ObservableObject {
 
     /// Sub-states of the paid booking flow. Free bookings never leave `.idle`
     /// — they use `isBooking` instead. Transitions:
-    /// `idle → creatingIntent → awaitingPaymentSheet → confirming → idle`.
+    /// `idle → creatingIntent → collectingPaymentMethod → confirming → idle`.
+    ///
+    /// **Path A flow (server-side confirm):** the PaymentSheet only
+    /// collects a `pm_…` — it does NOT confirm the PI itself, because
+    /// the PI lives on the expert's connected Stripe account and the
+    /// client SDK doesn't have that account id. Server-side
+    /// `/bookings/confirm` runs the actual confirm.
     enum PaidStep: Equatable {
         case idle
         case creatingIntent
-        case awaitingPaymentSheet
+        case collectingPaymentMethod
         case confirming
     }
 
@@ -62,10 +68,22 @@ final class MakeABookingViewModel: ObservableObject {
 
     // MARK: Selections
 
-    @Published var selectedTopic: BookingTopic?
+    /// Regenerates `bookingAttemptId` on change — a genuinely-new attempt
+    /// gets a fresh idempotency seed so the server doesn't 409 with
+    /// `BOOKING_ATTEMPT_CONFLICT`. Network retries within the same attempt
+    /// reuse the id.
+    @Published var selectedTopic: BookingTopic? {
+        didSet {
+            if oldValue?.id != selectedTopic?.id { newBookingAttempt() }
+        }
+    }
     @Published var selectedDate: Date = .init()
     @Published var displayedMonth: Date = .init()
-    @Published var selectedTimeSlot: BookingTimeSlot?
+    @Published var selectedTimeSlot: BookingTimeSlot? {
+        didSet {
+            if oldValue?.startTime != selectedTimeSlot?.startTime { newBookingAttempt() }
+        }
+    }
     @Published var meetingType: MeetingType = .inAppVoice
     @Published var clientNotes: String = ""
     @Published var showTopicPicker: Bool = false
@@ -76,10 +94,56 @@ final class MakeABookingViewModel: ObservableObject {
     @Published var availabilityState: LoadState = .idle
     @Published var isBooking: Bool = false
 
-    /// Surfaced to the view for an alert after the booking flow completes,
-    /// whether success (server message) or failure (`bookingError`).
+    // MARK: Payment-methods gating
+
+    /// Whether the client has a saved card. Paid bookings require this
+    /// to be `.available` before the CTA does the actual booking —
+    /// otherwise the CTA routes to the Payment Methods screen so the
+    /// user saves a card first. Loaded from `GET /me/payment-methods`
+    /// on appear and refreshed whenever the user returns from
+    /// `PaymentMethodsView`.
+    enum PaymentMethodsAvailability: Equatable {
+        case unknown
+        case none
+        case available
+    }
+
+    @Published var paymentMethodsAvailability: PaymentMethodsAvailability = .unknown
+
+    /// The client's saved cards, in the order the server returned. Kept
+    /// in sync with `paymentMethodsAvailability`. Populated so the
+    /// long-lead branch (session start > 6 days out, see Phase 27.1)
+    /// can pick a card and skip PI creation entirely — the short-lead
+    /// PaymentSheet flow never reads this and continues to rely on
+    /// PaymentSheet's own saved-card list.
+    @Published var savedPaymentMethods: [PaymentMethodItem] = []
+
+    /// True when the selected topic is paid and the client has no
+    /// saved cards on file. Drives the CTA to route to Payment Methods
+    /// instead of starting the paid booking flow.
+    var requiresPaymentMethodSetup: Bool {
+        guard let topic = selectedTopic, !topic.isFree else { return false }
+        return paymentMethodsAvailability == .none
+    }
+
+    /// Payment method id used by the long-lead branch. Prefers the
+    /// user's default; falls back to the first saved card so a user
+    /// with a single card (and no default flag set) still books.
+    private var preferredPaymentMethodId: String? {
+        if let defaultPM = savedPaymentMethods.first(where: { $0.isDefault }) {
+            return defaultPM.id
+        }
+        return savedPaymentMethods.first?.id
+    }
+
+    /// Surfaced to the view for an alert on booking failure.
     @Published var bookingError: String?
-    @Published var bookingSuccessMessage: String?
+    /// Set to the newly-created booking's id after a successful booking
+    /// flow (free or paid). Drives a `navigationDestination` push to
+    /// `BookingRequestSentView` — replaces the earlier "success alert"
+    /// pattern so the client lands on a proper confirmation screen that
+    /// can explain the Phase 27 payment lifecycle.
+    @Published var completedBookingId: UUID?
 
     // MARK: Paid flow state
 
@@ -87,14 +151,50 @@ final class MakeABookingViewModel: ObservableObject {
     /// `.idle` — they use `isBooking` instead.
     @Published var paidStep: PaidStep = .idle
     @Published var paymentIntentId: String?
-    @Published var paymentIntentClientSecret: String?
     @Published var paymentSummary: PaymentSummary?
+    /// SetupIntent client secret returned by
+    /// `POST /me/payment-methods/setup-intent`. Path A confirmation model:
+    /// PaymentSheet runs in **setup mode** against THIS secret so it only
+    /// attaches a card to the platform customer without touching the
+    /// booking PI (which lives on the expert's connected account and the
+    /// client SDK can't confirm). Side benefit: 3DS runs up-front at
+    /// SetupIntent confirm, so the resulting `pm_…` is pre-authenticated
+    /// and off-session confirm on the connected-account PI won't bounce
+    /// on fresh-card SCA.
+    @Published var setupIntentClientSecret: String?
     /// Stripe Customer id + short-lived ephemeral key — fed into
     /// `PaymentSheet.Configuration.customer` so the sheet lists the
-    /// caller's saved cards. Populated from the payment-intent
-    /// response; nil until `beginPaidBooking` succeeds.
+    /// caller's saved cards. Populated from the setup-intent response;
+    /// nil until `beginPaidBooking` succeeds.
     @Published var stripeCustomerId: String?
     @Published var stripeEphemeralKey: String?
+
+    /// Idempotency seed for the current booking attempt — sent as
+    /// `booking_attempt_id` on every `POST /bookings/payment-intent`
+    /// call. Regenerated only when the user meaningfully changes the
+    /// attempt (slot / topic swap); a network retry after failure
+    /// deliberately reuses the same id so Stripe treats it as one
+    /// idempotent operation.
+    private(set) var bookingAttemptId: UUID = UUID()
+
+    /// Set to true when the last confirm call landed on
+    /// `PAYMENT_REQUIRES_ACTION` — the view presents a 3DS/SCA sheet,
+    /// and after completion we retry `/bookings/confirm`.
+    ///
+    /// TODO(backend): the `stripeAccount` needed to complete 3DS on the
+    /// connected-account PI is expected in `detail.stripe_account` of
+    /// the 402 error. Wire the full retry once that ships.
+    @Published var pendingSCAChallenge: SCAChallenge?
+
+    /// Carries the `client_secret` (and, when the backend ships it,
+    /// the `stripe_account`) the SDK needs to complete 3DS.
+    struct SCAChallenge: Equatable {
+        let clientSecret: String
+        /// Connected account id for the PI. Nil until backend adds it
+        /// to `detail.stripe_account`; the sheet handles nil as a
+        /// hard-fail.
+        let stripeAccount: String?
+    }
 
     /// True while either the free flow is submitting or the paid flow is
     /// in-flight. The book button binds to this.
@@ -135,6 +235,7 @@ final class MakeABookingViewModel: ObservableObject {
         topics: [BookingTopic],
         availabilityByDate: [String: [BookingTimeSlot]] = [:],
         expertTimezone: String? = nil,
+        paymentMethodsAvailability: PaymentMethodsAvailability = .available,
         api: ClickMeAPI = .shared
     ) {
         self.expertId = expertId
@@ -145,6 +246,7 @@ final class MakeABookingViewModel: ObservableObject {
         self.topics = topics
         self.availabilityByDate = availabilityByDate
         self.expertTimezone = expertTimezone
+        self.paymentMethodsAvailability = paymentMethodsAvailability
         self.topicsState = .loaded
         self.availabilityState = availabilityByDate.isEmpty ? .idle : .loaded
         self.selectedTopic = topics.first
@@ -155,7 +257,24 @@ final class MakeABookingViewModel: ObservableObject {
     func onAppear() async {
         async let t: Void = loadTopics()
         async let a: Void = loadAvailability(for: displayedMonth)
-        _ = await (t, a)
+        async let p: Void = loadPaymentMethods()
+        _ = await (t, a, p)
+    }
+
+    /// Fetches the client's saved cards to gate the paid-booking CTA.
+    /// A load failure is treated as "no cards" — the CTA routes to
+    /// Payment Methods, which surfaces its own retry, rather than
+    /// silently permitting a booking that would then need a card to
+    /// be added mid-checkout.
+    func loadPaymentMethods() async {
+        do {
+            let response = try await api.getPaymentMethods()
+            savedPaymentMethods = response.data.paymentMethods
+            paymentMethodsAvailability = response.data.paymentMethods.isEmpty ? .none : .available
+        } catch {
+            savedPaymentMethods = []
+            paymentMethodsAvailability = .none
+        }
     }
 
     func loadTopics() async {
@@ -272,50 +391,117 @@ final class MakeABookingViewModel: ObservableObject {
                 timezone: TimeZone.current.identifier,
                 clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
             )
-            bookingSuccessMessage = response.data.message
+            completedBookingId = response.data.bookingId
         } catch {
             bookingError = Self.message(for: error)
         }
     }
 
-    // MARK: - Paid flow
+    // MARK: - Paid flow (Path A — server-side confirm)
 
-    /// Fetches a PaymentIntent from the server and moves the flow into
-    /// `.awaitingPaymentSheet`. The view observes that state and presents
-    /// Stripe's PaymentSheet with `paymentIntentClientSecret`.
+    /// Two-endpoint kick-off:
+    /// 1. `POST /bookings/payment-intent` — creates the PI on the expert's
+    ///    connected account (server-only concern; the client just needs the
+    ///    `pi_…` id to hand back at `/bookings/confirm`).
+    /// 2. `POST /me/payment-methods/setup-intent` — mints a SetupIntent on
+    ///    the platform customer so PaymentSheet can collect a card
+    ///    **without** confirming the connected-account PI. The resulting
+    ///    `pm_…` is what we hand to `/bookings/confirm` for the server to
+    ///    confirm off-session on the connected account.
+    ///
+    /// Runs the two calls sequentially. `async let` was rejected by Swift 6
+    /// strict concurrency — the child task ends up nonisolated and Swift's
+    /// synthesized main-actor `Decodable` conformance on the response types
+    /// can't be used from there. The serial cost (~two RTTs on tap) is
+    /// imperceptible and only paid once per booking attempt. On any
+    /// failure the flow resets — `bookingAttemptId` is preserved so a
+    /// user-triggered retry lands on the same idempotency key.
     private func beginPaidBooking(topic: BookingTopic, slot: BookingTimeSlot) async {
         paidStep = .creatingIntent
+
+        let selectedDateUTC = Self.utcDateString(from: slot.startTime)
+        let timeSlotUTC = Self.utcTimeSlotString(from: slot.startTime)
+
         do {
-            let selectedDateUTC = Self.utcDateString(from: slot.startTime)
-            let timeSlotUTC = Self.utcTimeSlotString(from: slot.startTime)
-            let response = try await api.createPaymentIntent(
+            let intent = try await api.createPaymentIntent(
                 expertId: expertId,
                 topicId: topic.id,
                 selectedDate: selectedDateUTC,
                 timeSlot: timeSlotUTC,
                 durationMinutes: topic.durationMinutes,
+                bookingAttemptId: bookingAttemptId,
                 promoCode: nil
             )
-            paymentIntentId = response.paymentIntentId
-            paymentIntentClientSecret = response.clientSecret
-            stripeCustomerId = response.customerId
-            stripeEphemeralKey = response.ephemeralKey
+            let setup = try await api.createPaymentMethodSetupIntent().data
+
+            paymentIntentId = intent.paymentIntentId
+            setupIntentClientSecret = setup.clientSecret
+            // Customer + ephemeral come from the SetupIntent so PaymentSheet
+            // lists the platform customer's saved cards. The PI response
+            // returns the same platform customer's ids too — either source
+            // works; picking one keeps the field origin unambiguous.
+            stripeCustomerId = setup.customerId
+            stripeEphemeralKey = setup.ephemeralKey
             paymentSummary = PaymentSummary(
-                subtotal: response.summary.subtotal,
-                discount: response.summary.discount,
-                total: response.summary.total,
-                currency: response.currency
+                subtotal: intent.summary.subtotal,
+                discount: intent.summary.discount,
+                total: intent.summary.total,
+                currency: intent.currency
             )
-            paidStep = .awaitingPaymentSheet
+            paidStep = .collectingPaymentMethod
         } catch {
-            bookingError = Self.message(for: error)
-            resetPaidFlow()
+            // Long-lead branch — server refused PI creation because the
+            // slot is > 6 days out. Skip the payment-intent step
+            // entirely and confirm against a saved card; the server
+            // schedules the actual charge ~24h before the session.
+            // See Phase 27.1 / `RESCHEDULE-PAYMENT-CONVERSION.md`.
+            if Self.errorCode(for: error) == .longLeadRequiresSavedCard {
+                await performLongLeadBooking(topic: topic, slot: slot)
+                return
+            }
+            handlePaidFlowError(error, phase: .createIntent, topic: topic, slot: slot)
         }
     }
 
-    /// Called from the PaymentSheet completion handler after the user's
-    /// card has been charged. Records the booking on our backend with the
-    /// `paymentIntentId` + `stripePaymentMethodId` pair.
+    /// Long-lead paid booking (session > 6 days out). Skips
+    /// `/bookings/payment-intent` and calls `/bookings/confirm`
+    /// **without** a `payment_intent_id`, routing the server to the
+    /// save-card-first / charge-at-T-24h branch (Phase 27.1). Requires
+    /// a saved card; the CTA gate already ensures this, so the missing
+    /// -pm guard here is a belt-and-suspenders backstop rather than a
+    /// user-visible state.
+    private func performLongLeadBooking(topic: BookingTopic, slot: BookingTimeSlot) async {
+        guard let pmId = preferredPaymentMethodId else {
+            paidStep = .idle
+            bookingError = "Please add a payment method before booking."
+            return
+        }
+
+        paidStep = .confirming
+        do {
+            let startTimeISO = Self.iso8601String(from: slot.startTime)
+            let response = try await api.confirmBooking(
+                paymentIntentId: nil,
+                expertId: expertId,
+                topicId: topic.id,
+                startTime: startTimeISO,
+                meetingType: meetingType,
+                stripePaymentMethodId: pmId,
+                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+                promoCode: nil
+            )
+            completedBookingId = response.data.bookingId
+            resetPaidFlow()
+        } catch {
+            handlePaidFlowError(error, phase: .confirm, topic: topic, slot: slot)
+        }
+    }
+
+    /// Called from the PaymentSheet completion handler after the user
+    /// has selected/entered a card. Server confirms the PI on the
+    /// connected account, authorizes funds (not captured yet — capture
+    /// runs post-session, ~15 min after the end time, per Phase 27),
+    /// and creates the booking.
     func completePaidBooking(paymentMethodId: String) async {
         guard let topic = selectedTopic,
               let slot = selectedTimeSlot,
@@ -338,14 +524,16 @@ final class MakeABookingViewModel: ObservableObject {
                 clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
                 promoCode: nil
             )
-            bookingSuccessMessage = response.data.message
+            // Funds are AUTHORIZED, not captured. Capture runs post-session
+            // (~15 min after end time, per Phase 27). Success routes the
+            // user to `BookingRequestSentView` where the payment
+            // lifecycle is explained inline; the raw server message is
+            // no longer surfaced.
+            completedBookingId = response.data.bookingId
+            resetPaidFlow()
         } catch {
-            // NOTE: money has been captured by Stripe at this point. Surface
-            // the paymentIntentId with the error so support can reconcile.
-            let base = Self.message(for: error)
-            bookingError = "\(base)\n\nPayment reference: \(intentId)"
+            handlePaidFlowError(error, phase: .confirm, topic: topic, slot: slot)
         }
-        resetPaidFlow()
     }
 
     /// Called when the user dismisses the PaymentSheet without paying.
@@ -356,10 +544,135 @@ final class MakeABookingViewModel: ObservableObject {
     private func resetPaidFlow() {
         paidStep = .idle
         paymentIntentId = nil
-        paymentIntentClientSecret = nil
+        setupIntentClientSecret = nil
         stripeCustomerId = nil
         stripeEphemeralKey = nil
         paymentSummary = nil
+        pendingSCAChallenge = nil
+    }
+
+    /// Regenerate `bookingAttemptId` when the user meaningfully changes
+    /// the attempt (slot / topic / expert swap). Called by setters below
+    /// via `didSet`.
+    private func newBookingAttempt() {
+        bookingAttemptId = UUID()
+    }
+
+    // MARK: - Paid flow error handling
+
+    private enum PaidPhase { case createIntent, confirm }
+
+    /// Maps `ErrorCode` → user-visible message + side effects, per the
+    /// backend Stripe integration doc. Codes without a specific action
+    /// fall back to the server's `message`.
+    private func handlePaidFlowError(_ error: Error, phase: PaidPhase, topic: BookingTopic, slot: BookingTimeSlot) {
+        let code = Self.errorCode(for: error)
+        let message = Self.message(for: error)
+
+        switch code {
+        case .paymentRequiresAction:
+            // Server confirmed the PI but it needs SCA/3DS. The client
+            // completes the challenge, then re-hits `/bookings/confirm`
+            // (server re-detects `requires_capture` and skips confirm).
+            if let detail = Self.errorDetail(for: error),
+               let clientSecret = detail["client_secret"] as? String {
+                let stripeAccount = detail["stripe_account"] as? String
+                pendingSCAChallenge = SCAChallenge(
+                    clientSecret: clientSecret,
+                    stripeAccount: stripeAccount
+                )
+                // Stay in `.confirming` — the SCA challenge sheet is
+                // presented by the view; on completion we retry confirm.
+                return
+            }
+            bookingError = message
+            resetPaidFlow()
+
+        case .bookingAttemptConflict:
+            // Same `booking_attempt_id`, different details — regenerate
+            // and start over from the intent-create step.
+            newBookingAttempt()
+            bookingError = "Please try booking again."
+            resetPaidFlow()
+
+        case .intentExpired, .piContextMismatch, .piAmountMismatch:
+            // PI is unusable. Regenerate attempt id and reset so the
+            // user can retry cleanly.
+            newBookingAttempt()
+            bookingError = message
+            resetPaidFlow()
+
+        case .expertNotBookable:
+            bookingError = "This expert isn't accepting bookings right now."
+            resetPaidFlow()
+
+        case .slotUnavailable:
+            // Kick the user back to the slot picker — the slot they had
+            // just got taken.
+            selectedTimeSlot = nil
+            newBookingAttempt()
+            bookingError = "That time slot was just taken. Please pick another."
+            resetPaidFlow()
+
+        case .invalidPaymentMethod:
+            bookingError = "This payment method can't be used for this booking. Please choose another card."
+            resetPaidFlow()
+
+        case .meetingLinkUnavailable:
+            bookingError = "The expert hasn't set up their Skype/Zoom link yet. Please choose in-app voice instead."
+            resetPaidFlow()
+
+        case .directChargeDisabled:
+            bookingError = "Payments are temporarily unavailable. Please try again in a few minutes."
+            resetPaidFlow()
+
+        case .paymentFailed:
+            bookingError = "Your card was declined. Please try another card."
+            resetPaidFlow()
+
+        case .duplicateBooking:
+            bookingError = "A booking for this session already exists."
+            resetPaidFlow()
+
+        case .amountBelowMinimum:
+            bookingError = "The session total is below the minimum charge amount."
+            resetPaidFlow()
+
+        case .invalidPromo:
+            bookingError = "That promo code isn't valid."
+            resetPaidFlow()
+
+        case .cannotBookSelf:
+            bookingError = "You can't book yourself."
+            resetPaidFlow()
+
+        default:
+            // On confirm-phase failure include the PI reference so
+            // support can reconcile if funds were charged.
+            if phase == .confirm, let intentId = paymentIntentId {
+                bookingError = "\(message)\n\nPayment reference: \(intentId)"
+            } else {
+                bookingError = message
+            }
+            resetPaidFlow()
+        }
+        _ = topic; _ = slot // reserved for future retry recovery
+    }
+
+    /// Called by the SCA challenge sheet after 3DS finishes. Re-hits
+    /// `/bookings/confirm` with the SAME `pm_…` — server sees the PI is
+    /// now `requires_capture` and skips its own confirm, just creating
+    /// the booking.
+    func retryConfirmAfterSCA(paymentMethodId: String) async {
+        pendingSCAChallenge = nil
+        await completePaidBooking(paymentMethodId: paymentMethodId)
+    }
+
+    /// Called if the SCA challenge failed or the user cancelled it.
+    func cancelSCA(withMessage message: String? = nil) {
+        pendingSCAChallenge = nil
+        if let message { bookingError = message }
+        resetPaidFlow()
     }
 
     // MARK: - Date helpers
@@ -432,6 +745,7 @@ final class MakeABookingViewModel: ObservableObject {
             id: t.id,
             title: t.title,
             durationMinutes: t.durationMins ?? 30,
+            description: t.description,
             priceAmount: t.price.amount,
             currency: t.price.currency,
             isFree: t.price.isFree
@@ -516,6 +830,24 @@ final class MakeABookingViewModel: ObservableObject {
             return response.message
         }
         return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+    }
+
+    private static func errorCode(for error: Error) -> ErrorCode? {
+        guard case let NetworkError.httpError(_, data) = error,
+              let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
+        else { return nil }
+        return response.code
+    }
+
+    /// Parses `detail` from the raw JSON error body via `JSONSerialization`
+    /// so `.convertFromSnakeCase` doesn't rewrite keys — the doc-defined
+    /// keys (`client_secret`, `stripe_account`) are snake_case and must
+    /// stay that way for lookup.
+    private static func errorDetail(for error: Error) -> [String: Any]? {
+        guard case let NetworkError.httpError(_, data) = error,
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return root["detail"] as? [String: Any]
     }
 }
 

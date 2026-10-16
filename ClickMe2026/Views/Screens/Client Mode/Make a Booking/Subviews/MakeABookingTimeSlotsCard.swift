@@ -2,7 +2,7 @@
 //  MakeABookingTimeSlotsCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -14,12 +14,12 @@ struct MakeABookingTimeSlotsCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Available Time Slots")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(MakeABookingBrand.onSurface)
                 Spacer()
                 if let tz = viewModel.expertTimezone {
                     Text(tz)
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .font(.brand(.caption, weight: .medium))
                         .foregroundColor(MakeABookingBrand.onSurfaceVar)
                 }
             }
@@ -52,7 +52,7 @@ struct MakeABookingTimeSlotsCard: View {
         let slots = viewModel.slotsForSelectedDate
         if slots.isEmpty {
             Text("No available slots on this day.")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
                 .padding(.vertical, 4)
         } else {
@@ -115,14 +115,14 @@ struct MakeABookingTimeSlotsCard: View {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
                 .lineLimit(2)
             Spacer()
             Button("Retry") {
                 Task { await viewModel.loadAvailability(for: viewModel.displayedMonth) }
             }
-            .font(.system(size: 13, weight: .semibold, design: .rounded))
+            .font(.brand(.caption, weight: .semibold))
             .foregroundColor(MakeABookingBrand.brandGreen)
         }
     }
@@ -136,7 +136,7 @@ struct MakeABookingTimeSlotsCard: View {
             if !isDisabled { viewModel.selectedTimeSlot = slot }
         } label: {
             Text(slot.displayLabel)
-                .font(.system(size: 14, weight: isSelected ? .bold : .regular, design: .rounded))
+                .font(.system(.subheadline, design: .rounded).weight(isSelected ? .bold : .regular))
                 .foregroundColor(
                     isSelected ? MakeABookingBrand.onPrimary :
                         isDisabled ? MakeABookingBrand.onSurfaceVar.opacity(0.35) :

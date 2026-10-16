@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,7 +24,7 @@ struct ProfileProfessionalCard: View {
                         .stroke(ProfileSettingsBrand.fieldBorder, lineWidth: 1))
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Professional Details")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .font(.brand(.caption, weight: .semibold))
                         .foregroundColor(ProfileSettingsBrand.onSurfaceVar)
                     HStack(spacing: 10) {
                         column(label: "Job Title", value: jobTitle)
@@ -42,10 +42,10 @@ struct ProfileProfessionalCard: View {
     private func column(label: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .font(.brand(.caption2, weight: .semibold))
                 .foregroundColor(ProfileSettingsBrand.labelColor)
             Text(value)
-                .font(.system(size: 14, design: .rounded))
+                .font(.brand(.subheadline))
                 .foregroundColor(ProfileSettingsBrand.onSurface)
                 .lineLimit(1)
         }

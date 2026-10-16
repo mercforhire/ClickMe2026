@@ -2,7 +2,7 @@
 //  BookingTopic.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -14,6 +14,11 @@ struct BookingTopic: Identifiable, Hashable {
     let id: UUID
     let title: String
     let durationMinutes: Int
+    /// Optional long-form description the expert wrote for this topic
+    /// (server: `topics_of_discussion[].description`). Surfaced in the
+    /// full-screen topic picker; the compact summary row shows only
+    /// title / duration / price.
+    let description: String?
     /// Price in minor units (cents). `nil` when the topic is free or price
     /// isn't set on the server.
     let priceAmount: Int?

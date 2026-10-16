@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-29.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -17,6 +17,10 @@ final class ExpertReviewsViewModel: ObservableObject {
     /// Server UUID of the expert whose reviews we're rendering. Nil when
     /// running under the preview seam that installs canned data.
     let expertId: UUID?
+    /// Expert's display name, used to personalize the nav-bar title
+    /// ("Sophia's Reviews"). Empty when unknown — the view falls back
+    /// to a generic "Reviews" label in that case.
+    let expertName: String
 
     // MARK: Content
     @Published var overallRating: Double
@@ -31,8 +35,9 @@ final class ExpertReviewsViewModel: ObservableObject {
 
     /// Runtime init — starts empty; `load()` on view appear populates from
     /// `GET /experts/:id/reviews`.
-    init(expertId: UUID?, api: ClickMeAPI = .shared) {
+    init(expertId: UUID?, expertName: String = "", api: ClickMeAPI = .shared) {
         self.expertId = expertId
+        self.expertName = expertName
         self.api = api
         self.overallRating = 0
         self.totalReviews = 0
@@ -44,16 +49,32 @@ final class ExpertReviewsViewModel: ObservableObject {
     /// succeeded. Used by the "sample data" preview to render without
     /// hitting the network.
     init(
+        expertName: String = "",
         overallRating: Double,
         totalReviews: Int,
         reviews: [ExpertReview]
     ) {
         self.expertId = nil
+        self.expertName = expertName
         self.api = .shared
         self.overallRating = overallRating
         self.totalReviews = totalReviews
         self.reviews = reviews
         self.state = .loaded
+    }
+
+    // MARK: - Derived
+
+    /// Nav-bar title. Uses the expert's first name only (keeps the bar
+    /// readable in `.inline` mode) and falls back to "Reviews" when no
+    /// name is available.
+    var navigationTitle: String {
+        let trimmed = expertName.trimmingCharacters(in: .whitespaces)
+        guard let first = trimmed.split(separator: " ").first.map(String.init),
+              !first.isEmpty else {
+            return "Reviews"
+        }
+        return "\(first)'s Reviews"
     }
 
     // MARK: - Load

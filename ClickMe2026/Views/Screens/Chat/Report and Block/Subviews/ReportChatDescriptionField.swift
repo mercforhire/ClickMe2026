@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct ReportChatDescriptionField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Description")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ReportChatBrand.onSurface)
 
             ZStack(alignment: .topLeading) {
@@ -31,7 +31,7 @@ struct ReportChatDescriptionField: View {
 
                 if text.isEmpty {
                     Text("Please provide any additional details...")
-                        .font(.system(size: 15, design: .rounded))
+                        .font(.brand(.subheadline))
                         .foregroundColor(ReportChatBrand.onSurfaceVar)
                         .padding(.horizontal, 14)
                         .padding(.top, 14)
@@ -41,7 +41,7 @@ struct ReportChatDescriptionField: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .foregroundColor(ReportChatBrand.onSurface)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.brand(.subheadline))
                     .tint(ReportChatBrand.brandGreen)
                     .frame(minHeight: 140)
                     .padding(.horizontal, 10)

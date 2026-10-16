@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -29,7 +29,7 @@ struct ProfessionalDetailsSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Edit Professional Details")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.brand(.title2, weight: .bold))
                 .foregroundColor(ProfileSettingsBrand.onSurface)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 28)
@@ -43,7 +43,7 @@ struct ProfessionalDetailsSheet: View {
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("Suggested Roles")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(ProfileSettingsBrand.onSurface)
 
                 ProfileFlowLayout(spacing: 8) {
@@ -52,7 +52,7 @@ struct ProfessionalDetailsSheet: View {
                             withAnimation(.easeInOut(duration: 0.2)) { jobTitle = role }
                         } label: {
                             Text(role)
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .font(.brand(.caption, weight: .medium))
                                 .foregroundColor(ProfileSettingsBrand.onSurface)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 7)
@@ -75,7 +75,7 @@ struct ProfessionalDetailsSheet: View {
             VStack(spacing: 10) {
                 Button { dismiss() } label: {
                     Text("Update")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(ProfileSettingsBrand.onPrimary)
                         .frame(maxWidth: .infinity).frame(height: 52)
                         .background(Capsule().fill(ProfileSettingsBrand.brandGreen)
@@ -85,7 +85,7 @@ struct ProfessionalDetailsSheet: View {
 
                 Button { dismiss() } label: {
                     Text("Cancel")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(ProfileSettingsBrand.onSurface)
                         .underline()
                 }
@@ -94,6 +94,10 @@ struct ProfessionalDetailsSheet: View {
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 28)
+        // Sheet presentation context — app-root keyboard toolbar doesn't
+        // reach this level, so re-attach locally for the Job Title /
+        // Company / URL TextFields.
+        .keyboardDismissToolbar()
     }
 
     /// URL-oriented variant of `sheetField` — turns off autocapitalization
@@ -108,10 +112,10 @@ struct ProfessionalDetailsSheet: View {
                     .stroke(ProfileSettingsBrand.fieldBorder, lineWidth: 1))
             VStack(alignment: .leading, spacing: 3) {
                 Text("Skype / Zoom link")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption2, weight: .semibold))
                     .foregroundColor(ProfileSettingsBrand.brandGreen)
                 TextField("e.g. zoom.us/j/1234567890", text: text)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.brand(.subheadline))
                     .foregroundColor(ProfileSettingsBrand.onSurface)
                     .tint(ProfileSettingsBrand.brandGreen)
                     .keyboardType(.URL)
@@ -132,10 +136,10 @@ struct ProfessionalDetailsSheet: View {
                     .stroke(ProfileSettingsBrand.fieldBorder, lineWidth: 1))
             VStack(alignment: .leading, spacing: 3) {
                 Text(label)
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption2, weight: .semibold))
                     .foregroundColor(ProfileSettingsBrand.brandGreen)
                 TextField("", text: text)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.brand(.subheadline))
                     .foregroundColor(ProfileSettingsBrand.onSurface)
                     .tint(ProfileSettingsBrand.brandGreen)
             }

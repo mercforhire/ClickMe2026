@@ -2,7 +2,7 @@
 //  MakeABookingSummarySection.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -31,11 +31,11 @@ struct MakeABookingSummarySection: View {
     private func row(label: String, value: String) -> some View {
         HStack(alignment: .top) {
             Text(label)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
                 .frame(width: 100, alignment: .leading)
             Text(value)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(MakeABookingBrand.onSurface)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: .infinity, alignment: .trailing)

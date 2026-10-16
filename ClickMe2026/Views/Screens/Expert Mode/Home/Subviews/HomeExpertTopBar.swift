@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-02.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,7 +25,7 @@ struct HomeExpertTopBar: View {
             HStack(spacing: 8) {
                 ClickMeLogoMark(size: 28)
                 Text("ClickMe")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.title3.weight(.semibold))
                     .tracking(-0.2)
                     .foregroundColor(Brand.onSurface)
             }
@@ -34,7 +34,7 @@ struct HomeExpertTopBar: View {
 
             Button(action: onNotifications) {
                 Image(systemName: "bell")
-                    .font(.system(size: 20, weight: .light))
+                    .font(.title3.weight(.light))
                     .foregroundColor(Brand.onSurface)
                     .frame(width: 36, height: 36)
             }

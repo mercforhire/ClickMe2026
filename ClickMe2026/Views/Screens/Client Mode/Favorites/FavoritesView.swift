@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -66,6 +66,11 @@ struct FavoritesView: View {
             .navigationDestination(for: FavoriteExpert.self) { expert in
                 ExpertProfileView(expert: PublicExpertProfile(from: expert))
             }
+            .navigationTitle("Favorite Experts")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(FavoritesBrand.bg, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
     }
 
     private var content: some View {
@@ -138,13 +143,13 @@ struct FavoritesView: View {
         VStack(spacing: 12) {
             Spacer()
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(FavoritesBrand.onSurfaceVar)
             Text("Couldn't load favorites")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(FavoritesBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(FavoritesBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -153,7 +158,7 @@ struct FavoritesView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(FavoritesBrand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)

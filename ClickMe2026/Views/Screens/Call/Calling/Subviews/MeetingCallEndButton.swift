@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -18,9 +18,9 @@ struct MeetingCallEndButton: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: "phone.down.fill")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.title3.weight(.semibold))
                 Text("End Call")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.brand(.body, weight: .bold))
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)

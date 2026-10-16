@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -30,8 +30,18 @@ struct BookingRequestDetail: Decodable {
     }
 
     struct Economics: Decodable {
+        /// **Legacy — gross.** What the client pays, not the expert's
+        /// take-home. Retained for wire compatibility; new UI should
+        /// read from `earningsBreakdown` per the Expert Earnings
+        /// Breakdown spec (§0).
         let potentialEarnings: Double?
         let currency: String?
+        /// Post-commission breakdown — populated on all responses since
+        /// the Expert Earnings Breakdown rollout (2026-08-11). The
+        /// object itself may be absent on very old cached responses,
+        /// hence Optional; render "Payout amount pending" if nil, same
+        /// as the `.unavailable` branch.
+        let earningsBreakdown: EarningsBreakdown?
     }
 
     let requestId: UUID

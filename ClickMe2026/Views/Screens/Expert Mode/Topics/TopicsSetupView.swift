@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -82,6 +82,7 @@ struct TopicsSetupView: View {
                 .padding(20)
                 .padding(.bottom, 32)
         }
+        .refreshable { await viewModel.reload() }
     }
 
     private var loadingContent: some View {
@@ -89,7 +90,7 @@ struct TopicsSetupView: View {
             ProgressView()
                 .tint(Brand.onSurface)
             Text("Loading topics…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -98,13 +99,13 @@ struct TopicsSetupView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant)
             Text("Couldn't load topics")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13))
+                .font(.caption)
                 .foregroundColor(Brand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -113,7 +114,7 @@ struct TopicsSetupView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)

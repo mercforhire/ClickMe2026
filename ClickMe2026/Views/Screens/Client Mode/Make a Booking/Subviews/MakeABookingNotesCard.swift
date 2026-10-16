@@ -2,7 +2,7 @@
 //  MakeABookingNotesCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -26,7 +26,7 @@ struct MakeABookingNotesCard: View {
 
                 if clientNotes.isEmpty {
                     Text("Add context for the expert — what you'd like to focus on, questions you have, etc.")
-                        .font(.system(size: 14, design: .rounded))
+                        .font(.brand(.subheadline))
                         .foregroundColor(MakeABookingBrand.onSurfaceVar.opacity(0.7))
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
@@ -34,7 +34,7 @@ struct MakeABookingNotesCard: View {
                 }
 
                 TextEditor(text: $clientNotes)
-                    .font(.system(size: 14, design: .rounded))
+                    .font(.brand(.subheadline))
                     .foregroundColor(MakeABookingBrand.onSurface)
                     .scrollContentBackground(.hidden)
                     .padding(.horizontal, 11)
@@ -51,7 +51,7 @@ struct MakeABookingNotesCard: View {
             HStack {
                 Spacer()
                 Text("\(clientNotes.count)/\(maxLength)")
-                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .font(.brand(.caption2, weight: .regular))
                     .foregroundColor(MakeABookingBrand.onSurfaceVar)
             }
         }

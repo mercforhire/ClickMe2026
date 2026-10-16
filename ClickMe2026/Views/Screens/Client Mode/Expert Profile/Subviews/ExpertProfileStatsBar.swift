@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,10 +24,10 @@ struct ExpertProfileStatsBar: View {
     private func cell(label: String, value: String) -> some View {
         VStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.brand(.caption2, weight: .medium))
                 .foregroundColor(ExpertProfileBrand.onSurfaceVar)
             Text(value)
-                .font(.system(size: 14, weight: .bold, design: .rounded))
+                .font(.brand(.subheadline, weight: .bold))
                 .foregroundColor(ExpertProfileBrand.onSurface)
         }
         .frame(maxWidth: .infinity)

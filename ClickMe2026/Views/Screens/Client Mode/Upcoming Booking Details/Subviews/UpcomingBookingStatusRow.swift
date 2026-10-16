@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,7 +21,7 @@ struct UpcomingBookingStatusRow: View {
                     .frame(width: 8, height: 8)
                     .shadow(color: UpcomingBookingBrand.brandGreen.opacity(0.80), radius: 4)
                 Text("Confirmed")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(UpcomingBookingBrand.brandGreen)
             }
             .padding(.horizontal, 14)
@@ -35,7 +35,7 @@ struct UpcomingBookingStatusRow: View {
             Spacer()
 
             Text("ID: \(bookingID)")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .font(.brand(.caption, weight: .medium))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
         }
     }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -13,17 +13,21 @@ import SwiftUI
 struct RescheduleTimeSlotsCard: View {
     let slots: [BookingTimeSlot]
     let selectedTime: BookingTimeSlot?
+    /// Whether a given slot corresponds to the booking's current start
+    /// time. Renders it disabled with a "Current" label so the user
+    /// can't reschedule to the same slot they're rescheduling from.
+    var isCurrent: (BookingTimeSlot) -> Bool = { _ in false }
     let onSelect: (BookingTimeSlot) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Time Slots")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(RescheduleBrand.onSurface)
 
             if slots.isEmpty {
                 Text("No available slots for the selected day.")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(RescheduleBrand.onSurfaceVar)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -39,19 +43,32 @@ struct RescheduleTimeSlotsCard: View {
     }
 
     private func timeChip(_ slot: BookingTimeSlot) -> some View {
+        let isCurrentSlot = isCurrent(slot)
         let isSelected = selectedTime == slot
-        let isDisabled = !slot.isAvailable
+        // Current slots are always disabled — user can't reschedule to
+        // the same time. Rendered with an orange border + "Current"
+        // caption so they're distinguishable from generic unavailable
+        // (grey) slots.
+        let isDisabled = !slot.isAvailable || isCurrentSlot
         return Button {
             guard !isDisabled else { return }
             onSelect(slot)
         } label: {
-            Text(slot.displayLabel)
-                .font(.system(size: 13, weight: isSelected ? .bold : .medium, design: .rounded))
-                .foregroundColor(
-                    isDisabled
-                        ? RescheduleBrand.onSurfaceVar.opacity(0.35)
-                        : (isSelected ? RescheduleBrand.brandGreen : RescheduleBrand.onSurface)
-                )
+            VStack(spacing: 1) {
+                Text(slot.displayLabel)
+                    .font(.system(.caption, design: .rounded).weight(isSelected ? .bold : .medium))
+                    .foregroundColor(chipTextColor(
+                        isSelected: isSelected,
+                        isDisabled: isDisabled,
+                        isCurrent: isCurrentSlot
+                    ))
+                if isCurrentSlot {
+                    Text("Current")
+                        .font(.brand(.caption2, weight: .semibold))
+                        .tracking(0.4)
+                        .foregroundColor(.orange.opacity(0.85))
+                }
+            }
                 .frame(maxWidth: .infinity)
                 .frame(height: 38)
                 .background(
@@ -60,10 +77,11 @@ struct RescheduleTimeSlotsCard: View {
                         .overlay(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .stroke(
-                                    isSelected
-                                        ? RescheduleBrand.brandGreen
-                                        : RescheduleBrand.chipBorder,
-                                    lineWidth: isSelected ? 1.5 : 1
+                                    chipBorderColor(
+                                        isSelected: isSelected,
+                                        isCurrent: isCurrentSlot
+                                    ),
+                                    lineWidth: isSelected || isCurrentSlot ? 1.5 : 1
                                 )
                                 .shadow(
                                     color: isSelected
@@ -76,5 +94,16 @@ struct RescheduleTimeSlotsCard: View {
         }
         .buttonStyle(.plain)
         .disabled(isDisabled)
+    }
+
+    private func chipTextColor(isSelected: Bool, isDisabled: Bool, isCurrent: Bool) -> Color {
+        if isCurrent { return RescheduleBrand.onSurface.opacity(0.7) }
+        if isDisabled { return RescheduleBrand.onSurfaceVar.opacity(0.35) }
+        return isSelected ? RescheduleBrand.brandGreen : RescheduleBrand.onSurface
+    }
+
+    private func chipBorderColor(isSelected: Bool, isCurrent: Bool) -> Color {
+        if isCurrent { return .orange.opacity(0.55) }
+        return isSelected ? RescheduleBrand.brandGreen : RescheduleBrand.chipBorder
     }
 }

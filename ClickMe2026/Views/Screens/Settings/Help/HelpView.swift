@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -13,6 +13,11 @@ import SwiftUI
 struct HelpView: View {
 
     @StateObject private var viewModel: HelpViewModel
+    @Environment(\.openURL) private var openURL
+
+    /// Support inbox surfaced by the "Email Us" contact row. Swap
+    /// here (not per-callsite) if the address ever changes.
+    private static let supportEmail = "support@clickme.app"
 
     init(viewModel: HelpViewModel = HelpViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -62,7 +67,7 @@ struct HelpView: View {
             ProgressView()
                 .tint(HelpBrand.onSurface)
             Text("Loading help…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(HelpBrand.onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -71,13 +76,13 @@ struct HelpView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(HelpBrand.onSurfaceVar)
             Text("Couldn't load help")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(HelpBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(HelpBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -86,7 +91,7 @@ struct HelpView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -123,9 +128,19 @@ struct HelpView: View {
             HelpContactRow(
                 icon: "envelope",
                 title: "Email Us",
-                action: {}
+                action: openSupportEmail
             )
         }
+    }
+
+    /// Hand off to the system with a `mailto:` URL. iOS routes to
+    /// whichever mail client the user has picked as default
+    /// (Mail / Gmail / Outlook / Spark). Silently no-ops on
+    /// simulator builds that have no mail handler configured — the
+    /// button "does nothing" only in that edge case.
+    private func openSupportEmail() {
+        guard let url = URL(string: "mailto:\(Self.supportEmail)") else { return }
+        openURL(url)
     }
 }
 

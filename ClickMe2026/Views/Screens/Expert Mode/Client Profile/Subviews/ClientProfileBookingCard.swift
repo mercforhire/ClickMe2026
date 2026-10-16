@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,19 +19,19 @@ struct ClientProfileBookingCard: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(booking.title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .bold))
                     .foregroundColor(ClientProfileBrand.onSurface)
                     .lineLimit(1)
 
                 Text("\(booking.status.label) - \(booking.date)")
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(ClientProfileBrand.onSurfaceVar)
             }
 
             Spacer()
 
             Text("$\(booking.amount)")
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(.brand(.callout, weight: .bold))
                 .foregroundColor(ClientProfileBrand.onSurface)
         }
         .padding(14)
@@ -67,7 +67,7 @@ struct ClientProfileBookingCard: View {
                 .frame(width: 44, height: 44)
 
             Image(systemName: booking.status.icon)
-                .font(.system(size: 20, weight: .medium))
+                .font(.title3.weight(.medium))
                 .foregroundColor(booking.status.tint)
         }
     }

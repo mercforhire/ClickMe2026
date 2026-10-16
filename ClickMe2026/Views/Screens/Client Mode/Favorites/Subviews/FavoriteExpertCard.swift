@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -40,7 +40,7 @@ struct FavoriteExpertCard: View {
                     ZStack {
                         Color(red: 0.10, green: 0.12, blue: 0.12)
                         Image(systemName: "person.fill")
-                            .font(.system(size: 30))
+                            .font(.title)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }
@@ -50,10 +50,10 @@ struct FavoriteExpertCard: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(expert.name)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(FavoritesBrand.onSurface)
                 Text(expert.title)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(FavoritesBrand.brandGreen)
             }
 
@@ -61,7 +61,7 @@ struct FavoriteExpertCard: View {
 
             Button(action: onUnfavorite) {
                 Image(systemName: "heart.fill")
-                    .font(.system(size: 22, weight: .regular))
+                    .font(.title2.weight(.regular))
                     .foregroundColor(FavoritesBrand.heartColor)
                     .frame(width: 36, height: 36)
             }
@@ -79,7 +79,7 @@ struct FavoriteExpertCard: View {
         TopicsSetupFlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
             ForEach(expert.tags, id: \.self) { tag in
                 Text(tag)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(FavoritesBrand.onSurface)
                     .lineLimit(1)
                     .fixedSize(horizontal: true, vertical: false)
@@ -98,7 +98,7 @@ struct FavoriteExpertCard: View {
 
     private var bioRow: some View {
         Text(expert.bio)
-            .font(.system(size: 13, weight: .regular, design: .rounded))
+            .font(.brand(.caption, weight: .regular))
             .foregroundColor(FavoritesBrand.onSurfaceVar)
             .lineLimit(3)
             .lineSpacing(3)

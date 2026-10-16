@@ -13,7 +13,7 @@ struct CustomTagSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Can't find a tag? Add your own.")
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Color.white.opacity(0.38))
 
             HStack(spacing: 10) {
@@ -21,17 +21,17 @@ struct CustomTagSection: View {
                     .placeholder(when: text.isEmpty) {
                         Text("Enter custom tag")
                             .foregroundColor(Color.white.opacity(0.28))
-                            .font(.system(size: 16, design: .rounded))
+                            .font(.brand(.callout))
                     }
                     .foregroundColor(.white)
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
                     .autocapitalization(.words)
                     .submitLabel(.done)
                     .onSubmit(onAdd)
 
                 Button(action: onAdd) {
                     Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.callout.weight(.medium))
                         .foregroundColor(text.isEmpty ? Color.white.opacity(0.25) : TagsBrand.green)
                 }
                 .disabled(text.isEmpty)

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,7 +21,7 @@ struct RequestDecisionClientHeader: View {
                     ZStack {
                         Color(red: 0.14, green: 0.20, blue: 0.16)
                         Image(systemName: "person.fill")
-                            .font(.system(size: 26))
+                            .font(.title)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }
@@ -31,12 +31,12 @@ struct RequestDecisionClientHeader: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(request.clientName)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(Brand.onSurface)
 
                 Button(action: onViewProfile) {
                     Text("View Profile")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.brand(.subheadline, weight: .medium))
                         .foregroundColor(Brand.primary)
                 }
                 .buttonStyle(.plain)

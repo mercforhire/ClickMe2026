@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,9 +19,9 @@ struct ReadyToStartCallMessageButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: "bubble.left.and.bubble.right")
-                    .font(.system(size: 17, weight: .regular))
+                    .font(.body.weight(.regular))
                 Text("Message Participant")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .font(.brand(.callout, weight: .semibold))
             }
             .foregroundColor(ReadyToStartCallBrand.onSurface)
             .frame(maxWidth: .infinity)

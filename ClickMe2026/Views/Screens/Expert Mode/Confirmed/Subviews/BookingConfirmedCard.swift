@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,10 +17,10 @@ struct BookingConfirmedCard: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(booking.expertName)
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(Brand.onSurface)
                     Text(booking.expertTitle)
-                        .font(.system(size: 14, weight: .regular, design: .rounded))
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(Brand.onSurfaceVariant)
                 }
 
@@ -34,7 +34,7 @@ struct BookingConfirmedCard: View {
                         ZStack {
                             Circle().fill(Color(red: 0.14, green: 0.20, blue: 0.16))
                             Image(systemName: "person.fill")
-                                .font(.system(size: 22))
+                                .font(.title2)
                                 .foregroundColor(.white.opacity(0.15))
                         }
                     }
@@ -76,11 +76,11 @@ struct BookingConfirmedCard: View {
     private func iconRow(icon: String, label: String) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
-                .font(.system(size: 20, weight: .regular))
+                .font(.title3.weight(.regular))
                 .foregroundColor(Brand.onSurfaceVariant)
                 .frame(width: 22)
             Text(label)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Brand.onSurface)
                 .fixedSize(horizontal: false, vertical: true)
         }

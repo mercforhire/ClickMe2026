@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,13 +22,13 @@ struct ProfileBioField: View {
                 .frame(minHeight: 110)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Bio")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption2, weight: .semibold))
                     .foregroundColor(ProfileSettingsBrand.labelColor)
                 TextEditor(text: $text)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .foregroundColor(ProfileSettingsBrand.onSurface)
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.brand(.subheadline))
                     .tint(ProfileSettingsBrand.brandGreen)
                     .frame(minHeight: 80)
             }

@@ -2,7 +2,7 @@
 //  NotificationsListViewModel.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -51,6 +51,21 @@ final class NotificationsListViewModel: ObservableObject {
         await forceLoad()
     }
 
+    /// Background refresh — re-groups notifications without touching
+    /// `loadState`. Fires from the view's `.onAppear` so returning to
+    /// the list surfaces new arrivals in place instead of blanking to
+    /// a spinner. Guarded on `.loaded` so it can't race the initial
+    /// `.task { load() }`. Failure is intentionally swallowed.
+    func silentReload() async {
+        guard case .loaded = loadState else { return }
+        do {
+            let response = try await api.getNotifications(page: 1, limit: 50)
+            sections = Self.group(response.data.notifications)
+        } catch {
+            // Swallow — see docblock.
+        }
+    }
+
     private func forceLoad() async {
         loadState = .loading
         do {
@@ -59,20 +74,6 @@ final class NotificationsListViewModel: ObservableObject {
             loadState = .loaded
         } catch {
             loadState = .failed(error.userMessage)
-        }
-    }
-
-    // MARK: - Clear all
-
-    /// Optimistically clears the local list and (best-effort) hits the
-    /// server if a bulk-clear endpoint ever ships. Today we just empty
-    /// the sections — the server doesn't expose a "delete all" route
-    /// yet, so the next `reload()` will bring items back. This satisfies
-    /// the design's "Clear all" affordance while the endpoint is
-    /// pending.
-    func clearAll() {
-        withAnimation(.easeInOut(duration: 0.25)) {
-            sections = []
         }
     }
 
@@ -115,6 +116,81 @@ final class NotificationsListViewModel: ObservableObject {
         return sections
     }
 
+    // MARK: - Tap routing
+
+    /// Maps a notification row to the app-wide `PushDestination` used by
+    /// the shells' navigation logic. Reuses the same routing surface as
+    /// real push taps so tap-from-list and tap-from-push land on the
+    /// same screen.
+    ///
+    /// Mirrors the table in `PushRouter.destination(for:)` — when the
+    /// backend omits `subCategory` (older payloads), we fall back to a
+    /// coarse category-only mapping so the row is still tappable.
+    static func destination(for item: NotificationItem) -> PushDestination? {
+        switch item.category {
+        case .booking:
+            // `booking/requests` is a pending expert-decision request —
+            // no confirmed booking to summarise, so land on the requests
+            // hub rather than a booking-summary view.
+            if item.subCategory == "requests" {
+                return .incomingRequests
+            }
+            guard let bookingId = bookingId(in: item.metaData) else { return nil }
+            return .bookingDetail(bookingId: bookingId)
+
+        case .session:
+            guard let bookingId = bookingId(in: item.metaData) else { return nil }
+            if item.subCategory == "ended" {
+                return .leaveReview(bookingId: bookingId)
+            }
+            return .bookingDetail(bookingId: bookingId)
+
+        case .message:
+            guard let threadId = threadId(in: item.metaData) else { return nil }
+            return .chatThread(threadId: threadId)
+
+        case .review:
+            guard let bookingId = bookingId(in: item.metaData) else { return nil }
+            if item.subCategory == "nudge" {
+                return .leaveReview(bookingId: bookingId)
+            }
+            return .bookingDetail(bookingId: bookingId)
+
+        case .payout:
+            if item.subCategory == "kyc_action" {
+                return .kycOnboarding
+            }
+            return .payouts
+
+        case .account:
+            return .accountSecurity
+        }
+    }
+
+    /// The shared `NetworkService` decoder applies
+    /// `.convertFromSnakeCase` to every dictionary key it decodes,
+    /// including the raw keys inside `JSONValue.object`. So a payload
+    /// like `{"booking_id": "…"}` on the wire arrives here as
+    /// `["bookingId": .string("…")]`. Extractors accept both spellings
+    /// so we're robust to whichever form the decoder produces.
+    private static func bookingId(in meta: JSONValue?) -> UUID? {
+        uuidValue(in: meta, forKeys: ["bookingId", "booking_id"])
+    }
+
+    private static func threadId(in meta: JSONValue?) -> UUID? {
+        uuidValue(in: meta, forKeys: ["threadId", "thread_id", "chatThreadId", "chat_thread_id"])
+    }
+
+    private static func uuidValue(in meta: JSONValue?, forKeys keys: [String]) -> UUID? {
+        guard case let .object(dict) = meta else { return nil }
+        for key in keys {
+            if case let .string(raw) = dict[key], let id = UUID(uuidString: raw) {
+                return id
+            }
+        }
+        return nil
+    }
+
     // MARK: - Preview seed
 
     static let defaultSeed: [NotificationsListSection] = {
@@ -130,6 +206,7 @@ final class NotificationsListViewModel: ObservableObject {
                     id: UUID(),
                     userId: UUID(),
                     category: .booking,
+                    subCategory: "requests",
                     title: "Booking Request",
                     body: "**Sarah Chen** sent you a booking request for UI Design.",
                     metaData: nil,
@@ -141,6 +218,7 @@ final class NotificationsListViewModel: ObservableObject {
                     id: UUID(),
                     userId: UUID(),
                     category: .session,
+                    subCategory: "reminder",
                     title: "Session Reminder",
                     body: "Your session with **Marcus Chen** starts in 30 minutes.",
                     metaData: nil,
@@ -154,6 +232,7 @@ final class NotificationsListViewModel: ObservableObject {
                     id: UUID(),
                     userId: UUID(),
                     category: .review,
+                    subCategory: "received",
                     title: "New Review",
                     body: "A client left you a new **5-star review!** Check out what they said.",
                     metaData: nil,
@@ -167,6 +246,7 @@ final class NotificationsListViewModel: ObservableObject {
                     id: UUID(),
                     userId: UUID(),
                     category: .account,
+                    subCategory: "password_changed",
                     title: "Account Security",
                     body: "Your payment method has been successfully updated.",
                     metaData: nil,

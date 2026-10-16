@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -40,7 +40,7 @@ struct TopicsSetupTopicCard: View {
                     // Falls back to `sparkles` when nil or the slug isn't
                     // in the table yet.
                     Image(systemName: topic.iconSlug.map { CategoryIconMap.sfSymbol(forSlug: $0) } ?? "sparkles")
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.body.weight(.semibold))
                         .foregroundColor(Brand.primary)
                 }
                 Spacer()
@@ -51,7 +51,7 @@ struct TopicsSetupTopicCard: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                         .foregroundColor(Brand.onSurfaceVariant)
                         .frame(width: 32, height: 32)
                 }
@@ -60,16 +60,16 @@ struct TopicsSetupTopicCard: View {
             // Topic + rate
             HStack(alignment: .top) {
                 Text(topic.title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                     .foregroundColor(Brand.onSurface)
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Per Session")
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.caption.weight(.medium))
                         .foregroundColor(Brand.onSurfaceVariant)
                     Text(priceLabel)
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.title2.weight(.bold))
                         .foregroundColor(Brand.primary)
                 }
             }

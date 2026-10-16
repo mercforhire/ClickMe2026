@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -40,7 +40,7 @@ struct IncomingRequestAvatar: View {
                     ZStack {
                         Color(red: 0.12, green: 0.18, blue: 0.14)
                         Image(systemName: "person.fill")
-                            .font(.system(size: 26))
+                            .font(.title)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }

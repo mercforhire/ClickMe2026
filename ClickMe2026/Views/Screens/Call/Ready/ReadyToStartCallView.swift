@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -126,7 +126,7 @@ struct ReadyToStartCallView: View {
         VStack(spacing: 12) {
             ProgressView().tint(ReadyToStartCallBrand.onSurface)
             Text("Preparing meeting link…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ReadyToStartCallBrand.onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -135,13 +135,13 @@ struct ReadyToStartCallView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(ReadyToStartCallBrand.onSurfaceVar)
             Text("Couldn't join call")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ReadyToStartCallBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(ReadyToStartCallBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -150,7 +150,7 @@ struct ReadyToStartCallView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -196,7 +196,7 @@ private struct LiveFetchReadyToStartCallBootstrap: View {
 
     private func resolve() async {
         do {
-            let response = try await ClickMeAPI.shared.getExpertBookings(page: 1, limit: 20)
+            let response = try await ClickMeAPI.shared.getExpertBookings(type: .upcoming, page: 1, limit: 20)
             let now = Date()
             let picked = response.data.bookings.first {
                 $0.session.meetingType == .skypeZoom && $0.session.endTime > now

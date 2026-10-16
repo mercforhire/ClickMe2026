@@ -2,7 +2,7 @@
 //  ExploreFeaturedTopicsSection.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -23,11 +23,11 @@ struct ExploreFeaturedTopicsSection: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Text("Featured Topics")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(.white)
                 Spacer()
                 Button("See all", action: onSeeAll)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(ExploreBrand.brandGreen)
             }
             .padding(.horizontal, 20)
@@ -62,14 +62,14 @@ private struct FeaturedTopicCard: View {
                 VStack(alignment: .leading, spacing: 0) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(topic.title)
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .font(.brand(.callout, weight: .bold))
                             .foregroundColor(.white)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                             .multilineTextAlignment(.leading)
 
                         Text(topic.priceLabel)
-                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                            .font(.system(.caption, design: .monospaced).weight(.semibold))
                             .foregroundColor(ExploreBrand.brandGreen)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -79,7 +79,7 @@ private struct FeaturedTopicCard: View {
                     HStack(spacing: 8) {
                         avatar
                         Text(topic.expertName)
-                            .font(.system(size: 11, design: .rounded))
+                            .font(.brand(.caption2))
                             .foregroundColor(.white.opacity(0.55))
                             .lineLimit(1)
                     }
@@ -122,7 +122,7 @@ private struct FeaturedTopicCard: View {
         ZStack {
             Color(red: 0.14, green: 0.20, blue: 0.16)
             Image(systemName: "person.fill")
-                .font(.system(size: 11))
+                .font(.caption2)
                 .foregroundColor(.white.opacity(0.35))
         }
     }

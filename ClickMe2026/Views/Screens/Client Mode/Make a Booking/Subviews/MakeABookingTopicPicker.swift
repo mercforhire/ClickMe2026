@@ -2,7 +2,7 @@
 //  MakeABookingTopicPicker.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -35,7 +35,7 @@ struct MakeABookingTopicPicker: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(viewModel.selectedTopic?.title ?? "Select a topic")
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(MakeABookingBrand.onSurface)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -43,12 +43,12 @@ struct MakeABookingTopicPicker: View {
                     if let topic = viewModel.selectedTopic {
                         HStack(spacing: 8) {
                             Text(topic.durationLabel)
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .font(.brand(.caption, weight: .medium))
                                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
                             Text("·")
                                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
                             Text(topic.priceLabel)
-                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .font(.brand(.caption, weight: .semibold))
                                 .foregroundColor(topic.isFree ? MakeABookingBrand.brandGreen : MakeABookingBrand.onSurface)
                         }
                     }
@@ -56,8 +56,8 @@ struct MakeABookingTopicPicker: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 14, weight: .medium))
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.medium))
                     .foregroundColor(MakeABookingBrand.onSurfaceVar)
             }
             .padding(.horizontal, 16)
@@ -66,10 +66,16 @@ struct MakeABookingTopicPicker: View {
         }
         .buttonStyle(.plain)
         .disabled(viewModel.topics.isEmpty)
-        .confirmationDialog("Topic of Discussion", isPresented: $viewModel.showTopicPicker, titleVisibility: .visible) {
-            ForEach(viewModel.topics) { topic in
-                Button("\(topic.title) — \(topic.priceLabel)") { viewModel.selectedTopic = topic }
-            }
+        // Full-height sheet replaces the previous `.confirmationDialog`
+        // — the old menu couldn't show descriptions or a rich per-row
+        // layout, which experts started asking for once topic count
+        // started varying meaningfully per profile. The sheet is
+        // tap-to-select and self-dismisses.
+        .sheet(isPresented: $viewModel.showTopicPicker) {
+            MakeABookingTopicSheet(viewModel: viewModel)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(MakeABookingBrand.bg)
         }
     }
 
@@ -94,12 +100,12 @@ struct MakeABookingTopicPicker: View {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(MakeABookingBrand.onSurfaceVar)
                 .lineLimit(2)
             Spacer()
             Button("Retry") { Task { await viewModel.loadTopics() } }
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(MakeABookingBrand.brandGreen)
         }
         .padding(.horizontal, 16)

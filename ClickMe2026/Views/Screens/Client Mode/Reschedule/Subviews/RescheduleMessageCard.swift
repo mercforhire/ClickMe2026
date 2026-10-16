@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct RescheduleMessageCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Message Text (optional)")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(RescheduleBrand.onSurface)
 
             ZStack(alignment: .topLeading) {
@@ -31,7 +31,7 @@ struct RescheduleMessageCard: View {
 
                 if text.isEmpty {
                     Text("Message text (optional)")
-                        .font(.system(size: 14, design: .rounded))
+                        .font(.brand(.subheadline))
                         .foregroundColor(RescheduleBrand.onSurfaceVar.opacity(0.6))
                         .padding(.horizontal, 14)
                         .padding(.top, 12)
@@ -41,7 +41,7 @@ struct RescheduleMessageCard: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .foregroundColor(RescheduleBrand.onSurface)
-                    .font(.system(size: 14, design: .rounded))
+                    .font(.brand(.subheadline))
                     .tint(RescheduleBrand.brandGreen)
                     .frame(minHeight: 88)
                     .padding(.horizontal, 10)

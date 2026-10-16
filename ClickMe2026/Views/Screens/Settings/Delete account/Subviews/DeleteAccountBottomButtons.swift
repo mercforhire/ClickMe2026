@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -32,7 +32,7 @@ struct DeleteAccountBottomButtons: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         } else {
                             Text(primaryLabel)
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .font(.brand(.callout, weight: .bold))
                                 .foregroundColor(.white)
                         }
                     }
@@ -42,7 +42,7 @@ struct DeleteAccountBottomButtons: View {
 
                 Button(action: secondaryAction) {
                     Text("Cancel")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.brand(.callout, weight: .semibold))
                         .foregroundColor(DeleteAccountBrand.onSurfaceVar)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)

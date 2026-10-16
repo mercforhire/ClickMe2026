@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -30,7 +30,7 @@ struct LanguageEditorSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Edit Languages")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.brand(.title2, weight: .bold))
                 .foregroundColor(ProfileSettingsBrand.onSurface)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 8)
@@ -45,7 +45,7 @@ struct LanguageEditorSheet: View {
 
             Button { dismiss() } label: {
                 Text("Done")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(ProfileSettingsBrand.onPrimary)
                     .frame(maxWidth: .infinity).frame(height: 52)
                     .background(Capsule().fill(ProfileSettingsBrand.brandGreen)
@@ -55,6 +55,9 @@ struct LanguageEditorSheet: View {
         }
         .padding(.horizontal, 24)
         .padding(.bottom, 28)
+        // Sheet presentation context — app-root keyboard toolbar
+        // doesn't reach the search TextField.
+        .keyboardDismissToolbar()
     }
 
     // MARK: Current
@@ -62,20 +65,20 @@ struct LanguageEditorSheet: View {
     private var currentLanguagesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Current Languages")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(ProfileSettingsBrand.onSurface)
 
             ProfileFlowLayout(spacing: 8) {
                 ForEach(languages, id: \.self) { lang in
                     HStack(spacing: 5) {
                         Text(lang)
-                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .font(.brand(.caption, weight: .medium))
                             .foregroundColor(ProfileSettingsBrand.onSurface)
                         Button {
                             withAnimation { languages.removeAll { $0 == lang } }
                         } label: {
                             Image(systemName: "xmark")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.caption2.weight(.bold))
                                 .foregroundColor(ProfileSettingsBrand.onSurface)
                         }
                     }
@@ -96,12 +99,12 @@ struct LanguageEditorSheet: View {
     private var searchBar: some View {
         HStack(spacing: 10) {
             TextField("Search and Add", text: $searchText)
-                .font(.system(size: 15, design: .rounded))
+                .font(.brand(.subheadline))
                 .foregroundColor(ProfileSettingsBrand.onSurface)
                 .tint(ProfileSettingsBrand.brandGreen)
                 .focused($searchFocused)
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 15))
+                .font(.subheadline)
                 .foregroundColor(ProfileSettingsBrand.onSurfaceVar)
         }
         .padding(.horizontal, 14)
@@ -125,7 +128,7 @@ struct LanguageEditorSheet: View {
                         searchText = ""
                     } label: {
                         Text(lang)
-                            .font(.system(size: 15, weight: .regular, design: .rounded))
+                            .font(.brand(.subheadline, weight: .regular))
                             .foregroundColor(ProfileSettingsBrand.onSurface)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 14)

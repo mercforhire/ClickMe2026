@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -20,16 +20,16 @@ struct FavoritesProTipCard: View {
                         .stroke(FavoritesBrand.tipBorder, lineWidth: 1))
                     .frame(width: 44, height: 44)
                 Image(systemName: "lightbulb")
-                    .font(.system(size: 20, weight: .regular))
+                    .font(.title3.weight(.regular))
                     .foregroundColor(FavoritesBrand.brandGreen)
             }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("Pro Tip:")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(.brand(.caption, weight: .bold))
                     .foregroundColor(FavoritesBrand.onSurface)
                 Text("Tap the star icon on any expert's profile to add them to this list instantly.")
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(FavoritesBrand.onSurfaceVar)
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)

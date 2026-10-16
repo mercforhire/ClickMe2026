@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-16.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -94,14 +94,14 @@ struct ModeSwitchView: View {
 
 #Preview("Client Active") {
     PreviewNavHarness(parentText: "Account", navTitle: "Settings", rowTitle: "Mode Switcher") {
-        ModeSwitchView()
+        ModeSwitchView(viewModel: ModeSwitchViewModel(selectedMode: .client))
     }
     .preferredColorScheme(.dark)
 }
 
 #Preview("Expert Active") {
     PreviewNavHarness(parentText: "Account", navTitle: "Settings", rowTitle: "Mode Switcher") {
-        ModeSwitchView()
+        ModeSwitchView(viewModel: ModeSwitchViewModel(selectedMode: .expert))
     }
     .preferredColorScheme(.dark)
 }

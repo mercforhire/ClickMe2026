@@ -16,14 +16,14 @@ struct ReviewCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text(title)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(Brand.onSurface)
 
                 Spacer()
 
                 Button(action: onEdit) {
                     Image(systemName: "square.and.pencil")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                         .foregroundColor(Brand.primary)
                         .padding(6)
                         .background(

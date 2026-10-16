@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -40,4 +40,15 @@ struct PublicProfileDetailsData: Decodable {
     let profile: Profile
     let topicsOfDiscussion: [TopicOfDiscussion]
     let recentReviews: [JSONValue]
+
+    /// Whether this expert can accept new bookings right now. Mirrors
+    /// the caller-scoped `charges_enabled` from
+    /// `/expert/connect/status` but for arbitrary experts so client
+    /// mode can hide the Book button before the user taps and hits a
+    /// 422 `EXPERT_NOT_BOOKABLE`.
+    ///
+    /// Optional — backend hasn't shipped the field yet. Nil defaults
+    /// to `true` (show the button) in `isBookable`, so we don't hide
+    /// the CTA for existing experts before the field lands.
+    let isBookable: Bool?
 }

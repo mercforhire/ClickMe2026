@@ -2,10 +2,14 @@
 //  PreviewNavHarness.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
-
-#if DEBUG
+//  NOTE on configuration: `#Preview` macro bodies compile in ALL
+//  configurations (Debug + Release), even though previews only ever
+//  run inside Xcode's canvas. Any type referenced from a `#Preview`
+//  block must therefore be visible in Release too — hence no `#if DEBUG`
+//  guard around this harness.
+//
 
 import SwiftUI
 
@@ -57,5 +61,3 @@ struct PreviewNavHarness<Content: View>: View {
         }
     }
 }
-
-#endif

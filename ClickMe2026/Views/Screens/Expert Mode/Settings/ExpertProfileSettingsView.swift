@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -116,8 +116,13 @@ struct ExpertProfileSettingsView: View {
 
                     // Mirrors ClientProfileSettingsView.fieldsStack — first/
                     // last name, phone, bio, professional card, city+state,
-                    // country, and languages. Email is omitted per spec.
+                    // country, and languages. Email is shown as a read-only
+                    // row (identity is immutable server-side; changing it
+                    // is a separate account-security flow).
                     VStack(spacing: 10) {
+                        if let email = UserManager.shared.me?.email, !email.isEmpty {
+                            ProfileReadOnlyField(label: "Email", value: email)
+                        }
                         HStack(spacing: 10) {
                             ProfileLabeledField(label: "First Name", text: $vm.firstName)
                             ProfileLabeledField(label: "Last Name", text: $vm.lastName)
@@ -130,6 +135,18 @@ struct ExpertProfileSettingsView: View {
                             jobTitle: vm.jobTitle,
                             company: vm.company,
                             action: { vm.showProfSheet = true }
+                        )
+
+                        // Skype / Zoom meeting URL — first-class field on
+                        // the main settings surface so it's discoverable
+                        // (still editable via the Professional Details
+                        // sheet as a backup). Same @Bindable path — edits
+                        // here trigger the shared debounced auto-save
+                        // that PATCHes `/expert/profile`.
+                        ProfileLabeledField(
+                            label: "Skype / Zoom Meeting Link",
+                            text: $vm.meetingUrl,
+                            keyboard: .URL
                         )
 
                         HStack(spacing: 8) {
@@ -160,7 +177,7 @@ struct ExpertProfileSettingsView: View {
         VStack(spacing: 12) {
             ProgressView().tint(Brand.onSurface)
             Text("Loading profile…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -169,13 +186,13 @@ struct ExpertProfileSettingsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant)
             Text("Couldn't load profile")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -184,7 +201,7 @@ struct ExpertProfileSettingsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)

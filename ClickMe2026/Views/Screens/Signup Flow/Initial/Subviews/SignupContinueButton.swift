@@ -24,7 +24,7 @@ struct SignupContinueButton: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     Text(title)
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.brand(.title3, weight: .bold))
                         .foregroundColor(.white)
                 }
             }

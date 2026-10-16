@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -24,7 +24,7 @@ struct FeedbackEmailField: View {
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
                     .foregroundColor(FeedbackBrand.onSurface)
-                    .font(.system(size: 16, design: .rounded))
+                    .font(.brand(.callout))
                     .tint(FeedbackBrand.brandGreen)
                     .focused($isFocused)
             }

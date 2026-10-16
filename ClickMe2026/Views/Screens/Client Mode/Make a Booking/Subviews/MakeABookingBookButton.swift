@@ -2,12 +2,13 @@
 //  MakeABookingBookButton.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
 
 struct MakeABookingBookButton: View {
+    let title: String
     let isBooking: Bool
     let isEnabled: Bool
     let action: () -> Void
@@ -25,8 +26,8 @@ struct MakeABookingBookButton: View {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: MakeABookingBrand.onPrimary))
                 } else {
-                    Text("Book Now")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                    Text(title)
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(MakeABookingBrand.onPrimary)
                 }
             }

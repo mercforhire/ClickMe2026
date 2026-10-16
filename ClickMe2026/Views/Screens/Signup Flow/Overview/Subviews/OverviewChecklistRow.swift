@@ -15,11 +15,11 @@ struct OverviewChecklistRow: View {
             HStack(spacing: 16) {
                 icon
                 Text(item.title)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.title3.weight(.bold))
                     .foregroundColor(Brand.onSurface)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                     .foregroundColor(Brand.onSurfaceFaint)
             }
             .padding(.horizontal, 18)
@@ -41,7 +41,7 @@ struct OverviewChecklistRow: View {
             ZStack {
                 Circle().fill(Brand.primary)
                 Image(systemName: "checkmark")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.title3.weight(.bold))
                     .foregroundColor(Brand.surface)
             }
             .frame(width: 44, height: 44)
@@ -49,7 +49,7 @@ struct OverviewChecklistRow: View {
             ZStack {
                 Circle().stroke(Brand.onSurfaceFaint, lineWidth: 1.5)
                 Image(systemName: "star")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.title3.weight(.regular))
                     .foregroundColor(Brand.onSurfaceFaint)
             }
             .frame(width: 44, height: 44)

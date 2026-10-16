@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -14,11 +14,11 @@ struct RequestDecisionMessageSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Message")
-                .font(.system(size: 17, weight: .bold, design: .rounded))
+                .font(.brand(.body, weight: .bold))
                 .foregroundColor(Brand.onSurface)
 
             Text(clientMessage)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Brand.overlayWhite80)
                 .lineSpacing(5)
                 .fixedSize(horizontal: false, vertical: true)

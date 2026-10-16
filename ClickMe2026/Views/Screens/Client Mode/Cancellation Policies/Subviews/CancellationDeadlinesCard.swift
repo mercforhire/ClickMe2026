@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -37,17 +37,17 @@ struct CancellationDeadlinesCard: View {
     private func deadlineRow(title: String, subtitle: String) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: "clock")
-                .font(.system(size: 20, weight: .regular))
+                .font(.title3.weight(.regular))
                 .foregroundColor(CancellationPoliciesBrand.brandGreen)
                 .frame(width: 24, height: 24)
                 .padding(.top, 1)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .bold))
                     .foregroundColor(CancellationPoliciesBrand.onSurface)
                 Text(subtitle)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(CancellationPoliciesBrand.onSurfaceVar)
             }
         }

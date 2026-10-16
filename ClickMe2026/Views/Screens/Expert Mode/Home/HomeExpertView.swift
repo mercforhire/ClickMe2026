@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-02.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -16,8 +16,12 @@ import SwiftUI
 struct HomeExpertView: View {
     @State private var selectedTab: HomeExpertTab = .dashboard
 
-    /// Observed so the top-bar avatar refreshes reactively.
-    @ObservedObject private var userManager = UserManager.shared
+    /// Read so the top-bar avatar refreshes reactively. `@Observable`
+    /// tracks reads on this singleton automatically — no property
+    /// wrapper required.
+    private let userManager = UserManager.shared
+    /// Observed so a tapped push notification lands on the right tab.
+    @ObservedObject private var pushRouter = PushRouter.shared
 
     // MARK: Per-tab nav paths — persistent across tab switches.
     @StateObject private var dashboardPath = HomeNavigationPath()
@@ -71,6 +75,61 @@ struct HomeExpertView: View {
                 peerAvatarURL: peerAvatarURL
             ))
         })
+        // Consume any pending deep-link the router parked when a push
+        // was tapped. Fires whether the shell was already on-screen
+        // or just came up.
+        .onChange(of: pushRouter.pendingDestination) { _, destination in
+            handlePushDestination(destination)
+        }
+        .onAppear {
+            // In case the destination was set before this view mounted
+            // (e.g. app cold-started via a notification tap), consume
+            // it now.
+            handlePushDestination(pushRouter.pendingDestination)
+        }
+    }
+
+    /// Route a tapped push notification to the appropriate tab + view.
+    /// Clears `pendingDestination` after handling so a subsequent
+    /// identical push still fires (SwiftUI's `onChange` skips
+    /// duplicate values).
+    private func handlePushDestination(_ destination: PushDestination?) {
+        guard let destination else { return }
+        switch destination {
+        case let .bookingDetail(bookingId):
+            selectedTab = .bookings
+            bookingsPath.push(HomeRoute.expertBookingSummary(bookingId: bookingId))
+        case .incomingRequests:
+            // Booking-request notifications land here — the pending
+            // requests hub, reachable from the dashboard tab.
+            selectedTab = .dashboard
+            dashboardPath.push(HomeRoute.incomingRequests)
+        case let .chatThread(threadId):
+            selectedTab = .chats
+            chatsPath.push(HomeRoute.chat(
+                threadId: threadId,
+                peerName: "",
+                peerAvatarURL: ""
+            ))
+        case let .leaveReview(bookingId):
+            // Experts don't leave reviews — land on the summary and
+            // let them read the completed session.
+            selectedTab = .bookings
+            bookingsPath.push(HomeRoute.expertBookingSummary(bookingId: bookingId))
+        case .payouts, .kycOnboarding:
+            // Both go to `PayoutsView` — the KYC onboarding banner
+            // lives on that screen when Stripe Connect isn't fully
+            // set up, so a `payout/kyc_action` push lands one tap
+            // away from the onboarding CTA.
+            selectedTab = .dashboard
+            dashboardPath.push(HomeRoute.expertPayouts)
+        case .accountSecurity:
+            selectedTab = .profile
+            profilePath.push(HomeRoute.accountSecurity)
+        case .notificationsList:
+            dashboardPath.push(HomeRoute.notifications)
+        }
+        pushRouter.pendingDestination = nil
     }
 
     // MARK: - Tabs
@@ -122,6 +181,9 @@ struct HomeExpertView: View {
     private var profileTab: some View {
         NavigationStack(path: $profilePath.path) {
             ExpertProfileHomeScreen()
+                .navigationDestination(for: HomeRoute.self) { route in
+                    homeRouteDestination(route)
+                }
         }
         .environment(\.homeNavigationPath, profilePath)
     }
@@ -157,6 +219,12 @@ struct HomeExpertView: View {
             // Expert is viewing their client — ClientProfileView loads
             // everything by id, so name/avatar seeds are unused here.
             ClientProfileView(clientId: userId)
+        case .incomingRequests:
+            IncomingRequestsView()
+        case .expertPayouts:
+            PayoutsView()
+        case .accountSecurity:
+            AccountSecurityView()
         }
     }
 }

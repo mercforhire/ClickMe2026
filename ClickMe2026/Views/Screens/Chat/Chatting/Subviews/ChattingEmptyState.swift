@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,18 +21,18 @@ struct ChattingEmptyState: View {
 
             VStack(spacing: 8) {
                 Text("Start your conversation here.")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.brand(.title2, weight: .bold))
                     .foregroundColor(ChattingBrand.onSurface)
                     .multilineTextAlignment(.center)
 
                 Text("Say hello!")
-                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                    .font(.brand(.callout, weight: .regular))
                     .foregroundColor(ChattingBrand.onSurfaceVar)
             }
 
             Button(action: onSendMessage) {
                 Text("Send a message")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(ChattingBrand.myText)
                     .frame(width: 220, height: 52)
                     .background(

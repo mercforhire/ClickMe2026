@@ -12,7 +12,7 @@ struct OverviewNextBar: View {
     var body: some View {
         Button(action: action) {
             Text("Next")
-                .font(.system(size: 18, weight: .bold))
+                .font(.title3.weight(.bold))
                 .foregroundColor(Brand.surface)
                 .frame(maxWidth: .infinity)
                 .frame(height: 58)

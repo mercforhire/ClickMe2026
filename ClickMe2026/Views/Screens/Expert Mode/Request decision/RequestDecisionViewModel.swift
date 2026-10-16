@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -21,8 +21,18 @@ final class RequestDecisionViewModel: ObservableObject {
 
     @Published var request: IncomingRequest
     @Published var clientMessage: String
+    /// **Legacy — gross session fee.** What the client pays. Kept because
+    /// other screens (`RequestDecisionDetailsCard`, sample data, previews)
+    /// still consume it. UI labeled "you earn" now reads from
+    /// `earningsBreakdown` — see `RequestDecisionEarningsSection`.
     @Published var potentialEarnings: Double
     @Published var currency: String
+    /// Post-commission breakdown from the backend, per the Expert
+    /// Earnings Breakdown spec. Drives the redesigned earnings section.
+    /// `nil` means the response predates the rollout — treat as the
+    /// `.unavailable` branch (no fee / net data, show session price
+    /// + "Payout amount pending").
+    @Published var earningsBreakdown: EarningsBreakdown?
     /// Server UUID of the client on this request — needed to look up (or
     /// create) the chat thread when the footer's Message button is tapped.
     /// Populated from `detail.client.id` after the fetch resolves.
@@ -59,6 +69,7 @@ final class RequestDecisionViewModel: ObservableObject {
         self.clientMessage = ""
         self.potentialEarnings = 0
         self.currency = "USD"
+        self.earningsBreakdown = nil
         self.clientId = nil
         self.isExpired = isExpired
         self.loadState = .idle
@@ -77,6 +88,14 @@ final class RequestDecisionViewModel: ObservableObject {
         clientMessage: String = "Hi, I'm really looking forward to our session. I'd love to discuss my career path and get your advice on breaking into the design industry. Thanks!",
         potentialEarnings: Double = 75.0,
         currency: String = "USD",
+        earningsBreakdown: EarningsBreakdown? = EarningsBreakdown(
+            grossAmount: 75.0,
+            platformFee: 11.25,
+            netAmount: 63.75,
+            commissionPct: 15.0,
+            currency: "USD",
+            feeSource: .booking
+        ),
         isExpired: Bool = false,
         loadState: LoadState = .loaded
     ) {
@@ -85,6 +104,7 @@ final class RequestDecisionViewModel: ObservableObject {
         self.clientMessage = clientMessage
         self.potentialEarnings = potentialEarnings
         self.currency = currency
+        self.earningsBreakdown = earningsBreakdown
         self.clientId = nil
         self.isExpired = isExpired
         self.loadState = loadState
@@ -119,6 +139,7 @@ final class RequestDecisionViewModel: ObservableObject {
             clientMessage = detail.session.clientMessage ?? ""
             potentialEarnings = detail.economics.potentialEarnings ?? 0
             currency = detail.economics.currency ?? "USD"
+            earningsBreakdown = detail.economics.earningsBreakdown
             clientId = detail.client.id
             loadState = .loaded
         } catch {

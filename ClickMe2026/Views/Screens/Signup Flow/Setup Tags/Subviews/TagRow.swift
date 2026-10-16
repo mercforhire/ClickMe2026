@@ -15,13 +15,13 @@ struct TagRow: View {
         Button(action: onToggle) {
             HStack {
                 Text(tag)
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.brand(.body, weight: .semibold))
                     .foregroundColor(.white)
 
                 Spacer()
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
-                    .font(.system(size: 22, weight: .regular))
+                    .font(.title2.weight(.regular))
                     .foregroundColor(isSelected ? TagsBrand.green : TagsBrand.green.opacity(0.60))
                     .animation(.easeInOut(duration: 0.15), value: isSelected)
             }

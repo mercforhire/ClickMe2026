@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -90,13 +90,13 @@ struct AllCategoriesView: View {
         VStack(spacing: 12) {
             Spacer()
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(AllCategoriesBrand.onSurface.opacity(0.7))
             Text("Couldn't load categories")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(AllCategoriesBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(AllCategoriesBrand.onSurface.opacity(0.65))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -105,7 +105,7 @@ struct AllCategoriesView: View {
                 Task { await viewModel.retry() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(AllCategoriesBrand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)

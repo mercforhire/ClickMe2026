@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -12,11 +12,15 @@ import SwiftUI
 /// Earlier) of `NotificationRow` cards, plus a bottom "End of recent
 /// updates" pill. Designed to be embedded inside `HomeClientView` /
 /// `HomeExpertView` — the shell provides the top bar and tab bar, so
-/// this screen just handles the pushed nav-toolbar (title + Clear all)
-/// and the content list.
+/// this screen just handles the pushed nav-toolbar (title) and the
+/// content list.
 struct NotificationsListView: View {
 
     @StateObject private var viewModel: NotificationsListViewModel
+    /// Observed so a push arriving in the foreground bumps this list's
+    /// silent-reload. `PushRouter.newNotificationTick` increments once
+    /// per arrival — value is meaningless, the change is the signal.
+    @ObservedObject private var pushRouter = PushRouter.shared
 
     // MARK: Init
 
@@ -36,18 +40,18 @@ struct NotificationsListView: View {
         .toolbarBackground(Brand.surface, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Clear all") {
-                    viewModel.clearAll()
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Brand.primary)
-                .opacity(viewModel.sections.isEmpty ? 0.3 : 1)
-                .disabled(viewModel.sections.isEmpty)
-            }
-        }
         .task { await viewModel.load() }
+        // Silent refresh on re-entry — surfaces new notifications
+        // that landed while the user was away without a spinner
+        // flash. `.task` still owns the first-open fetch.
+        .onAppear { Task { await viewModel.silentReload() } }
+        .onChange(of: pushRouter.newNotificationTick) { _, _ in
+            // Silent re-fetch when a foreground push arrives so the
+            // user sees the new row without pull-to-refresh — was
+            // `reload()` which flashed the spinner; `silentReload` is
+            // the friendlier surface for an incoming-push refresh.
+            Task { await viewModel.silentReload() }
+        }
     }
 
     // MARK: - Content router
@@ -70,7 +74,7 @@ struct NotificationsListView: View {
         VStack(spacing: 12) {
             ProgressView().tint(Brand.onSurface)
             Text("Loading notifications…")
-                .font(.system(size: 13))
+                .font(.caption)
                 .foregroundColor(Brand.onSurfaceVariant.opacity(0.7))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -79,13 +83,13 @@ struct NotificationsListView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 26, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant.opacity(0.7))
             Text("Couldn't load notifications")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13))
+                .font(.caption)
                 .foregroundColor(Brand.onSurfaceVariant.opacity(0.7))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -94,7 +98,7 @@ struct NotificationsListView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -131,13 +135,27 @@ struct NotificationsListView: View {
                 .font(.system(size: 34, weight: .light))
                 .foregroundColor(Brand.onSurfaceVariant.opacity(0.65))
             Text("You're all caught up")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.callout.weight(.semibold))
                 .foregroundColor(Brand.onSurface)
             Text("No new notifications right now.")
-                .font(.system(size: 13))
+                .font(.caption)
                 .foregroundColor(Brand.onSurfaceVariant.opacity(0.7))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Tap routing
+
+    /// Route through `PushRouter.pendingDestination` — the same channel
+    /// real push taps use — so the shell handles tab-switch + push in
+    /// one place. Rows without a routable payload are silently ignored.
+    private func handleTap(_ item: NotificationItem) {
+        let destination = NotificationsListViewModel.destination(for: item)
+        #if DEBUG
+        print("notif-tap: category=\(item.category) sub=\(item.subCategory ?? "nil") meta=\(String(describing: item.metaData)) → \(String(describing: destination))")
+        #endif
+        guard let destination else { return }
+        PushRouter.shared.pendingDestination = destination
     }
 
     // MARK: - Section
@@ -145,13 +163,15 @@ struct NotificationsListView: View {
     private func sectionView(_ section: NotificationsListSection) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(section.kind.title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .kerning(1.4)
                 .foregroundColor(Brand.onSurfaceVariant)
 
             VStack(spacing: 16) {
                 ForEach(section.items, id: \.id) { item in
-                    NotificationRow(item: item)
+                    NotificationRow(item: item) {
+                        handleTap(item)
+                    }
                 }
             }
         }
@@ -159,7 +179,7 @@ struct NotificationsListView: View {
 
     private var endOfUpdatesBanner: some View {
         Text("End of recent updates")
-            .font(.system(size: 12, weight: .medium))
+            .font(.caption.weight(.medium))
             .italic()
             .foregroundColor(Brand.onSurfaceVariant.opacity(0.7))
             .frame(maxWidth: .infinity)

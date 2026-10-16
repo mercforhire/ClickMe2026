@@ -2,7 +2,7 @@
 //  CallCenter.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Combine
@@ -114,7 +114,9 @@ final class CallCenter: ObservableObject {
         peerImageURL: String,
         topic: String,
         scheduledStart: Date?,
-        scheduledEnd: Date?
+        scheduledEnd: Date?,
+        meetingType: MeetingType,
+        isRejoin: Bool = false
     ) {
         // Second-join attempt during an active call — give feedback
         // rather than silently no-op'ing.
@@ -123,6 +125,12 @@ final class CallCenter: ObservableObject {
             return
         }
 
+        // MeetingType is a client-side hint so the call view can pick
+        // the right surface (Agora vs. Skype/Zoom) immediately, before
+        // `POST /join` returns. The server response is still the
+        // source of truth for the actual `connectionType`.
+        let initialConnection: ConnectionType = (meetingType == .skypeZoom) ? .skypeZoom : .inAppVoice
+
         let vm = MeetingCallViewModel(
             bookingId: bookingId,
             peerId: peerId,
@@ -130,7 +138,9 @@ final class CallCenter: ObservableObject {
             expertImageURL: peerImageURL,
             topic: topic,
             scheduledStart: scheduledStart,
-            scheduledEnd: scheduledEnd
+            scheduledEnd: scheduledEnd,
+            initialConnectionType: initialConnection,
+            isRejoin: isRejoin
         )
         viewModel = vm
         isMinimized = false

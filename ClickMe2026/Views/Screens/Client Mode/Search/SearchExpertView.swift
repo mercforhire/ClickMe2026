@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -143,11 +143,11 @@ struct SearchExpertView: View {
 
             VStack(spacing: 8) {
                 Text("No Experts Found")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(SearchExpertBrand.onSurface)
 
                 Text("Try adjusting your search or picking a different category.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(SearchExpertBrand.onSurfaceVar)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
@@ -197,13 +197,13 @@ struct SearchExpertView: View {
     private func errorList(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(SearchExpertBrand.onSurfaceVar)
             Text("Couldn't load results")
-                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                .font(.brand(.callout, weight: .semibold))
                 .foregroundColor(SearchExpertBrand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(SearchExpertBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -212,7 +212,7 @@ struct SearchExpertView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(SearchExpertBrand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)

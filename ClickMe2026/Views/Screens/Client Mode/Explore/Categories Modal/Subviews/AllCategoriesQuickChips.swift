@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-22.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -47,7 +47,7 @@ struct AllCategoriesQuickChips: View {
             }
         } label: {
             Text(label)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(selected ? AllCategoriesBrand.onPrimary : AllCategoriesBrand.onSurface)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)

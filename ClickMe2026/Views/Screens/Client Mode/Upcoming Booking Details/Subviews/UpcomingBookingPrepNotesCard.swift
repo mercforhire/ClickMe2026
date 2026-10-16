@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,12 +21,12 @@ struct UpcomingBookingPrepNotesCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("YOUR MESSAGE")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .font(.brand(.caption2, weight: .semibold))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 .tracking(1.3)
 
             Text(preparationNote)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(UpcomingBookingBrand.onSurface)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)

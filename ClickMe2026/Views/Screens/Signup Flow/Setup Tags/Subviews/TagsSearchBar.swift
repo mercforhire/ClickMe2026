@@ -13,24 +13,24 @@ struct TagsSearchBar: View {
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 16))
+                .font(.callout)
                 .foregroundColor(Color.white.opacity(0.38))
 
             TextField("", text: $text)
                 .placeholder(when: text.isEmpty) {
                     Text("Search for tags")
                         .foregroundColor(Color.white.opacity(0.30))
-                        .font(.system(size: 16, design: .rounded))
+                        .font(.brand(.callout))
                 }
                 .foregroundColor(.white)
-                .font(.system(size: 16, design: .rounded))
+                .font(.brand(.callout))
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
 
             if !text.isEmpty {
                 Button(action: onClear) {
                     Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 15))
+                        .font(.subheadline)
                         .foregroundColor(Color.white.opacity(0.35))
                 }
             }

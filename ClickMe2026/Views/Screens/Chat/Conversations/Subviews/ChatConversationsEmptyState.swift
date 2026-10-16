@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -18,7 +18,7 @@ struct ChatConversationsEmptyState: View {
                 .font(.system(size: 40, weight: .light))
                 .foregroundColor(ChatConversationsBrand.onSurfaceVar.opacity(0.40))
             Text("No conversations found")
-                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .font(.brand(.callout, weight: .medium))
                 .foregroundColor(ChatConversationsBrand.onSurfaceVar)
             Spacer()
         }

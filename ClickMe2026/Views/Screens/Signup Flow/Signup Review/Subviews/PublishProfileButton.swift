@@ -21,7 +21,7 @@ struct PublishProfileButton: View {
                         .tint(Brand.onPrimary)
                 } else {
                     Text("Publish Profile")
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .font(.brand(.body, weight: .bold))
                         .foregroundColor(Brand.onPrimary)
                 }
             }

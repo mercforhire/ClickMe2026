@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,13 +19,13 @@ struct RescheduleExpertCard: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(booking.expertName)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(RescheduleBrand.onSurface)
                 Text(booking.role)
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(RescheduleBrand.onSurfaceVar)
                 Text(booking.currentDateLabel)
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(RescheduleBrand.onSurfaceVar.opacity(0.85))
                     .padding(.top, 2)
             }
@@ -49,7 +49,7 @@ struct RescheduleExpertCard: View {
                     ZStack {
                         RescheduleBrand.avatarFallback
                         Image(systemName: "person.fill")
-                            .font(.system(size: 22))
+                            .font(.title2)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -38,7 +38,7 @@ struct RescheduleCalendarCard: View {
         HStack {
             Button(action: onPrevMonth) {
                 Image(systemName: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(RescheduleBrand.onSurfaceVar)
                     .frame(width: 32, height: 32)
             }
@@ -46,14 +46,14 @@ struct RescheduleCalendarCard: View {
             Spacer()
 
             Text(monthLabel)
-                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .font(.brand(.callout, weight: .bold))
                 .foregroundColor(RescheduleBrand.onSurface)
 
             Spacer()
 
             Button(action: onNextMonth) {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(RescheduleBrand.onSurfaceVar)
                     .frame(width: 32, height: 32)
             }
@@ -64,7 +64,7 @@ struct RescheduleCalendarCard: View {
         HStack(spacing: 0) {
             ForEach(weekdaySymbols, id: \.self) { sym in
                 Text(sym)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(RescheduleBrand.onSurfaceVar)
                     .frame(maxWidth: .infinity)
             }
@@ -102,7 +102,7 @@ struct RescheduleCalendarCard: View {
                         .frame(width: 32, height: 32)
                 }
                 Text("\(dayNumber)")
-                    .font(.system(size: 14, weight: selected ? .bold : .regular, design: .rounded))
+                    .font(.system(.subheadline, design: .rounded).weight(selected ? .bold : .regular))
                     .foregroundColor(
                         !bookable
                             ? RescheduleBrand.onSurfaceVar.opacity(0.30)

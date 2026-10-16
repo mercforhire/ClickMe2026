@@ -2,7 +2,7 @@
 //  ExampleTests.swift
 //  ClickMe2026Tests
 //
-//  Copyright © 2024 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 @testable import ClickMe2026

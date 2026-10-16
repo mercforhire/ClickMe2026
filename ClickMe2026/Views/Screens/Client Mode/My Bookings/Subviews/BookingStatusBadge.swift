@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -15,7 +15,7 @@ struct BookingStatusBadge: View {
 
     var body: some View {
         Text(status.label)
-            .font(.system(size: 12, weight: .semibold, design: .rounded))
+            .font(.brand(.caption, weight: .semibold))
             .foregroundColor(status.color)
             .padding(.horizontal, 12)
             .padding(.vertical, 5)

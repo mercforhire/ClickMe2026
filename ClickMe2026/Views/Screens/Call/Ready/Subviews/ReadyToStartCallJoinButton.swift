@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,9 +19,9 @@ struct ReadyToStartCallJoinButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Text("Join Call")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.brand(.body, weight: .bold))
                 Image(systemName: "video.fill")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
             }
             .foregroundColor(ReadyToStartCallBrand.onPrimary)
             .frame(width: 200, height: 54)

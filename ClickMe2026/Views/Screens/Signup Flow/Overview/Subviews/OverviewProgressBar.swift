@@ -16,11 +16,11 @@ struct OverviewProgressBar: View {
         VStack(spacing: 12) {
             HStack {
                 Text("Profile Completion")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.body.weight(.semibold))
                     .foregroundColor(Brand.onSurface)
                 Spacer()
                 Text("\(Int(progress * 100))%")
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.body.weight(.bold))
                     .foregroundColor(Brand.onSurface)
             }
 

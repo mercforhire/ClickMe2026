@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -131,9 +131,9 @@ struct AvailabilitySettingsView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "location.fill")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.caption2.weight(.semibold))
                             Text("Auto-detect from device")
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .font(.brand(.caption, weight: .medium))
                         }
                         .foregroundColor(Brand.primary)
                     }
@@ -169,14 +169,14 @@ struct AvailabilitySettingsView: View {
     private var overlapBanner: some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(Brand.error)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Overlapping time slots")
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
                 Text(overlapCopy)
-                    .font(.system(size: 12, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(Brand.onSurfaceVariant)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -204,7 +204,7 @@ struct AvailabilitySettingsView: View {
         VStack(spacing: 12) {
             ProgressView().tint(Brand.onSurface)
             Text("Loading availability…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -213,13 +213,13 @@ struct AvailabilitySettingsView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant)
             Text("Couldn't load availability")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -228,7 +228,7 @@ struct AvailabilitySettingsView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -256,7 +256,7 @@ struct AvailabilitySettingsView: View {
                 viewModel.save()
             } label: {
                 Text("Save")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(viewModel.hasOverlaps
                         ? Brand.onSurfaceVariant.opacity(0.55)
                         : Brand.primary)

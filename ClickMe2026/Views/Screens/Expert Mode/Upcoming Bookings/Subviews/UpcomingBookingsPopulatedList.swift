@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -14,6 +14,7 @@ struct UpcomingBookingsPopulatedList: View {
     var onMessage: (UpcomingSession) -> Void
     var onReschedule: (UpcomingSession) -> Void
     var onCardTap: (UpcomingSession) -> Void = { _ in }
+    var onPrivateNote: (UpcomingSession) -> Void = { _ in }
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -27,7 +28,7 @@ struct UpcomingBookingsPopulatedList: View {
                             .frame(width: 8, height: 8)
                             .shadow(color: Brand.primary.opacity(0.80), radius: 4)
                         Text("\(sessions.count) Total")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(.brand(.subheadline, weight: .bold))
                             .foregroundColor(Brand.onSurface)
                     }
                     .padding(.horizontal, 14)
@@ -50,7 +51,8 @@ struct UpcomingBookingsPopulatedList: View {
                             onJoin: { onJoinSession(session) },
                             onMessage: { onMessage(session) },
                             onReschedule: { onReschedule(session) },
-                            onCardTap: { onCardTap(session) }
+                            onCardTap: { onCardTap(session) },
+                            onPrivateNote: { onPrivateNote(session) }
                         )
                     }
                 }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-02.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -78,8 +78,14 @@ final class ClientProfileViewModel: ObservableObject {
             let profileResponse = try await api.getClientProfile(id: clientId)
             profile = profileResponse.data
 
-            let bookingsResponse = try await api.getExpertBookings(page: 1, limit: 50)
-            bookingHistory = bookingsResponse.data.bookings
+            // Merge upcoming + past so the "History" list on the client
+            // profile shows the full record with that client, not just
+            // future sessions. Sequential (not parallel) — parallel
+            // async-let decoding trips Swift 6's main-actor-isolated
+            // Decodable conformance check.
+            let upResp = try await api.getExpertBookings(type: .upcoming, page: 1, limit: 50)
+            let pastResp = try await api.getExpertBookings(type: .past, page: 1, limit: 50)
+            bookingHistory = (upResp.data.bookings + pastResp.data.bookings)
                 .filter { $0.client.id == clientId }
                 .sorted { $0.session.startTime > $1.session.startTime }
                 .map(Self.mapBooking(from:))

@@ -22,18 +22,18 @@ struct VerifyEmailMessageSection: View {
     var body: some View {
         VStack(spacing: 14) {
             Text("Verify Your Email Address")
-                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .font(.brand(.title2, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
 
             Text(explainer)
-                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Color.white.opacity(0.50))
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
 
             Text(email)
-                .font(.system(size: 15, weight: .medium, design: .monospaced))
+                .font(.system(.subheadline, design: .monospaced).weight(.medium))
                 .foregroundColor(Color.white.opacity(0.70))
                 .multilineTextAlignment(.center)
         }

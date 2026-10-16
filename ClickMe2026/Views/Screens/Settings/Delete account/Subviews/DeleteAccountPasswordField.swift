@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-07-10.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -30,7 +30,7 @@ struct DeleteAccountPasswordField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Confirm your password")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(DeleteAccountBrand.onSurface)
 
             HStack(spacing: 0) {
@@ -44,7 +44,7 @@ struct DeleteAccountPasswordField: View {
                     }
                 }
                 .focused($isFocused)
-                .font(.system(size: 14, design: .rounded))
+                .font(.brand(.subheadline))
                 .foregroundColor(DeleteAccountBrand.onSurface)
                 .tint(DeleteAccountBrand.errorRed)
                 .padding(.horizontal, 14)
@@ -54,7 +54,7 @@ struct DeleteAccountPasswordField: View {
                     isVisible.toggle()
                 } label: {
                     Image(systemName: isVisible ? "eye.slash" : "eye")
-                        .font(.system(size: 16, weight: .regular))
+                        .font(.callout.weight(.regular))
                         .foregroundColor(DeleteAccountBrand.onSurfaceVar)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -73,7 +73,7 @@ struct DeleteAccountPasswordField: View {
 
             if let errorMessage {
                 Text(errorMessage)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(DeleteAccountBrand.errorRed)
                     .fixedSize(horizontal: false, vertical: true)
             }

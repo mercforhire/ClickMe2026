@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -53,6 +53,25 @@ final class IncomingRequestsViewModel: ObservableObject {
 
     func reload() async {
         await forceLoad()
+    }
+
+    /// Background refresh — fetches fresh data without flipping the
+    /// spinner or error state, so returning to this screen updates
+    /// the list in place. Guarded on `.loaded` so a first-open race
+    /// with `.task { load() }` doesn't fire two concurrent fetches.
+    /// Failure is intentionally swallowed — keep the last-known-good
+    /// list on screen; the user can pull-to-refresh for a visible
+    /// retry if they notice something looks stale.
+    func silentReload() async {
+        guard case .loaded = loadState else { return }
+        do {
+            let response = try await api.getBookingRequests(page: 1, limit: 50)
+            requests = response.data.requests
+                .map { Self.mapRequest(from: $0, now: now()) }
+                .sorted { Self.sortKey(for: $0) < Self.sortKey(for: $1) }
+        } catch {
+            // Swallow — see docblock.
+        }
     }
 
     private func forceLoad() async {

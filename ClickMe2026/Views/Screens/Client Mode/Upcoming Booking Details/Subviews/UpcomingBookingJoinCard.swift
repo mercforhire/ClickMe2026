@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -44,9 +44,9 @@ struct UpcomingBookingJoinCard: View {
         Button(action: onJoinCall) {
             HStack(spacing: 8) {
                 Image(systemName: "phone.fill")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                 Text("JOIN CALL")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .tracking(0.5)
             }
             .foregroundColor(UpcomingBookingBrand.onPrimary)
@@ -70,16 +70,16 @@ struct UpcomingBookingJoinCard: View {
                     .fill(UpcomingBookingBrand.videoBg)
                     .frame(width: 42, height: 42)
                 Image(systemName: "video")
-                    .font(.system(size: 18, weight: .regular))
+                    .font(.title3.weight(.regular))
                     .foregroundColor(UpcomingBookingBrand.blueAccent)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Meeting Link")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(UpcomingBookingBrand.onSurface)
                 Text(joinLink.isEmpty ? "Not available yet" : joinLink)
-                    .font(.system(size: 12, weight: .regular, design: .monospaced))
+                    .font(.system(.caption, design: .monospaced))
                     .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -97,7 +97,7 @@ struct UpcomingBookingJoinCard: View {
                 onCopyLink()
             } label: {
                 Image(systemName: didCopyLink ? "checkmark" : "doc.on.doc")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.callout.weight(.regular))
                     .foregroundColor(joinLink.isEmpty ? UpcomingBookingBrand.onSurfaceVar : UpcomingBookingBrand.brandGreen)
                     .frame(width: 36, height: 36)
             }

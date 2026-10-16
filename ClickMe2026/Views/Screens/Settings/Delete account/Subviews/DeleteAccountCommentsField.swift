@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct DeleteAccountCommentsField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Additional comments (optional)")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(DeleteAccountBrand.onSurface)
 
             ZStack(alignment: .topLeading) {
@@ -29,7 +29,7 @@ struct DeleteAccountCommentsField: View {
 
                 if text.isEmpty {
                     Text("Share any additional thoughts...")
-                        .font(.system(size: 14, design: .rounded))
+                        .font(.brand(.subheadline))
                         .foregroundColor(DeleteAccountBrand.onSurfaceVar.opacity(0.55))
                         .padding(.horizontal, 14)
                         .padding(.top, 12)
@@ -39,7 +39,7 @@ struct DeleteAccountCommentsField: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .foregroundColor(DeleteAccountBrand.onSurface)
-                    .font(.system(size: 14, design: .rounded))
+                    .font(.brand(.subheadline))
                     .tint(DeleteAccountBrand.errorRed)
                     .frame(minHeight: 100)
                     .padding(.horizontal, 10)

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,17 +17,17 @@ struct ChatConversationsSearchBar: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 16))
+                .font(.callout)
                 .foregroundColor(ChatConversationsBrand.onSurfaceVar)
 
             TextField("", text: $text)
                 .placeholder(when: text.isEmpty) {
                     Text("Search")
                         .foregroundColor(ChatConversationsBrand.onSurfaceVar)
-                        .font(.system(size: 16, design: .rounded))
+                        .font(.brand(.callout))
                 }
                 .foregroundColor(ChatConversationsBrand.onSurface)
-                .font(.system(size: 16, design: .rounded))
+                .font(.brand(.callout))
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
                 .tint(ChatConversationsBrand.brandGreen)
@@ -36,7 +36,7 @@ struct ChatConversationsSearchBar: View {
                 Button(action: onClear) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(ChatConversationsBrand.onSurfaceVar.opacity(0.60))
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                 }
             }
         }

@@ -13,7 +13,7 @@ struct ProfilePhotoZoomSlider: View {
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: "minus")
-                .font(.system(size: 14, weight: .medium))
+                .font(.subheadline.weight(.medium))
                 .foregroundColor(Color.white.opacity(0.45))
                 .onTapGesture { zoomScale = max(0, zoomScale - 0.1) }
 
@@ -23,7 +23,7 @@ struct ProfilePhotoZoomSlider: View {
                 .opacity(isEnabled ? 1 : 0.35)
 
             Image(systemName: "plus")
-                .font(.system(size: 14, weight: .medium))
+                .font(.subheadline.weight(.medium))
                 .foregroundColor(Color.white.opacity(0.45))
                 .onTapGesture { zoomScale = min(1, zoomScale + 0.1) }
         }

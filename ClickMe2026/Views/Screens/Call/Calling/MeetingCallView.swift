@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -51,64 +51,141 @@ struct MeetingCallView: View {
         ZStack {
             MeetingCallBackground()
 
-            VStack(spacing: 0) {
-                if viewModel.isInFinalStretch || viewModel.isPastScheduledEnd {
-                    endingSoonBanner
-                        .padding(.horizontal, 24)
-                        .padding(.top, 12)
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-
-                Spacer()
-
-                MeetingCallAvatar(
-                    expertImageURL: viewModel.expertImageURL,
-                    myAvatarURL: viewModel.myAvatarURL,
-                    callStatus: viewModel.callStatus,
-                    glowPulse: viewModel.glowPulse,
-                    ringPulse: viewModel.ringPulse
-                )
-                .padding(.bottom, 40)
-
-                MeetingCallInfo(
-                    expertName: viewModel.expertName,
-                    topic: viewModel.topic,
-                    scheduledRangeLabel: viewModel.scheduledRangeLabel,
-                    timerString: viewModel.timerString,
-                    statusLabel: viewModel.callStatus.label,
-                    remainingLabel: viewModel.remainingLabel,
-                    isNearOrPastEnd: viewModel.isInFinalStretch || viewModel.isPastScheduledEnd
-                )
-                .padding(.bottom, 56)
-
-                MeetingCallControls(
-                    isMuted: viewModel.isMuted,
-                    isSpeakerOn: viewModel.isSpeakerOn,
-                    onMinimize: onMinimize,
-                    onOpenChat: { CallCenter.shared.requestOpenChatWithPeer() },
-                    onToggleMute: { viewModel.toggleMute() },
-                    onToggleSpeaker: { viewModel.toggleSpeaker() }
-                )
-                .padding(.bottom, 52)
-
-                MeetingCallEndButton(
-                    isEnding: viewModel.isEndingCall,
-                    action: { CallCenter.shared.endCall() }
-                )
-                .padding(.horizontal, 24)
-                .padding(.bottom, 40)
+            // Branch on the connection type returned by `POST /join`.
+            // `.skypeZoom` renders a compact "external meeting" surface
+            // (copy / open link + End Session); everything else falls
+            // through to the standard in-app voice UI.
+            if viewModel.connectionType == .skypeZoom {
+                skypeCallContent
+            } else {
+                agoraCallContent
             }
         }
         .animation(.easeInOut(duration: 0.25), value: viewModel.isInFinalStretch)
         .animation(.easeInOut(duration: 0.25), value: viewModel.isPastScheduledEnd)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.connectionType)
         // Server pushed `call.ended` for this booking — the peer hung
         // up. Drop back to the "waiting for peer" visual so the local
         // user can wait for a rejoin or hang up manually. Only the
-        // local Hang Up button runs the teardown.
+        // local Hang Up button runs the teardown. Skype path has no
+        // real-time signal from the server, so this only fires for
+        // in-app voice.
         .onChange(of: viewModel.peerEndedCall) { _, ended in
             if ended {
                 viewModel.handlePeerLeft()
             }
+        }
+    }
+
+    // MARK: - Agora in-app voice content (existing)
+
+    private var agoraCallContent: some View {
+        VStack(spacing: 0) {
+            if viewModel.isInFinalStretch || viewModel.isPastScheduledEnd {
+                endingSoonBanner
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            Spacer()
+
+            MeetingCallAvatar(
+                expertImageURL: viewModel.expertImageURL,
+                myAvatarURL: viewModel.myAvatarURL,
+                callStatus: viewModel.callStatus,
+                glowPulse: viewModel.glowPulse,
+                ringPulse: viewModel.ringPulse
+            )
+            .padding(.bottom, 40)
+
+            MeetingCallInfo(
+                expertName: viewModel.expertName,
+                topic: viewModel.topic,
+                scheduledRangeLabel: viewModel.scheduledRangeLabel,
+                timerString: viewModel.timerString,
+                statusLabel: viewModel.callStatus.label,
+                remainingLabel: viewModel.remainingLabel,
+                isNearOrPastEnd: viewModel.isInFinalStretch || viewModel.isPastScheduledEnd
+            )
+            .padding(.bottom, 56)
+
+            MeetingCallControls(
+                isMuted: viewModel.isMuted,
+                isSpeakerOn: viewModel.isSpeakerOn,
+                onMinimize: onMinimize,
+                onOpenChat: { CallCenter.shared.requestOpenChatWithPeer() },
+                onToggleMute: { viewModel.toggleMute() },
+                onToggleSpeaker: { viewModel.toggleSpeaker() }
+            )
+            .padding(.bottom, 52)
+
+            MeetingCallEndButton(
+                isEnding: viewModel.isEndingCall,
+                action: { CallCenter.shared.endCall() }
+            )
+            .padding(.horizontal, 24)
+            .padding(.bottom, 40)
+        }
+    }
+
+    // MARK: - Skype/Zoom external-meeting content
+
+    /// Compact "external meeting" surface. No audio, no mute/speaker —
+    /// just the meeting link (copy + open) and an End Session button so
+    /// the user can complete the booking after the external call.
+    private var skypeCallContent: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            SkypeSessionHero(
+                peerName: viewModel.expertName,
+                peerAvatarURL: viewModel.expertImageURL,
+                topic: viewModel.topic,
+                scheduledRangeLabel: viewModel.scheduledRangeLabel
+            )
+            .padding(.bottom, 40)
+
+            SkypeLinkActions(
+                joinURL: viewModel.externalJoinURL,
+                showCopiedToast: viewModel.showLinkCopiedToast,
+                onOpen: { viewModel.openExternalLink() },
+                onCopy: { viewModel.copyExternalLinkToPasteboard() }
+            )
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+
+            Text(skypeStatusText)
+                .font(.brand(.caption, weight: .medium))
+                .foregroundColor(MeetingCallBrand.onSurfaceVar)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .padding(.bottom, 32)
+
+            // Skype variant only shows Minimize + Chat — no mute /
+            // speaker since there's no in-app audio to route.
+            HStack(spacing: 32) {
+                MeetingCallControlButton(
+                    icon: "chevron.compact.down",
+                    label: "Minimize",
+                    isActive: false,
+                    action: onMinimize
+                )
+                MeetingCallControlButton(
+                    icon: "bubble.left.and.bubble.right.fill",
+                    label: "Chat",
+                    isActive: false,
+                    action: { CallCenter.shared.requestOpenChatWithPeer() }
+                )
+            }
+            .padding(.bottom, 40)
+
+            MeetingCallEndButton(
+                isEnding: viewModel.isEndingCall,
+                action: { CallCenter.shared.endCall() }
+            )
+            .padding(.horizontal, 24)
+            .padding(.bottom, 40)
         }
     }
 
@@ -123,10 +200,10 @@ struct MeetingCallView: View {
     private var endingSoonBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: "hourglass")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundColor(.orange)
             Text(bannerText)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(MeetingCallBrand.onSurface)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
@@ -146,6 +223,20 @@ struct MeetingCallView: View {
             return "Scheduled time complete — you can wrap up when ready."
         }
         return "Session ending soon — please start wrapping up."
+    }
+
+    /// Status copy for the Skype variant. Softens the End Session
+    /// button — the auto-cutoff will close the session for us, so
+    /// coming back to press it is optional. Falls back to the older
+    /// generic string when the scheduled end isn't known.
+    private var skypeStatusText: String {
+        if !viewModel.hasOpenedExternalLink {
+            return "Open the meeting link to start the session."
+        }
+        if let endLabel = viewModel.scheduledEndLabel {
+            return "Meeting in progress. This will end automatically at \(endLabel) — or tap End Session when you're done."
+        }
+        return "Meeting in progress — tap End Session when you're done, or leave the session to end automatically."
     }
 }
 

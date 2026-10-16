@@ -2,7 +2,7 @@
 //  MakeABookingMeetingTypeCard.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -49,7 +49,7 @@ struct MakeABookingMeetingTypeCard: View {
                 }
 
                 Text(type.displayName)
-                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(MakeABookingBrand.onSurface)
 
                 Spacer()

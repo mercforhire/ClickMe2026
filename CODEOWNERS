@@ -4,5 +4,6 @@
 # For documentation about the file format, see:
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# The iOS team at Q42 maintains this repo.
-*     @q42/ios-developers
+# The iOS team at Uptrend Investments Inc. maintains this repo.
+# TODO: switch to @<uptrend-org>/ios once the GitHub org is set up.
+# *     @q42/ios-developers

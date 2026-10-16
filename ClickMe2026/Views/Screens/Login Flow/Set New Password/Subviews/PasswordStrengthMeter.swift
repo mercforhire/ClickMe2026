@@ -22,10 +22,10 @@ struct PasswordStrengthMeter: View {
 
             HStack(spacing: 4) {
                 Text("Strength:")
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(Color.white.opacity(0.45))
                 Text(strength.label)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.brand(.caption, weight: .semibold))
                     .foregroundColor(strength.color)
                     .animation(.easeInOut(duration: 0.2), value: strength)
             }

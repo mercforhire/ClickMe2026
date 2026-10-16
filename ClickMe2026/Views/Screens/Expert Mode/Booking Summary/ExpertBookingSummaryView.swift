@@ -2,10 +2,22 @@
 //  ExpertBookingSummaryView.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
+
+// MARK: - Local routes
+
+/// Push target for the "My Note" card. Kept private + registered
+/// locally on this view so the seed values ride along with the route
+/// without any shell-level plumbing.
+private struct ExpertPrivateNoteRoute: Hashable {
+    let bookingId: UUID
+    let clientName: String
+    let topic: String
+    let dateLabel: String
+}
 
 // MARK: - Expert Booking Summary View
 
@@ -26,6 +38,13 @@ struct ExpertBookingSummaryView: View {
     /// Drives the `.sheet` presenting `ExpertCancellationView`. Flipped
     /// by the Cancel action button; cleared by the sheet's dismiss.
     @State private var showCancellationSheet: Bool = false
+
+    /// Confirmation-dialog state for accepting the pending reschedule.
+    @State private var showAcceptRescheduleConfirmation: Bool = false
+    /// Alert-with-text-field state for declining the reschedule with
+    /// an optional reason.
+    @State private var showDeclineReschedulePrompt: Bool = false
+    @State private var declineRescheduleReason: String = ""
 
     // MARK: Init
 
@@ -51,6 +70,55 @@ struct ExpertBookingSummaryView: View {
         .sheet(isPresented: $showCancellationSheet) {
             cancellationSheet
         }
+        .navigationDestination(for: ExpertPrivateNoteRoute.self) { route in
+            ExpertBookingNoteView(
+                bookingId: route.bookingId,
+                clientName: route.clientName,
+                topic: route.topic,
+                dateLabel: route.dateLabel
+            )
+        }
+        .confirmationDialog(
+            "Accept the proposed reschedule?",
+            isPresented: $showAcceptRescheduleConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Accept") {
+                Task { await viewModel.acceptReschedule() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The session will move to the new time your client proposed.")
+        }
+        .alert(
+            "Decline reschedule",
+            isPresented: $showDeclineReschedulePrompt
+        ) {
+            TextField("Optional reason", text: $declineRescheduleReason)
+            Button("Decline", role: .destructive) {
+                let reason = declineRescheduleReason
+                declineRescheduleReason = ""
+                Task { await viewModel.declineReschedule(reason: reason) }
+            }
+            Button("Keep session as-is", role: .cancel) {
+                declineRescheduleReason = ""
+            }
+        } message: {
+            Text("The booking will revert to its original time.")
+        }
+        .alert(
+            "Couldn't update booking",
+            isPresented: Binding(
+                get: { viewModel.rescheduleError != nil },
+                set: { if !$0 { viewModel.rescheduleError = nil } }
+            ),
+            presenting: viewModel.rescheduleError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+        .keyboardDismissToolbar()
     }
 
     /// Wraps `ExpertCancellationView` in its own NavigationStack (so the
@@ -102,6 +170,11 @@ struct ExpertBookingSummaryView: View {
             VStack(alignment: .leading, spacing: 20) {
                 clientHeader(detail: detail)
                 statusBadge(detail: detail)
+
+                if let proposal = detail.reschedule {
+                    rescheduleCard(detail: detail, proposal: proposal)
+                }
+
                 detailsCard(detail: detail)
 
                 if let notes = detail.preparationNotes.text?
@@ -110,6 +183,8 @@ struct ExpertBookingSummaryView: View {
                 {
                     prepNotesCard(text: notes)
                 }
+
+                myNoteCard(detail: detail)
 
                 if detail.actions.canMessage {
                     messageClientButton(detail: detail)
@@ -154,9 +229,9 @@ struct ExpertBookingSummaryView: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.subheadline.weight(.medium))
                 Text(label)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
             }
             .foregroundColor(Brand.onSurface)
             .frame(maxWidth: .infinity)
@@ -179,9 +254,9 @@ struct ExpertBookingSummaryView: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.subheadline.weight(.medium))
                 Text(label)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
             }
             .foregroundColor(Color.red.opacity(0.95))
             .frame(maxWidth: .infinity)
@@ -207,7 +282,7 @@ struct ExpertBookingSummaryView: View {
                     ZStack {
                         Color(red: 0.14, green: 0.20, blue: 0.16)
                         Image(systemName: "person.fill")
-                            .font(.system(size: 26))
+                            .font(.title)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }
@@ -217,7 +292,7 @@ struct ExpertBookingSummaryView: View {
 
             VStack(alignment: .leading, spacing: 5) {
                 Text(detail.client.name ?? "Client")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(Brand.onSurface)
 
                 Button {
@@ -229,7 +304,7 @@ struct ExpertBookingSummaryView: View {
                     ))
                 } label: {
                     Text("View Profile")
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .font(.brand(.subheadline, weight: .medium))
                         .foregroundColor(Brand.primary)
                 }
                 .buttonStyle(.plain)
@@ -248,7 +323,7 @@ struct ExpertBookingSummaryView: View {
                 .frame(width: 7, height: 7)
                 .shadow(color: Brand.primary.opacity(0.75), radius: 4)
             Text(detail.status.label.uppercased())
-                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .font(.brand(.caption2, weight: .bold))
                 .tracking(0.8)
                 .foregroundColor(Brand.onSurface)
         }
@@ -267,25 +342,25 @@ struct ExpertBookingSummaryView: View {
         VStack(spacing: 0) {
             detailRow(label: "Date") {
                 Text(viewModel.dateLabel)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
             }
             rowDivider
             detailRow(label: "Time") {
                 Text(viewModel.timeRangeLabel)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
             }
             rowDivider
             detailRow(label: "Duration") {
                 Text(viewModel.durationLabel)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
             }
             rowDivider
             detailRow(label: "Topic") {
                 Text(detail.session.topicTitle ?? "Session")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onSurface)
                     .multilineTextAlignment(.trailing)
             }
@@ -293,17 +368,17 @@ struct ExpertBookingSummaryView: View {
             detailRow(label: "Meeting Type") {
                 HStack(spacing: 6) {
                     Image(systemName: viewModel.meetingTypeIcon)
-                        .font(.system(size: 14))
+                        .font(.subheadline)
                         .foregroundColor(Brand.onSurface)
                     Text(viewModel.meetingTypeLabel)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .semibold))
                         .foregroundColor(Brand.onSurface)
                 }
             }
             rowDivider
             detailRow(label: "Consultation Fee") {
                 Text(viewModel.feeLabel)
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.primary)
             }
         }
@@ -320,7 +395,7 @@ struct ExpertBookingSummaryView: View {
     ) -> some View {
         HStack(alignment: .top) {
             Text(label)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Brand.overlayWhite60)
             Spacer()
             content()
@@ -337,11 +412,11 @@ struct ExpertBookingSummaryView: View {
     private func prepNotesCard(text: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Client's message")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .tracking(0.6)
                 .foregroundColor(Brand.overlayWhite60)
             Text(text)
-                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Brand.onSurface)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -353,6 +428,241 @@ struct ExpertBookingSummaryView: View {
         )
     }
 
+    // MARK: - Reschedule card
+
+    /// Amber-toned banner shown when a reschedule is pending. Renders
+    /// three states:
+    /// - Client proposed → expert is counterparty → **Accept + Decline**
+    ///   actions rendered inline.
+    /// - Expert proposed → expert is initiator → "Awaiting response"
+    ///   pill, no actions.
+    /// - (Either way, current + proposed times shown side-by-side.)
+    private func rescheduleCard(
+        detail: ExpertBookingDetail,
+        proposal: RescheduleProposal
+    ) -> some View {
+        // The initiator is whoever proposed *most recently* (last-write-
+        // wins on race). The counterparty acts; the initiator waits.
+        let expertIsCounterparty = proposal.initiatedBy == .client
+        let headline = expertIsCounterparty
+            ? "Client requested a new time"
+            : "You proposed a new time"
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 8) {
+                Image(systemName: "clock.badge.exclamationmark")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.orange.opacity(0.9))
+                Text(headline)
+                    .font(.brand(.subheadline, weight: .semibold))
+                    .foregroundColor(Brand.onSurface)
+                Spacer()
+            }
+
+            rescheduleTimesRow(
+                fromDate: detail.session.schedule.startTime,
+                toDate: proposal.proposedStart
+            )
+
+            if let note = proposal.note?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+               !note.isEmpty
+            {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(expertIsCounterparty ? "Client's message" : "Your message")
+                        .font(.brand(.caption2, weight: .semibold))
+                        .tracking(0.6)
+                        .foregroundColor(Brand.onSurfaceVariant)
+                    Text(note)
+                        .font(.brand(.caption, weight: .regular))
+                        .foregroundColor(Brand.onSurface)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            if expertIsCounterparty {
+                rescheduleActionButtons
+            } else {
+                awaitingResponsePill
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.orange.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.orange.opacity(0.35), lineWidth: 1)
+                )
+        )
+    }
+
+    private func rescheduleTimesRow(fromDate: Date, toDate: Date) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            timeBlock(
+                label: "From",
+                value: viewModel.formattedProposedSlot(RescheduleProposal(
+                    proposedStart: fromDate,
+                    proposedEnd: fromDate,
+                    proposedTimezone: "",
+                    initiatedBy: .client,
+                    note: nil,
+                    createdAt: fromDate
+                ))
+            )
+            Image(systemName: "arrow.right")
+                .font(.caption.weight(.semibold))
+                .foregroundColor(Brand.onSurfaceVariant)
+            timeBlock(
+                label: "To",
+                value: viewModel.formattedProposedSlot(RescheduleProposal(
+                    proposedStart: toDate,
+                    proposedEnd: toDate,
+                    proposedTimezone: "",
+                    initiatedBy: .client,
+                    note: nil,
+                    createdAt: toDate
+                ))
+            )
+            Spacer()
+        }
+    }
+
+    private func timeBlock(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label.uppercased())
+                .font(.brand(.caption2, weight: .semibold))
+                .tracking(0.6)
+                .foregroundColor(Brand.onSurfaceVariant)
+            Text(value)
+                .font(.brand(.caption, weight: .semibold))
+                .foregroundColor(Brand.onSurface)
+        }
+    }
+
+    private var rescheduleActionButtons: some View {
+        HStack(spacing: 12) {
+            Button {
+                showDeclineReschedulePrompt = true
+            } label: {
+                Text("Decline")
+                    .font(.brand(.subheadline, weight: .semibold))
+                    .foregroundColor(Color.red.opacity(0.95))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 42)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.red.opacity(0.10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(Color.red.opacity(0.45), lineWidth: 1)
+                            )
+                    )
+            }
+            .buttonStyle(PressScaleButtonStyle())
+            .disabled(viewModel.isSubmittingReschedule)
+
+            Button {
+                showAcceptRescheduleConfirmation = true
+            } label: {
+                HStack(spacing: 6) {
+                    if viewModel.isSubmittingReschedule {
+                        ProgressView().tint(Brand.onPrimary).controlSize(.small)
+                    }
+                    Text("Accept")
+                        .font(.brand(.subheadline, weight: .semibold))
+                }
+                .foregroundColor(Brand.onPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 42)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Brand.primary)
+                )
+            }
+            .buttonStyle(PressScaleButtonStyle())
+            .disabled(viewModel.isSubmittingReschedule)
+        }
+    }
+
+    private var awaitingResponsePill: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "hourglass")
+                .font(.caption2.weight(.semibold))
+            Text("Awaiting client's response")
+                .font(.brand(.caption, weight: .semibold))
+        }
+        .foregroundColor(Brand.onSurfaceVariant)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(Brand.overlayWhite05)
+                .overlay(Capsule().stroke(Brand.outlineVariant, lineWidth: 1))
+        )
+    }
+
+    // MARK: - My Note
+
+    /// Full-text private-note surface. Shows the note inline when the
+    /// server sent one (so the expert doesn't have to drill in), or an
+    /// empty-state ghost prompt otherwise. Tap pushes the editor via
+    /// the shell's shared nav path.
+    private func myNoteCard(detail: ExpertBookingDetail) -> some View {
+        Button(action: { pushPrivateNote(detail: detail) }) {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "note.text")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(Brand.primary)
+                    Text("My Note")
+                        .font(.brand(.subheadline, weight: .semibold))
+                        .foregroundColor(Brand.onSurface)
+                    Spacer()
+                    Image(systemName: "pencil")
+                        .font(.caption.weight(.regular))
+                        .foregroundColor(Brand.primary)
+                }
+
+                if let note = detail.expertPrivateNote, !note.isEmpty {
+                    Text(note)
+                        .font(.brand(.caption, weight: .regular))
+                        .foregroundColor(Brand.onSurface)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text("Tap to jot down your thoughts — only you can see this.")
+                        .font(.brand(.caption, weight: .regular))
+                        .foregroundColor(Brand.onSurfaceVariant.opacity(0.7))
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Brand.primary.opacity(0.06))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Brand.primary.opacity(0.30), lineWidth: 1))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func pushPrivateNote(detail: ExpertBookingDetail) {
+        guard let homeNavigationPath else { return }
+        homeNavigationPath.push(ExpertPrivateNoteRoute(
+            bookingId: detail.bookingId,
+            clientName: detail.client.name ?? "Client",
+            topic: detail.session.topicTitle ?? "Session",
+            dateLabel: "\(viewModel.dateLabel) • \(viewModel.timeRangeLabel)"
+        ))
+    }
+
     // MARK: - Message CTA
 
     private func messageClientButton(detail: ExpertBookingDetail) -> some View {
@@ -361,9 +671,9 @@ struct ExpertBookingSummaryView: View {
         } label: {
             HStack(spacing: 8) {
                 Image(systemName: "bubble.left.fill")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                 Text("Message Client")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
             }
             .foregroundColor(Brand.onPrimary)
             .frame(maxWidth: .infinity)
@@ -401,7 +711,7 @@ struct ExpertBookingSummaryView: View {
         VStack(spacing: 12) {
             ProgressView().tint(Brand.onSurface)
             Text("Loading booking…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -410,13 +720,13 @@ struct ExpertBookingSummaryView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(Brand.onSurfaceVariant)
             Text("Couldn't load booking")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(Brand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -425,7 +735,7 @@ struct ExpertBookingSummaryView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Brand.onPrimary)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -451,13 +761,13 @@ private struct LiveFetchExpertBookingSummaryBootstrap: View {
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text("Preview bootstrap failed")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.white)
                 Text(errorMessage)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)
@@ -475,7 +785,7 @@ private struct LiveFetchExpertBookingSummaryBootstrap: View {
     private func bootstrap() async {
         ClickMeAPI.shared.bearerToken = PreviewSecrets.expertBearerToken
         do {
-            let response = try await ClickMeAPI.shared.getExpertBookings(page: 1, limit: 20)
+            let response = try await ClickMeAPI.shared.getExpertBookings(type: .upcoming, page: 1, limit: 20)
             if let soonest = response.data.bookings.sorted(by: { $0.session.startTime < $1.session.startTime }).first {
                 bookingId = soonest.bookingId
                 return

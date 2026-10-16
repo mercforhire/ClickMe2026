@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-14.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -61,7 +61,7 @@ struct SignupVerifyEmailView: View {
                         .padding(.bottom, 36)
 
                     Text("Email Verification")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.brand(.title, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.bottom, 36)
 

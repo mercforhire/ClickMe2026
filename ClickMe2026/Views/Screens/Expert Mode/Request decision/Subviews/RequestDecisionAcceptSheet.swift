@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -31,7 +31,7 @@ struct RequestDecisionAcceptSheet: View {
                 VStack(spacing: 20) {
                     // Title
                     Text("Confirm Booking")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(.brand(.title3, weight: .bold))
                         .foregroundColor(Brand.onSurface)
 
                     // Summary card
@@ -49,7 +49,7 @@ struct RequestDecisionAcceptSheet: View {
                     // Optional message
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Add a message (optional)")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .font(.brand(.caption, weight: .semibold))
                             .foregroundColor(Brand.onSurface)
 
                         ZStack(alignment: .topLeading) {
@@ -61,7 +61,7 @@ struct RequestDecisionAcceptSheet: View {
 
                             if message.isEmpty {
                                 Text("e.g., Looking forward to our session!")
-                                    .font(.system(size: 13, design: .rounded))
+                                    .font(.brand(.caption))
                                     .foregroundColor(Color.white.opacity(0.35))
                                     .padding(.horizontal, 12)
                                     .padding(.top, 12)
@@ -71,7 +71,7 @@ struct RequestDecisionAcceptSheet: View {
                                 .scrollContentBackground(.hidden)
                                 .background(Color.clear)
                                 .foregroundColor(Brand.onSurface)
-                                .font(.system(size: 13, design: .rounded))
+                                .font(.brand(.caption))
                                 .frame(minHeight: 72)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 8)
@@ -82,7 +82,7 @@ struct RequestDecisionAcceptSheet: View {
                     HStack(spacing: 12) {
                         Button(action: onCancel) {
                             Text("Cancel")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                                 .foregroundColor(Brand.onSurface)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
@@ -93,7 +93,7 @@ struct RequestDecisionAcceptSheet: View {
 
                         Button { onConfirm(message) } label: {
                             Text("Confirm")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                                 .foregroundColor(Brand.onPrimary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
@@ -117,16 +117,22 @@ struct RequestDecisionAcceptSheet: View {
                 .clipShape(RequestDecisionRoundedCorner(radius: 24, corners: [.topLeft, .topRight]))
                 .ignoresSafeArea(edges: .bottom)
         )
+        // No local `.keyboardDismissToolbar()` — this sheet is rendered
+        // as a same-tree ZStack overlay by `RequestDecisionView` (via
+        // its `sheetOverlay` helper), NOT as a system `.sheet(isPresented:)`.
+        // The parent view already installs the toolbar; attaching a
+        // second one here stacks a duplicate "Done" button on the
+        // keyboard accessory bar.
     }
 
     private func summaryRow(label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .font(.system(size: 13, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(Brand.overlayWhite60)
             Spacer()
             Text(value)
-                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(Brand.onSurface)
                 .multilineTextAlignment(.trailing)
         }

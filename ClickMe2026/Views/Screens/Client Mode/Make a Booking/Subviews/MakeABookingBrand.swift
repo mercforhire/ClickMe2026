@@ -2,7 +2,7 @@
 //  MakeABookingBrand.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -27,7 +27,7 @@ struct MakeABookingSectionHeader: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 20, weight: .bold, design: .rounded))
+            .font(.brand(.title3, weight: .bold))
             .foregroundColor(MakeABookingBrand.onSurface)
     }
 }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -13,6 +13,15 @@ import SwiftUI
 struct MakeABooking: View {
 
     @StateObject private var viewModel: MakeABookingViewModel
+    @State private var showPaymentInfo: Bool = false
+    @State private var showPaymentMethods: Bool = false
+
+    /// Shell-injected shortcuts consumed by the post-booking
+    /// `BookingRequestSentView`. Nil in previews / isolated tests —
+    /// `BookingRequestSentView` treats the underlying closures as
+    /// optional no-ops in that case.
+    @Environment(\.showMyBookings) private var showMyBookings
+    @Environment(\.returnToHome) private var returnToHome
 
     // MARK: Inits
 
@@ -71,10 +80,31 @@ struct MakeABooking: View {
                         priceLabel: viewModel.selectedTopic?.priceLabel ?? "—"
                     )
 
+                    // Non-intrusive info affordance — only surfaced for
+                    // paid topics; free bookings don't need a payment
+                    // explainer. Deliberately placed above the primary
+                    // CTA so users curious about timing can find it
+                    // without decoration cluttering the button itself.
+                    if shouldShowPaymentInfoLink {
+                        Button {
+                            showPaymentInfo = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "info.circle")
+                                    .font(.footnote.weight(.semibold))
+                                Text("How does payment work?")
+                                    .font(.brand(.caption, weight: .semibold))
+                            }
+                            .foregroundColor(Brand.primary)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+
                     MakeABookingBookButton(
+                        title: bookButtonTitle,
                         isBooking: viewModel.isSubmitting,
                         isEnabled: canBook,
-                        action: viewModel.book
+                        action: bookButtonAction
                     )
                 }
                 .padding(.horizontal, 20)
@@ -89,12 +119,33 @@ struct MakeABooking: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await viewModel.onAppear() }
         .bookingPaymentSheet(viewModel: viewModel)
-        .alert("Booking sent",
-               isPresented: presenting(\.bookingSuccessMessage),
-               presenting: viewModel.bookingSuccessMessage) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { text in
-            Text(text)
+        // Post-success navigation. `navigationDestination(item:)` takes
+        // a `Binding<Optional<Hashable>>`; UUID is Hashable so we don't
+        // need a wrapper. Fires for both free (`performFreeBooking`) and
+        // paid (`completePaidBooking`) paths — the destination view
+        // conditionally hides the payment-lifecycle card for free
+        // bookings.
+        .navigationDestination(item: $viewModel.completedBookingId) { bookingId in
+            BookingRequestSentView(
+                bookingId: bookingId,
+                onViewBookings: { showMyBookings?() },
+                onBackToHome: { returnToHome?() }
+            )
+        }
+        // Routes the client to Payment Methods when they try to book a
+        // paid topic without a saved card. Refreshes the availability
+        // flag on return so a newly-added card immediately re-enables
+        // the "Book Now" CTA.
+        .navigationDestination(isPresented: $showPaymentMethods) {
+            PaymentMethodsView()
+        }
+        .onChange(of: showPaymentMethods) { _, isShowing in
+            if !isShowing {
+                Task { await viewModel.loadPaymentMethods() }
+            }
+        }
+        .sheet(isPresented: $showPaymentInfo) {
+            PaymentInfoSheet()
         }
         .alert("Couldn't book",
                isPresented: presenting(\.bookingError),
@@ -103,14 +154,58 @@ struct MakeABooking: View {
         } message: { text in
             Text(text)
         }
+        // App-root keyboard toolbar doesn't reliably reach this deep
+        // through the tab shell + booking-tab NavigationStack, so
+        // re-attach locally to guarantee the message `TextEditor` has
+        // a Done button.
+        .keyboardDismissToolbar()
     }
 
     // MARK: Derived
 
     private var canBook: Bool {
-        viewModel.selectedTopic != nil
-            && viewModel.selectedTimeSlot != nil
-            && !viewModel.isSubmitting
+        guard let topic = viewModel.selectedTopic else { return false }
+        if viewModel.isSubmitting { return false }
+
+        // Paid topics gate the CTA on the payment-methods check. While
+        // the check is still in flight (`.unknown`) we keep the button
+        // disabled so a tap can't slip through into the paid flow —
+        // which would let the user add a card mid-checkout and bypass
+        // the "save first" rule.
+        if !topic.isFree {
+            switch viewModel.paymentMethodsAvailability {
+            case .unknown:
+                return false
+            case .none:
+                // "Add a Payment Method" branch — just needs a topic
+                // selected; a slot isn't required to route the user
+                // into settings.
+                return true
+            case .available:
+                break
+            }
+        }
+
+        return viewModel.selectedTimeSlot != nil
+    }
+
+    private var bookButtonTitle: String {
+        viewModel.requiresPaymentMethodSetup ? "Add a Payment Method" : "Book Now"
+    }
+
+    private var bookButtonAction: () -> Void {
+        if viewModel.requiresPaymentMethodSetup {
+            return { showPaymentMethods = true }
+        }
+        return viewModel.book
+    }
+
+    /// The "How does payment work?" affordance only makes sense for paid
+    /// sessions. Free topics don't authorize a card — the sheet would
+    /// describe a flow that doesn't apply.
+    private var shouldShowPaymentInfoLink: Bool {
+        guard let topic = viewModel.selectedTopic else { return false }
+        return !topic.isFree
     }
 
     private var summaryDateTimeLabel: String {
@@ -132,13 +227,15 @@ struct MakeABooking: View {
 
 // MARK: - Preview helpers
 
-#if DEBUG
 private func makeABookingPreviewViewModel(isFree: Bool) -> MakeABookingViewModel {
     let topics: [BookingTopic] = [
         BookingTopic(
             id: UUID(),
             title: isFree ? "Intro Session" : "Marketing Strategy Deep Dive",
             durationMinutes: 30,
+            description: isFree
+                ? "A quick 30-minute intro chat to see if we're a good fit — no agenda required."
+                : "Deep dive on positioning, ICP, channel mix, and 90-day GTM execution priorities.",
             priceAmount: isFree ? nil : 5000,
             currency: isFree ? nil : "USD",
             isFree: isFree
@@ -147,6 +244,7 @@ private func makeABookingPreviewViewModel(isFree: Bool) -> MakeABookingViewModel
             id: UUID(),
             title: "Brand Growth",
             durationMinutes: 45,
+            description: "Positioning workshop for early-stage founders — narrative, audience, and messaging tests.",
             priceAmount: 7500,
             currency: "USD",
             isFree: false
@@ -173,7 +271,6 @@ private func makeABookingPreviewViewModel(isFree: Bool) -> MakeABookingViewModel
         expertTimezone: "America/Toronto"
     )
 }
-#endif
 
 // MARK: - Live-fetch bootstrap
 
@@ -203,13 +300,13 @@ private struct LiveFetchBookingBootstrap: View {
         } else if let errorMessage {
             VStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 28, weight: .light))
+                    .font(.title.weight(.light))
                     .foregroundColor(.white.opacity(0.6))
                 Text("Preview bootstrap failed")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.white)
                 Text(errorMessage)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.brand(.caption))
                     .foregroundColor(.white.opacity(0.6))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 24)

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-27.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct ExpertCancellationReasonSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("Reason for Cancellation")
-                .font(.system(size: 17, weight: .bold, design: .rounded))
+                .font(.brand(.body, weight: .bold))
                 .foregroundColor(ExpertCancellationBrand.onSurface)
                 .padding(.top, 16)
                 .padding(.bottom, 12)
@@ -31,9 +31,8 @@ struct ExpertCancellationReasonSheet: View {
                     } label: {
                         HStack {
                             Text(reason.rawValue)
-                                .font(.system(size: 15,
-                                              weight: selectedReason == reason ? .semibold : .regular,
-                                              design: .rounded))
+                                .font(.system(.subheadline, design: .rounded)
+                                    .weight(selectedReason == reason ? .semibold : .regular))
                                 .foregroundColor(
                                     selectedReason == reason
                                         ? ExpertCancellationBrand.brandGreen
@@ -42,7 +41,7 @@ struct ExpertCancellationReasonSheet: View {
                             Spacer()
                             if selectedReason == reason {
                                 Image(systemName: "checkmark")
-                                    .font(.system(size: 13, weight: .bold))
+                                    .font(.caption.weight(.bold))
                                     .foregroundColor(ExpertCancellationBrand.brandGreen)
                             }
                         }

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -22,11 +22,11 @@ struct UpcomingEmptyState: View {
 
             VStack(spacing: 12) {
                 Text("No Bookings Yet!")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.brand(.title, weight: .bold))
                     .foregroundColor(MyBookingsBrand.onSurface)
 
                 Text("Start your learning journey by finding\nan expert that suits your needs.")
-                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                    .font(.brand(.callout, weight: .regular))
                     .foregroundColor(MyBookingsBrand.onSurfaceVar)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
@@ -34,7 +34,7 @@ struct UpcomingEmptyState: View {
 
             Button(action: onExploreExperts) {
                 Text("Explore Experts")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(MyBookingsBrand.onPrimary)
                     .frame(width: 220, height: 52)
                     .background(

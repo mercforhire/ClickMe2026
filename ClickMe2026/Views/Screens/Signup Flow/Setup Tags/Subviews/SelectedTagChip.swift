@@ -6,19 +6,39 @@
 import SwiftUI
 
 /// Capsule chip showing a selected tag with a × remove button.
+///
+/// Optionally renders a leading star toggle when `isPrimary` +
+/// `onMakePrimary` are supplied — used by the expertise editor to let
+/// experts change which tag is their "primary" (server-side
+/// `is_primary`, surfaced first in discovery/search). Signup-flow
+/// callers omit both params so the star doesn't show up in a context
+/// where the primary concept doesn't apply.
 struct SelectedTagChip: View {
     let tag: String
     let onRemove: () -> Void
+    var isPrimary: Bool? = nil
+    var onMakePrimary: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 6) {
+            if let isPrimary, let onMakePrimary {
+                Button(action: onMakePrimary) {
+                    Image(systemName: isPrimary ? "star.fill" : "star")
+                        .font(.caption2.weight(.bold))
+                        .foregroundColor(isPrimary ? TagsBrand.green : Color.white.opacity(0.55))
+                }
+                .buttonStyle(.plain)
+                .disabled(isPrimary)
+                .accessibilityLabel(isPrimary ? "Primary expertise" : "Make primary")
+            }
+
             Text(tag)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .font(.brand(.subheadline, weight: .medium))
                 .foregroundColor(.white)
 
             Button(action: onRemove) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.caption2.weight(.bold))
                     .foregroundColor(.white.opacity(0.75))
             }
         }

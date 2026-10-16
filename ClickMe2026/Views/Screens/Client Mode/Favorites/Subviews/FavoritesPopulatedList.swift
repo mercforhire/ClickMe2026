@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-15.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,22 +17,14 @@ struct FavoritesPopulatedList: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 10) {
-                    Image(systemName: "star")
-                        .font(.system(size: 22, weight: .regular))
-                        .foregroundColor(FavoritesBrand.brandGreen)
-                    Text("Favorite Experts")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                        .foregroundColor(FavoritesBrand.onSurface)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 6)
-
+                // Screen title lives on the nav bar (see
+                // `FavoritesView.body`); tagline stays as a subtitle
+                // above the list.
                 Text("Manage your curated list of elite professionals.")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(FavoritesBrand.onSurfaceVar)
                     .padding(.horizontal, 20)
+                    .padding(.top, 16)
                     .padding(.bottom, 20)
 
                 VStack(spacing: 14) {

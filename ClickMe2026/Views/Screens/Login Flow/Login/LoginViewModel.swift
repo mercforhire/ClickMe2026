@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -93,6 +93,13 @@ final class LoginViewModel: ObservableObject {
     @discardableResult
     func attemptLogin() async -> [UserRole]? {
         didAttemptLogin = true
+        // iOS keyboards frequently append a trailing space after
+        // period-double-tap or autocomplete when the user types their
+        // email — the server's strict email validator then 422s with
+        // "Enter a valid email or username". Trim before both
+        // validating and sending so the value on the wire matches what
+        // the user meant to type.
+        email = email.trimmingCharacters(in: .whitespacesAndNewlines)
         validateEmail()
         validatePassword()
         guard emailError == nil, passwordError == nil else { return nil }

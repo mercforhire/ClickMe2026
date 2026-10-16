@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,12 +17,12 @@ struct UpcomingBookingTopicCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("SESSION TOPIC")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .font(.brand(.caption2, weight: .semibold))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 .tracking(1.3)
 
             Text(topic)
-                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .font(.brand(.title3, weight: .semibold))
                 .foregroundColor(UpcomingBookingBrand.onSurface)
                 .lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
@@ -33,11 +33,11 @@ struct UpcomingBookingTopicCard: View {
 
             HStack {
                 Text("Total Paid")
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 Spacer()
                 Text(consultationFee)
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+                    .font(.brand(.title3, weight: .semibold))
                     .foregroundColor(UpcomingBookingBrand.brandGreen)
             }
         }

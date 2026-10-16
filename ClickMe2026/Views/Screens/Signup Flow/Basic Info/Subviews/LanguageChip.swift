@@ -13,12 +13,12 @@ struct LanguageChip: View {
     var body: some View {
         HStack(spacing: 5) {
             Text(language)
-                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .font(.brand(.subheadline, weight: .medium))
                 .foregroundColor(BasicInfoBrand.onSurface)
 
             Button(action: onRemove) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.caption2.weight(.bold))
                     .foregroundColor(BasicInfoBrand.onSurfaceVar)
             }
             .buttonStyle(.plain)

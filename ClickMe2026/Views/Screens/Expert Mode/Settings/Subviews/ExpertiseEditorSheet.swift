@@ -2,7 +2,7 @@
 //  ExpertiseEditorSheet.swift
 //  ClickMe2026
 //
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -69,7 +69,7 @@ struct ExpertiseEditorSheet: View {
                             ProgressView().tint(TagsBrand.green)
                         } else {
                             Text("Save")
-                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .font(.brand(.subheadline, weight: .semibold))
                                 .foregroundColor(TagsBrand.green)
                         }
                     }
@@ -142,7 +142,7 @@ struct ExpertiseEditorSheet: View {
         VStack(spacing: 12) {
             ProgressView().tint(.white)
             Text("Loading tags…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(.white.opacity(0.6))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -151,13 +151,13 @@ struct ExpertiseEditorSheet: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 26, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(.white.opacity(0.6))
             Text("Couldn't load tags")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(.white)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -166,7 +166,7 @@ struct ExpertiseEditorSheet: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -180,7 +180,7 @@ struct ExpertiseEditorSheet: View {
 
     private func sectionLabel(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 13, weight: .medium, design: .rounded))
+            .font(.brand(.caption, weight: .medium))
             .foregroundColor(Color.white.opacity(0.40))
     }
 
@@ -188,11 +188,24 @@ struct ExpertiseEditorSheet: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 ForEach(viewModel.selectedTags, id: \.id) { tag in
-                    SelectedTagChip(tag: tag.label) {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            viewModel.removeTag(tag)
+                    SelectedTagChip(
+                        tag: tag.label,
+                        onRemove: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                viewModel.removeTag(tag)
+                            }
+                        },
+                        isPrimary: viewModel.isPrimary(tag),
+                        onMakePrimary: {
+                            // `selectedTags` re-orders with the primary
+                            // first, so promoting a non-primary chip
+                            // reshuffles the row — animate the swap so
+                            // the change reads as intentional.
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                viewModel.makePrimary(tag)
+                            }
                         }
-                    }
+                    )
                 }
             }
             .padding(.horizontal, 1)

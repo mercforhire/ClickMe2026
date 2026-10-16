@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-20.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -55,6 +55,29 @@ enum ErrorCode: String, Decodable {
     case sessionInProgress       = "SESSION_IN_PROGRESS"
     case expertHasUpcomingBookings = "EXPERT_HAS_UPCOMING_BOOKINGS"
     case callUnavailable         = "CALL_UNAVAILABLE"       // 503 — Agora not configured
+    case cannotBookSelf          = "CANNOT_BOOK_SELF"       // 422 — client tried to book themselves
+    case expertNotBookable       = "EXPERT_NOT_BOOKABLE"    // 422 — expert not `charges_enabled` yet
+    case meetingLinkUnavailable  = "MEETING_LINK_UNAVAILABLE" // 422 — Skype/Zoom link missing on confirm
+    // 422 — Rare, terminal reschedule backstop (Phase 27.1). A move
+    // past the ~6-day authorization window is no longer refused on its
+    // own — the server voids the hold and converts to charge-at-T-24h.
+    // This code now fires only when the booking is genuinely
+    // unconvertible: no connected account on file, direct charging
+    // disabled platform-wide, proposed start < 24h from now, or a
+    // legacy card-less booking hit at expert-accept. UX must prompt
+    // the user to re-book (not to pick another slot).
+    case rescheduleOutsideAuthWindow = "RESCHEDULE_OUTSIDE_AUTH_WINDOW"
+    // 422 — Client reschedule / accept-reschedule only (Phase 27.1).
+    // The booking has no saved card on file, OR the referenced card
+    // exists but cannot be prepared for future billing (typical for a
+    // one-off PaymentSheet card confirmed at booking time — that card
+    // is single-use on the connected account). This is DB-only on the
+    // server — do NOT infer "user has no saved cards" from this code.
+    // Recovery: fetch `GET /me/payment-methods`; if non-empty, resend
+    // the request with `stripe_payment_method_id` set to the chosen
+    // card's id; only fall back to a SetupIntent add-card flow when
+    // that list is empty. See `RESCHEDULE-PAYMENT-CONVERSION.md` §3.1.
+    case paymentMethodRequired   = "PAYMENT_METHOD_REQUIRED"
 
     // MARK: - Chat
     case threadBlocked           = "THREAD_BLOCKED"
@@ -63,22 +86,45 @@ enum ErrorCode: String, Decodable {
     case expertNotFound          = "EXPERT_NOT_FOUND"
 
     // MARK: - Payments / booking-financial
-    case paymentFailed           = "PAYMENT_FAILED"
-    case intentExpired           = "INTENT_EXPIRED"
-    case piContextMismatch       = "PI_CONTEXT_MISMATCH"
-    case piAmountMismatch        = "PI_AMOUNT_MISMATCH"
-    case amountBelowMinimum      = "AMOUNT_BELOW_MINIMUM"
-    case paidTopicRequiresPayment = "PAID_TOPIC_REQUIRES_PAYMENT"
-    case invalidPromo            = "INVALID_PROMO"
-    case refundAmountMissing     = "REFUND_AMOUNT_MISSING"
+    case paymentFailed             = "PAYMENT_FAILED"
+    case paymentRequiresAction     = "PAYMENT_REQUIRES_ACTION"    // 402 — SCA/3DS needed; `detail.client_secret` + (soon) `detail.stripe_account`
+    case intentExpired             = "INTENT_EXPIRED"
+    case piContextMismatch         = "PI_CONTEXT_MISMATCH"
+    case piAmountMismatch          = "PI_AMOUNT_MISMATCH"
+    case amountBelowMinimum        = "AMOUNT_BELOW_MINIMUM"       // 422 — Stripe's own per-currency floor (booking flow)
+    // 422 — ClickMe's own per-currency floor on topic price. Enforced
+    // on topic create/patch AND on both booking-creation paths
+    // (short-lead `/bookings/payment-intent`, long-lead
+    // `/bookings/confirm`). Distinct from `AMOUNT_BELOW_MINIMUM`
+    // (Stripe's floor) — both are live and mean different things.
+    // Server message is display-ready + currency-formatted, safe to
+    // surface directly.
+    case priceBelowMinimum         = "PRICE_BELOW_MINIMUM"
+    case paidTopicRequiresPayment  = "PAID_TOPIC_REQUIRES_PAYMENT"
+    case invalidPromo              = "INVALID_PROMO"
+    case invalidPaymentMethod      = "INVALID_PAYMENT_METHOD"     // 422 — pm_ belongs to a different customer
+    case bookingAttemptConflict    = "BOOKING_ATTEMPT_CONFLICT"   // 409 — same booking_attempt_id, different details
+    // 422 — `POST /bookings/payment-intent` only (Phase 27.1). Session
+    // start is > 6 days out; the manual-capture PI flow cannot cover
+    // that lead time. Do NOT retry `/payment-intent`. Switch to the
+    // save-card path: call `POST /bookings/confirm` **without** a
+    // `payment_intent_id` — the server routes it to the long-lead /
+    // charge-at-T-24h branch. Requires the client to have a saved
+    // card already (our booking gate ensures this).
+    case longLeadRequiresSavedCard = "LONG_LEAD_REQUIRES_SAVED_CARD"
+    case commissionNotConfigured   = "COMMISSION_NOT_CONFIGURED"  // 500 — server config issue
+    case directChargeDisabled      = "DIRECT_CHARGE_DISABLED"     // 503 — server kill switch
+    case refundAmountMissing       = "REFUND_AMOUNT_MISSING"
 
     // MARK: - Payouts / Stripe Connect
     case noPayoutMethod          = "NO_PAYOUT_METHOD"
     case kycIncomplete           = "KYC_INCOMPLETE"
-    case insufficientBalance     = "INSUFFICIENT_BALANCE"
-    case withdrawInProgress      = "WITHDRAW_IN_PROGRESS"
-    case missingIdempotencyKey   = "MISSING_IDEMPOTENCY_KEY"
     case configMissing           = "CONFIG_MISSING"
+    case invalidCountry          = "INVALID_COUNTRY"        // 422 — non-CA account on onboard
+    case connectNotRatified      = "CONNECT_NOT_RATIFIED"   // 403 — live-mode legal gate
+
+    // MARK: - Endpoint lifecycle
+    case endpointRetired         = "ENDPOINT_RETIRED"       // 410 — retired endpoint (e.g. expert withdraw)
 
     // MARK: - Account
     case emailRequired           = "EMAIL_REQUIRED"

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-06-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -19,10 +19,13 @@ struct HomeClientView: View {
     @State private var selectedTab: HomeClientTab = .explore
     @State private var showOnboarding: Bool = false
 
-    /// Observed so the top-bar avatar refreshes reactively when the
+    /// Read so the top-bar avatar refreshes reactively when the
     /// user updates their photo (or when `UserManager.refreshProfile`
-    /// completes on cold launch).
-    @ObservedObject private var userManager = UserManager.shared
+    /// completes on cold launch). `@Observable` tracks reads on this
+    /// singleton automatically — no property wrapper required.
+    private let userManager = UserManager.shared
+    /// Observed so a tapped push notification lands on the right tab.
+    @ObservedObject private var pushRouter = PushRouter.shared
 
     // MARK: Per-tab nav paths
     //
@@ -76,6 +79,20 @@ struct HomeClientView: View {
                 peerAvatarURL: peerAvatarURL
             ))
         })
+        // Post-booking navigation shortcuts consumed by
+        // `BookingRequestSentView`. Both unwind the source tab (Explore
+        // — where MakeABookingView was pushed from) so the user
+        // doesn't find the booking flow still on the stack when they
+        // navigate back there later.
+        .environment(\.showMyBookings, HomeShellAction {
+            explorePath.reset()
+            bookingsPath.reset()
+            selectedTab = .bookings
+        })
+        .environment(\.returnToHome, HomeShellAction {
+            explorePath.reset()
+            selectedTab = .explore
+        })
         // Global call surface + floating pill overlays. Sits above the
         // TabView but below any modal (sheet / fullScreenCover), so
         // ordinary navigation continues to work while a call is in
@@ -108,6 +125,50 @@ struct HomeClientView: View {
                 }
             )
         }
+        .onChange(of: pushRouter.pendingDestination) { _, destination in
+            handlePushDestination(destination)
+        }
+        .onAppear {
+            handlePushDestination(pushRouter.pendingDestination)
+        }
+    }
+
+    /// Route a tapped push notification to the appropriate tab + view.
+    private func handlePushDestination(_ destination: PushDestination?) {
+        guard let destination else { return }
+        switch destination {
+        case let .bookingDetail(bookingId):
+            selectedTab = .bookings
+            bookingsPath.push(HomeRoute.upcomingBooking(bookingId: bookingId))
+        case .incomingRequests:
+            // Expert-only push. If a client shell somehow receives it,
+            // fall back to the notifications list rather than stranding
+            // the user on a blank landing.
+            explorePath.push(HomeRoute.notifications)
+        case let .chatThread(threadId):
+            selectedTab = .chats
+            chatsPath.push(HomeRoute.chat(
+                threadId: threadId,
+                peerName: "",
+                peerAvatarURL: ""
+            ))
+        case let .leaveReview(bookingId):
+            // Land on the past-summary — its Leave Review CTA takes
+            // the client the rest of the way.
+            selectedTab = .bookings
+            bookingsPath.push(HomeRoute.bookingSummary(bookingId: bookingId))
+        case .payouts, .kycOnboarding:
+            // Client shell has no payout surface — payouts belong to
+            // expert mode. Fall back to the notifications list so the
+            // user isn't stranded on a blank landing.
+            explorePath.push(HomeRoute.notifications)
+        case .accountSecurity:
+            selectedTab = .profile
+            profilePath.push(HomeRoute.accountSecurity)
+        case .notificationsList:
+            explorePath.push(HomeRoute.notifications)
+        }
+        pushRouter.pendingDestination = nil
     }
 
     // MARK: - Tabs
@@ -164,6 +225,9 @@ struct HomeClientView: View {
     private var profileTab: some View {
         NavigationStack(path: $profilePath.path) {
             ClientProfileHomeScreen()
+                .navigationDestination(for: HomeRoute.self) { route in
+                    homeRouteDestination(route)
+                }
         }
         .environment(\.homeNavigationPath, profilePath)
     }
@@ -196,6 +260,15 @@ struct HomeClientView: View {
         case .expertReschedule:
             // Expert-only destination. Not reachable from the client shell.
             EmptyView()
+        case .incomingRequests:
+            // Expert-only. If a client somehow lands here (deep-link
+            // with wrong mode), do nothing.
+            EmptyView()
+        case .expertPayouts:
+            // Expert-only surface. Unreachable from the client shell.
+            EmptyView()
+        case .accountSecurity:
+            AccountSecurityView()
         case let .peerProfile(userId, name, avatarURL):
             // Client is viewing the expert they were chatting with —
             // seed the profile with what we already know, then let the

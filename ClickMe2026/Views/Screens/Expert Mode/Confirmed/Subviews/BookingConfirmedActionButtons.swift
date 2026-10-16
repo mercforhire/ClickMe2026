@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct BookingConfirmedActionButtons: View {
             // Add to Calendar — solid green pill
             Button { onAddToCalendar() } label: {
                 Text("Add to Calendar")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(Brand.onPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
@@ -32,7 +32,7 @@ struct BookingConfirmedActionButtons: View {
             // Back to Home — dark pill
             Button { onBackToHome() } label: {
                 Text("Back to Home")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.brand(.callout, weight: .bold))
                     .foregroundColor(Brand.onSurface)
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)

@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-19.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import Foundation
@@ -45,6 +45,20 @@ final class AvailabilitySettingsViewModel {
 
     @ObservationIgnored
     private let api: ClickMeAPI
+
+    /// One-shot guard for the "auto-detect on first load when server
+    /// says UTC" behavior. Ensures a later explicit UTC save doesn't
+    /// get silently overridden on the next `reload()` — the auto-fill
+    /// only happens the first time this VM hydrates.
+    @ObservationIgnored
+    private var didAutoDetectOnLoad: Bool = false
+
+    /// Set by `hydrate` when the auto-detect flip actually changed the
+    /// timezone. Consumed by `forceLoad` after hydrate settles, so a
+    /// silent PUT can persist the new zone without racing the schedule
+    /// hydration. Transient — never drives UI, hence `@ObservationIgnored`.
+    @ObservationIgnored
+    private var pendingAutoDetectSave: Bool = false
 
     // MARK: Init
 
@@ -141,9 +155,37 @@ final class AvailabilitySettingsViewModel {
             let response = try await api.getMyAvailability()
             hydrate(from: response.data)
             loadState = .loaded
+
+            // If hydrate performed a UTC → device-timezone auto-fill,
+            // persist it silently so the server stops returning UTC on
+            // future loads. The schedule is fully hydrated at this
+            // point, so the PUT carries the real slot data (not the
+            // pre-hydrate defaults). Runs post-hydrate on purpose to
+            // avoid a race where the PUT would fire against a
+            // half-populated schedule.
+            if pendingAutoDetectSave {
+                pendingAutoDetectSave = false
+                await performSilentSave()
+            }
         } catch {
             loadState = .failed(error.userMessage)
         }
+    }
+
+    /// Fire-and-forget PUT used by the auto-detect flip. Skips every
+    /// UI toggle (`isSaving`, `didSave`, `saveError`) — the user
+    /// didn't tap Save, and a checkmark flash on screen open would
+    /// look like an unexplained animation. On network failure the
+    /// server just keeps returning UTC and the next screen open
+    /// retries the same auto-fill, so silently swallowing is safe.
+    private func performSilentSave() async {
+        // Don't step on a real user-initiated save in flight.
+        guard !isSaving else { return }
+        // Same overlap invariant the visible save enforces. A UTC-only
+        // account normally has the default no-overlap schedule, but
+        // guard just in case future defaults change.
+        guard overlappingDayNames.isEmpty else { return }
+        _ = try? await api.updateMyAvailability(buildRequest())
     }
 
     private func hydrate(from data: AvailabilityScheduleData) {
@@ -156,6 +198,24 @@ final class AvailabilitySettingsViewModel {
         } else {
             selectedTimezoneId = data.timezone.id
             selectedTimezone = data.timezone.displayName
+        }
+
+        // Auto-detect on first load when the server's timezone is UTC
+        // — the app-wide default for accounts that never set one.
+        // Snap to the device's detected zone so the expert isn't
+        // silently publishing availability against the wrong wall-clock.
+        // No-op if the device is also UTC. Fires only on the first
+        // hydrate; a subsequent explicit UTC save + reload won't be
+        // overridden. User still needs to tap Save to persist.
+        if !didAutoDetectOnLoad, Self.isUTCId(selectedTimezoneId) {
+            didAutoDetectOnLoad = true
+            let device = Timezones.detected()
+            if !Self.isUTCId(device.id) {
+                selectedTimezoneId = device.id
+                selectedTimezone = device.label
+                // Flag for `forceLoad` to persist after hydrate finishes.
+                pendingAutoDetectSave = true
+            }
         }
 
         let recurring = data.recurringSchedule
@@ -171,6 +231,14 @@ final class AvailabilitySettingsViewModel {
             schedule[i].slots = mapped
             schedule[i].isEnabled = !mapped.isEmpty
         }
+    }
+
+    /// Server may return either `"UTC"` or `"Etc/UTC"` (both valid
+    /// IANA aliases). Match either — case-insensitively — so the
+    /// auto-detect trigger doesn't miss the second form.
+    private static func isUTCId(_ id: String) -> Bool {
+        let normalized = id.lowercased()
+        return normalized == "utc" || normalized == "etc/utc"
     }
 
     /// Parse `"HH:mm"` → minutes-from-midnight. Nil for malformed strings.

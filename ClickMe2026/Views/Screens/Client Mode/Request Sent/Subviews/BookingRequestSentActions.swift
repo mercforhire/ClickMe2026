@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-18.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -20,7 +20,7 @@ struct BookingRequestSentActions: View {
         VStack(spacing: 14) {
             Button(action: onViewBookings) {
                 Text("View My Bookings")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.brand(.body, weight: .bold))
                     .foregroundColor(BookingRequestSentBrand.onPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
@@ -34,7 +34,7 @@ struct BookingRequestSentActions: View {
 
             Button(action: onBackToHome) {
                 Text("Back to Home")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.brand(.body, weight: .bold))
                     .foregroundColor(BookingRequestSentBrand.onSurface)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)

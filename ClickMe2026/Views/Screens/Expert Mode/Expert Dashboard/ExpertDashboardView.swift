@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-24.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -30,7 +30,9 @@ struct ExpertDashboardView: View {
     /// self-contained NavigationStack so the screen still works.
     @Environment(\.homeNavigationPath) private var navPath
     @State private var _localPath: [ExpertDashboardRoute] = []
-    @Environment(\.openURL) private var openURL
+    /// Owns the ASWebAuthenticationSession for the Stripe Connect
+    /// onboarding flow. See `ConnectOnboardingSession` for details.
+    @State private var onboardingSession = ConnectOnboardingSession()
 
     /// Bound to `CallCenter.shared.joinError` — surfaces the alert on
     /// this screen when a join fails. Actual call presentation is
@@ -70,13 +72,28 @@ struct ExpertDashboardView: View {
                 }
             }
         }
-        // Stripe hands us a fresh single-use URL — open it immediately in
-        // Safari (or the system default browser) and clear the field so a
-        // subsequent onboarding tap gets a new URL.
+        // Present the Stripe hosted onboarding URL in an in-app
+        // ASWebAuthenticationSession. Backend 302s to
+        // clickme://connect/return when the flow completes; the
+        // session closes and we refresh status. Refresh variant
+        // reopens onboarding automatically.
         .onChange(of: viewModel.connectOnboardingURL) { _, url in
             guard let url else { return }
-            openURL(url)
             viewModel.connectOnboardingURL = nil
+            onboardingSession.start(url: url) { outcome in
+                switch outcome {
+                case .completed(let callback):
+                    Task {
+                        if callback.isConnectRefresh {
+                            await viewModel.startOnboarding()
+                        } else {
+                            await viewModel.reload()
+                        }
+                    }
+                case .cancelled:
+                    break
+                }
+            }
         }
         .alert(
             "Couldn't open payout setup",
@@ -98,6 +115,11 @@ struct ExpertDashboardView: View {
             content
         }
         .task { await viewModel.load() }
+        // Silent refresh on tab-return so today's session count,
+        // pending request badge, and balance stay current without a
+        // spinner flash. `.task` still owns the first fetch;
+        // `silentReload` early-returns until it lands.
+        .onAppear { Task { await viewModel.silentReload() } }
         .refreshable { await viewModel.reload() }
         .navigationDestination(for: ExpertDashboardRoute.self) { route in
             destination(for: route)
@@ -146,6 +168,9 @@ struct ExpertDashboardView: View {
             VStack(alignment: .leading, spacing: 24) {
                 heroHeader
                 pendingBanner
+                if viewModel.rescheduleRequestCount > 0 {
+                    rescheduleBanner
+                }
                 todaysSessions
                 financialSummary
                 expertTools
@@ -161,7 +186,7 @@ struct ExpertDashboardView: View {
             ProgressView()
                 .tint(onSurface)
             Text("Loading dashboard…")
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(onSurfaceVar)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -170,13 +195,13 @@ struct ExpertDashboardView: View {
     private func errorContent(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .light))
+                .font(.title.weight(.light))
                 .foregroundColor(onSurfaceVar)
             Text("Couldn't load dashboard")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(onSurface)
             Text(message)
-                .font(.system(size: 13, design: .rounded))
+                .font(.brand(.caption))
                 .foregroundColor(onSurfaceVar)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
@@ -185,7 +210,7 @@ struct ExpertDashboardView: View {
                 Task { await viewModel.reload() }
             } label: {
                 Text("Retry")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(.black)
                     .padding(.horizontal, 22)
                     .padding(.vertical, 10)
@@ -220,12 +245,12 @@ struct ExpertDashboardView: View {
     private var heroHeader: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("DASHBOARD OVERVIEW")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .font(.brand(.caption2, weight: .semibold))
                 .foregroundColor(onSurfaceVar)
                 .tracking(1.4)
 
             Text("Hello, \(greetingName)")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.brand(.title, weight: .bold))
                 .foregroundColor(onSurface)
         }
     }
@@ -247,23 +272,23 @@ struct ExpertDashboardView: View {
                         .fill(brandGreen.opacity(0.18))
                         .frame(width: 44, height: 44)
                     Image(systemName: "bell.badge")
-                        .font(.system(size: 20, weight: .regular))
+                        .font(.title3.weight(.regular))
                         .foregroundColor(brandGreen)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text("\(viewModel.pendingCount) Pending Requests")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(brandGreen)
                     Text("Review and confirm new bookings")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(onSurfaceVar)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(brandGreen)
             }
             .padding(16)
@@ -277,18 +302,63 @@ struct ExpertDashboardView: View {
         .buttonStyle(PressScaleButtonStyle())
     }
 
+    // MARK: - Reschedule banner
+
+    /// Amber-toned counterpart to `pendingBanner`. Only rendered when
+    /// there's at least one client-initiated reschedule proposal
+    /// awaiting this expert's decision. Tapping lands on the Upcoming
+    /// Sessions screen — those rows now carry a "Client proposed a new
+    /// time" pill and open the summary's Accept/Decline surface.
+    private var rescheduleBanner: some View {
+        Button { push(.calendar) } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.orange.opacity(0.18))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "clock.badge.exclamationmark")
+                        .font(.title3.weight(.regular))
+                        .foregroundColor(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("\(viewModel.rescheduleRequestCount) Reschedule Request\(viewModel.rescheduleRequestCount == 1 ? "" : "s")")
+                        .font(.brand(.callout, weight: .bold))
+                        .foregroundColor(.orange)
+                    Text("Review pending time changes")
+                        .font(.brand(.caption, weight: .regular))
+                        .foregroundColor(onSurfaceVar)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.orange)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color.orange.opacity(0.10))
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.orange.opacity(0.45), lineWidth: 1))
+            )
+        }
+        .buttonStyle(PressScaleButtonStyle())
+    }
+
     // MARK: - Today's Sessions
 
     private var todaysSessions: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("Today's Sessions")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.brand(.title3, weight: .bold))
                     .foregroundColor(onSurface)
                 Spacer()
                 Button { push(.calendar) } label: {
                     Text("View Calendar")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .font(.brand(.caption, weight: .semibold))
                         .foregroundColor(brandGreen)
                 }
                 .buttonStyle(.plain)
@@ -309,13 +379,13 @@ struct ExpertDashboardView: View {
     private var emptyTodaysSessions: some View {
         VStack(spacing: 8) {
             Image(systemName: "calendar")
-                .font(.system(size: 22, weight: .light))
+                .font(.title2.weight(.light))
                 .foregroundColor(onSurfaceVar)
             Text("No sessions today")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(onSurface)
             Text("Enjoy the breather — new bookings will show up here.")
-                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .font(.brand(.caption, weight: .regular))
                 .foregroundColor(onSurfaceVar)
                 .multilineTextAlignment(.center)
         }
@@ -331,55 +401,69 @@ struct ExpertDashboardView: View {
 
     private func sessionCard(for session: ExpertBookingItem) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            // Client row
-            HStack(spacing: 12) {
-                AsyncImage(url: URL(string: session.client.avatarUrl ?? "")) { phase in
-                    switch phase {
-                    case let .success(img): img.resizable().scaledToFill()
-                    default:
-                        ZStack {
-                            Color(red: 0.12, green: 0.18, blue: 0.14)
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.15))
+            // Info block (client row + time) is its own tap region so
+            // hitting the Join button below doesn't also fire the
+            // summary push. Mirrors the pattern on the past-session
+            // and past-booking cards.
+            VStack(alignment: .leading, spacing: 14) {
+                // Client row
+                HStack(spacing: 12) {
+                    AsyncImage(url: URL(string: session.client.avatarUrl ?? "")) { phase in
+                        switch phase {
+                        case let .success(img): img.resizable().scaledToFill()
+                        default:
+                            ZStack {
+                                Color(red: 0.12, green: 0.18, blue: 0.14)
+                                Image(systemName: "person.fill")
+                                    .font(.callout)
+                                    .foregroundColor(.white.opacity(0.15))
+                            }
                         }
                     }
-                }
-                .frame(width: 42, height: 42)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(brandGreen.opacity(0.50), lineWidth: 1))
+                    .frame(width: 42, height: 42)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(brandGreen.opacity(0.50), lineWidth: 1))
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(session.client.name ?? "Client")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundColor(onSurface)
-                    Text(session.session.topic ?? "")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(session.client.name ?? "Client")
+                            .font(.brand(.subheadline, weight: .bold))
+                            .foregroundColor(onSurface)
+                        Text(session.session.topic ?? "")
+                            .font(.brand(.caption, weight: .regular))
+                            .foregroundColor(onSurfaceVar)
+                    }
+
+                    Spacer()
+
+                    if viewModel.isStartingNow(session) {
+                        Text("STARTING NOW")
+                            .font(.brand(.caption2, weight: .bold))
+                            .foregroundColor(onPrimary)
+                            .tracking(0.5)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Capsule().fill(brandGreen)
+                                .shadow(color: brandGreen.opacity(0.55), radius: 6))
+                    }
+                }
+
+                // Time
+                HStack(spacing: 8) {
+                    Image(systemName: "clock")
+                        .font(.subheadline.weight(.regular))
                         .foregroundColor(onSurfaceVar)
-                }
-
-                Spacer()
-
-                if viewModel.isStartingNow(session) {
-                    Text("STARTING NOW")
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
-                        .foregroundColor(onPrimary)
-                        .tracking(0.5)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Capsule().fill(brandGreen)
-                            .shadow(color: brandGreen.opacity(0.55), radius: 6))
+                    Text(viewModel.timeLabel(session))
+                        .font(.brand(.subheadline, weight: .regular))
+                        .foregroundColor(onSurface)
                 }
             }
-
-            // Time
-            HStack(spacing: 8) {
-                Image(systemName: "clock")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(onSurfaceVar)
-                Text(viewModel.timeLabel(session))
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
-                    .foregroundColor(onSurface)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                // Push a shell-level route (registered on the
+                // dashboardTab NavigationStack in HomeExpertView) —
+                // not `ExpertDashboardRoute`, which is scoped to this
+                // screen's own destinations.
+                navPath?.push(HomeRoute.expertBookingSummary(bookingId: session.bookingId))
             }
 
             // Join Session button — visible when the session is within
@@ -398,14 +482,16 @@ struct ExpertDashboardView: View {
                     peerImageURL: session.client.avatarUrl ?? "",
                     topic: session.session.topic ?? "",
                     scheduledStart: session.session.startTime,
-                    scheduledEnd: session.session.endTime
+                    scheduledEnd: session.session.endTime,
+                    meetingType: session.session.meetingType,
+                    isRejoin: session.status.code == .completed
                 )
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "video.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.callout.weight(.semibold))
                     Text("Join Session")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .font(.brand(.callout, weight: .bold))
                 }
                 .foregroundColor(onPrimary)
                 .frame(maxWidth: .infinity)
@@ -452,7 +538,7 @@ struct ExpertDashboardView: View {
     private var financialSummary: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Financial Summary")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(onSurface)
 
             if viewModel.payoutOnboardingRequired {
@@ -475,19 +561,19 @@ struct ExpertDashboardView: View {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("This Week")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(onSurfaceVar)
                         Text(weeklyEarningsLabel)
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .font(.brand(.title, weight: .bold))
                             .foregroundColor(brandGreen)
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("Available Payout")
-                            .font(.system(size: 13, weight: .regular, design: .rounded))
+                            .font(.brand(.caption, weight: .regular))
                             .foregroundColor(onSurfaceVar)
                         Text(availablePayoutLabel)
-                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .font(.brand(.title, weight: .bold))
                             .foregroundColor(onSurface)
                     }
                 }
@@ -495,10 +581,10 @@ struct ExpertDashboardView: View {
                 // Payout meta
                 HStack(spacing: 8) {
                     Image(systemName: "banknote")
-                        .font(.system(size: 15, weight: .regular))
+                        .font(.subheadline.weight(.regular))
                         .foregroundColor(brandGreen)
                     Text(nextPayoutLabel)
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(onSurfaceVar)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer()
@@ -518,8 +604,14 @@ struct ExpertDashboardView: View {
     /// Displayed in place of the balance block when Stripe Connect isn't
     /// fully onboarded. Tapping fires `startConnectOnboarding` and opens
     /// the returned single-use Account Link URL in Safari.
+    ///
+    /// While the mint is in flight (`isMintingOnboarding == true`) the
+    /// chevron swaps for a spinner and the button is disabled — the
+    /// Stripe call can take a few seconds and repeat presses used to
+    /// fire the request multiple times with no feedback.
     private var onboardPayoutCard: some View {
-        Button {
+        let isBusy = viewModel.isMintingOnboarding
+        return Button {
             // Stripe Connect onboarding hands off to a browser —
             // interrupts the audio session. Gate it.
             guard CallCenter.shared.attempt("set up payouts") else { return }
@@ -531,16 +623,16 @@ struct ExpertDashboardView: View {
                         .fill(brandGreen.opacity(0.18))
                         .frame(width: 44, height: 44)
                     Image(systemName: "creditcard")
-                        .font(.system(size: 20, weight: .regular))
+                        .font(.title3.weight(.regular))
                         .foregroundColor(brandGreen)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Complete payout setup")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                    Text(isBusy ? "Opening secure setup…" : "Complete payout setup")
+                        .font(.brand(.callout, weight: .bold))
                         .foregroundColor(brandGreen)
                     Text("Verify your identity and add a bank account to receive earnings.")
-                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .font(.brand(.caption, weight: .regular))
                         .foregroundColor(onSurfaceVar)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -548,9 +640,17 @@ struct ExpertDashboardView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(brandGreen)
+                // Swap chevron ↔ spinner in the same slot to avoid a
+                // layout jump when the mint starts / ends.
+                if isBusy {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(brandGreen)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(brandGreen)
+                }
             }
             .padding(16)
             .background(
@@ -559,8 +659,11 @@ struct ExpertDashboardView: View {
                     .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .stroke(pendingBdr, lineWidth: 1))
             )
+            .opacity(isBusy ? 0.7 : 1)
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(isBusy)
+        .animation(.easeInOut(duration: 0.2), value: isBusy)
     }
 
     // MARK: Financial formatting
@@ -588,7 +691,7 @@ struct ExpertDashboardView: View {
     private var expertTools: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Expert Tools")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .font(.brand(.title3, weight: .bold))
                 .foregroundColor(onSurface)
 
             let tools: [(String, String, ExpertDashboardRoute)] = [
@@ -618,11 +721,11 @@ struct ExpertDashboardView: View {
                         .fill(toolIconBg)
                         .frame(width: 52, height: 52)
                     Image(systemName: icon)
-                        .font(.system(size: 24, weight: .regular))
+                        .font(.title2.weight(.regular))
                         .foregroundColor(brandGreen)
                 }
                 Text(label)
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .font(.brand(.subheadline, weight: .bold))
                     .foregroundColor(onSurface)
                     .multilineTextAlignment(.center)
             }

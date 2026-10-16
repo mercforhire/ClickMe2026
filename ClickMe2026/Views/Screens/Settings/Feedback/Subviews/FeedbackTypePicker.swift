@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,11 +21,11 @@ struct FeedbackTypePicker: View {
             Button(action: onTap) {
                 HStack {
                     Text(feedbackType)
-                        .font(.system(size: 16, design: .rounded))
+                        .font(.brand(.callout))
                         .foregroundColor(FeedbackBrand.onSurface)
                     Spacer()
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.subheadline.weight(.medium))
                         .foregroundColor(FeedbackBrand.onSurfaceVar)
                 }
                 .padding(.horizontal, 16)

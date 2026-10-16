@@ -21,7 +21,7 @@ struct ChangeEmailButton: View {
                     .frame(height: 56)
 
                 Text("Change Email Address")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .font(.brand(.body, weight: .semibold))
                     .foregroundColor(VerifyEmailBrand.green)
             }
         }

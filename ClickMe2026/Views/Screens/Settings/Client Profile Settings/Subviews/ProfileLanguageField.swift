@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -23,12 +23,12 @@ struct ProfileLanguageField: View {
                         .stroke(ProfileSettingsBrand.fieldBorder, lineWidth: 1))
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Spoken Languages")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .font(.brand(.caption2, weight: .semibold))
                         .foregroundColor(ProfileSettingsBrand.labelColor)
                     HStack(spacing: 8) {
                         ForEach(languages, id: \.self) { lang in
                             Text(lang)
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .font(.brand(.caption, weight: .medium))
                                 .foregroundColor(ProfileSettingsBrand.onSurface)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)

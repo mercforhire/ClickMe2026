@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -25,14 +25,14 @@ struct UpcomingBookingDateTimeRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 15, weight: .regular))
+                    .font(.subheadline.weight(.regular))
                     .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
                 Text(label)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .font(.brand(.caption, weight: .medium))
                     .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
             }
             Text(value)
-                .font(.system(size: 16, weight: .regular, design: .rounded))
+                .font(.brand(.callout, weight: .regular))
                 .foregroundColor(UpcomingBookingBrand.onSurface)
                 .fixedSize(horizontal: false, vertical: true)
         }

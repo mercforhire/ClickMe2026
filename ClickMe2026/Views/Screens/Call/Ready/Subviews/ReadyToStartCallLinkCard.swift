@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-21.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,10 +21,10 @@ struct ReadyToStartCallLinkCard: View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Skype link:")
-                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                    .font(.brand(.caption, weight: .regular))
                     .foregroundColor(ReadyToStartCallBrand.onSurfaceVar)
                 Text(skypeLink)
-                    .font(.system(size: 14, weight: .regular, design: .monospaced))
+                    .font(.system(.subheadline, design: .monospaced))
                     .foregroundColor(ReadyToStartCallBrand.onSurface)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -35,9 +35,9 @@ struct ReadyToStartCallLinkCard: View {
             Button(action: onCopy) {
                 HStack(spacing: 6) {
                     Image(systemName: didCopy ? "checkmark" : "doc.on.doc")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.subheadline.weight(.semibold))
                     Text(didCopy ? "Copied" : "Copy")
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .font(.brand(.subheadline, weight: .bold))
                 }
                 .foregroundColor(ReadyToStartCallBrand.onPrimary)
                 .padding(.horizontal, 16)

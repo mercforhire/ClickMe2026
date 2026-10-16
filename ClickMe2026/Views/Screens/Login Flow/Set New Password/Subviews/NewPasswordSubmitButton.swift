@@ -23,9 +23,9 @@ struct NewPasswordSubmitButton: View {
                 if isSuccess {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.title3.weight(.semibold))
                         Text("Password Updated!")
-                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .font(.brand(.title3, weight: .bold))
                     }
                     .foregroundColor(.white)
                 } else if isLoading {
@@ -33,7 +33,7 @@ struct NewPasswordSubmitButton: View {
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                 } else {
                     Text("Set New Password")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(.brand(.title3, weight: .bold))
                         .foregroundColor(.white)
                 }
             }

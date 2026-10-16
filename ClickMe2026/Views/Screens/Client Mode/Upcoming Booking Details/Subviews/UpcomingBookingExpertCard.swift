@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-23.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import SwiftUI
@@ -21,10 +21,10 @@ struct UpcomingBookingExpertCard: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(expertName)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.brand(.title2, weight: .bold))
                     .foregroundColor(UpcomingBookingBrand.onSurface)
                 Text(expertTitle)
-                    .font(.system(size: 14, weight: .regular, design: .rounded))
+                    .font(.brand(.subheadline, weight: .regular))
                     .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
             }
 
@@ -48,7 +48,7 @@ struct UpcomingBookingExpertCard: View {
                     ZStack {
                         UpcomingBookingBrand.avatarFallback
                         Image(systemName: "person.fill")
-                            .font(.system(size: 30))
+                            .font(.title)
                             .foregroundColor(.white.opacity(0.15))
                     }
                 }

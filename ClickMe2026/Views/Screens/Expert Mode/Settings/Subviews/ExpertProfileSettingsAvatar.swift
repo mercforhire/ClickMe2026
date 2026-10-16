@@ -3,7 +3,7 @@
 //  ClickMe2026
 //
 //  Created by Leon Chen on 2026-05-17.
-//  Copyright © 2026 Q42. All rights reserved.
+//  Copyright © 2026 Uptrend Investments Inc. All rights reserved.
 //
 
 import PhotosUI
@@ -74,7 +74,7 @@ struct ExpertProfileSettingsAvatar: View {
                     .frame(width: 36, height: 36)
                     .overlay(Circle().stroke(Brand.primary.opacity(0.60), lineWidth: 1))
                 Image(systemName: "pencil")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundColor(Brand.primary)
             }
         }

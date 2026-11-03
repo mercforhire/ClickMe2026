@@ -19,7 +19,6 @@
 	<array>
 		<string>audio</string>
 		<string>remote-notification</string>
-		<string>bluetooth-peripheral</string>
 	</array>
 </dict>
 </plist>

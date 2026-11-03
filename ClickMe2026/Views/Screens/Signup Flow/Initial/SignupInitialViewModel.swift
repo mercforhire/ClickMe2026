@@ -13,12 +13,10 @@ import SwiftUI
 final class SignupInitialViewModel: ObservableObject {
 
     // MARK: Form state
-    @Published var username: String
     @Published var email: String
     @Published var password: String
 
     // MARK: Validation state
-    @Published var usernameError: String?
     @Published var emailError: String?
     @Published var passwordError: String?
     @Published var didAttemptContinue: Bool
@@ -33,10 +31,8 @@ final class SignupInitialViewModel: ObservableObject {
     private let userManager: UserManager?
 
     init(
-        username: String = "",
         email: String = "",
         password: String = "",
-        usernameError: String? = nil,
         emailError: String? = nil,
         passwordError: String? = nil,
         didAttemptContinue: Bool = false,
@@ -44,10 +40,8 @@ final class SignupInitialViewModel: ObservableObject {
         accumulator: SignupAccumulator? = nil,
         userManager: UserManager? = nil
     ) {
-        self.username = username
         self.email = email
         self.password = password
-        self.usernameError = usernameError
         self.emailError = emailError
         self.passwordError = passwordError
         self.didAttemptContinue = didAttemptContinue
@@ -57,16 +51,6 @@ final class SignupInitialViewModel: ObservableObject {
     }
 
     // MARK: Validation
-
-    func validateUsername() {
-        if username.trimmingCharacters(in: .whitespaces).isEmpty {
-            usernameError = "Username is required"
-        } else if username.count < 3 {
-            usernameError = "Username must be at least 3 characters"
-        } else {
-            usernameError = nil
-        }
-    }
 
     func validateEmail() {
         let pattern = #"^[^@\s]+@[^@\s]+\.[^@\s]+$"#
@@ -94,10 +78,6 @@ final class SignupInitialViewModel: ObservableObject {
     }
 
     /// Revalidate each field after edits, once a continue has been attempted.
-    func usernameDidChange() {
-        if didAttemptContinue { validateUsername() }
-    }
-
     func emailDidChange() {
         if didAttemptContinue { validateEmail() }
     }
@@ -115,14 +95,15 @@ final class SignupInitialViewModel: ObservableObject {
     /// skipped and `isComplete` fires immediately.
     func attemptContinue() {
         didAttemptContinue = true
-        validateUsername()
         validateEmail()
         validatePassword()
-        guard usernameError == nil, emailError == nil, passwordError == nil else { return }
+        guard emailError == nil, passwordError == nil else { return }
 
         // Mirror credentials onto the accumulator so downstream screens have
-        // access to the email (verify screen) without prop drilling.
-        accumulator?.username = username
+        // access to the email (verify screen) without prop drilling. Username
+        // is derived from email for backend compatibility — the field is no
+        // longer collected from the user.
+        accumulator?.username = email
         accumulator?.email = email
         accumulator?.password = password
 
@@ -138,7 +119,6 @@ final class SignupInitialViewModel: ObservableObject {
             defer { isLoading = false }
             do {
                 _ = try await userManager.signup(
-                    username: username,
                     email: email,
                     password: password,
                     role: .expert
@@ -158,31 +138,28 @@ final class SignupInitialViewModel: ObservableObject {
             return
         }
 
-        // 409 Conflict → username/email already taken. `StandardErrorResponse`
-        // envelope with a human-authored message.
+        // 409 Conflict → email already taken. The server also handles the
+        // legacy "username taken" case internally; because we now derive
+        // username from email, any 409 is effectively an email collision.
         if statusCode == 409,
            let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
         {
-            let message = response.message
-            if message.localizedCaseInsensitiveContains("username") {
-                usernameError = message
-            } else {
-                emailError = message
-            }
+            emailError = response.message
             return
         }
 
-        // 422 Validation → per-field messages. Route each to the matching
-        // inline error so the user knows exactly what's wrong.
+        // 422 Validation → per-field messages. The server may still return
+        // a `username` field error if its own validator trips on the
+        // derived value; we route it to the email field since that's what
+        // the user actually typed.
         if statusCode == 422,
            let response = try? JSONDecoder().decode(FieldValidationErrorResponse.self, from: data)
         {
             for fieldError in response.errors {
                 switch fieldError.field {
-                case "username": usernameError = fieldError.message
-                case "email":    emailError = fieldError.message
-                case "password": passwordError = fieldError.message
-                default:         apiError = fieldError.message
+                case "email", "username": emailError = fieldError.message
+                case "password":          passwordError = fieldError.message
+                default:                  apiError = fieldError.message
                 }
             }
             return

@@ -139,6 +139,13 @@ enum APIRequestURLs {
     case sendChatMessage
     case chatActions
 
+    // MARK: Users
+    /// `POST /users/:id/report` — report a user from their profile.
+    /// Thread-independent (does NOT require an existing chat), unlike
+    /// `chatActions` which is thread-scoped. See
+    /// `docs/ios/USER-REPORTING.md`.
+    case reportUser
+
     // MARK: Notifications
     case registerDeviceToken
     case unregisterDeviceToken
@@ -300,6 +307,9 @@ enum APIRequestURLs {
         case .sendChatMessage: return "/chats/:id/send"
         case .chatActions:     return "/chats/:id/actions"
 
+        // Users
+        case .reportUser:      return "/users/:id/report"
+
         // Notifications
         case .registerDeviceToken:           return "/notifications/tokens"
         case .unregisterDeviceToken:         return "/notifications/tokens/:device_id"
@@ -454,6 +464,10 @@ enum APIRequestURLs {
             return .post
         case .getChats, .getChatMessages:
             return .get
+
+        // Users
+        case .reportUser:
+            return .post
 
         // Notifications
         case .registerDeviceToken:

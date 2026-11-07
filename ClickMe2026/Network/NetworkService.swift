@@ -50,9 +50,17 @@ final class NetworkService {
     /// (used by tests / previews that don't wire an auth manager).
     var authTokenRefresher: TokenRefresher?
 
+    /// Called from the main actor when a `403 ACCOUNT_SUSPENDED` is
+    /// seen on ANY request. `UserManager` wires this to clear tokens +
+    /// disconnect the realtime socket + raise a suspended-flag that the
+    /// shell's splash/login route can observe. The original error still
+    /// propagates to the caller so individual VMs can also surface it.
+    /// See `docs/ios/USER-REPORTING.md` §4.
+    var suspensionHandler: (@MainActor @Sendable () -> Void)?
+
     init(session: URLSession? = nil) {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 60
+        config.timeoutIntervalForRequest = 120
         self.session = session ?? URLSession(configuration: config)
 
         let formatter = DateFormatter()
@@ -148,6 +156,19 @@ final class NetworkService {
         do {
             return try await sendRaw(request)
         } catch let error {
+            // Global 403 ACCOUNT_SUSPENDED trap. Fires BEFORE the
+            // generic 401-refresh path so a suspended user never
+            // triggers a refresh loop. We still rethrow so the caller
+            // can show its own message if it wants, but the handler
+            // has already cleared auth + disconnected the socket.
+            if case let NetworkError.httpError(403, data) = error,
+               isAccountSuspendedError(data: data),
+               let handler = suspensionHandler
+            {
+                await handler()
+                throw error
+            }
+
             guard case NetworkError.httpError(401, _) = error,
                   shouldAttemptRefresh(for: request),
                   let refresher = authTokenRefresher
@@ -166,6 +187,18 @@ final class NetworkService {
             applyAuth(&retry)
             return try await sendRaw(retry)
         }
+    }
+
+    /// Peeks the body of a 403 to see whether it's a suspension (vs an
+    /// ordinary FORBIDDEN). Uses an isolated decoder to avoid snake-case
+    /// drift confusing the shared one.
+    private func isAccountSuspendedError(data: Data) -> Bool {
+        struct Envelope: Decodable { let code: String? }
+        let decoder = JSONDecoder()
+        guard let envelope = try? decoder.decode(Envelope.self, from: data) else {
+            return false
+        }
+        return envelope.code == ErrorCode.accountSuspended.rawValue
     }
 
     /// Fires the URL request, checks status, decodes. No refresh

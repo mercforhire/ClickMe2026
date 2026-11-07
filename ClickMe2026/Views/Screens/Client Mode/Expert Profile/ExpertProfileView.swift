@@ -64,6 +64,24 @@ struct ExpertProfileView: View {
     /// piggybacks on whichever `NavigationStack` this profile is inside.
     @State private var showReviews: Bool = false
 
+    /// True while the profile-report sheet is presented. The sheet calls
+    /// the thread-independent `POST /users/:id/report` endpoint; see
+    /// `docs/ios/USER-REPORTING.md` §1 and `ReportUserSheet`.
+    @State private var showReportSheet: Bool = false
+
+    /// Thread id for the Block flow. Populated after `/chats/initiate`
+    /// returns, which gives us the thread-scoped id required by the
+    /// existing `chat_action = "block"` endpoint. Block has to stay
+    /// thread-based because that's what the current block API wants —
+    /// only Report has a dedicated user-scoped endpoint today.
+    @State private var blockThreadId: ReportThreadIdentifier?
+
+    /// Non-nil when a transient error from the block flow (initiate-chat
+    /// failure, suspended target, etc.) needs surfacing. Report errors
+    /// stay inside `ReportUserSheet` so they're seen next to the submit
+    /// button.
+    @State private var blockErrorMessage: String?
+
     /// Shared nav path from the home shell (Explore / Search / Favorites
     /// all push this screen onto it). Used to push the booking flow on
     /// "Book Session" tap.
@@ -90,6 +108,20 @@ struct ExpertProfileView: View {
 
     /// Shortcut for the expert model exposed by the view model.
     private var expert: PublicExpertProfile { viewModel.expert }
+
+    /// Defense-in-depth: `isSelfView` is caller-supplied and can be
+    /// wrong (route forgets to pass it, auth transitions mid-view, …).
+    /// Compare the profile id to the current session's user id at
+    /// runtime so Report / Block never fire against the signed-in
+    /// user — the backend will also 422 `CANNOT_REPORT_SELF`, but the
+    /// client should never let the request leave.
+    private var isSameAsCurrentUser: Bool {
+        guard let expertId = expert.expertId,
+              let currentId = UserManager.shared.me?.id
+                  ?? UserManager.shared.authUser?.id
+        else { return false }
+        return expertId == currentId
+    }
 
     // MARK: Init
 
@@ -211,7 +243,82 @@ struct ExpertProfileView: View {
                     .disabled(viewModel.isFavoriteInFlight)
                     .accessibilityLabel(viewModel.isFavorited ? "Remove from favorites" : "Add to favorites")
                 }
+
+                // Overflow menu — App Review 1.2 requires an in-surface
+                // path to report / block UGC. Report hits the dedicated
+                // `/users/:id/report` endpoint (no chat required); Block
+                // still goes through the existing thread-scoped
+                // `chat_action` endpoint, so we bootstrap a thread
+                // via `/chats/initiate` on demand.
+                //
+                // Also gate on `!isSameAsCurrentUser` so the signed-in
+                // user never sees Report / Block pointed at themselves,
+                // even if a caller forgets to set `isSelfView` (e.g.
+                // viewing own profile via the shared `openChatThread`
+                // or Explore cache). Backend 422s on `CANNOT_REPORT_SELF`
+                // regardless, but the request should never leave.
+                if !isSameAsCurrentUser {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Button(role: .destructive) {
+                                showReportSheet = true
+                            } label: {
+                                Label("Report This Profile", systemImage: "exclamationmark.bubble")
+                            }
+                            Button(role: .destructive) {
+                                handleOpenBlockFlow()
+                            } label: {
+                                Label("Block \(expert.name)", systemImage: "hand.raised")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.title3.weight(.regular))
+                                .foregroundColor(ExpertProfileBrand.onSurface)
+                        }
+                        .accessibilityLabel("More options")
+                    }
+                }
             }
+        }
+        .sheet(isPresented: $showReportSheet) {
+            if let expertId = expert.expertId {
+                ReportUserSheet(
+                    userId: expertId,
+                    userName: expert.name,
+                    onSubmitted: { showReportSheet = false },
+                    onDismiss: { showReportSheet = false }
+                )
+            }
+        }
+        .sheet(item: $blockThreadId) { identifier in
+            NavigationStack {
+                ReportChatView(
+                    threadId: identifier.id,
+                    userName: expert.name,
+                    onBlock: { _ in blockThreadId = nil },
+                    onReport: { _, _ in blockThreadId = nil },
+                    onUnblock: { _ in blockThreadId = nil },
+                    onDismiss: { blockThreadId = nil }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") { blockThreadId = nil }
+                    }
+                }
+            }
+            .presentationDetents([.large])
+        }
+        .alert(
+            "Couldn't open block flow",
+            isPresented: Binding(
+                get: { blockErrorMessage != nil },
+                set: { if !$0 { blockErrorMessage = nil } }
+            ),
+            presenting: blockErrorMessage
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
         }
         .onAppear { viewModel.glowPulse = true }
         .task { await viewModel.loadProfileDetails() }
@@ -269,6 +376,29 @@ struct ExpertProfileView: View {
         }
     }
 
+    /// Opens the Block flow by bootstrapping a chat thread first
+    /// (`/chats/initiate` is idempotent — returns existing or creates
+    /// new). The existing `ReportChatView` is thread-scoped and handles
+    /// the block action; we only need the threadId. Report has its own
+    /// endpoint and does NOT go through this path.
+    private func handleOpenBlockFlow() {
+        guard let expertId = expert.expertId,
+              !isSameAsCurrentUser  // belt-and-suspenders: menu is already gated
+        else { return }
+        Task {
+            do {
+                let response = try await ClickMeAPI.shared.initiateChat(peerId: expertId)
+                await MainActor.run {
+                    blockThreadId = ReportThreadIdentifier(id: response.data.threadId)
+                }
+            } catch {
+                await MainActor.run {
+                    blockErrorMessage = error.userMessage
+                }
+            }
+        }
+    }
+
     /// Message tap handler. Fires `onMessage` (caller escape hatch),
     /// then calls `POST /chats/initiate` to get or create a thread with
     /// this expert and asks the shell to open the Chats tab + push the
@@ -297,6 +427,15 @@ struct ExpertProfileView: View {
             }
         }
     }
+}
+
+// MARK: - Block-sheet identifier
+
+/// Wraps the chat thread id so SwiftUI's `.sheet(item:)` can key on it
+/// for the Block flow. Report has its own `isPresented` binding and
+/// doesn't need this type.
+private struct ReportThreadIdentifier: Identifiable {
+    let id: UUID
 }
 
 // MARK: - Placeholder

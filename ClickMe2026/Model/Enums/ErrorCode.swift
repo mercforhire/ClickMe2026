@@ -137,6 +137,27 @@ enum ErrorCode: String, Decodable {
     case confirmationRequired    = "CONFIRMATION_REQUIRED"
     case tokenUserMismatch       = "TOKEN_USER_MISMATCH"
 
+    // MARK: - Account suspension & counterparty unavailability
+    // See `docs/ios/USER-REPORTING.md`.
+    /// 403 — the caller's own account was suspended. Returned on ANY
+    /// authed request and on `/auth/login`. Networking layer should
+    /// trap this globally: clear tokens, disconnect socket, route to
+    /// the suspension screen.
+    case accountSuspended        = "ACCOUNT_SUSPENDED"
+    /// 422 — tried to report self. Hide the Report action on the
+    /// user's own profile.
+    case cannotReportSelf        = "CANNOT_REPORT_SELF"
+    /// 409 — booking endpoints when the target expert was suspended
+    /// or terminated between discovery and action. Return to Explore
+    /// with "This expert is no longer available."
+    case expertUnavailable       = "EXPERT_UNAVAILABLE"
+    /// 409 — expert accept-reschedule when the client was suspended
+    /// or terminated. Symmetric with `expertUnavailable`.
+    case clientUnavailable       = "CLIENT_UNAVAILABLE"
+    /// 403 — `POST /chats/:id/send` when the recipient is unavailable.
+    /// Disable the message composer: "This user is unavailable."
+    case recipientUnavailable    = "RECIPIENT_UNAVAILABLE"
+
     // MARK: - Media
     case uploadError             = "UPLOAD_ERROR"           // 400 (multer) or 413 (LIMIT_FILE_SIZE)
 

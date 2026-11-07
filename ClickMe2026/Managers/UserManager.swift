@@ -24,6 +24,14 @@ final class UserManager {
     private(set) var authUser: AuthUser?
     private(set) var me: MeData?
     private(set) var profile: UserProfileData?
+
+    /// Set to `true` when the networking layer observes a
+    /// `403 ACCOUNT_SUSPENDED`. Observed by the shell's splash/login
+    /// route to present a "Your account has been suspended" message
+    /// (with support contact) one shot after the logout settles.
+    /// Cleared on the next successful login. See
+    /// `docs/ios/USER-REPORTING.md` §4.
+    private(set) var wasSuspended: Bool = false
     /// Expert-scoped profile from `GET /expert/profile`. Carries the
     /// `setup_completed` flag and the rehydration payload for the
     /// mid-flow signup resume path. `nil` for clients and until first
@@ -120,6 +128,31 @@ final class UserManager {
         api.service.authTokenRefresher = TokenRefresher { [weak self] in
             await self?.performRefreshCycle() ?? false
         }
+
+        // Global ACCOUNT_SUSPENDED handler. Fires on ANY 403 whose body
+        // code is `ACCOUNT_SUSPENDED`. We clear credentials + disconnect
+        // the socket and raise `wasSuspended` so the login/splash view
+        // can show the one-shot message. Original error still propagates
+        // to the caller.
+        api.service.suspensionHandler = { [weak self] in
+            self?.handleAccountSuspended()
+        }
+    }
+
+    @MainActor
+    private func handleAccountSuspended() {
+        // No-op if we've already handled it (concurrent requests all
+        // return 403 at once).
+        guard !wasSuspended else { return }
+        wasSuspended = true
+        logout()
+    }
+
+    /// Called by the login/splash view after it has shown the
+    /// "account suspended" alert, so a subsequent fresh login doesn't
+    /// immediately re-trigger the alert.
+    func clearSuspensionFlag() {
+        wasSuspended = false
     }
 
     // MARK: - Login

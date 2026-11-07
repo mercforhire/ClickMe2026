@@ -42,12 +42,28 @@ final class SplashViewModel {
 
     /// Shows the splash for `displaySeconds`, then checks the user manager and
     /// populates `destination` so the view can transition.
+    ///
+    /// Offline-tolerant: when `tryAutoLogin` succeeds in the "transient
+    /// failure" branch (token still stored, `/me` unreachable), `me` is
+    /// still nil here. Rather than kicking the user to login, we fall
+    /// through to the dashboard using the persisted mode preference —
+    /// the user keeps their session and the app hydrates cached profile
+    /// data. The first successful authed request later re-populates
+    /// `me` from the server.
     func start() async {
         try? await Task.sleep(nanoseconds: UInt64(displaySeconds * 1_000_000_000))
 
         let succeeded = await userManager.tryAutoLogin()
-        guard succeeded, let roles = userManager.me?.roles else {
+        guard succeeded else {
             destination = .login
+            return
+        }
+
+        // Transient-failure branch: `tryAutoLogin` kept the token but
+        // couldn't fetch `/me`. Honor the last-known mode preference
+        // and skip the expert-setup-check (which needs server data).
+        guard let roles = userManager.me?.roles else {
+            destination = .dashboard(userManager.currentMode)
             return
         }
 

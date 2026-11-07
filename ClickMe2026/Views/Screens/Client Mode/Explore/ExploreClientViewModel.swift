@@ -87,10 +87,22 @@ final class ExploreClientViewModel: ObservableObject {
             expertsState = .loaded
             featuredTopicsState = .loaded
         } catch {
-            let msg = Self.message(for: error)
-            categoriesState = .failed(msg)
-            expertsState = .failed(msg)
-            featuredTopicsState = .failed(msg)
+            // Pull-to-refresh / view-identity changes cancel the in-flight
+            // `URLSession.data(for:)`, which bubbles up as `URLError.cancelled`
+            // or `CancellationError`. That's not a real failure — a fresh
+            // load is almost always already on its way. Revert loading rows
+            // to idle (so the skeleton reappears instead of a red error
+            // card) and leave loaded sections untouched.
+            if Self.isCancellation(error) {
+                if categoriesState == .loading { categoriesState = .idle }
+                if expertsState == .loading { expertsState = .idle }
+                if featuredTopicsState == .loading { featuredTopicsState = .idle }
+            } else {
+                let msg = Self.message(for: error)
+                categoriesState = .failed(msg)
+                expertsState = .failed(msg)
+                featuredTopicsState = .failed(msg)
+            }
         }
 
         await loadTodaysSessions()
@@ -266,6 +278,12 @@ final class ExploreClientViewModel: ObservableObject {
     }
 
     // MARK: - Error helpers
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+        return false
+    }
 
     private static func message(for error: Error) -> String {
         if case let NetworkError.httpError(_, data) = error,

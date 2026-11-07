@@ -215,8 +215,18 @@ final class UserManager {
     // MARK: - Auto-login
 
     /// Attempts to restore a session from the persisted token. Returns `true`
-    /// when `/me` succeeds, `false` when no token exists or the token is
-    /// rejected (in which case stored state is cleared).
+    /// when `/me` succeeds OR when `/me` fails for transient reasons
+    /// (offline, DNS, server 5xx) while a token is still stored — the
+    /// user stays signed in and the app lands on home with whatever
+    /// cached data is on disk. Returns `false` only when:
+    ///   - no token exists in the keychain, OR
+    ///   - the stored token is actually rejected (401 / 403 non-suspension),
+    ///     in which case stored state is cleared.
+    ///
+    /// Rationale: wiping credentials on a transient network blip is a
+    /// terrible UX — a user who opens the app in airplane mode would
+    /// have to log in again on next online launch, even though their
+    /// session is perfectly valid.
     @discardableResult
     func tryAutoLogin() async -> Bool {
         guard hasStoredToken else { return false }
@@ -233,9 +243,39 @@ final class UserManager {
             fetchAndUploadFCMToken()
             return true
         } catch {
-            logout()
+            // Branch: real auth failure vs. transient network failure.
+            if Self.isAuthRejection(error) {
+                logout()
+                return false
+            }
+            // Transient — keep the token, synthesize a minimal signed-in
+            // state from whatever's cached. `refreshMe` will be retried
+            // the next time any screen's `.task` fires a `/me` or any
+            // other authed request succeeds, which hydrates `me` for
+            // real. Until then the app renders cached profile data.
+            return true
+        }
+    }
+
+    /// True when the error is a hard credential rejection (401 or non-
+    /// suspension 403), i.e. the stored token is actually invalid and
+    /// we should clear it. Network errors, 5xx server errors, timeouts,
+    /// and ACCOUNT_SUSPENDED (handled elsewhere) all return false so
+    /// `tryAutoLogin` keeps the user signed in.
+    private static func isAuthRejection(_ error: Error) -> Bool {
+        guard case let NetworkError.httpError(status, data) = error else {
             return false
         }
+        if status == 401 { return true }
+        if status == 403 {
+            // ACCOUNT_SUSPENDED is handled by the global suspension
+            // interceptor — don't treat it as a password-is-wrong style
+            // rejection here.
+            let envelope = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
+            if envelope?.code == .accountSuspended { return false }
+            return true
+        }
+        return false
     }
 
     var hasStoredToken: Bool { api.bearerToken != nil }

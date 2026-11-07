@@ -27,7 +27,6 @@ struct UpdateUserProfileRequest: Encodable {
     struct Basic: Encodable {
         var firstName: String?
         var lastName: String?
-        var phone: String?
         var bio: String?
         /// Included for completeness — server 403s if this is set. Leave nil.
         var email: String?

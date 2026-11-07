@@ -127,7 +127,6 @@ struct ExpertProfileSettingsView: View {
                             ProfileLabeledField(label: "First Name", text: $vm.firstName)
                             ProfileLabeledField(label: "Last Name", text: $vm.lastName)
                         }
-                        ProfileLabeledField(label: "Phone", text: $vm.phone, keyboard: .phonePad)
 
                         ProfileBioField(text: $vm.bio)
 
@@ -218,7 +217,7 @@ struct ExpertProfileSettingsView: View {
     /// scheduler — cleaner than an `.onChange` per field.
     private var autoSaveSnapshot: String {
         [
-            viewModel.firstName, viewModel.lastName, viewModel.phone, viewModel.bio,
+            viewModel.firstName, viewModel.lastName, viewModel.bio,
             viewModel.jobTitle, viewModel.company, viewModel.meetingUrl,
             viewModel.city, viewModel.state, viewModel.country
         ].joined(separator: "|")

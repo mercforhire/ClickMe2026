@@ -19,7 +19,6 @@ final class ExpertProfileSettingsViewModel {
 
     var firstName: String
     var lastName: String
-    var phone: String
     var bio: String
 
     // MARK: Professional / location / languages
@@ -109,7 +108,6 @@ final class ExpertProfileSettingsViewModel {
     init(
         firstName: String = "Ethan",
         lastName: String = "Carter",
-        phone: String = "+1 234 567 890",
         bio: String = "Passionate expert with over 10 years of experience helping brands grow.",
         jobTitle: String = "Digital Marketing Expert",
         company: String = "Self-Employed",
@@ -125,7 +123,6 @@ final class ExpertProfileSettingsViewModel {
     ) {
         self.firstName = firstName
         self.lastName = lastName
-        self.phone = phone
         self.bio = bio
         self.jobTitle = jobTitle
         self.company = company
@@ -235,7 +232,6 @@ final class ExpertProfileSettingsViewModel {
         let location = data.location
         firstName = personal.firstName ?? ""
         lastName = personal.lastName ?? ""
-        phone = personal.phone ?? ""
         bio = personal.bio ?? ""
         avatarUrl = personal.avatarUrl
         jobTitle = professional.jobTitle ?? ""
@@ -275,7 +271,6 @@ final class ExpertProfileSettingsViewModel {
         body.basic = .init(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             lastName: lastName.trimmingCharacters(in: .whitespaces),
-            phone: phone.trimmingCharacters(in: .whitespaces),
             bio: bio.trimmingCharacters(in: .whitespaces)
         )
         body.location = .init(
@@ -333,7 +328,7 @@ final class ExpertProfileSettingsViewModel {
     /// Concatenated view of the auto-save-tracked fields. Used to dedup
     /// the debounced save against the server's known state.
     private var currentSnapshot: String {
-        [firstName, lastName, phone, bio, jobTitle, company, meetingUrl, city, state, country]
+        [firstName, lastName, bio, jobTitle, company, meetingUrl, city, state, country]
             .joined(separator: "|")
     }
 

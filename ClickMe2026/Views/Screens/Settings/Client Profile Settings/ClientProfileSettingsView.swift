@@ -130,7 +130,6 @@ struct ClientProfileSettingsView: View {
                 ProfileLabeledField(label: "First Name", text: $viewModel.firstName)
                 ProfileLabeledField(label: "Last Name", text: $viewModel.lastName)
             }
-            ProfileLabeledField(label: "Phone", text: $viewModel.phone, keyboard: .phonePad)
 
             ProfileBioField(text: $viewModel.bio)
 
@@ -178,7 +177,7 @@ struct ClientProfileSettingsView: View {
     /// scheduler — cleaner than an `.onChange` per field.
     private var autoSaveSnapshot: String {
         [
-            viewModel.firstName, viewModel.lastName, viewModel.phone, viewModel.bio,
+            viewModel.firstName, viewModel.lastName, viewModel.bio,
             viewModel.jobTitle, viewModel.company,
             viewModel.city, viewModel.state, viewModel.country
         ].joined(separator: "|")

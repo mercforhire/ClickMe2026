@@ -18,7 +18,6 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     // MARK: Basic info
     @Published var firstName: String
     @Published var lastName: String
-    @Published var phone: String
     @Published var bio: String
 
     // MARK: Professional
@@ -91,7 +90,6 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     ) {
         self.firstName = ""
         self.lastName = ""
-        self.phone = ""
         self.bio = ""
         self.jobTitle = ""
         self.company = ""
@@ -134,7 +132,6 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     static func previewSeed(
         firstName: String = "Sophia",
         lastName: String = "Carter",
-        phone: String = "+1 234 567 890",
         bio: String = "Passionate digital marketing expert with over 10 years of experience helping brands grow their online presence.",
         jobTitle: String = "Digital Marketing Expert",
         company: String = "Self-Employed",
@@ -146,7 +143,6 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         let vm = ClientProfileSettingsViewModel()
         vm.firstName = firstName
         vm.lastName = lastName
-        vm.phone = phone
         vm.bio = bio
         vm.jobTitle = jobTitle
         vm.company = company
@@ -173,7 +169,6 @@ final class ClientProfileSettingsViewModel: ObservableObject {
 
         firstName = personal.firstName ?? ""
         lastName = personal.lastName ?? ""
-        phone = personal.phone ?? ""
         bio = personal.bio ?? ""
 
         jobTitle = professional.jobTitle ?? ""
@@ -193,7 +188,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     /// display.
     private func currentSnapshot() -> String {
         [
-            firstName, lastName, phone, bio,
+            firstName, lastName, bio,
             jobTitle, company,
             city, state, country,
             languages.joined(separator: ","),
@@ -270,7 +265,6 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         body.basic = .init(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             lastName: lastName.trimmingCharacters(in: .whitespaces),
-            phone: phone.trimmingCharacters(in: .whitespaces),
             bio: bio.trimmingCharacters(in: .whitespaces)
         )
         body.location = .init(

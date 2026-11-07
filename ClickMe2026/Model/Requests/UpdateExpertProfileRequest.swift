@@ -13,7 +13,6 @@ struct UpdateExpertProfileRequest: Encodable {
     struct PersonalInfo: Encodable {
         let firstName: String?
         let lastName: String?
-        let phone: String?
         let bio: String?
     }
 

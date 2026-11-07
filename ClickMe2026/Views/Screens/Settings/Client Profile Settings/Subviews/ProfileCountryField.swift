@@ -23,7 +23,7 @@ struct ProfileCountryField: View {
 
     var body: some View {
         Menu {
-            ForEach(Countries.all) { entry in
+            ForEach(Countries.selectable) { entry in
                 Button {
                     country = entry.code
                 } label: {

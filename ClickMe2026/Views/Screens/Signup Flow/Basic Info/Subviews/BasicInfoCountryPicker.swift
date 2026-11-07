@@ -21,7 +21,7 @@ struct BasicInfoCountryPicker: View {
 
     var body: some View {
         Menu {
-            ForEach(Countries.all) { entry in
+            ForEach(Countries.selectable) { entry in
                 Button {
                     countryCode = entry.code
                 } label: {

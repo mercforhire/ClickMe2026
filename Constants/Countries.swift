@@ -35,6 +35,12 @@ enum Countries {
         .sorted { $0.name < $1.name }
     }()
 
+    /// Countries offered in the signup + profile country pickers. Deliberately
+    /// narrower than `all`: launch markets only (Canada, US), in this order.
+    /// `all` stays the full lookup table so a user who saved a different
+    /// country earlier still sees its name and `normalize` still accepts it.
+    static let selectable: [Country] = ["CAN", "USA"].compactMap { find(byCode: $0) }
+
     /// Looks up a country by its wire (alpha-3) code. `nil` when the code
     /// isn't in the curated list.
     static func find(byCode code: String) -> Country? {

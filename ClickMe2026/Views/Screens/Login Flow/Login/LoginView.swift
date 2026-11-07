@@ -191,6 +191,22 @@ struct LoginView: View {
                     case .review:
                         SignupReviewView(
                             accumulator: signupAccumulator,
+                            onEdit: { section in
+                                // Jump back to the matching signup step so
+                                // the user can revise the shown values.
+                                // Each destination screen already pops
+                                // itself after save (see the
+                                // `.profilePhoto` / `.tags` cases above),
+                                // which naturally returns to this review.
+                                switch section {
+                                case .personalDetails:
+                                    path.append(SignupRoute.basicInfo)
+                                case .profilePhoto:
+                                    path.append(SignupRoute.profilePhoto)
+                                case .expertise:
+                                    path.append(SignupRoute.tags)
+                                }
+                            },
                             onPublish: {
                                 // Fresh expert always lands on client home
                                 // — they haven't published any topics yet,

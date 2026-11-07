@@ -27,9 +27,6 @@ final class SignupAccumulator {
 
     // MARK: Initial (account creation)
 
-    /// Handles both @username and full-name conventions — the field is
-    /// labelled "Username" in the UI but the server accepts either.
-    var username: String = ""
     var email: String = ""
     var password: String = ""
 

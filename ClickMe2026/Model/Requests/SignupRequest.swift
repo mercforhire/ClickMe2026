@@ -18,7 +18,6 @@ import Foundation
 /// `role` is set client-side based on which signup flow the user
 /// entered — currently always `expert` for this flow.
 struct SignupRequest: Encodable {
-    let username: String
     let email: String
     let password: String
     let role: String

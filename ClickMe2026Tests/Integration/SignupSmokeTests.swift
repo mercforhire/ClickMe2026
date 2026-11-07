@@ -12,7 +12,7 @@
 //    4. GET  /meta/languages, /meta/expertise-tags (fetch real ids for setup)
 //    5. PATCH /expert/profile/setup        (final publish, uses accumulator's builder)
 //
-//  Each run creates a fresh DB row with a timestamped username/email. There
+//  Each run creates a fresh DB row with a timestamped email. There
 //  is no explicit cleanup — talk to the backend team about a scheduled
 //  sweep of `verify.smoke.*@clickme.test` accounts if this becomes an issue.
 //
@@ -39,10 +39,9 @@ struct SignupSmokeTests {
     @Test("signup creates a new account and returns a bearer token")
     func signupReturnsToken() async throws {
         let api = makeRealAPI()
-        let (username, email) = uniqueIdentity()
+        let email = uniqueEmail()
 
         let response = try await api.signup(SignupRequest(
-            username: username,
             email: email,
             password: "Verify123!",
             role: "expert"
@@ -60,17 +59,16 @@ struct SignupSmokeTests {
     @Test("re-signing up with the same email returns a 4xx")
     func signupWithDuplicateEmailFails() async throws {
         let api = makeRealAPI()
-        let (username, email) = uniqueIdentity()
+        let email = uniqueEmail()
 
         // First create it — should succeed.
         _ = try await api.signup(SignupRequest(
-            username: username, email: email, password: "Verify123!", role: "expert"
+            email: email, password: "Verify123!", role: "expert"
         ))
 
-        // Second attempt with the same email but a different username must fail.
+        // Second attempt with the same email must fail.
         do {
             _ = try await api.signup(SignupRequest(
-                username: username + "dup",
                 email: email,
                 password: "Verify123!",
                 role: "expert"
@@ -188,19 +186,18 @@ struct SignupSmokeTests {
 
     /// Creates a fresh account and returns the `SignupResponse` payload.
     private func freshAccount(api: ClickMeAPI) async throws -> SignupResponse {
-        let (username, email) = uniqueIdentity()
+        let email = uniqueEmail()
         let response = try await api.signup(SignupRequest(
-            username: username, email: email, password: "Verify123!", role: "expert"
+            email: email, password: "Verify123!", role: "expert"
         ))
         return response.data
     }
 
     /// Timestamp + random suffix — unique across runs and parallel tests.
-    private func uniqueIdentity() -> (username: String, email: String) {
+    private func uniqueEmail() -> String {
         let stamp = Int(Date().timeIntervalSince1970)
         let jitter = Int.random(in: 100 ... 999)
-        let user = "smoke\(stamp)\(jitter)"
-        return (user, "verify.smoke.\(stamp)\(jitter)@clickme.test")
+        return "verify.smoke.\(stamp)\(jitter)@clickme.test"
     }
 
     private func makeRealAPI() -> ClickMeAPI {

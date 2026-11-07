@@ -18,7 +18,6 @@ extension ClickMeAPI {
             url: url(.signup),
             method: .post,
             parameters: [
-                "username": body.username,
                 "email": body.email,
                 "password": body.password,
                 "role": body.role

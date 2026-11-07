@@ -158,8 +158,12 @@ final class UserManager {
     /// subsequent onboarding calls (`uploadAvatar`, `setupExpertProfile`) are
     /// authorized even before the verification email is opened.
     @discardableResult
-    func signup(username: String, email: String, password: String, role: UserRole) async throws -> SignupResponse {
-        let request = SignupRequest(username: username, email: email, password: password, role: role.rawValue)
+    func signup(email: String, password: String, role: UserRole) async throws -> SignupResponse {
+        let request = SignupRequest(
+            email: email,
+            password: password,
+            role: role.rawValue
+        )
         let response = try await api.signup(request)
         apply(signupData: response.data)
         return response.data

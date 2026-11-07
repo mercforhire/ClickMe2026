@@ -100,10 +100,7 @@ final class SignupInitialViewModel: ObservableObject {
         guard emailError == nil, passwordError == nil else { return }
 
         // Mirror credentials onto the accumulator so downstream screens have
-        // access to the email (verify screen) without prop drilling. Username
-        // is derived from email for backend compatibility — the field is no
-        // longer collected from the user.
-        accumulator?.username = email
+        // access to the email (verify screen) without prop drilling.
         accumulator?.email = email
         accumulator?.password = password
 
@@ -138,9 +135,7 @@ final class SignupInitialViewModel: ObservableObject {
             return
         }
 
-        // 409 Conflict → email already taken. The server also handles the
-        // legacy "username taken" case internally; because we now derive
-        // username from email, any 409 is effectively an email collision.
+        // 409 Conflict → email already taken.
         if statusCode == 409,
            let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
         {
@@ -148,18 +143,15 @@ final class SignupInitialViewModel: ObservableObject {
             return
         }
 
-        // 422 Validation → per-field messages. The server may still return
-        // a `username` field error if its own validator trips on the
-        // derived value; we route it to the email field since that's what
-        // the user actually typed.
+        // 422 Validation → per-field messages.
         if statusCode == 422,
            let response = try? JSONDecoder().decode(FieldValidationErrorResponse.self, from: data)
         {
             for fieldError in response.errors {
                 switch fieldError.field {
-                case "email", "username": emailError = fieldError.message
-                case "password":          passwordError = fieldError.message
-                default:                  apiError = fieldError.message
+                case "email":    emailError = fieldError.message
+                case "password": passwordError = fieldError.message
+                default:         apiError = fieldError.message
                 }
             }
             return

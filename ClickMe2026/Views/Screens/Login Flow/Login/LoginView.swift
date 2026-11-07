@@ -325,7 +325,7 @@ struct LoginView: View {
     private var formSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             ValidatedField(
-                placeholder: "Email or Username",
+                placeholder: "Email",
                 text: $viewModel.email,
                 icon: "envelope",
                 keyboardType: .emailAddress,

@@ -47,19 +47,14 @@ final class LoginViewModel: ObservableObject {
 
     // MARK: Validation
 
-    /// `POST /auth/login` accepts either an email or a username under the
-    /// `email` key. Client-side validation matches either format so we
-    /// don't gate valid identifiers behind an email-only rule.
+    /// Email is the sole login handle.
     func validateEmail() {
         let emailPattern = #"^[^@\s]+@[^@\s]+\.[^@\s]+$"#
-        let usernamePattern = #"^[A-Za-z0-9_.]{3,30}$"#
         let trimmed = email.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty {
-            emailError = "Email or username is required"
-        } else if trimmed.range(of: emailPattern, options: .regularExpression) == nil,
-                  trimmed.range(of: usernamePattern, options: .regularExpression) == nil
-        {
-            emailError = "Enter a valid email or username"
+            emailError = "Email is required"
+        } else if trimmed.range(of: emailPattern, options: .regularExpression) == nil {
+            emailError = "Invalid email format"
         } else {
             emailError = nil
         }
@@ -95,10 +90,9 @@ final class LoginViewModel: ObservableObject {
         didAttemptLogin = true
         // iOS keyboards frequently append a trailing space after
         // period-double-tap or autocomplete when the user types their
-        // email — the server's strict email validator then 422s with
-        // "Enter a valid email or username". Trim before both
-        // validating and sending so the value on the wire matches what
-        // the user meant to type.
+        // email — the server's strict email validator then 422s. Trim
+        // before both validating and sending so the value on the wire
+        // matches what the user meant to type.
         email = email.trimmingCharacters(in: .whitespacesAndNewlines)
         validateEmail()
         validatePassword()
@@ -120,10 +114,29 @@ final class LoginViewModel: ObservableObject {
     // MARK: Helpers
 
     private func handle(loginError error: Error) {
-        // 401 → invalid credentials: surface both as an inline field error and
-        // as the top-level alert.
-        if case let NetworkError.httpError(statusCode, _) = error, statusCode == 401 {
-            passwordError = "Invalid credentials"
+        guard case let NetworkError.httpError(statusCode, data) = error else {
+            apiError = Self.message(for: error)
+            return
+        }
+
+        // 422 → syntax-only email validation failure (not an email string).
+        // Server returns `errors[0] = { field: "email", message: ... }` with
+        // no `code`. Surface inline on the email field and skip the alert.
+        // See `docs/ios/SIGNUP-USERNAME-OPTIONAL.md` §2.
+        if statusCode == 422,
+           let response = try? JSONDecoder().decode(FieldValidationErrorResponse.self, from: data),
+           let fieldError = response.errors.first(where: { $0.field == "email" })
+        {
+            emailError = fieldError.message
+            return
+        }
+
+        // 401 → wrong credentials or unknown email. Server returns a
+        // deliberately generic `{ message: "Invalid email or password" }`
+        // (no `code`) so neither field can be verified from the response.
+        // Mirror the generic message on both inline fields + top alert.
+        if statusCode == 401 {
+            passwordError = Self.message(for: error)
         }
         apiError = Self.message(for: error)
     }

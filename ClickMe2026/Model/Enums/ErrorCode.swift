@@ -30,7 +30,6 @@ enum ErrorCode: String, Decodable {
     case invalidCode             = "INVALID_CODE"           // /auth/email/verify + /auth/password/reset — wrong or expired 6-digit code
     case authServiceUnavailable  = "AUTH_SERVICE_UNAVAILABLE"
     case expiredToken            = "EXPIRED_TOKEN"
-    case usernameTaken           = "USERNAME_TAKEN"
     case emailTaken              = "EMAIL_TAKEN"
 
     // MARK: - Generic authz / lookup

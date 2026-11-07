@@ -136,13 +136,6 @@ struct SignupInitialView: View {
     private var formSection: some View {
         VStack(spacing: 0) {
             SignupValidatedField(
-                placeholder: "Username",
-                text: $viewModel.username,
-                error: viewModel.usernameError
-            )
-            .onChange(of: viewModel.username) { viewModel.usernameDidChange() }
-
-            SignupValidatedField(
                 placeholder: "Email",
                 text: $viewModel.email,
                 error: viewModel.emailError,
@@ -211,10 +204,8 @@ private struct PreviewInitial: View {
 
 #Preview("All Errors") {
     PreviewInitial(viewModel: SignupInitialViewModel(
-        username: "ab",
         email: "notanemail",
         password: "123",
-        usernameError: "Username must be at least 3 characters",
         emailError: "Invalid email format",
         passwordError: "Password must be at least 8 characters",
         didAttemptContinue: true
@@ -222,18 +213,8 @@ private struct PreviewInitial: View {
     .preferredColorScheme(.dark)
 }
 
-#Preview("Username Error") {
-    PreviewInitial(viewModel: SignupInitialViewModel(
-        username: "",
-        usernameError: "Username is required",
-        didAttemptContinue: true
-    ))
-    .preferredColorScheme(.dark)
-}
-
 #Preview("Valid — Ready to Continue") {
     PreviewInitial(viewModel: SignupInitialViewModel(
-        username: "johndoe",
         email: "john@example.com",
         password: "Secure123!"
     ))

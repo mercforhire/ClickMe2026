@@ -442,7 +442,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ClickMe2026/ClickMe2026.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_ASSET_PATHS = "\"ClickMe2026/Preview Content\"";
 				DEVELOPMENT_TEAM = V68J585TK5;
 				ENABLE_PREVIEWS = YES;
@@ -450,6 +450,7 @@
 				INFOPLIST_FILE = ClickMe2026/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ClickMe;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Add your ClickMe sessions to your calendar so you don't miss them.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "ClickMe does not use the camera. This permission is required by third-party libraries included in the app.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ClickMe needs microphone access so you can talk to your session partner.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -482,7 +483,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ClickMe2026/ClickMe2026.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 6;
 				DEVELOPMENT_ASSET_PATHS = "\"ClickMe2026/Preview Content\"";
 				DEVELOPMENT_TEAM = V68J585TK5;
 				ENABLE_PREVIEWS = YES;
@@ -490,6 +491,7 @@
 				INFOPLIST_FILE = ClickMe2026/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ClickMe;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Add your ClickMe sessions to your calendar so you don't miss them.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "ClickMe does not use the camera. This permission is required by third-party libraries included in the app.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "ClickMe needs microphone access so you can talk to your session partner.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -527,7 +529,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.ClickMe2026.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClickMe2026.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ClickMe2026";
 			};
 			name = Debug;
@@ -544,7 +546,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.uptrendinvestments.ClickMe2026.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ClickMe2026.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ClickMe2026";
 			};
 			name = Release;
@@ -561,7 +563,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_TARGET_NAME = ClickMe2026;
 			};
 			name = Debug;
@@ -578,7 +580,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1";
+				TARGETED_DEVICE_FAMILY = 1;
 				TEST_TARGET_NAME = ClickMe2026;
 			};
 			name = Release;

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>Current</key>
-	<string>Development</string>
+	<string>Production</string>
 	<key>Environments</key>
 	<dict>
 		<key>Development</key>

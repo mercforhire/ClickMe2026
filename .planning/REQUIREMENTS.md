@@ -172,12 +172,114 @@ Which phases cover which requirements. Filled in during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| CALL-01 | Phase 2 | Pending |
+| CALL-02 | Phase 2 | Pending |
+| CALL-03 | Phase 3 | Pending |
+| CALL-04 | Phase 2 | Pending |
+| CALL-05 | Phase 2 | Pending |
+| CALL-06 | Phase 3 | Pending |
+| CALL-07 | Phase 3 | Pending |
+| CALL-08 | Phase 3 | Pending |
+| CALL-09 | Phase 2 | Pending |
+| CALL-10 | Phase 3 | Pending |
+| BOOK-01 | Phase 4 | Pending |
+| BOOK-02 | Phase 4 | Pending |
+| BOOK-03 | Phase 4 | Pending |
+| BOOK-04 | Phase 4 | Pending |
+| BOOK-05 | Phase 4 | Pending |
+| BOOK-06 | Phase 3 | Pending |
+| BOOK-07 | Phase 3 | Pending |
+| BOOK-08 | Phase 3 | Pending |
+| BOOK-09 | Phase 3 | Pending |
+| BOOK-10 | Phase 2 | Pending |
+| BOOK-11 | Phase 3 | Pending |
+| BOOK-12 | Phase 3 | Pending |
+| BOOK-13 | Phase 3 | Pending |
+| BOOK-14 | Phase 2 | Pending |
+| BOOK-15 | Phase 2 | Pending |
+| BOOK-16 | Phase 3 | Pending |
+| BOOK-17 | Phase 3 | Pending |
+| BOOK-18 | Phase 2 | Pending |
+| BOOK-19 | Phase 4 | Pending |
+| PAY-01 | Phase 4 | Pending |
+| PAY-02 | Phase 4 | Pending |
+| PAY-03 | Phase 4 | Pending |
+| PAY-04 | Phase 4 | Pending |
+| PAY-05 | Phase 2 | Pending |
+| EXPL-01 | Phase 4 | Pending |
+| EXPL-02 | Phase 4 | Pending |
+| EXPL-03 | Phase 4 | Pending |
+| EXPL-04 | Phase 4 | Pending |
+| EXPL-05 | Phase 4 | Pending |
+| EXPL-06 | Phase 4 | Pending |
+| SIGN-01 | Phase 5 | Pending |
+| SIGN-02 | Phase 5 | Pending |
+| SIGN-03 | Phase 5 | Pending |
+| SIGN-04 | Phase 5 | Pending |
+| SIGN-05 | Phase 5 | Pending |
+| SIGN-06 | Phase 5 | Pending |
+| EXP-01 | Phase 6 | Pending |
+| EXP-02 | Phase 6 | Pending |
+| EXP-03 | Phase 6 | Pending |
+| EXP-04 | Phase 6 | Pending |
+| EXP-05 | Phase 6 | Pending |
+| EXP-06 | Phase 6 | Pending |
+| EXP-07 | Phase 6 | Pending |
+| EXP-08 | Phase 6 | Pending |
+| EXP-09 | Phase 6 | Pending |
+| EXP-10 | Phase 6 | Pending |
+| EXP-11 | Phase 3 | Pending |
+| EXP-12 | Phase 6 | Pending |
+| EXP-13 | Phase 3 | Pending |
+| EXP-14 | Phase 6 | Pending |
+| EXP-15 | Phase 6 | Pending |
+| EXP-16 | Phase 6 | Pending |
+| CHAT-01 | Phase 7 | Pending |
+| CHAT-02 | Phase 7 | Pending |
+| CHAT-03 | Phase 7 | Pending |
+| CHAT-04 | Phase 7 | Pending |
+| CHAT-05 | Phase 7 | Pending |
+| CHAT-06 | Phase 7 | Pending |
+| CHAT-07 | Phase 7 | Pending |
+| CHAT-08 | Phase 7 | Pending |
+| CHAT-09 | Phase 2 | Pending |
+| PUSH-01 | Phase 2 | Pending |
+| PUSH-02 | Phase 2 | Pending |
+| PUSH-03 | Phase 2 | Pending |
+| PUSH-04 | Phase 2 | Pending |
+| SET-01 | Phase 5 | Pending |
+| SET-02 | Phase 5 | Pending |
+| SET-03 | Phase 5 | Pending |
+| SET-04 | Phase 5 | Pending |
+| SET-05 | Phase 5 | Pending |
+| SET-06 | Phase 5 | Pending |
+| SET-07 | Phase 5 | Pending |
+| BACK-01 | Phase 1 | Pending |
+| BACK-02 | Phase 1 | Pending |
+| BACK-03 | Phase 1 | Pending |
+| BACK-04 | Phase 1 | Pending |
+| BACK-05 | Phase 1 | Pending |
+| BACK-06 | Phase 1 | Pending |
+| BACK-07 | Phase 1 | Pending |
+| BACK-08 | Phase 1 | Pending |
+| BACK-09 | Phase 1 | Pending |
+| BACK-10 | Phase 1 | Pending |
+| BACK-11 | Phase 1 | Pending |
+| BACK-12 | Phase 1 | Pending |
+| BACK-13 | Phase 1 | Pending |
+| BACK-14 | Phase 1 | Pending |
+| BACK-15 | Phase 1 | Pending |
+| BACK-16 | Phase 1 | Pending |
+| BACK-17 | Phase 1 | Pending |
+| BACK-18 | Phase 1 | Pending |
+| REL-01 | Phase 8 | Pending |
+| REL-02 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 102 total
-- Mapped to phases: 0
-- Unmapped: 102 ⚠️
+- Mapped to phases: 102
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-07 after initial definition*
+*Last updated: 2026-11-07 after roadmap creation (traceability filled)*

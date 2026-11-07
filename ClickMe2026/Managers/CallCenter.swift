@@ -41,10 +41,17 @@ final class CallCenter: ObservableObject {
     /// them to render.
     @Published var isMinimized: Bool = false
 
-    /// Set when a join attempt fails (server refused, bad token, mic
-    /// permission denied, etc.). The shell listens and shows a single
-    /// alert. Cleared once shown.
+    /// Set when a join attempt fails (server refused, bad token,
+    /// missing meeting link, etc.). The shell listens and shows a
+    /// generic alert. Does NOT fire for mic-permission denials — see
+    /// `micPermissionDenied`.
     @Published var joinError: String?
+
+    /// Set when join bailed because the mic permission is denied. The
+    /// shell shows a dedicated alert with an **Open Settings** button
+    /// that deep-links to the ClickMe permissions page in iOS Settings,
+    /// since the app is non-functional without the mic for in-app calls.
+    @Published var micPermissionDenied: Bool = false
 
     /// Set when the user taps the Chat button on the expanded call
     /// screen. The shell reacts by (1) switching to the Chats tab and
@@ -97,6 +104,7 @@ final class CallCenter: ObservableObject {
 
     private let api: ClickMeAPI
     private var joinErrorSubscription: AnyCancellable?
+    private var micPermissionSubscription: AnyCancellable?
 
     init(api: ClickMeAPI = .shared) {
         self.api = api
@@ -157,6 +165,18 @@ final class CallCenter: ObservableObject {
                 self?.abortCallOnJoinFailure(message: message)
             }
 
+        // Separate bridge for the dedicated mic-permission signal.
+        // Same teardown behavior (nuke the call container) but routes
+        // to `micPermissionDenied` so the shell renders the Open
+        // Settings alert instead of the generic one.
+        micPermissionSubscription = vm.$micPermissionDenied
+            .dropFirst()
+            .filter { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.abortCallOnMicPermissionDenied()
+            }
+
         // Kick off Agora join immediately — the expanded call view
         // will just observe the resulting `callStatus` transitions.
         vm.startCall()
@@ -174,6 +194,7 @@ final class CallCenter: ObservableObject {
             self.viewModel = nil
             self.isMinimized = false
             self.joinErrorSubscription = nil
+            self.micPermissionSubscription = nil
         }
     }
 
@@ -184,7 +205,19 @@ final class CallCenter: ObservableObject {
         viewModel = nil
         isMinimized = false
         joinErrorSubscription = nil
+        micPermissionSubscription = nil
         joinError = message
+    }
+
+    /// Mic-permission teardown. Same shape as `abortCallOnJoinFailure`
+    /// but routes the UI through `micPermissionDenied` so the shell can
+    /// render the Open Settings deep-link alert.
+    func abortCallOnMicPermissionDenied() {
+        viewModel = nil
+        isMinimized = false
+        joinErrorSubscription = nil
+        micPermissionSubscription = nil
+        micPermissionDenied = true
     }
 
     // MARK: - Minimize / expand

@@ -69,10 +69,21 @@ final class MeetingCallViewModel: ObservableObject {
     @Published var isSpeakerOn: Bool
     @Published var isEndingCall: Bool
 
-    /// Non-fatal error surfaced from the join flow (permission denied,
-    /// server error, wrong meeting type). `CallCenter` picks it up and
-    /// forwards to the shell alert.
+    /// Non-fatal error surfaced from the join flow (server error, wrong
+    /// meeting type, etc.). `CallCenter` picks it up and forwards to
+    /// the generic shell alert. Does NOT fire for mic-permission
+    /// denials — those use `micPermissionDenied` so the shell can show
+    /// a dedicated alert with an Open Settings button.
     @Published var joinError: String?
+
+    /// Set when join bailed because `AVCaptureDevice.authorizationStatus(
+    /// for: .audio)` is `.denied`. `CallCenter` observes this to tear
+    /// down the call container AND surface a dedicated alert with a
+    /// deep-link to iOS Settings so the user can re-grant the
+    /// permission. Separate from `joinError` so the shell can show
+    /// different UX for a recoverable permission problem vs a hard
+    /// server failure.
+    @Published var micPermissionDenied: Bool = false
 
     // MARK: External-meeting (Skype/Zoom) state
 
@@ -397,10 +408,13 @@ final class MeetingCallViewModel: ObservableObject {
 
     /// Agora audio path — mic permission, engine init, channel join.
     private func startInAppVoice(config: JoinCallResponse.AgoraConfig?) async throws {
-        // Mic permission is only needed for the in-app voice path.
+        // Mic permission is only needed for the in-app voice path. Use
+        // the dedicated `micPermissionDenied` signal (not `joinError`)
+        // so the shell can show a tailored alert with an Open Settings
+        // deep-link instead of a generic Dismiss-only error.
         let granted = await AgoraManager.checkForPermissions()
         guard granted else {
-            self.joinError = "Microphone permission is required for the call. Grant it in Settings and try again."
+            self.micPermissionDenied = true
             return
         }
 

@@ -168,6 +168,10 @@ struct UpcomingBookingsView: View {
         } message: { message in
             Text(message)
         }
+        .micPermissionDeniedAlert(isPresented: Binding(
+            get: { callCenter.micPermissionDenied },
+            set: { if !$0 { callCenter.micPermissionDenied = false } }
+        ))
         .navigationTitle("Upcoming Sessions")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: SessionRoute.self) { route in

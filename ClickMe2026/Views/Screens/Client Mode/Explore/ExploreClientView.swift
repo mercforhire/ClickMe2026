@@ -166,6 +166,10 @@ struct ExploreClientView: View {
         } message: { message in
             Text(message)
         }
+        .micPermissionDeniedAlert(isPresented: Binding(
+            get: { callCenter.micPermissionDenied },
+            set: { if !$0 { callCenter.micPermissionDenied = false } }
+        ))
     }
 
     // MARK: Sections

@@ -10,18 +10,26 @@ import SwiftUI
 
 // MARK: - Block / Unblock card
 //
-// Three visual states, per `docs/ios/CHAT-UNBLOCK.md` §5:
+// Three visual states — looser than `docs/ios/CHAT-UNBLOCK.md` §5
+// because legacy pre-2026-10-17 blocks (§7) have no recorded blocker
+// and would otherwise leave the user stranded. We ALWAYS surface an
+// Unblock button on a blocked thread and let the server adjudicate —
+// 200 unblocks, 403 NOT_BLOCKER reconciles state so the button goes
+// away on the next render.
 //
 // | isBlocked | blockedByMe | Rendered state |
 // |-----------|-------------|----------------|
 // | false     | n/a         | "Block User" primary CTA |
-// | true      | true        | "Unblock User" primary CTA |
-// | true      | false       | neutral banner — "You can't reply to this conversation", no action |
+// | true      | true        | "You blocked this" + Unblock button |
+// | true      | false       | "Blocked by the other party" + Unblock button (legacy-safe) |
 
 struct ReportChatBlockCard: View {
     let isBlocked: Bool
     let blockedByMe: Bool
     let isWorking: Bool
+    /// True after a `403 NOT_BLOCKER` denial — hide the Unblock button
+    /// so the user can't thrash on it.
+    var unblockDenied: Bool = false
     let onBlockTap: () -> Void
     let onUnblockTap: () -> Void
 
@@ -61,32 +69,36 @@ struct ReportChatBlockCard: View {
         .background(ReportChatGlassCard())
     }
 
-    // MARK: - Derived copy
-
+    /// Hide the button only after the server has definitively denied an
+    /// unblock. Otherwise always show it so legacy blocks (§7) can be
+    /// lifted via server adjudication.
     private var shouldShowButton: Bool {
-        // Blocked by the OTHER party — no action available, just the
-        // explainer banner. Any other state (unblocked, or blocked-by-me)
-        // offers a button.
-        !(isBlocked && !blockedByMe)
+        !(isBlocked && unblockDenied)
     }
 
+    // MARK: - Derived copy
+
     private var headlineText: String {
-        if isBlocked && blockedByMe { return "You blocked this conversation" }
-        if isBlocked               { return "You can't reply to this conversation" }
+        if isBlocked && unblockDenied { return "This conversation was blocked by the other person" }
+        if isBlocked && blockedByMe   { return "You blocked this conversation" }
+        if isBlocked                  { return "This conversation is blocked" }
         return "Block User"
     }
 
     private var bodyText: String {
+        if isBlocked && unblockDenied {
+            return "You can still see earlier messages, but neither of you can send new ones. Only the person who blocked this conversation can lift it."
+        }
         if isBlocked && blockedByMe {
             return "Unblocking will let this user see your profile, send you messages, and book appointments with you again."
         }
         if isBlocked {
-            return "The other person has blocked this conversation. You can still see earlier messages, but neither of you can send new ones."
+            return "You can still see earlier messages, but neither of you can send new ones. If you blocked this conversation, you can lift the block below."
         }
         return "Blocking this user will prevent them from seeing your profile, sending you messages, or booking appointments with you. They will not be notified that you have blocked them."
     }
 
     private var buttonText: String {
-        isBlocked && blockedByMe ? "Unblock User" : "Block User"
+        isBlocked ? "Unblock User" : "Block User"
     }
 }

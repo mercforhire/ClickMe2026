@@ -62,7 +62,13 @@ extension ClickMeAPI {
         )
     }
 
-    func chatAction(id: UUID, action: String, reason: String? = nil, details: String? = nil) async throws -> SuccessMessageResponse {
+    /// `POST /chats/:id/actions` — `action = "block" | "report" | "clear_history"`.
+    /// Server returns a bare `{"status":"success"}` on `block` (no `message`),
+    /// so this is typed to the status-only envelope — using
+    /// `SuccessMessageResponse` here would decode-fail on the missing
+    /// `message` key and surface a bogus client-side error even on a 200.
+    /// Callers discard the return value.
+    func chatAction(id: UUID, action: String, reason: String? = nil, details: String? = nil) async throws -> SuccessStatusOnlyResponse {
         var params: [String: Any] = ["action": action]
         if let reason { params["reason"] = reason }
         if let details { params["details"] = details }

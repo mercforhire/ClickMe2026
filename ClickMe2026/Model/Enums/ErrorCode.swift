@@ -80,6 +80,13 @@ enum ErrorCode: String, Decodable {
 
     // MARK: - Chat
     case threadBlocked           = "THREAD_BLOCKED"
+    /// 403 — `unblock` by the participant who did not block. Reconcile
+    /// local state to `is_blocked = true, blocked_by_me = false` and
+    /// hide the Unblock affordance. See `docs/ios/CHAT-UNBLOCK.md` §4.
+    case notBlocker              = "NOT_BLOCKER"
+    /// 422 — `block` or `unblock` against a self-thread. UI should
+    /// never show block controls on a self-thread; this is a backstop.
+    case cannotBlockSelf         = "CANNOT_BLOCK_SELF"
 
     // MARK: - Discovery
     case expertNotFound          = "EXPERT_NOT_FOUND"

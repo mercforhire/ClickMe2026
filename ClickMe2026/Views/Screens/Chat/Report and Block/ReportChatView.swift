@@ -16,27 +16,40 @@ struct ReportChatView: View {
 
     var onBlock: (String) -> Void
     var onReport: (String, String) -> Void
+    /// Fired after a successful `unblock`. Callers typically re-fetch
+    /// their chat list and either dismiss or update the thread row.
+    var onUnblock: (String) -> Void
     var onDismiss: () -> Void
 
     @FocusState private var descFocused: Bool
 
     // MARK: Init
 
-    /// Runtime init — hits `POST /chats/:id/actions` with `action=block`
-    /// / `action=report`.
+    /// Runtime init — hits `POST /chats/:id/actions` with
+    /// `action=block` / `action=unblock` / `action=report`. Fetches the
+    /// thread's `is_blocked` + `blocked_by_me` on appear so the Block
+    /// card lands in the correct state (Block vs Unblock vs "blocked
+    /// by them"). Pass `initialIsBlocked` / `initialBlockedByMe` when
+    /// the caller already knows (saves one `GET /chats`).
     init(
         threadId: UUID,
         userName: String,
+        initialIsBlocked: Bool = false,
+        initialBlockedByMe: Bool = false,
         onBlock: @escaping (String) -> Void = { _ in },
         onReport: @escaping (String, String) -> Void = { _, _ in },
+        onUnblock: @escaping (String) -> Void = { _ in },
         onDismiss: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: ReportChatViewModel(
             threadId: threadId,
-            userName: userName
+            userName: userName,
+            isBlocked: initialIsBlocked,
+            blockedByMe: initialBlockedByMe
         ))
         self.onBlock = onBlock
         self.onReport = onReport
+        self.onUnblock = onUnblock
         self.onDismiss = onDismiss
     }
 
@@ -45,11 +58,13 @@ struct ReportChatView: View {
         viewModel: ReportChatViewModel = ReportChatViewModel(),
         onBlock: @escaping (String) -> Void = { _ in },
         onReport: @escaping (String, String) -> Void = { _, _ in },
+        onUnblock: @escaping (String) -> Void = { _ in },
         onDismiss: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBlock = onBlock
         self.onReport = onReport
+        self.onUnblock = onUnblock
         self.onDismiss = onDismiss
     }
 
@@ -62,7 +77,16 @@ struct ReportChatView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     ReportChatBlockCard(
-                        onBlockTap: { viewModel.showBlockConfirm = true }
+                        isBlocked: viewModel.isBlocked,
+                        blockedByMe: viewModel.blockedByMe,
+                        isWorking: viewModel.isBlocking,
+                        unblockDenied: viewModel.unblockDenied,
+                        onBlockTap: { viewModel.showBlockConfirm = true },
+                        onUnblockTap: {
+                            viewModel.unblockUser { name in
+                                onUnblock(name)
+                            }
+                        }
                     )
 
                     ReportChatReportCard(
@@ -84,6 +108,7 @@ struct ReportChatView: View {
         }
         .navigationTitle("Block & Report")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await viewModel.loadBlockState() }
         .toolbarBackground(ReportChatBrand.bg, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)

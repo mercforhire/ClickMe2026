@@ -37,4 +37,11 @@ struct ChatThreadItem: Decodable {
     let unreadCount: Int
     let isOnline: Bool
     let isBlocked: Bool
+    /// Caller-relative blocker flag. Only `true` when `isBlocked` is also
+    /// `true` AND the caller is the recorded blocker. Legacy blocks pre
+    /// 2026-10-17 don't have a recorded blocker, so both sides see
+    /// `false` (handled per `docs/ios/CHAT-UNBLOCK.md` §7). Optional so
+    /// pre-rollout cached responses still decode; coalesce to `false`
+    /// at the call site.
+    let blockedByMe: Bool?
 }

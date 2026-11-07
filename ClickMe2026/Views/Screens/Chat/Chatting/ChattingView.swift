@@ -81,6 +81,7 @@ struct ChatView: View {
                     userName: viewModel.peerName,
                     onBlock: { _ in showingBlockReport = false },
                     onReport: { _, _ in },
+                    onUnblock: { _ in showingBlockReport = false },
                     onDismiss: { showingBlockReport = false }
                 )
             }

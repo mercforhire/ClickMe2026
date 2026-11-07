@@ -24,6 +24,20 @@ final class ReportChatViewModel: ObservableObject {
     @Published var isBlocking: Bool
     @Published var showReasonError: Bool
 
+    // MARK: Block state (synced from `GET /chats` on `loadBlockState`)
+    /// `true` when the backing thread is blocked by either party. Drives
+    /// the composer-disabled + banner states in `ReportChatBlockCard`.
+    @Published var isBlocked: Bool
+    /// `true` only when the caller is the recorded blocker, per
+    /// `docs/ios/CHAT-UNBLOCK.md` §5.
+    @Published var blockedByMe: Bool
+    /// Set to `true` after a `403 NOT_BLOCKER` response — prevents the
+    /// user from re-tapping Unblock and re-triggering the same denial.
+    /// Legacy-block (§7) escape hatch: we still show Unblock when
+    /// `blockedByMe` is false, but one rejection latches the button off
+    /// for the remainder of this screen session.
+    @Published var unblockDenied: Bool = false
+
     /// Alert copy shown on either block or report failure.
     @Published var apiError: String?
 
@@ -50,6 +64,8 @@ final class ReportChatViewModel: ObservableObject {
         didSubmit: Bool = false,
         isBlocking: Bool = false,
         showReasonError: Bool = false,
+        isBlocked: Bool = false,
+        blockedByMe: Bool = false,
         reasons: [String] = ReportChatViewModel.defaultReasons,
         api: ClickMeAPI = .shared
     ) {
@@ -62,8 +78,31 @@ final class ReportChatViewModel: ObservableObject {
         self.didSubmit = didSubmit
         self.isBlocking = isBlocking
         self.showReasonError = showReasonError
+        self.isBlocked = isBlocked
+        self.blockedByMe = blockedByMe
         self.reasons = reasons
         self.api = api
+    }
+
+    // MARK: - Block-state sync
+
+    /// Fetches `GET /chats` once on view appear and extracts THIS
+    /// thread's `isBlocked` + `blockedByMe` flags. There's no
+    /// single-thread read endpoint, so we scan the list. Silent on
+    /// failure — the card falls back to the "unknown ⇒ show Block"
+    /// default, which is the safest wrong answer (an extra Block tap
+    /// on an already-blocked thread is a documented 200 no-op).
+    func loadBlockState() async {
+        guard let threadId else { return }
+        do {
+            let response = try await api.getChats(page: 1, limit: 50)
+            if let thread = response.data.threads.first(where: { $0.threadId == threadId }) {
+                isBlocked = thread.isBlocked
+                blockedByMe = thread.blockedByMe ?? false
+            }
+        } catch {
+            // Silent — see docstring.
+        }
     }
 
     // MARK: - Reason selection
@@ -130,12 +169,16 @@ final class ReportChatViewModel: ObservableObject {
     // MARK: - Block
 
     /// POSTs `chat_action = "block"`. Fires the caller's `onBlock` closure
-    /// on success so the chat view can dismiss.
+    /// on success so the chat view can dismiss. Locally reconciles state
+    /// per `docs/ios/CHAT-UNBLOCK.md` §6 — if the peer actually blocked
+    /// first, the next `GET /chats` will correct us.
     func blockUser(onBlock: @escaping (String) -> Void) {
         guard !isBlocking else { return }
 
         // Preview / design path — immediate callback, no network.
         guard let threadId else {
+            isBlocked = true
+            blockedByMe = true
             onBlock(userName)
             return
         }
@@ -148,8 +191,58 @@ final class ReportChatViewModel: ObservableObject {
             defer { self.isBlocking = false }
             do {
                 _ = try await self.api.chatAction(id: threadId, action: "block")
+                self.isBlocked = true
+                self.blockedByMe = true
                 onBlock(self.userName)
             } catch {
+                self.apiError = error.userMessage
+            }
+        }
+    }
+
+    // MARK: - Unblock
+
+    /// POSTs `chat_action = "unblock"`. Only valid for the recorded
+    /// blocker; the server returns `403 NOT_BLOCKER` otherwise, which
+    /// we reconcile per `docs/ios/CHAT-UNBLOCK.md` §6
+    /// (`is_blocked = true, blocked_by_me = false`) so the UI drops the
+    /// Unblock affordance and shows the "You can't reply" banner.
+    func unblockUser(onUnblock: @escaping (String) -> Void) {
+        guard !isBlocking else { return }
+
+        // Preview / design path — immediate callback, no network.
+        guard let threadId else {
+            isBlocked = false
+            blockedByMe = false
+            onUnblock(userName)
+            return
+        }
+
+        apiError = nil
+        isBlocking = true
+
+        Task { [weak self] in
+            guard let self else { return }
+            defer { self.isBlocking = false }
+            do {
+                _ = try await self.api.chatAction(id: threadId, action: "unblock")
+                self.isBlocked = false
+                self.blockedByMe = false
+                onUnblock(self.userName)
+            } catch {
+                // 403 NOT_BLOCKER → stay blocked but by the other party.
+                // We'd never show the Unblock button in that state, so
+                // this is defense-in-depth against race conditions
+                // (e.g. the peer blocked between our last load and now).
+                if case let NetworkError.httpError(status, data) = error,
+                   status == 403,
+                   let envelope = try? JSONDecoder().decode(StandardErrorResponse.self, from: data),
+                   envelope.code == .notBlocker
+                {
+                    self.isBlocked = true
+                    self.blockedByMe = false
+                    self.unblockDenied = true
+                }
                 self.apiError = error.userMessage
             }
         }

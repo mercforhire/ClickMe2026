@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-06-PLAN.md
-last_updated: "2026-11-08T05:43:32.695Z"
+stopped_at: Completed 01-07-PLAN.md
+last_updated: "2026-11-08T05:48:09.418Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 1dc334492dbe8252b690f25aa19bb3c730442985
+state_head: b364bddf28587747c3086e6037760e67374e3084
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 7 of 23
+Plan: 8 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P04 | 6min | 2 tasks | 9 files |
 | Phase 01 P05 | 12 min | 3 tasks | 7 files |
 | Phase 01 P06 | 3 min | 2 tasks | 7 files |
+| Phase 01 P07 | n/a | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 01]: [01-05] A reviews read error fails the expert booking read via dbError instead of reporting has_review false; the reviews read runs after the payout fallback so existing mock order holds
 - [Phase 01]: [01-05] Expert fee label uses currencySymbolFor over MIN_PRICE_CURRENCY_SYMBOLS (CA$12.50 / session); no new currency util; CHF symbol has no trailing space (unchanged)
 - [Phase 01]: 01-06 BACK-02: decline_reason_code and decline_reason_text are exposed on GET /client/bookings/:id only when status is declined (column is shared with reschedule declines); free text reaches clients via in_app_meta and chat event_data, never the FCM data map
+- [Phase 01]: 01-07: BACK-10 rejects start <= now and duration != topic duration_mins in createRequest before any Redis hold; topic length wins over requested length
+- [Phase 01]: 01-07: BACK-11 bounds are INTEGER max (2147483647) for topic price and 50 for languages and expertise_tags (Open Q9 assumption, spot-check in 01-10)
 
 ### Pending Todos
 
@@ -107,6 +110,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T05:43:32.672Z
-Stopped at: Completed 01-06-PLAN.md
+Last session: 2026-11-08T05:48:09.395Z
+Stopped at: Completed 01-07-PLAN.md
 Resume file: None

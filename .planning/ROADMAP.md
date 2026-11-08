@@ -54,7 +54,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Chat and push data is correct: sending a message increments the recipient's unread count and `message.read` resets it, `GET /chats` lists empty threads, and `/feedback/submit` is rate-limited. Push payloads carry `category`, `sub_category` and a per-recipient `target_role` for iOS and Android alike (Q6 settled as the backend route, D-01/D-02).
   5. Every change has backend tests. The current Android build and the live iOS build 6 can still sign in, book, pay, join and chat against the updated backend.
 
-**Plans**: 2/23 plans executed (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)
+**Plans**: 3/23 plans executed (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)
 
 Plans:
 **Wave 1**
@@ -64,7 +64,7 @@ Plans:
 - [x] 01-02-PLAN.md — BACK-17 push routing fields for every platform plus target_role and in_app_meta (push.js, events.js, pushTargetRole helpers)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-03-PLAN.md — BACK-17 target_role on chat, review, payment-action and reminder pushes
+- [x] 01-03-PLAN.md — BACK-17 target_role on chat, review, payment-action and reminder pushes
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-04-PLAN.md — BACK-17 target_role on no-show, review-nudge, long-lead and account-level pushes (D-02 at every call site)
@@ -283,7 +283,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Fixes | 2/23 | In Progress | - |
+| 1. Backend Fixes | 3/23 | In Progress | - |
 | 2. Shared iOS Plumbing | 0/TBD | Not started | - |
 | 3. Booked Sessions and Joining | 0/TBD | Not started | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |

@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: 01-10 paused at Task 3 checkpoint (user applies migration, pushes wave 1, runs smoke)
-last_updated: "2026-11-08T06:09:46.729Z"
+stopped_at: Completed 01-10-PLAN.md
+last_updated: "2026-11-08T17:25:52.557Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: dff4eabcd2c13d9537a02c706f5694efa1502f57
+state_head: 949bb0cffbc8901cd3cf86aea08bc707e1dcc88b
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 9
+  completed_plans: 10
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 10 of 23
+Plan: 11 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -65,6 +65,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P07 | n/a | 3 tasks | 9 files |
 | Phase 01 P08 | 15 min | 2 tasks | 8 files |
 | Phase 01 P09 | 25 min | 2 tasks | 7 files |
+| Phase 01 P10 | ~11h 15m wall clock (user wait) | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -91,6 +92,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-08 BACK-16: GET /chats lists empty threads ordered last_msg_at desc nulls last then created_at desc; POST /feedback/submit limited to 5 per 15 min per user via in-memory feedbackLimiter (valid only while numReplicas is 1); hard-mocked rateLimiter modules in connect/payouts tests need each new limiter added
 - [Phase 01]: BACK-01: postUserMessage (src/services/chatMessages.js) is the single chat message path; callers own block/moderation checks (send rejects, accept silently skips)
 - [Phase 01]: BACK-01: accept message uses client_msg_id booking-accept:<booking id> for idempotency and fails open on a moderation lookup error, like chats.send
+- [Phase 01]: 01-10: BACK-14 column bookings.cancellation_reason applied to production a full deploy wave before the code that writes it (Open Q8 default)
+- [Phase 01]: 01-10: wave 1 deployed, production moved from 2ec82af to a92acba; smoke checklist user-reported all passed on build 6 and Android, with no per-step notes
 
 ### Pending Todos
 
@@ -122,6 +125,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T06:09:46.700Z
-Stopped at: 01-10 paused at Task 3 checkpoint (user applies migration, pushes wave 1, runs smoke)
-Resume file: .planning/phases/01-backend-fixes/01-10-SUMMARY.md
+Last session: 2026-11-08T17:25:52.531Z
+Stopped at: Completed 01-10-PLAN.md
+Resume file: None

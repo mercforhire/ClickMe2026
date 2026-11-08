@@ -120,22 +120,22 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Backend (in `../ClickMe2026 Backend`, compatible with current Android)
 
-- [ ] **BACK-01** [K1]: The accept `message` is delivered to the client (or the iOS field is removed)
-- [ ] **BACK-02** [K2] **[major]**: The decline note is returned on the client booking detail and notification, and shown in iOS
-- [ ] **BACK-03** [K3]: Expert booking detail and lists expose whether the client left a review (`has_review`)
-- [ ] **BACK-04** [K4]: An expert can clear `meeting_url` (null or "")
-- [ ] **BACK-05** [K5]: `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol
+- [x] **BACK-01** [K1]: The accept `message` is delivered to the client (or the iOS field is removed)
+- [x] **BACK-02** [K2] **[major]**: The decline note is returned on the client booking detail and notification, and shown in iOS
+- [x] **BACK-03** [K3]: Expert booking detail and lists expose whether the client left a review (`has_review`)
+- [x] **BACK-04** [K4]: An expert can clear `meeting_url` (null or "")
+- [x] **BACK-05** [K5]: `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol
 - [ ] **BACK-06** [K6]: A lone saved card is made the default
 - [ ] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone
 - [ ] **BACK-08** [K8]: A client account is never shown the Stripe tax-ID prompt
 - [ ] **BACK-09** [K9]: The join window matches the client rule in CALL-02, and `/bookings/:id/join` checks booking status
-- [ ] **BACK-10** [K10]: `POST /bookings/request` validates `duration_minutes` and rejects a past `scheduled_start`
-- [ ] **BACK-11** [K11]: `price_amount` and the tag-replace list have upper bounds
+- [x] **BACK-10** [K10]: `POST /bookings/request` validates `duration_minutes` and rejects a past `scheduled_start`
+- [x] **BACK-11** [K11]: `price_amount` and the tag-replace list have upper bounds
 - [ ] **BACK-12** [K12]: Client cancel is rejected after the session's end time
 - [ ] **BACK-13** [K13] **[major]**: A client is promoted to expert only by an explicit setup call, not any `/expert/*` call
 - [ ] **BACK-14** [K14]: The cancel `reason` is stored
 - [ ] **BACK-15** [K15]: A confirm retry with the same `booking_attempt_id` replays the original result
-- [ ] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
+- [x] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
 - [x] **BACK-17** [N1 backend half]: Push payloads carry the routing fields iOS needs (if decision Q6 picks the backend route)
 - [ ] **BACK-18** [H7 backend half] **[major]**: Unread counts increment on send and reset on `message.read`
 - [ ] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule
@@ -255,22 +255,22 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | SET-05 | Phase 5 | Pending |
 | SET-06 | Phase 5 | Pending |
 | SET-07 | Phase 5 | Pending |
-| BACK-01 | Phase 1 | Pending |
-| BACK-02 | Phase 1 | Pending |
-| BACK-03 | Phase 1 | Pending |
-| BACK-04 | Phase 1 | Pending |
-| BACK-05 | Phase 1 | Pending |
+| BACK-01 | Phase 1 | Complete |
+| BACK-02 | Phase 1 | Complete |
+| BACK-03 | Phase 1 | Complete |
+| BACK-04 | Phase 1 | Complete |
+| BACK-05 | Phase 1 | Complete |
 | BACK-06 | Phase 1 | Pending |
 | BACK-07 | Phase 1 | Pending |
 | BACK-08 | Phase 1 | Pending |
 | BACK-09 | Phase 1 | Pending |
-| BACK-10 | Phase 1 | Pending |
-| BACK-11 | Phase 1 | Pending |
+| BACK-10 | Phase 1 | Complete |
+| BACK-11 | Phase 1 | Complete |
 | BACK-12 | Phase 1 | Pending |
 | BACK-13 | Phase 1 | Pending |
 | BACK-14 | Phase 1 | Pending |
 | BACK-15 | Phase 1 | Pending |
-| BACK-16 | Phase 1 | Pending |
+| BACK-16 | Phase 1 | Complete |
 | BACK-17 | Phase 1 | Complete |
 | BACK-18 | Phase 1 | Pending |
 | BACK-19 | Phase 1 | Pending |

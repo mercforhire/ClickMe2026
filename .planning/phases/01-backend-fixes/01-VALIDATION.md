@@ -41,24 +41,38 @@ Baseline: 124/125 suites, 2664 tests pass. `tests/services/redis.test.js` fails 
 
 ## Per-Task Verification Map
 
-Filled in by the planner and executor as task IDs are assigned. Requirement → test mapping from RESEARCH.md:
+Filled in by the planner (2026-11-07); the executor updates Status. Requirement → test mapping from RESEARCH.md.
+
+Commands below are shortened; run each as `npm --prefix "/Users/LeonChen/Documents/ClickMe2026 Backend" test -- <files>`. Plans run sequentially (wave = plan number) because every plan commits to the one shared backend checkout and nearly all touch openapi/clickme-api.yaml.
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| TBD | TBD | TBD | BACK-09 | — | Join rejected outside window / wrong status | unit + supertest | `npm test -- tests/call.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-12 | — | Client cancel after `end_time` rejected | supertest | `npm test -- tests/clientBooking.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-14 | — | N/A | supertest | `npm test -- tests/clientBooking.test.js tests/expertBooking.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-19 | — | Captured PI refunded in full on expert cancel | supertest + mocked stripe | `npm test -- tests/expertBooking.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-10/15 | — | Past start / bad duration 422; foreign replay still 409 | supertest | `npm test -- tests/booking.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-01/02 | — | Decline note only visible to booking's client | supertest | `npm test -- tests/bookingRequests.test.js tests/clientBooking.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-03/05 | — | N/A | supertest | `npm test -- tests/expertBooking.test.js tests/bookingRequests.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-04/11 | — | Oversized input 4xx, not 500 | supertest + schema | `npm test -- tests/expertProfile.test.js tests/expertTopics.test.js tests/onboarding.test.js tests/schemas/expertProfile.schema.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-06/07 | — | Deleted card cannot be charged via clone | supertest + mocked stripe | `npm test -- tests/paymentMethods.test.js tests/services/connectedPaymentMethodClone.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-13/08 | — | Client-only write to /expert/* → 403; no silent promotion | unit + supertest | `npm test -- tests/middleware/ensureExpert.test.js tests/expertRoutesGate.test.js` | ❌ W0 (gate test) | ⬜ pending |
-| TBD | TBD | TBD | BACK-16 | — | 6th feedback in window → 429 | supertest | `npm test -- tests/chats.test.js tests/feedback.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-17 | — | N/A | unit | `npm test -- tests/push.test.js` | ✅ | ⬜ pending |
-| TBD | TBD | TBD | BACK-18 | — | Reader can only reset own unread count | unit | `npm test -- tests/socket.messageRead.test.js` | ❌ W0 | ⬜ pending |
-| TBD | TBD | TBD | All | — | Existing response key sets unchanged (additive only) | contract | `npm test -- tests/contract.responseShapes.test.js` | ❌ W0 | ⬜ pending |
+| 01-01-T1 | 01-01 | 1 | BACK-04 | T-01-01 | Non-empty meeting_url still URL-validated | supertest + schema (tracer) | `tests/expertProfile.test.js tests/schemas/expertProfile.schema.test.js` | ✅ | ⬜ pending |
+| 01-01-T2 | 01-01 | 1 | All (D-12) | T-01-02 | Existing response key sets unchanged (additive only) | contract | `tests/contract.responseShapes.test.js tests/booking.test.js` | ❌ W0 (created here) | ⬜ pending |
+| 01-01-T3 | 01-01 | 1 | BACK-16, BACK-19 (docs) | — | N/A | grep (iOS repo) | `grep -c "BACK-19" .planning/REQUIREMENTS.md .planning/ROADMAP.md` | ✅ | ⬜ pending |
+| 01-02-T1 | 01-02 | 2 | BACK-17 | T-01-03 | Free text never in FCM data; in_app_meta row-only | unit | `tests/push.test.js` | ✅ | ⬜ pending |
+| 01-02-T2 | 01-02 | 2 | BACK-17 | T-01-04 | N/A | unit | `tests/events.test.js tests/push.test.js` | ✅ | ⬜ pending |
+| 01-03-T1..T3 | 01-03 | 3 | BACK-17 | T-01-05 | No new push recipient introduced | unit | `tests/chats.test.js tests/reviews.test.js tests/webhooks.test.js tests/reminderNotification.test.js tests/noShowNotification.test.js tests/reviewNudgeNotification.test.js tests/cron/longLeadChargeSweep.test.js` | ✅ | ⬜ pending |
+| 01-04-T1 | 01-04 | 4 | BACK-03 | T-01-06 | has_review only for the expert's own bookings | supertest | `tests/expertBooking.test.js tests/contract.responseShapes.test.js` | ✅ | ⬜ pending |
+| 01-04-T2..T3 | 01-04 | 4 | BACK-05 | T-01-07 | N/A | unit + supertest | `tests/utils/pricing.test.js tests/expertBooking.test.js tests/bookingRequests.test.js` | ✅ | ⬜ pending |
+| 01-05-T1..T2 | 01-05 | 5 | BACK-02 | T-01-08, T-01-09 | Decline note only on declined bookings; never in FCM data | supertest + unit | `tests/clientBooking.test.js tests/events.test.js tests/bookingRequests.test.js` | ✅ | ⬜ pending |
+| 01-06-T1 | 01-06 | 6 | BACK-10 | T-01-11 | Rejected request holds nothing | supertest | `tests/booking.test.js` | ✅ | ⬜ pending |
+| 01-06-T2..T3 | 01-06 | 6 | BACK-11 | T-01-12 | Oversized input 422, not 500 | supertest + schema | `tests/expertTopics.test.js tests/onboarding.test.js tests/schemas/expertProfile.schema.test.js` | ✅ | ⬜ pending |
+| 01-07-T1..T2 | 01-07 | 7 | BACK-16 | T-01-13, T-01-14 | 6th feedback in window → 429 | supertest | `tests/chats.test.js tests/feedback.test.js` | ✅ | ⬜ pending |
+| 01-08-T1..T2 | 01-08 | 8 | BACK-01 | T-01-15, T-01-16 | Blocked/moderated recipient skipped | unit + supertest | `tests/services/chatMessages.test.js tests/chats.test.js tests/bookingRequests.test.js` | ❌ W0 (chatMessages test created here) | ⬜ pending |
+| 01-09-T1..T3 | 01-09 | 9 | BACK-14 (migration) + wave-1 deploy | T-01-18, T-01-19 | Column applied before dependent code | grep + full gate + manual | full gate; column check in checkpoint | ✅ | ⬜ pending |
+| 01-10-T1..T3 | 01-10 | 10 | BACK-09 | T-01-20, T-01-21, T-01-22 | Join rejected outside window / wrong status | unit + supertest | `tests/call.test.js tests/clientBooking.test.js tests/expertBooking.test.js tests/expirePastSessions.test.js` | ✅ | ⬜ pending |
+| 01-11-T1 | 01-11 | 11 | BACK-14 | T-01-24 | Reason only to the two parties; never in push data | supertest | `tests/clientBooking.test.js tests/expertBooking.test.js` | ✅ | ⬜ pending |
+| 01-11-T2 | 01-11 | 11 | BACK-12 | T-01-23 | Client cancel after end_time rejected, no Stripe call | supertest | `tests/clientBooking.test.js` | ✅ | ⬜ pending |
+| 01-12-T1..T2 | 01-12 | 12 | BACK-15 | T-01-26, T-01-27, T-01-28 | Replay only for the owner; no second booking or charge | supertest | `tests/booking.test.js tests/services/stripePaymentsContract.test.js` | ✅ | ⬜ pending |
+| 01-13-T1..T3 | 01-13 | 13 | BACK-18 | T-01-29, T-01-30 | Reader can only reset own unread count | unit + supertest | `tests/services/unreadCounts.test.js tests/services/chatMessages.test.js tests/socket.messageRead.test.js tests/chats.test.js` | ❌ W0 (socket and unread tests created here) | ⬜ pending |
+| 01-14-T1..T2 | 01-14 | 14 | wave-2 deploy | T-01-31 | N/A | full gate + manual | full gate | ✅ | ⬜ pending |
+| 01-15-T1..T2 | 01-15 | 15 | BACK-06, BACK-07 | T-01-32, T-01-33, T-01-35 | Deleted card cannot be charged via clone; in-use card 409 | supertest + mocked stripe | `tests/stripe.paymentMethods.test.js tests/services/connectedPaymentMethodClone.test.js tests/paymentMethods.test.js` | ✅ | ⬜ pending |
+| 01-16-T1..T2 | 01-16 | 16 | wave-3a deploy | T-01-36 | N/A | full gate + manual (real card) | full gate | ✅ | ⬜ pending |
+| 01-17-T1..T2 | 01-17 | 17 | BACK-19 | T-01-37, T-01-38 | Captured PI refunded in full on expert cancel; no double refund | supertest + mocked stripe | `tests/expertBooking.test.js tests/clientBooking.test.js tests/refund.test.js` | ✅ | ⬜ pending |
+| 01-18-T1..T2 | 01-18 | 18 | wave-3b deploy | T-01-39 | N/A | full gate + manual (real card) | full gate | ✅ | ⬜ pending |
+| 01-19-T1..T3 | 01-19 | 19 | BACK-13, BACK-08 | T-01-40, T-01-41 | Client-only write to /expert/* → 403; no silent promotion | unit + supertest | `tests/middleware/ensureExpert.test.js tests/expertRoutesGate.test.js tests/onboarding.test.js` | ❌ W0 (gate test created here) | ⬜ pending |
+| 01-20-T1..T2 | 01-20 | 20 | wave-3c deploy + BACK-08 check | T-01-44, T-01-45 | N/A | full gate + manual | full gate | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -66,10 +80,10 @@ Filled in by the planner and executor as task IDs are assigned. Requirement → 
 
 ## Wave 0 Requirements
 
-- [ ] `tests/contract.responseShapes.test.js` — locks current key sets (D-12)
-- [ ] `tests/socket.messageRead.test.js` + exported handler in `src/services/socket.js` — BACK-18
-- [ ] `tests/expertRoutesGate.test.js` — table-driven over the `/expert/*` classification — BACK-13
-- [ ] Shared supertest helper for an authenticated app with configurable `roles`
+- [ ] `tests/contract.responseShapes.test.js` — locks current key sets (D-12) — plan 01-01 Task 2
+- [ ] `tests/socket.messageRead.test.js` + exported handler in `src/services/socket.js` — BACK-18 — plan 01-13 Task 2
+- [ ] `tests/expertRoutesGate.test.js` — table-driven over the `/expert/*` classification — BACK-13 — plan 01-19 Task 2
+- [ ] Shared supertest helper for an authenticated app with configurable `roles` — `tests/support/authMock.js`, plan 01-01 Task 2
 - Framework install: none needed (Jest already present)
 
 ---

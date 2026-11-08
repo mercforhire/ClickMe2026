@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-11-PLAN.md
-last_updated: "2026-11-08T17:35:04.949Z"
+stopped_at: Completed 01-12-PLAN.md
+last_updated: "2026-11-08T17:42:26.298Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 4654e7f69be2f1002512cdba0b41d1f6f595285c
+state_head: 61c51081bcc730d5165e7f9f70685fafb21141c0
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 11
+  completed_plans: 12
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 12 of 23
+Plan: 13 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -67,6 +67,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P09 | 25 min | 2 tasks | 7 files |
 | Phase 01 P10 | ~11h 15m wall clock (user wait) | 3 tasks | 3 files |
 | Phase 01 P11 | 7 min | 3 tasks | 10 files |
+| Phase 01 P12 | 4 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-11 BACK-09: /join refusals reuse 403 SESSION_NOT_ACTIVE with status-specific messages because both shipped clients decode the code and show the server message
 - [Phase 01]: 01-11 BACK-09: can_join reads the caller's own joined_at through evaluateJoinWindow, the same function as the gate; the column is selected for the flag only and never returned
 - [Phase 01]: 01-11 BACK-09: an overtime /end after the cron changes end_reason from auto_completed to completed; nothing in src reads end_reason, so counting cron closures from it would be unreliable
+- [Phase 01]: 01-12 BACK-12: client cancel at or after end_time returns 409 SESSION_ALREADY_ENDED, after the status guard and for every cancellable status; a pending_approval hold past end_time now stays until expireBookings voids it at expires_at (up to about 12h after the request)
+- [Phase 01]: 01-12 BACK-14: the trimmed cancel reason is written to cancellation_reason in the atomic cancel UPDATE and returned only by GET /client/bookings/:id (cancelled only) and GET /expert/bookings/:id/summary; never in dispatch, push or chat event_data
 
 ### Pending Todos
 
@@ -129,6 +132,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T17:35:04.924Z
-Stopped at: Completed 01-11-PLAN.md
+Last session: 2026-11-08T17:42:26.272Z
+Stopped at: Completed 01-12-PLAN.md
 Resume file: None

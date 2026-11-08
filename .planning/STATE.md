@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-11-08T05:23:04.188Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-11-08T05:27:40.937Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: b1ca95480b08634c457973595c806e37b3236751
+state_head: efeab35f960f339a09e708f3e3f3e6758f48bbf5
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 2 of 23
+Plan: 3 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 12 min | 3 tasks | 10 files |
+| Phase 01 P02 | 3 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,7 @@ Recent decisions affecting current work:
 - [Init]: Open questions Q1–Q8 are settled in each affected phase's discuss step (Q6 in Phase 1, Q3 in Phase 2, Q2 in Phase 3, Q4 in Phase 4, Q1/Q5/Q7 in Phase 5, Q8 in Phase 7)
 - [Phase 01]: [01-01] meeting_url clearable via refine (not union) so 422 keeps a hand-written message; controller stores null for '' and null
 - [Phase 01]: [01-01] D-12 contract baselines are committed literals checked with arrayContaining; later plans may only add keys
+- [Phase 01]: BACK-17: push routing keys (category, sub_category, target_role) go to every platform; platform check only gates the Android presentation block. Disallowed target_role is dropped; explicit target_role wins over the is_expert_only default; in_app_meta reaches notifications.meta_data only.
 
 ### Pending Todos
 
@@ -96,6 +98,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T05:23:04.167Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-11-08T05:27:40.916Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

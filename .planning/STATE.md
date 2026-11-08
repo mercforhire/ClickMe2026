@@ -1,17 +1,18 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 1
+current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-11-08T05:16:07.697Z"
-last_activity: "2026-11-07: Roadmap created (8 phases, 102/102 v1 requirements mapped)"
-state_head: 7dad35b455365f1dfb54277f779a8553b9cb17bc
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-11-08T05:23:04.188Z"
+last_activity: 2026-11-08
+last_activity_desc: Phase 01 execution started
+state_head: b1ca95480b08634c457973595c806e37b3236751
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -22,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-07)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 1: Backend Fixes
+**Current focus:** Phase 01 — Backend Fixes
 
 ## Current Position
 
-Phase: 1 (Backend Fixes) — READY TO EXECUTE
-Plan: 0 of TBD in current phase
+Phase: 01 (Backend Fixes) — EXECUTING
+Plan: 2 of 23
 Status: Ready to execute
-Last activity: 2026-11-07: Roadmap created (8 phases, 102/102 v1 requirements mapped)
+Last activity: 2026-11-08 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -51,6 +52,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 12 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -64,6 +70,8 @@ Recent decisions affecting current work:
 - [Init]: One iOS release at the end, with no hotfix build in between (user, 2026-11-07)
 - [Init]: Backend changes stay compatible with the current Android build (launch ~2026-12-13)
 - [Init]: Open questions Q1–Q8 are settled in each affected phase's discuss step (Q6 in Phase 1, Q3 in Phase 2, Q2 in Phase 3, Q4 in Phase 4, Q1/Q5/Q7 in Phase 5, Q8 in Phase 7)
+- [Phase 01]: [01-01] meeting_url clearable via refine (not union) so 422 keeps a hand-written message; controller stores null for '' and null
+- [Phase 01]: [01-01] D-12 contract baselines are committed literals checked with arrayContaining; later plans may only add keys
 
 ### Pending Todos
 
@@ -88,6 +96,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T00:16:12.643Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-backend-fixes/01-CONTEXT.md
+Last session: 2026-11-08T05:23:04.167Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None

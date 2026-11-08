@@ -52,29 +52,32 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Booking and expert data is complete and correct: the client receives the decline note and the accept message (or the accept field is dropped by decision); expert booking detail and lists include `has_review`; `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol; an expert can clear `meeting_url`; oversized `price_amount` and tag lists get a 4xx instead of a 500; and a client becomes an expert only through an explicit setup call.
   4. Chat and push data is correct: sending a message increments the recipient's unread count and `message.read` resets it, `GET /chats` lists empty threads, notifications can be marked read, and `/feedback/submit` is rate-limited. If Q6 picks the backend route, iOS push payloads also carry `category`/`sub_category`.
   5. Every change has backend tests. The current Android build and the live iOS build 6 can still sign in, book, pay, join and chat against the updated backend.
-**Plans**: 20 plans (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)
+**Plans**: 23 plans (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)
 
 Plans:
 - [ ] 01-01-PLAN.md — Tracer BACK-04 (clear meeting_url), D-12 response-shape lock, requirements/roadmap sync for D-15/D-17
-- [ ] 01-02-PLAN.md — BACK-17 push routing fields for every platform plus target_role and in_app_meta (push.js, events.js)
-- [ ] 01-03-PLAN.md — BACK-17 target_role at the remaining push senders (chat, review, webhook, crons)
-- [ ] 01-04-PLAN.md — BACK-03 has_review; BACK-05 currency symbol and digits
-- [ ] 01-05-PLAN.md — BACK-02 decline note on client detail, in-app notification and chat event
-- [ ] 01-06-PLAN.md — BACK-10 free-request validation; BACK-11 price and list bounds
-- [ ] 01-07-PLAN.md — BACK-16 empty threads listed; feedback rate limit
-- [ ] 01-08-PLAN.md — BACK-01 accept message posted as a chat message (shared postUserMessage)
-- [ ] 01-09-PLAN.md — Deploy wave 1 handoff; BACK-14 migration applied first (checkpoint)
-- [ ] 01-10-PLAN.md — BACK-09 two-tier join gate, status check, can_join, overtime /end
-- [ ] 01-11-PLAN.md — BACK-14 cancel reason stored; BACK-12 client cancel after end rejected
-- [ ] 01-12-PLAN.md — BACK-15 ownership-checked confirm replay; payment-intent own-booking 409
-- [ ] 01-13-PLAN.md — BACK-18 unread counts recomputed on send, read and thread open
-- [ ] 01-14-PLAN.md — Deploy wave 2 handoff (checkpoint)
-- [ ] 01-15-PLAN.md — BACK-06 lone-card default; BACK-07 in-use 409 and clone eviction
-- [ ] 01-16-PLAN.md — Deploy wave 3a handoff, saved-card smoke (checkpoint)
-- [ ] 01-17-PLAN.md — BACK-19 (D-17) expert cancel always refunds in full
-- [ ] 01-18-PLAN.md — Deploy wave 3b handoff, expert-cancel smoke (checkpoint)
-- [ ] 01-19-PLAN.md — BACK-13 promotion only via setup; read/write expert gate; BACK-08 regression
-- [ ] 01-20-PLAN.md — Deploy wave 3c handoff, BACK-13 smoke and BACK-08 production check (checkpoint)
+- [ ] 01-02-PLAN.md — BACK-17 push routing fields for every platform plus target_role and in_app_meta (push.js, events.js, pushTargetRole helpers)
+- [ ] 01-03-PLAN.md — BACK-17 target_role on chat, review, payment-action and reminder pushes
+- [ ] 01-04-PLAN.md — BACK-17 target_role on no-show, review-nudge, long-lead and account-level pushes (D-02 at every call site)
+- [ ] 01-05-PLAN.md — BACK-03 has_review; BACK-05 currency symbol and digits
+- [ ] 01-06-PLAN.md — BACK-02 decline note on client detail, in-app notification and chat event
+- [ ] 01-07-PLAN.md — BACK-10 free-request validation; BACK-11 price and list bounds
+- [ ] 01-08-PLAN.md — BACK-16 empty threads listed; feedback rate limit
+- [ ] 01-09-PLAN.md — BACK-01 accept message posted as a chat message (shared postUserMessage)
+- [ ] 01-10-PLAN.md — Deploy wave 1 handoff; BACK-14 migration applied first (checkpoint)
+- [ ] 01-11-PLAN.md — BACK-09 two-tier join gate, status check, can_join, overtime /end
+- [ ] 01-12-PLAN.md — BACK-14 cancel reason stored; BACK-12 client cancel after end rejected
+- [ ] 01-13-PLAN.md — BACK-15 ownership-checked confirm replay; payment-intent own-booking 409
+- [ ] 01-14-PLAN.md — BACK-18 unread counts recomputed on send, read and thread open
+- [ ] 01-15-PLAN.md — Deploy wave 2 handoff (checkpoint)
+- [ ] 01-16-PLAN.md — BACK-06 lone-card default; BACK-07 in-use 409 and clone eviction
+- [ ] 01-17-PLAN.md — Deploy wave 3a handoff, saved-card smoke (checkpoint)
+- [ ] 01-18-PLAN.md — BACK-19 (D-17) expert cancel always refunds in full
+- [ ] 01-19-PLAN.md — Deploy wave 3b handoff, expert-cancel smoke (checkpoint)
+- [ ] 01-20-PLAN.md — BACK-13 promotion only via setup; read/write expert gate; legacy convert-on-demand tests flipped
+- [ ] 01-21-PLAN.md — BACK-08 at its traced seams (no Connect account for non-experts; tax-profile GET per user decision); 38-route classification lock
+- [ ] 01-22-PLAN.md — BACK-13/BACK-08 contract docs (EXPERT_SETUP_REQUIRED, EXPERT-SETUP-GATE.md) and route-header sweep
+- [ ] 01-23-PLAN.md — Deploy wave 3c handoff, BACK-13 and BACK-08 seam smoke, account B background check (checkpoint)
 
 **Notes**:
 - All work happens in the separate backend repo (`../ClickMe2026 Backend`) and is committed there. Update `openapi/clickme-api.yaml` and `docs/SOCKET-CONTRACT.md` with every contract change.

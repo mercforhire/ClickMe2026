@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-11-08T05:30:38.294Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-11-08T05:33:23.383Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 5853f8c64b44664341da4cbbf15c9fed5c83d4ed
+state_head: 87f58ca892d5e95426a61c95f7c825a1e318e4b7
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 4 of 23
+Plan: 5 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P01 | 12 min | 3 tasks | 10 files |
 | Phase 01 P02 | 3 min | 2 tasks | 7 files |
 | Phase 01 P03 | 2 min | 2 tasks | 8 files |
+| Phase 01 P04 | 6min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,7 @@ Recent decisions affecting current work:
 - [Phase 01]: [01-01] D-12 contract baselines are committed literals checked with arrayContaining; later plans may only add keys
 - [Phase 01]: BACK-17: push routing keys (category, sub_category, target_role) go to every platform; platform check only gates the Android presentation block. Disallowed target_role is dropped; explicit target_role wins over the is_expert_only default; in_app_meta reaches notifications.meta_data only.
 - [Phase 01]: 01-03: chat push uses targetRoleFor(thread, recipientId); review push uses literal 'expert'; refund webhook push uses targetRoleFor(booking, booking.client_id) (the plan's 'payment-action-required' push is the refund-issued push)
+- [Phase 01]: [01-04] Account pushes take target_role from targetRoleForAccount(req.user.roles); stale JWT yields 'client', acceptable since the security screen exists in both modes
 
 ### Pending Todos
 
@@ -100,6 +102,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T05:30:38.273Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-11-08T05:33:23.361Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None

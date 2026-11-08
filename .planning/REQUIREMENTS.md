@@ -136,7 +136,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BACK-14** [K14]: The cancel `reason` is stored
 - [ ] **BACK-15** [K15]: A confirm retry with the same `booking_attempt_id` replays the original result
 - [ ] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
-- [ ] **BACK-17** [N1 backend half]: Push payloads carry the routing fields iOS needs (if decision Q6 picks the backend route)
+- [x] **BACK-17** [N1 backend half]: Push payloads carry the routing fields iOS needs (if decision Q6 picks the backend route)
 - [ ] **BACK-18** [H7 backend half] **[major]**: Unread counts increment on send and reset on `message.read`
 - [ ] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule
 
@@ -271,7 +271,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BACK-14 | Phase 1 | Pending |
 | BACK-15 | Phase 1 | Pending |
 | BACK-16 | Phase 1 | Pending |
-| BACK-17 | Phase 1 | Pending |
+| BACK-17 | Phase 1 | Complete |
 | BACK-18 | Phase 1 | Pending |
 | BACK-19 | Phase 1 | Pending |
 | REL-01 | Phase 8 | Pending |

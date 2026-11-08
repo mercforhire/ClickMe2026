@@ -94,7 +94,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+Android follow-ups from Phase 1 (logged, not built):
+
+- Decline note display on Android booking detail (BACK-02)
+- Switch `displayUnread` to the server count once BACK-18 is live (BACK-18)
+- Expert-cancel copy promises a full refund (D-17/BACK-19)
+- Map PAYMENT_METHOD_IN_USE on card delete (BACK-07)
+- Map EXPERT_SETUP_REQUIRED and route to the setup hub (BACK-13)
+- Map SESSION_ALREADY_ENDED on client cancel (BACK-12)
 
 ### Blockers/Concerns
 

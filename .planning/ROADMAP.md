@@ -43,6 +43,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Backend Fixes
+
 **Goal**: The production backend validates, stores and returns everything the iOS fixes depend on, and every change stays safe for the current Android build
 **Depends on**: Nothing (first phase)
 **Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06, BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12, BACK-13, BACK-14, BACK-15, BACK-16, BACK-17, BACK-18
@@ -52,32 +53,81 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Booking and expert data is complete and correct: the client receives the decline note and the accept message (or the accept field is dropped by decision); expert booking detail and lists include `has_review`; `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol; an expert can clear `meeting_url`; oversized `price_amount` and tag lists get a 4xx instead of a 500; and a client becomes an expert only through an explicit setup call.
   4. Chat and push data is correct: sending a message increments the recipient's unread count and `message.read` resets it, `GET /chats` lists empty threads, notifications can be marked read, and `/feedback/submit` is rate-limited. If Q6 picks the backend route, iOS push payloads also carry `category`/`sub_category`.
   5. Every change has backend tests. The current Android build and the live iOS build 6 can still sign in, book, pay, join and chat against the updated backend.
+
 **Plans**: 23 plans (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)
 
 Plans:
+**Wave 1**
 - [ ] 01-01-PLAN.md — Tracer BACK-04 (clear meeting_url), D-12 response-shape lock, requirements/roadmap sync for D-15/D-17
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-02-PLAN.md — BACK-17 push routing fields for every platform plus target_role and in_app_meta (push.js, events.js, pushTargetRole helpers)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01-03-PLAN.md — BACK-17 target_role on chat, review, payment-action and reminder pushes
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 01-04-PLAN.md — BACK-17 target_role on no-show, review-nudge, long-lead and account-level pushes (D-02 at every call site)
+
+**Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 01-05-PLAN.md — BACK-03 has_review; BACK-05 currency symbol and digits
+
+**Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 01-06-PLAN.md — BACK-02 decline note on client detail, in-app notification and chat event
+
+**Wave 7** *(blocked on Wave 6 completion)*
 - [ ] 01-07-PLAN.md — BACK-10 free-request validation; BACK-11 price and list bounds
+
+**Wave 8** *(blocked on Wave 7 completion)*
 - [ ] 01-08-PLAN.md — BACK-16 empty threads listed; feedback rate limit
+
+**Wave 9** *(blocked on Wave 8 completion)*
 - [ ] 01-09-PLAN.md — BACK-01 accept message posted as a chat message (shared postUserMessage)
+
+**Wave 10** *(blocked on Wave 9 completion)*
 - [ ] 01-10-PLAN.md — Deploy wave 1 handoff; BACK-14 migration applied first (checkpoint)
+
+**Wave 11** *(blocked on Wave 10 completion)*
 - [ ] 01-11-PLAN.md — BACK-09 two-tier join gate, status check, can_join, overtime /end
+
+**Wave 12** *(blocked on Wave 11 completion)*
 - [ ] 01-12-PLAN.md — BACK-14 cancel reason stored; BACK-12 client cancel after end rejected
+
+**Wave 13** *(blocked on Wave 12 completion)*
 - [ ] 01-13-PLAN.md — BACK-15 ownership-checked confirm replay; payment-intent own-booking 409
+
+**Wave 14** *(blocked on Wave 13 completion)*
 - [ ] 01-14-PLAN.md — BACK-18 unread counts recomputed on send, read and thread open
+
+**Wave 15** *(blocked on Wave 14 completion)*
 - [ ] 01-15-PLAN.md — Deploy wave 2 handoff (checkpoint)
+
+**Wave 16** *(blocked on Wave 15 completion)*
 - [ ] 01-16-PLAN.md — BACK-06 lone-card default; BACK-07 in-use 409 and clone eviction
+
+**Wave 17** *(blocked on Wave 16 completion)*
 - [ ] 01-17-PLAN.md — Deploy wave 3a handoff, saved-card smoke (checkpoint)
+
+**Wave 18** *(blocked on Wave 17 completion)*
 - [ ] 01-18-PLAN.md — BACK-19 (D-17) expert cancel always refunds in full
+
+**Wave 19** *(blocked on Wave 18 completion)*
 - [ ] 01-19-PLAN.md — Deploy wave 3b handoff, expert-cancel smoke (checkpoint)
+
+**Wave 20** *(blocked on Wave 19 completion)*
 - [ ] 01-20-PLAN.md — BACK-13 promotion only via setup; read/write expert gate; legacy convert-on-demand tests flipped
+
+**Wave 21** *(blocked on Wave 20 completion)*
 - [ ] 01-21-PLAN.md — BACK-08 at its traced seams (no Connect account for non-experts; tax-profile GET per user decision); 38-route classification lock
+
+**Wave 22** *(blocked on Wave 21 completion)*
 - [ ] 01-22-PLAN.md — BACK-13/BACK-08 contract docs (EXPERT_SETUP_REQUIRED, EXPERT-SETUP-GATE.md) and route-header sweep
+
+**Wave 23** *(blocked on Wave 22 completion)*
 - [ ] 01-23-PLAN.md — Deploy wave 3c handoff, BACK-13 and BACK-08 seam smoke, account B background check (checkpoint)
+
+**Cross-cutting constraints:**
+- After the user's push, production GET /health reports the short SHA of local master
 
 **Notes**:
 - All work happens in the separate backend repo (`../ClickMe2026 Backend`) and is committed there. Update `openapi/clickme-api.yaml` and `docs/SOCKET-CONTRACT.md` with every contract change.
@@ -89,6 +139,7 @@ Plans:
 - iOS pairs: BACK-02 → Phase 3 (decline note display), BACK-14 → BOOK-07, BACK-15 → PAY-02, BACK-12 → BOOK-13, BACK-09 → CALL-02, BACK-13 → SIGN-06, BACK-18 → CHAT-07, BACK-17 → PUSH-01. Android display follow-ups, such as the decline note and the unread badge, are logged, not built.
 
 ### Phase 2: Shared iOS Plumbing
+
 **Goal**: The app-wide rules that many screens rely on are correct in one shared place: call lifetime and join window, money formatting, booking-status decoding, booking error codes and push routing
 **Depends on**: Phase 1
 **Requirements**: CALL-01, CALL-02, CALL-04, CALL-05, CALL-09, BOOK-10, BOOK-14, BOOK-15, BOOK-18, PAY-05, PUSH-01, PUSH-02, PUSH-03, PUSH-04, CHAT-09
@@ -98,6 +149,7 @@ Plans:
   3. Every money amount in the app goes through one shared formatter and shows correct decimals for its currency ($12.50, not $12). A realtime `booking.update` with `rescheduled` or any unknown status updates the open screen instead of being dropped.
   4. Paid booking and reschedule pickers offer no slot more than 6 days ahead. The long-lead error codes show a clear error instead of an invalid confirm. Paid and free booking paths show the same slot-taken and meeting-link copy.
   5. Tapping any push switches to the right mode and opens the right screen: a booking-request push opens that request, `booking/payment_actions` opens that booking, and unknown types open the notifications list. No banner appears for the chat already on screen, and after logout the device stops receiving the old account's pushes.
+
 **Plans**: TBD
 **Notes**:
 - Plan CALL-01 first. It is critical and was confirmed on a production iPhone.
@@ -107,6 +159,7 @@ Plans:
 - Unit-testable: overtime cutoff, join window, money formatter, status decoding with an unknown fallback, provider host matching, error-code mapping, push parsing and routing.
 
 ### Phase 3: Booked Sessions and Joining
+
 **Goal**: Clients and experts can respond to, cancel, reschedule and join their booked sessions from every screen that offers those actions, with accurate status and refund information
 **Depends on**: Phase 2 (and Phase 1 for BACK-02, BACK-12, BACK-14)
 **Requirements**: BOOK-06, BOOK-07, BOOK-08, BOOK-09, BOOK-11, BOOK-12, BOOK-13, BOOK-16, BOOK-17, CALL-03, CALL-06, CALL-07, CALL-08, CALL-10, EXP-11, EXP-13
@@ -116,6 +169,7 @@ Plans:
   3. Cancel screens on both sides state the refund the backend will actually give: the 24-hour rule applies, a held booking shows as a release, and the policy follows Q2. The client's cancellation comment is sent and stored. Cancel is hidden once a session has ended.
   4. Reschedule works from both sides. Reschedule on an expert Upcoming card opens the expert reschedule flow. The client picker excludes the booking being moved, returns to where the user started with a confirmation, and shows correct copy for held bookings.
   5. Booking screens show the real state: the status pill shows the booking's real status, a declined booking shows the expert's decline note (the iOS half of BACK-02), the Past tab has an empty state, Keep Booking returns one screen back, and Leave a Review appears only for completed sessions.
+
 **Plans**: TBD
 **UI hint**: yes
 **Notes**:
@@ -124,6 +178,7 @@ Plans:
 - This phase uses the Phase 2 join window (CALL-03, CALL-08, CALL-10), money formatter and status decoding. BOOK-07 only has an effect once BACK-14 stores the reason.
 
 ### Phase 4: Booking, Payment and Discovery
+
 **Goal**: Clients can find an expert, book and pay without double submissions, unintended holds, misleading errors or missing profile data
 **Depends on**: Phase 2 (and Phase 1 for BACK-06, BACK-07, BACK-10, BACK-15)
 **Requirements**: BOOK-01, BOOK-02, BOOK-03, BOOK-04, BOOK-05, BOOK-19, PAY-01, PAY-02, PAY-03, PAY-04, EXPL-01, EXPL-02, EXPL-03, EXPL-04, EXPL-05, EXPL-06
@@ -133,6 +188,7 @@ Plans:
   3. Changing month never shows the previous month's availability. Slot and Today's Sessions times show a readable time-zone name and follow the device's 12/24-hour setting.
   4. An unavailable (404) expert profile shows "This profile isn't available", and network errors offer a retry. Empty Expertise, Topics and Reviews sections are hidden. Free featured topics show "Free". Search tag pills show their full text.
   5. Favorites shows every favorite (paged), with working empty-state buttons and correct copy. A profile's favorite state matches its `is_favorite`. The full reviews list loads beyond 20 reviews.
+
 **Plans**: TBD
 **UI hint**: yes
 **Notes**:
@@ -143,6 +199,7 @@ Plans:
 - PAY-04 is a comment-only change, verified in code review.
 
 ### Phase 5: Signup, Mode Switch and Account
+
 **Goal**: Users can finish signup, enter Expert mode only with a complete setup, and edit or close their account with saves that stick and copy that tells the truth
 **Depends on**: Phase 2 (and Phase 1 for BACK-13)
 **Requirements**: SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-05, SIGN-06, SET-01, SET-02, SET-03, SET-04, SET-05, SET-06, SET-07
@@ -152,6 +209,7 @@ Plans:
   3. Language edits on the client and expert profiles save to the server. Opening Notification preferences sends no save until the user changes something.
   4. Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`. Feedback cannot be sent with fewer than 10 characters. Delete Account has no Pause Account card and accurately says what is deleted and what is kept or anonymized.
   5. `CancellationPoliciesView` and `ReadyToStartCallView` are either reachable in the app or removed from the codebase (per Q7).
+
 **Plans**: TBD
 **UI hint**: yes
 **Notes**:
@@ -164,6 +222,7 @@ Plans:
 - SET-01: check the expert profile settings view model for the same missing languages save.
 
 ### Phase 6: Expert Mode
+
 **Goal**: Experts can price, describe and schedule their topics correctly and handle requests, bookings, clients and notes without wrong amounts or dead ends
 **Depends on**: Phase 2 (and Phase 1 for BACK-01, BACK-05, BACK-11)
 **Requirements**: EXP-01, EXP-02, EXP-03, EXP-04, EXP-05, EXP-06, EXP-07, EXP-08, EXP-09, EXP-10, EXP-12, EXP-14, EXP-15, EXP-16
@@ -173,6 +232,7 @@ Plans:
   3. Accepting a request shows the booking-confirmed screen, and the calendar event created from it is titled with the client's name.
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.
   5. The private booking note is capped at 5000 characters with a counter, trims whitespace, and asks before discarding unsaved edits.
+
 **Plans**: TBD
 **UI hint**: yes
 **Notes**:
@@ -182,6 +242,7 @@ Plans:
 - EXP-08 is a comment-only change, verified in code review.
 
 ### Phase 7: Chat
+
 **Goal**: Chat is reliable and clear: messages appear immediately and can be retried, block state is obvious to both sides, and unread and read state is visible
 **Depends on**: Phase 2 (and Phase 1 for BACK-16, BACK-18)
 **Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05, CHAT-06, CHAT-07, CHAT-08
@@ -191,6 +252,7 @@ Plans:
   3. Conversation rows show an unread badge that clears once the thread is read.
   4. Reports from chat reach the backend as report-reason enum values, the same as profile reports.
   5. The "Read" label updates live while a chat is open, or CHAT-08 is closed as not reproducible after the device re-test.
+
 **Plans**: TBD
 **UI hint**: yes
 **Notes**:
@@ -199,6 +261,7 @@ Plans:
 - Realtime checks need two devices or accounts.
 
 ### Phase 8: Release
+
 **Goal**: One verified iOS build with every fix reaches TestFlight and the App Store, after all backend changes are live in production
 **Depends on**: Phases 1, 2, 3, 4, 5, 6 and 7
 **Requirements**: REL-01, REL-02
@@ -207,6 +270,7 @@ Plans:
   2. Every in-scope inventory item is closed, closed as not reproducible (LIKELY items), or explicitly deferred with a reason.
   3. Every backend change is deployed to production before the iOS build is submitted, and the current Android build still works against it.
   4. One new iOS build containing every fix builds cleanly with no new warnings, is on TestFlight, and is submitted to the App Store.
+
 **Plans**: TBD
 **Notes**:
 - No hotfix build comes before this one (user decision 2026-11-07).
@@ -219,7 +283,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Fixes | 0/20 | Planned | - |
+| 1. Backend Fixes | 0/23 | Planned | - |
 | 2. Shared iOS Plumbing | 0/TBD | Not started | - |
 | 3. Booked Sessions and Joining | 0/TBD | Not started | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |

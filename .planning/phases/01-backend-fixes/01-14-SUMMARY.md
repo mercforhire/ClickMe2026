@@ -154,7 +154,7 @@ All paths are in `/Users/LeonChen/Documents/ClickMe2026 Backend`.
 - `src/services/chatMessages.js` - recipient recount inside the existing `chats` update
 - `src/services/socket.js` - exported `handleMessageRead`, reader recount
 - `src/controllers/chats.controller.js` - page 1 recount in `messages`
-- `tests/services/unreadCounts.test.js` - new: 15 cases for the recount service
+- `tests/services/unreadCounts.test.js` - new: 13 cases for the recount service
 - `tests/services/chatMessages.test.js` - 5 new send cases
 - `tests/socket.messageRead.test.js` - new: 10 cases, the first socket handler tests
 - `tests/chats.test.js` - 5 new open cases, plus the count step in one send test's mock

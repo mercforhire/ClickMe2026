@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-12-PLAN.md
-last_updated: "2026-11-08T17:42:26.298Z"
+stopped_at: Completed 01-13-PLAN.md
+last_updated: "2026-11-08T17:52:27.012Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 61c51081bcc730d5165e7f9f70685fafb21141c0
+state_head: f85c0163f93ee4c580a0ca770cace711e32ae28f
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 12
+  completed_plans: 13
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 13 of 23
+Plan: 14 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P10 | ~11h 15m wall clock (user wait) | 3 tasks | 3 files |
 | Phase 01 P11 | 7 min | 3 tasks | 10 files |
 | Phase 01 P12 | 4 min | 2 tasks | 6 files |
+| Phase 01 P13 | 7 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-11 BACK-09: an overtime /end after the cron changes end_reason from auto_completed to completed; nothing in src reads end_reason, so counting cron closures from it would be unreliable
 - [Phase 01]: 01-12 BACK-12: client cancel at or after end_time returns 409 SESSION_ALREADY_ENDED, after the status guard and for every cancellable status; a pending_approval hold past end_time now stays until expireBookings voids it at expires_at (up to about 12h after the request)
 - [Phase 01]: 01-12 BACK-14: the trimmed cancel reason is written to cancellation_reason in the atomic cancel UPDATE and returned only by GET /client/bookings/:id (cancelled only) and GET /expert/bookings/:id/summary; never in dispatch, push or chat event_data
+- [Phase 01]: 01-13 BACK-15: confirm retries replay 201 through an ownership-checked lookup on payment_intent_id, with no new column or stored response; only pending_approval, confirmed, pending_reschedule and in_progress replay, with the booking's current status; a foreign or finished booking keeps the generic 409 with no booking id
+- [Phase 01]: 01-13 BACK-15: on the 23P01 path the replay lookup runs before the slot keys are released; a lookup error returns 500 and leaves the keys to their 900s TTL because they may be the winner's
+- [Phase 01]: 01-13 BACK-15: payment-intent returns 409 DUPLICATE_BOOKING with detail.booking_id only for the caller's own active booking with the same expert, topic and start; a different topic stays SLOT_UNAVAILABLE; a duration_minutes that differs from the topic's duration_mins returns 422 before any hold or Stripe call
 
 ### Pending Todos
 
@@ -112,6 +116,7 @@ Android follow-ups from Phase 1 (logged, not built):
 - Map PAYMENT_METHOD_IN_USE on card delete (BACK-07)
 - Map EXPERT_SETUP_REQUIRED and route to the setup hub (BACK-13)
 - Map SESSION_ALREADY_ENDED on client cancel (BACK-12)
+- Route payment-intent 409 DUPLICATE_BOOKING to detail.booking_id (BACK-15)
 
 ### Blockers/Concerns
 
@@ -132,6 +137,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T17:42:26.272Z
-Stopped at: Completed 01-12-PLAN.md
+Last session: 2026-11-08T17:52:26.986Z
+Stopped at: Completed 01-13-PLAN.md
 Resume file: None

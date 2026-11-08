@@ -88,7 +88,7 @@ coverage:
 # plan_head_before / plan_head_after below are the iOS repo (planning docs only, no code in this plan).
 # Backend (the repo with this plan's code) heads are listed separately.
 plan_head_before: f39cf45cb8f7a2b32185716418e7bad0473f798f
-plan_head_after: PENDING_SUMMARY_COMMIT
+plan_head_after: fb1a9b4130b6cbd72b272398f126b7ee2ee1f2e0
 backend_head_before: 70c7ed6ee2ffdd12649f43e267ad93f4a6c43391
 backend_head_after: 365e091ca3fbe98073c11dae0eb77e6335ed9579
 commits: 3

@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-10-PLAN.md
-last_updated: "2026-11-08T17:25:52.557Z"
+stopped_at: Completed 01-11-PLAN.md
+last_updated: "2026-11-08T17:35:04.949Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 949bb0cffbc8901cd3cf86aea08bc707e1dcc88b
+state_head: 4654e7f69be2f1002512cdba0b41d1f6f595285c
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 10
+  completed_plans: 11
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 11 of 23
+Plan: 12 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -66,6 +66,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P08 | 15 min | 2 tasks | 8 files |
 | Phase 01 P09 | 25 min | 2 tasks | 7 files |
 | Phase 01 P10 | ~11h 15m wall clock (user wait) | 3 tasks | 3 files |
+| Phase 01 P11 | 7 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,9 @@ Recent decisions affecting current work:
 - [Phase 01]: BACK-01: accept message uses client_msg_id booking-accept:<booking id> for idempotency and fails open on a moderation lookup error, like chats.send
 - [Phase 01]: 01-10: BACK-14 column bookings.cancellation_reason applied to production a full deploy wave before the code that writes it (Open Q8 default)
 - [Phase 01]: 01-10: wave 1 deployed, production moved from 2ec82af to a92acba; smoke checklist user-reported all passed on build 6 and Android, with no per-step notes
+- [Phase 01]: 01-11 BACK-09: /join refusals reuse 403 SESSION_NOT_ACTIVE with status-specific messages because both shipped clients decode the code and show the server message
+- [Phase 01]: 01-11 BACK-09: can_join reads the caller's own joined_at through evaluateJoinWindow, the same function as the gate; the column is selected for the flag only and never returned
+- [Phase 01]: 01-11 BACK-09: an overtime /end after the cron changes end_reason from auto_completed to completed; nothing in src reads end_reason, so counting cron closures from it would be unreliable
 
 ### Pending Todos
 
@@ -125,6 +129,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T17:25:52.531Z
-Stopped at: Completed 01-10-PLAN.md
+Last session: 2026-11-08T17:35:04.924Z
+Stopped at: Completed 01-11-PLAN.md
 Resume file: None

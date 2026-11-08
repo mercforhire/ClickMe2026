@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-08-PLAN.md
-last_updated: "2026-11-08T06:03:51.241Z"
+stopped_at: Completed 01-09-PLAN.md
+last_updated: "2026-11-08T06:07:42.373Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: a7ccabc4a4fa606b9f945cea609208bbedf24448
+state_head: 31f32231fc48af62b777c49e1e0376b8868dec38
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 8
+  completed_plans: 9
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 9 of 23
+Plan: 10 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -64,6 +64,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P06 | 3 min | 2 tasks | 7 files |
 | Phase 01 P07 | n/a | 3 tasks | 9 files |
 | Phase 01 P08 | 15 min | 2 tasks | 8 files |
+| Phase 01 P09 | 25 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-07: BACK-10 rejects start <= now and duration != topic duration_mins in createRequest before any Redis hold; topic length wins over requested length
 - [Phase 01]: 01-07: BACK-11 bounds are INTEGER max (2147483647) for topic price and 50 for languages and expertise_tags (Open Q9 assumption, spot-check in 01-10)
 - [Phase 01]: 01-08 BACK-16: GET /chats lists empty threads ordered last_msg_at desc nulls last then created_at desc; POST /feedback/submit limited to 5 per 15 min per user via in-memory feedbackLimiter (valid only while numReplicas is 1); hard-mocked rateLimiter modules in connect/payouts tests need each new limiter added
+- [Phase 01]: BACK-01: postUserMessage (src/services/chatMessages.js) is the single chat message path; callers own block/moderation checks (send rejects, accept silently skips)
+- [Phase 01]: BACK-01: accept message uses client_msg_id booking-accept:<booking id> for idempotency and fails open on a moderation lookup error, like chats.send
 
 ### Pending Todos
 
@@ -112,6 +115,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T06:03:51.217Z
-Stopped at: Completed 01-08-PLAN.md
+Last session: 2026-11-08T06:07:42.349Z
+Stopped at: Completed 01-09-PLAN.md
 Resume file: None

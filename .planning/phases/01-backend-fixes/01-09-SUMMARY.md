@@ -132,7 +132,7 @@ Backend `git status -sb` shows `master...origin/main [ahead 20]`. Nothing was pu
 ## Verification
 
 - Task 1: `tests/services/chatMessages.test.js tests/chats.test.js tests/events.test.js` 134/134. `tests/chats.test.js` is untouched (`git diff HEAD~2 --stat` empty). `ensureThread` appears in `module.exports` (baseline: absent).
-- Task 2: `tests/bookingRequests.test.js tests/expertBooking.test.js` 195/195 (77 in bookingRequests, 16 of them new for BACK-01 counting the `it.each` expansions). `grep -c "booking-accept:"` in the controller is 1 (baseline 0).
+- Task 2: `tests/bookingRequests.test.js tests/expertBooking.test.js` 195/195 (77 in bookingRequests, 13 of them new for BACK-01, counting the `it.each` expansions). `grep -c "booking-accept:"` in the controller is 1 (baseline 0).
 - Full gate (`--testPathIgnorePatterns=tests/services/redis.test.js`): 126/126 suites, 2790/2790 tests, 0 failed. `check-openapi-coverage` and `check-doc-coverage` both print `OK: all 128 endpoints`. No flaky failure occurred on the final run.
 
 ## Deviations from Plan

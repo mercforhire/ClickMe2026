@@ -61,7 +61,7 @@ Commands below are shortened; run each as `npm --prefix "/Users/LeonChen/Documen
 | 01-07-T2..T3 | 01-07 | 7 | BACK-11 | T-01-12 | Oversized input 422, not 500 | supertest + schema | `tests/expertTopics.test.js tests/onboarding.test.js tests/schemas/expertProfile.schema.test.js` | ✅ | ⬜ pending |
 | 01-08-T1..T2 | 01-08 | 8 | BACK-16 | T-01-13, T-01-14 | 6th feedback in window → 429 | supertest | `tests/chats.test.js tests/feedback.test.js` | ✅ | ⬜ pending |
 | 01-09-T1..T2 | 01-09 | 9 | BACK-01 | T-01-15, T-01-16 | Blocked/moderated recipient skipped | unit + supertest | `tests/services/chatMessages.test.js tests/chats.test.js tests/bookingRequests.test.js` | ❌ W0 (chatMessages test created here) | ⬜ pending |
-| 01-10-T1..T3 | 01-10 | 10 | BACK-14 (migration) + wave-1 deploy | T-01-18, T-01-19 | Column applied before dependent code | grep + full gate + manual | full gate; column check in checkpoint | ✅ | ⬜ pending |
+| 01-10-T1..T3 | 01-10 | 10 | BACK-14 (migration) + wave-1 deploy + Android follow-up log | T-01-18, T-01-19 | Column applied before dependent code | grep + full gate + manual | full gate; `grep -c "Android follow-ups from Phase 1" .planning/STATE.md` (iOS repo); column check in checkpoint | ✅ | ⬜ pending |
 | 01-11-T1..T3 | 01-11 | 11 | BACK-09 | T-01-20, T-01-21, T-01-22 | Join rejected outside window / wrong status | unit + supertest | `tests/call.test.js tests/clientBooking.test.js tests/expertBooking.test.js tests/expirePastSessions.test.js` | ✅ | ⬜ pending |
 | 01-12-T1 | 01-12 | 12 | BACK-14 | T-01-24 | Reason only to the two parties; never in push data | supertest | `tests/clientBooking.test.js tests/expertBooking.test.js` | ✅ | ⬜ pending |
 | 01-12-T2 | 01-12 | 12 | BACK-12 | T-01-23 | Client cancel after end_time rejected, no Stripe call | supertest | `tests/clientBooking.test.js` | ✅ | ⬜ pending |
@@ -74,8 +74,8 @@ Commands below are shortened; run each as `npm --prefix "/Users/LeonChen/Documen
 | 01-19-T1..T2 | 01-19 | 19 | wave-3b deploy | T-01-39 | N/A | full gate + manual (real card) | full gate | ✅ | ⬜ pending |
 | 01-20-T1..T3 | 01-20 | 20 | BACK-13 | T-01-40, T-01-41 | Client-only write to /expert/* → 403; no silent promotion; stale JWT allowed | unit + supertest | `tests/middleware/ensureExpert.test.js tests/onboarding.test.js tests/expertProfile.test.js tests/earnings.test.js tests/earnings.transactions.test.js tests/payouts.test.js tests/connect.test.js` | ✅ | ⬜ pending |
 | 01-21-T1 | 01-21 | 21 | BACK-08, BACK-13 | T-01-48 | No Connect account for a non-expert; 38-route classification pinned | unit + supertest | `tests/expertRoutesGate.test.js tests/connect.test.js` | ❌ W0 (gate test created here) | ⬜ pending |
-| 01-21-T2 | 01-21 | 21 | BACK-08 | — | N/A (user decision on GET /expert/tax-profile, D-08) | checkpoint:decision (blocking-human) | n/a | — | ⬜ pending |
-| 01-21-T3 | 01-21 | 21 | BACK-08 | T-01-49 | No TIN stored for a non-expert; GET per the user's option | supertest | `tests/expertTaxProfile.test.js tests/expertRoutesGate.test.js` | ✅ | ⬜ pending |
+| 01-21-D1 | 01-21 | 21 | BACK-08 | — | N/A (decision recorded: option-a, user 2026-11-07; D-08 amendment for GET /expert/tax-profile only; replaces the former T2 checkpoint) | recorded decision (no execution step) | n/a | — | n/a (decided) |
+| 01-21-T2 | 01-21 | 21 | BACK-08 | T-01-49 | No TIN stored or TIN form served for a non-expert: client-only GET and POST /expert/tax-profile → 403 EXPERT_SETUP_REQUIRED; JWT and stale-token experts unchanged; table 17 / 20 / 1 | supertest | `tests/expertTaxProfile.test.js tests/expertRoutesGate.test.js` | ✅ | ⬜ pending |
 | 01-22-T1..T2 | 01-22 | 22 | BACK-13, BACK-08 (contract docs) | T-01-50 | N/A | coverage scripts + grep + full gate | full gate; convert-on-demand sweep | ✅ | ⬜ pending |
 | 01-23-T1..T2 | 01-23 | 23 | wave-3c deploy + BACK-08 seam smoke | T-01-44, T-01-45 | N/A | full gate + manual | full gate | ✅ | ⬜ pending |
 
@@ -102,7 +102,7 @@ Commands below are shortened; run each as `npm --prefix "/Users/LeonChen/Documen
 | Rejoin call at end+30 | BACK-09 | Real Agora session | Join, leave, rejoin within reconnect window |
 | Card add/delete + expert cancel with real test card | BACK-06/07/19 | Stripe test-mode end-to-end | Add/delete card, expert-cancel a captured booking, check Stripe dashboard |
 | Client-only account opens expert home | BACK-13 | Client UX path | Sign in as client-only, open expert home, confirm no promotion and no crash |
-| Client-only account reaches no tax-ID prompt | BACK-08 | Real Stripe Connect page and shipped client screens | Plan 01-23 steps B7-B8: Payouts set-up refused with no Stripe page and no payout_accounts row; Tax & Payout Info per the plan 01-21 option; Android cannot reach the expert shell without setup |
+| Client-only account reaches no tax-ID prompt | BACK-08 | Real Stripe Connect page and shipped client screens | Plan 01-23 steps B7-B8: Payouts set-up refused with no Stripe page and no payout_accounts row; Tax & Payout Info on build 6 shows the setup error with no TIN field (plan 01-21 option-a); Android cannot reach the expert shell without setup |
 | `cancellation_reason` migration applied before code deploy | BACK-14 | Production DB ops | `supabase db push`, verify column exists, then deploy |
 
 ---

@@ -15,7 +15,7 @@ This project fixes every confirmed and likely iOS bug that the Android port foun
 | Decision | Affects | Settled in |
 |----------|---------|------------|
 | Q1 Merge remember-login-email? | T8 (out of scope unless moved in) | Phase 5 |
-| Q2 Expert cancel: full refund or the 24 h rule? | BOOK-08, EXP-11 | Phase 3 (see the note there) |
+| Q2 Expert cancel: full refund or the 24 h rule? | BOOK-08, EXP-11 | Phase 1 (D-17) |
 | Q3 Long-lead SCA recovery, or route the push only? | BOOK-15 | Phase 2 |
 | Q4 Dismissed payment sheet with a preselected card: cancel or confirm? | PAY-01 | Phase 4 |
 | Q5 Optional province, and a gated Expert-mode switch? | SIGN-06 (S2 out of scope unless moved in) | Phase 5 |
@@ -46,12 +46,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Goal**: The production backend validates, stores and returns everything the iOS fixes depend on, and every change stays safe for the current Android build
 **Depends on**: Nothing (first phase)
-**Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06, BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12, BACK-13, BACK-14, BACK-15, BACK-16, BACK-17, BACK-18
+**Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06, BACK-07, BACK-08, BACK-09, BACK-10, BACK-11, BACK-12, BACK-13, BACK-14, BACK-15, BACK-16, BACK-17, BACK-18, BACK-19
 **Success Criteria** (what must be TRUE):
   1. Booking requests, cancels, confirms and joins are validated and recorded. A past `scheduled_start` or an invalid `duration_minutes` is rejected, and so is a client cancel after the session's end. The cancel `reason` is saved on the booking. A confirm retry with the same `booking_attempt_id` returns the original result instead of SLOT_UNAVAILABLE. `/bookings/:id/join` enforces the agreed join window and checks booking status.
-  2. Saved cards behave safely on live Stripe. A lone saved card becomes the default, a deleted card can no longer be charged through its connected-account clone, and a client account is never shown the tax-ID prompt.
+  2. Saved cards behave safely on live Stripe. A lone saved card becomes the default, a deleted card can no longer be charged through its connected-account clone, and a client account is never shown the tax-ID prompt. An expert-initiated cancel always refunds the client in full or releases the hold (BACK-19, D-17).
   3. Booking and expert data is complete and correct: the client receives the decline note and the accept message (or the accept field is dropped by decision); expert booking detail and lists include `has_review`; `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol; an expert can clear `meeting_url`; oversized `price_amount` and tag lists get a 4xx instead of a 500; and a client becomes an expert only through an explicit setup call.
-  4. Chat and push data is correct: sending a message increments the recipient's unread count and `message.read` resets it, `GET /chats` lists empty threads, notifications can be marked read, and `/feedback/submit` is rate-limited. If Q6 picks the backend route, iOS push payloads also carry `category`/`sub_category`.
+  4. Chat and push data is correct: sending a message increments the recipient's unread count and `message.read` resets it, `GET /chats` lists empty threads, and `/feedback/submit` is rate-limited. Push payloads carry `category`, `sub_category` and a per-recipient `target_role` for iOS and Android alike (Q6 settled as the backend route, D-01/D-02).
   5. Every change has backend tests. The current Android build and the live iOS build 6 can still sign in, book, pay, join and chat against the updated backend.
 
 **Plans**: 23 plans (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)

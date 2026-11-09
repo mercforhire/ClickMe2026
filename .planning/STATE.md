@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: "Completed 01-20-PLAN.md (wave 3c, local only). Next: 01-21"
-last_updated: "2026-11-09T02:25:37.278Z"
+stopped_at: "Completed 01-21-PLAN.md (wave 3c, local only). Next: 01-22"
+last_updated: "2026-11-09T02:33:51.565Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 268e89fdfc0179e33aafddc92a5dbd3121e15c3d
+state_head: cbdf3bec316581b6963eacc8d7182cef63fde82c
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 20
+  completed_plans: 21
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 21 of 23
+Plan: 22 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -76,6 +76,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P18 | 5 min | 2 tasks | 5 files |
 | Phase 01 P19 | ~1h 10m wall clock (user wait) | 1 of 2 (Task 2 deployed, smoke not run) tasks | 1 files |
 | Phase 01 P20 | 6 min | 3 tasks | 9 files |
+| Phase 01 P21 | 5 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-20 BACK-13: the default export of ensureExpert is the method-aware gate (GET/HEAD/OPTIONS read gate, other methods write gate), so every mount changes with no wiring change; only PATCH /expert/profile/setup is rewired, to validate then provisionExpert. Committed locally at bdc580f, not deployed, mocks only
 - [Phase 01]: 01-20 BACK-13: a token without expert costs one primary-key read of profiles.roles; a failed read is a safe 500 through dbError, never a 403; provisionExpert error paths are unchanged
 - [Phase 01]: 01-20 BACK-13: a schema-valid setup PATCH promotes even when it is {} or when the controller then returns 422 for an incomplete publish; matches the plan, logged in deferred-items.md as a possible user decision before 01-23
+- [Phase 01]: 01-21-D1 BACK-08: GET /expert/tax-profile refuses a client-only account with 403 EXPERT_SETUP_REQUIRED by mounting expertWriteGate; option-a, user decision of 2026-11-07, a D-08 amendment for this one route; final classification 17 reads, 20 refused, 1 setup. Committed locally at e1eb483, not deployed, mocks only
+- [Phase 01]: 01-21 BACK-08: postOnboard refuses a caller whose req.user.roles lacks expert (missing and empty included) before any payout_accounts or Stripe call; getConnectStatus and postRefreshLink need no such check because only postOnboard creates a payout_accounts row
 
 ### Pending Todos
 
@@ -171,6 +174,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T02:25:37.239Z
-Stopped at: Completed 01-20-PLAN.md (wave 3c, local only). Next: 01-21
+Last session: 2026-11-09T02:33:51.535Z
+Stopped at: Completed 01-21-PLAN.md (wave 3c, local only). Next: 01-22
 Resume file: None

@@ -76,3 +76,21 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-18 (BACK-19), backend `src/utils/refund.js` header (lists expert cancel as an importer), `src/services/stripe.js` `createRefund` docblock (says callers use the D-04 policy), `tests/refund.test.js` header.
   **What:** comments only; no behavior is affected.
   **Why deferred:** these files are outside the plan, which says `refund.js` is unchanged.
+
+- A schema-valid setup PATCH that the controller then refuses still promotes
+  status: open
+  **Found in:** plan 01-20 (BACK-13), backend `src/routes/onboarding.js` and `src/controllers/onboarding.controller.js` `setupProfile`.
+  **What:** every field in `onboardingSchema` is optional, so `{}` is a valid body and promotes a client-only account. `{ "setup_completed": true }` on an incomplete record also promotes, because the controller's 422 with `missing_fields` runs after `provisionExpert`; that 422 keeps the other fields it already saved, by design (quick-260715-vta). Only a schema failure promotes nothing.
+  **Why deferred:** this matches the plan's wording (validate, then provision) and D-07 names the route, not a required field. A stricter rule would change the setup contract both shipped clients use, so it is a user decision. No promotion is possible from any other route.
+
+- Live UAT scripts and docs still assume a first `/expert/*` call converts the account
+  status: open
+  **Found in:** plan 01-20 (BACK-13), backend `scripts/uat-convert-expert.js`, `scripts/uat-topic-tags.js`, `scripts/uat-topic-owned-tags.js`, `scripts/uat-seed-notifications.js`, `docs/UAT-ACCOUNTS.md`, `docs/ios/EXPERT-EARNINGS-TRANSACTIONS.md` line 22.
+  **What:** after wave 3c deploys, a client-only account is not converted by these paths, so a script that relies on it fails or reports the wrong result, and the transactions doc states the old behavior to client developers. Plan 01-22 sweeps `src/routes` and `src/middleware` and does not list these files.
+  **Why deferred:** outside this plan's files, with no effect on production behavior. The doc line should be fixed alongside 01-22's contract docs.
+
+- `src/services/stripeEvents.js` cites an old line number in `ensureExpert.js`
+  status: open
+  **Found in:** plan 01-20 (BACK-13), backend `src/services/stripeEvents.js` line 44.
+  **What:** the comment points at `src/middleware/ensureExpert.js:82` for the upsert precedent, and that line moved when the file was rewritten. The upsert is now in `provisionExpert`. Comment only.
+  **Why deferred:** outside this plan's files.

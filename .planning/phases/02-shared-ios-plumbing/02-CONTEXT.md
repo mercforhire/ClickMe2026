@@ -39,6 +39,8 @@ The app-wide rules that many iOS screens rely on are fixed in one shared place: 
 - **D-13:** The BOOK-14 6-day cap applies to the **client** paid booking and reschedule pickers in Phase 2. The shared error mapper handles the long-lead codes on both sides. The **expert** reschedule picker cap ships with EXP-13 in Phase 3.
 - **D-14:** CALL-05 closes on a **unit-tested Agora connection-state mapping** (`.failed` → Ended) plus a regression check on one normal call on the device. The UAT does not include a 20-minute airplane-mode repro.
 - **D-15:** Phase 2 is planned **without a UI-SPEC** (`--skip-ui` equivalent). It changes logic and copy, not layouts. The only new UI is the CALL-01 in-call notice at end + 55, which uses the existing call-screen styling.
+- **D-16:** When `route_category` is missing, the `event_type` fallback uses **Android's full event_type table** (chat, booking, payout, account and review types), not chat only. This widens D-05 to match Android. Anything still unmatched opens the notifications list.
+- **D-17:** The PUSH-04 cleanup retries only at **launch and login**. The user **accepts the residual window** after an offline logout: the old account's pushes can arrive until the next launch or login. There is no foreground retry.
 
 ### Claude's Discretion
 - **Unknown booking status (BOOK-18):** `BookingStatus` gets `rescheduled` and an unknown fallback case, so decoding never fails. A realtime `booking.update` with an unknown or `rescheduled` status refetches the open booking, and the screen shows a neutral label until the refetch finishes.

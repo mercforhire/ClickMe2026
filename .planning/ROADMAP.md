@@ -305,3 +305,21 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 ---
 *Roadmap created: 2026-11-07*
+
+## Backlog
+
+### Phase 999.1: Follow-up — Phase 01 deferred UAT follow-up: Test 1 (BACKLOG)
+
+**Goal:** Resolve the UAT checkpoint deferred during Phase 01 verification
+**Source phase:** 01
+**Deferred at:** 2026-11-09 during /gsd-verify-work 01 session completion
+**Follow-ups:**
+- [ ] Test 1: defer (Run real-Stripe checklists 01-17 and 01-19 during Phase 4 payment UAT; the 01-19 checklist does not prove the failed-refund retry) (deferred 2026-11-09)
+
+### Phase 999.2: Follow-up — Phase 01 deferred UAT follow-up: Test 4 (BACKLOG)
+
+**Goal:** Resolve the UAT checkpoint deferred during Phase 01 verification
+**Source phase:** 01
+**Deferred at:** 2026-11-09 during /gsd-verify-work 01 session completion
+**Follow-ups:**
+- [ ] Test 4: defer (Run BACK-15 with a real hold during Phase 4 payment UAT. A normal retry tap only proves one booking and one hold, not the confirm replay code; on iOS only the retry after 3D Secure calls confirm again) (deferred 2026-11-09)

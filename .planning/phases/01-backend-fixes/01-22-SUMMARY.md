@@ -119,7 +119,7 @@ All in `/Users/LeonChen/Documents/ClickMe2026 Backend`, branch `master`, not pus
 | Same, run 3, at `8407402`, the final commit | 130 suites, 3099 tests, all passed |
 | `check-openapi-coverage` and `check-doc-coverage` | `OK: all 128 endpoints` on both |
 | `grep -c ExpertSetupRequired openapi/clickme-api.yaml` | 21 (one definition, 20 references; baseline 0) |
-| `grep -c EXPERT_SETUP_REQUIRED openapi/clickme-api.yaml` | at least 1 (baseline 0) |
+| `grep -c EXPERT_SETUP_REQUIRED openapi/clickme-api.yaml` | 7 (baseline 0) |
 | Parsed spec | All 20 refused operations carry the `$ref`; 16 of the 17 reads have no 403, and `GET /expert/clients/{id}` keeps `NO_RELATIONSHIP` |
 | Convert-on-demand sweep, case-sensitive per the plan and case-insensitive | No matches in `src/routes` or `src/middleware` |
 | Task 2 comment-only diff check, run right after its commit | Prints nothing |
@@ -144,7 +144,7 @@ This checks documents against the code and the test suite against mocks. No clie
 
 ## Decisions Made
 
-- `POST` and `decline` on `accept-reschedule` and `decline-reschedule` keep the shared `$ref` and override its description, because a 403 key holds only one response and those controllers also return `403 FORBIDDEN` when the expert proposed the reschedule.
+- `POST /expert/bookings/:id/accept-reschedule` and `/decline-reschedule` keep the shared `$ref` and override its description, because a 403 key holds only one response and those controllers also return `403 FORBIDDEN` when the expert proposed the reschedule.
 - In `analytics.js`, "analytics are expert-private" became "scoped to the caller's own id", because a client-only account can now read these routes and gets its own empty data.
 
 ## Deviations from Plan

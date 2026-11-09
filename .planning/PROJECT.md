@@ -30,6 +30,7 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - ✓ Report/block from expert profile and global account-suspension handling — existing (`097db7a`)
 - ✓ Offline-tolerant auto-login — existing (`f43f38d`)
 - ✓ FCM push for chat and booking requests — existing (other categories broken, see N1)
+- ✓ Backend fixes K1–K5, K9–K12, K14, K16, plus the backend halves of H7 and N1 — Phase 1 (deployed to production at `d86bf97`)
 
 ### Active
 
@@ -44,7 +45,9 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - [ ] Chat: H1–H9 (H7 needs backend, H8 needs re-test)
 - [ ] Push: N1–N4 (N1 needs backend)
 - [ ] Settings / profile / account: T1–T7
-- [ ] Backend fixes: K1–K16, plus the backend halves of H7 and N1 (all 18 in scope)
+- [ ] Backend fixes still open: K6, K7, K15 and Q2 refund retry (BACK-19) are deployed but await real-money checks in Phase 4; K8 and K13 are not delivered (wave 3c parked until SIGN-06)
+- [ ] Backend: handle card removal made inside Stripe's PaymentSheet (T-01-32 accepted risk; must ship before the iOS release)
+- [ ] EXPL-07: Explore loads when a featured topic has no currency (fix built; device check in Phase 4)
 
 ### Out of Scope
 
@@ -82,6 +85,10 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 | Backend changes stay compatible with current Android | Android launches ~2026-12-13 on the same API | — Pending |
 | Settle open product questions (inventory Q1–Q8) in each phase's discuss step | Decide with the code in front of the user, not up front | — Pending |
 
+| Drop deploy wave 3c (BACK-08, BACK-13) | It would stop client-only accounts on App Store build 6 from becoming experts; no backend change may break the live build | ✓ Good — revisit with SIGN-06 |
+| Defer real-money smoke checks to Phase 4 payment UAT | Avoid real holds now; mocked tests cover the logic | — Pending (backlog 999.1, 999.2) |
+| Backend guard for the Explore free-topic decode failure | Build 6 can't get an iOS fix until release | ✓ Good — migration applied 2026-11-09 |
+
 ### Open product questions (settle in the affected phase's discuss step)
 
 - Q1 Merge `feature/remember-login-email` (iOS `b0629d9`)?
@@ -111,4 +118,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-07 after initialization*
+*Last updated: 2026-11-09 after Phase 1*

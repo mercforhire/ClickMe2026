@@ -1,43 +1,43 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 01
-current_phase_name: Backend Fixes
-status: verifying
-stopped_at: Completed 01-26-PLAN.md (BACK-19 refund retry deployed at d86bf97, mocked Stripe only, BACK-19 Pending; Phase 1 plans complete, next is phase verification)
-last_updated: "2026-11-09T07:39:54.496Z"
-last_activity: 2026-11-08
-last_activity_desc: Phase 01 execution started
-state_head: 77178f569ec41ce4b4b07e3679cc7226924e9058
+current_phase: 2
+current_phase_name: Shared iOS Plumbing
+status: planning
+stopped_at: Phase 01 complete, ready to plan Phase 2
+last_updated: "2026-11-09T16:38:25.910Z"
+last_activity: 2026-11-09
+last_activity_desc: Phase 01 complete, transitioned to Phase 2
+state_head: 7fa74b95aa2479b61e4ccf7eb49db480c1a73e0f
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 26
   completed_plans: 26
-  percent: 0
+  percent: 13
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-07)
+See: .planning/PROJECT.md (updated 2026-11-09)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 01 — Backend Fixes
+**Current focus:** Phase 2 — Shared iOS Plumbing
 
 ## Current Position
 
-Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 26 of 26
-Status: Phase complete — ready for verification
-Last activity: 2026-11-09 - Completed quick task 261109-323: Fix Explore home feed decode failure on free topics with no currency
+Phase: 2 — Shared iOS Plumbing
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-11-09 — Phase 01 complete, transitioned to Phase 2
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 13%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
+- Total plans completed: 26
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -45,7 +45,7 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01 | 26 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -175,6 +175,8 @@ Captured todos:
 
 ### Blockers/Concerns
 
+- [Before release]: T-01-32 accepted risk: card removal inside Stripe's PaymentSheet skips BACK-07, so a reschedule-converted booking could charge a stale clone. Backend fix tracked in `.planning/todos/pending/2026-11-09-handle-paymentsheet-card-removal-on-the-backend.md`; no phase assigned yet.
+- [Before release]: iOS tests: `LoginTests.swift`, `AuthSmokeTests.swift` and `SignupSmokeTests.swift` don't compile, so Cmd+U fails; `.github/workflows/test.yml` and `scripts/run-smoke-tests.sh` still name `ClickMe2026.xcodeproj` (quick 261109-323).
 - [Phase 1]: User accepted verification overrides for BACK-08 and BACK-13 (2026-11-09 UTC): not delivered, wave 3c stays dropped. The refund retry gap was fixed and deployed by plans 01-24 to 01-26 (backend `d86bf97`, 2026-11-09); it is proven on mocked Stripe only and BACK-19 stays Pending.
 - [Phase 1]: CR-01 fixed 2026-11-08 (backend `215adcb`, live, user device check passed): build 6 booking push taps open the app without navigating, in client and expert mode, until the new iOS build. Production is at `215adcb`; `master` matches it; `wave-3c` remains parked and unshipped.
 - [Phase 1]: Q6 must be settled before BACK-17 is planned. It decides whether PUSH-01 (Phase 2) uses a backend `category` or a wider iOS parser.
@@ -209,5 +211,5 @@ Items acknowledged and deferred at milestone close, most recent first:
 ## Session Continuity
 
 Last session: 2026-11-09T05:35:44.958Z
-Stopped at: Completed 01-26-PLAN.md (BACK-19 refund retry deployed at d86bf97, mocked Stripe only, BACK-19 Pending; Phase 1 plans complete, next is phase verification)
+Stopped at: Phase 01 complete, ready to plan Phase 2
 Resume file: None

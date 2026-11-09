@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: "Completed 01-19-PLAN.md (wave 3b deployed; smoke not run by user decision). Next: 01-20"
-last_updated: "2026-11-09T02:16:24.177Z"
+stopped_at: "Completed 01-20-PLAN.md (wave 3c, local only). Next: 01-21"
+last_updated: "2026-11-09T02:25:37.278Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: babb17cee91179392a5ae0ed9ac1557f12cd2fd2
+state_head: 268e89fdfc0179e33aafddc92a5dbd3121e15c3d
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 19
+  completed_plans: 20
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 20 of 23
+Plan: 21 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -75,6 +75,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P17 | ~30 min wall clock (user wait) | 1 of 2 (Task 2 deployed, smoke not run) tasks | 1 files |
 | Phase 01 P18 | 5 min | 2 tasks | 5 files |
 | Phase 01 P19 | ~1h 10m wall clock (user wait) | 1 of 2 (Task 2 deployed, smoke not run) tasks | 1 files |
+| Phase 01 P20 | 6 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-19: wave 3b deployed by the user, production moved from d356fdc to 3899d63; the production smoke was NOT RUN by user decision (2026-11-08), so BACK-19 stays Pending. Wave 3a and wave 3b are both live with no real-Stripe check; d356fdc is the rollback target for this wave and contains unverified card code
 - [Phase 01]: 01-19: user chose option A on the refund retry (2026-11-08): push now, fix next. Failed refunds are not retried as refunds until a separate plan and deploy, before Phase 4 payment UAT; that plan still needs creating
 - [Phase 01]: 01-19: read-only queries QA and QB were user-run and reported empty after the push; their order relative to the push is not known. An empty QA is strong evidence, not proof, since an old row's payment_status can be stale
+- [Phase 01]: 01-20 BACK-13: the default export of ensureExpert is the method-aware gate (GET/HEAD/OPTIONS read gate, other methods write gate), so every mount changes with no wiring change; only PATCH /expert/profile/setup is rewired, to validate then provisionExpert. Committed locally at bdc580f, not deployed, mocks only
+- [Phase 01]: 01-20 BACK-13: a token without expert costs one primary-key read of profiles.roles; a failed read is a safe 500 through dbError, never a 403; provisionExpert error paths are unchanged
+- [Phase 01]: 01-20 BACK-13: a schema-valid setup PATCH promotes even when it is {} or when the controller then returns 422 for an incomplete publish; matches the plan, logged in deferred-items.md as a possible user decision before 01-23
 
 ### Pending Todos
 
@@ -167,6 +171,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T02:16:24.148Z
-Stopped at: Completed 01-19-PLAN.md (wave 3b deployed; smoke not run by user decision). Next: 01-20
+Last session: 2026-11-09T02:25:37.239Z
+Stopped at: Completed 01-20-PLAN.md (wave 3c, local only). Next: 01-21
 Resume file: None

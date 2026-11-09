@@ -98,7 +98,9 @@ final class ExploreClientViewModel: ObservableObject {
                 if expertsState == .loading { expertsState = .idle }
                 if featuredTopicsState == .loading { featuredTopicsState = .idle }
             } else {
-                let msg = Self.message(for: error)
+                let msg = error.userMessage
+                // Don't leave stale Featured Topics beside the section errors.
+                featuredTopics = []
                 categoriesState = .failed(msg)
                 expertsState = .failed(msg)
                 featuredTopicsState = .failed(msg)
@@ -249,13 +251,13 @@ final class ExploreClientViewModel: ObservableObject {
     }
 
     /// Formats the server's minor-units rate into a display label like
-    /// `"$120"` or `"Free"`. Falls back to `"—"` when both amount and
-    /// currency are missing.
+    /// `"$120"` or `"Free"`. Falls back to `"—"` when the amount or the
+    /// currency is missing.
     private static func mapFeaturedTopic(_ t: ClientHomeData.FeaturedTopic) -> FeaturedTopic {
         FeaturedTopic(
             topicId: t.topicId,
             title: t.title,
-            priceLabel: formatPrice(t.hourlyRate),
+            priceLabel: formatPrice(t.hourlyRate, isFree: t.isFree),
             expertId: t.expert.expertId,
             expertName: t.expert.fullName ?? "Expert",
             expertImageURL: t.expert.profileImageUrl ?? ""
@@ -266,15 +268,19 @@ final class ExploreClientViewModel: ObservableObject {
     /// server ships this value under a `hourly_rate` key on
     /// `/client/home.featured_topics`, but the amount is what the client
     /// actually pays per booking — misleading key, per-session semantics.
-    private static func formatPrice(_ rate: ClientHomeData.FeaturedTopic.HourlyRate?) -> String {
-        guard let rate else { return "—" }
-        let amountMajor = Double(rate.amount) / 100.0
+    private static func formatPrice(
+        _ rate: ClientHomeData.FeaturedTopic.HourlyRate?,
+        isFree: Bool?
+    ) -> String {
+        if isFree == true { return "Free" }
+        guard let amount = rate?.amount, let currency = rate?.currency else { return "—" }
+        let amountMajor = Double(amount) / 100.0
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
-        formatter.currencyCode = rate.currency
+        formatter.currencyCode = currency
         formatter.maximumFractionDigits = amountMajor.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 2
         return formatter.string(from: NSNumber(value: amountMajor))
-            ?? "\(rate.currency) \(String(format: "%.0f", amountMajor))"
+            ?? "\(currency) \(String(format: "%.0f", amountMajor))"
     }
 
     // MARK: - Error helpers
@@ -283,14 +289,5 @@ final class ExploreClientViewModel: ObservableObject {
         if error is CancellationError { return true }
         if let urlError = error as? URLError, urlError.code == .cancelled { return true }
         return false
-    }
-
-    private static func message(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 }

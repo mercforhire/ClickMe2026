@@ -29,3 +29,10 @@ extension Error {
         return (self as? LocalizedError)?.errorDescription ?? localizedDescription
     }
 }
+
+/// One fixed string, so no case can leak the wrapped error (decoder paths,
+/// type names) into the UI. `userMessage` still prefers the server's message
+/// for an `httpError` that carries one.
+extension NetworkError: LocalizedError {
+    var errorDescription: String? { "Something went wrong. Please try again." }
+}

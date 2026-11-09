@@ -54,7 +54,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Chat and push data is correct: sending a message increments the recipient's unread count and `message.read` resets it, `GET /chats` lists empty threads, and `/feedback/submit` is rate-limited. Push payloads carry `category`, `sub_category` and a per-recipient `target_role` for iOS and Android alike (Q6 settled as the backend route, D-01/D-02).
   5. Every change has backend tests. The current Android build and the live iOS build 6 can still sign in, book, pay, join and chat against the updated backend.
 
-**Plans**: 23/26 plans executed (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint; 01-24 to 01-26 close the BACK-19 refund retry gap with their own push checkpoint)
+**Plans**: 24/26 plans executed (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint; 01-24 to 01-26 close the BACK-19 refund retry gap with their own push checkpoint)
 
 Plans:
 **Wave 1**
@@ -127,7 +127,7 @@ Plans:
 - [x] 01-23-PLAN.md — Deploy wave 3c handoff, BACK-13 and BACK-08 seam smoke, account B background check (checkpoint) — NOT deployed; wave 3c dropped by user decision. No smoke run; BACK-08 and BACK-13 stay Pending
 
 **Wave 24** *(blocked on Wave 23 completion)*
-- [ ] 01-24-PLAN.md — BACK-19 gap: a failed expert-cancel refund is retried as a refund; the sweep reads Stripe before moving money; booking detail stops reporting a failed refund
+- [x] 01-24-PLAN.md — BACK-19 gap: a failed expert-cancel refund is retried as a refund; the sweep reads Stripe before moving money; booking detail stops reporting a failed refund
 
 **Wave 25** *(blocked on Wave 24 completion)*
 - [ ] 01-25-PLAN.md — BACK-19 gap: the same fix for client cancels, including the hold left unflagged when retrievePI fails within 24 hours; transactions ledger; contract docs
@@ -293,7 +293,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Fixes | 23/23 | In Progress | - |
+| 1. Backend Fixes | 24/26 | In Progress | - |
 | 2. Shared iOS Plumbing | 0/TBD | Not started | - |
 | 3. Booked Sessions and Joining | 0/TBD | Not started | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |

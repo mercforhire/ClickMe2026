@@ -45,3 +45,21 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-17 review of BACK-07, backend `src/services/connectedPaymentMethodClone.js` `evictClonesForPlatformPaymentMethod` and `src/services/stripe.js` `clonePaymentMethodToConnectedAccount`.
   **What:** eviction detaches a clone and deletes its row one account at a time. If a later step fails (a 502 on another account's clone, or the platform detach), the card stays saved with that clone gone. The clone call uses the fixed idempotency key `clone-{pm}-on-{acct}`, so a later booking with that card and expert may get the old, detached clone back from Stripe within the key's retention window, and the attach would then fail before any hold. Removing and re-adding the card gives a new pm id and avoids it. Inferred from the code, not tested against Stripe.
   **Why deferred:** no money moves and the failure needs a prior partial delete. Changing the key or the eviction order is a money-path change for a planned item.
+
+- A failed cancel refund is never retried as a refund
+  status: open
+  **Found in:** plan 01-18 (BACK-19), backend `src/controllers/expertBooking.controller.js` `cancel` and `src/controllers/clientBooking.controller.js` `cancel`, catch blocks; `src/cron/refundReconciliation.js`.
+  **What:** when `createRefund` throws, both handlers set `refund_failed: true` but leave `refund_amount_minor_units` NULL. The sweep reads NULL as a failed void and calls `cancelPI`, not `createRefund`. On a captured PaymentIntent that call should fail on every 30-minute sweep (not run against real Stripe), so the flag never clears and the client is not refunded unless someone does it by hand. The code comment saying the cron retries is wrong for this branch. The same failed call also returns `refund_amount` as the full amount, because the value is set before `createRefund` runs. BACK-19 sends more bookings down this path, since a captured booking within 24 hours used to make no Stripe call.
+  **Why deferred:** the plan says to leave the CR-06 error handling untouched, and the behavior predates it. The obvious fix, writing the amount in the catch, is not safe alone: when `retrievePI` fails on an uncaptured booking the handler assumes `succeeded`, and that row needs the void retry. A money-path decision for the user, needed before wave 3b ships if the guarantee has to hold when Stripe fails.
+
+- `PATCH /expert/bookings/:id/status` with `cancelled` moves no money
+  status: open
+  **Found in:** plan 01-18 (BACK-19), backend `src/controllers/expertBooking.controller.js` `patchStatus`.
+  **What:** an expert can mark any past session `cancelled`, with no check on its current status. The handler makes no refund or void, so a captured booking stays charged. D-17 was implemented on `POST /expert/bookings/:id/cancel` only.
+  **Why deferred:** outside this plan's scope. Whether D-17 covers this route is a product decision for the user.
+
+- Comments still describe the old expert refund rule
+  status: open
+  **Found in:** plan 01-18 (BACK-19), backend `src/utils/refund.js` header (lists expert cancel as an importer), `src/services/stripe.js` `createRefund` docblock (says callers use the D-04 policy), `tests/refund.test.js` header.
+  **What:** comments only; no behavior is affected.
+  **Why deferred:** these files are outside the plan, which says `refund.js` is unchanged.

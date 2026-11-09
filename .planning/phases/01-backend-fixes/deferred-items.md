@@ -94,3 +94,15 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-20 (BACK-13), backend `src/services/stripeEvents.js` line 44.
   **What:** the comment points at `src/middleware/ensureExpert.js:82` for the upsert precedent, and that line moved when the file was rewritten. The upsert is now in `provisionExpert`. Comment only.
   **Why deferred:** outside this plan's files.
+
+- One `expertBooking.test.js` flake has a likely cause: two separate `Date.now()` calls
+  status: open
+  **Found in:** plan 01-21 full-suite run, backend `tests/expertBooking.test.js` lines 273-274 (the same pair is at 693-694 and 1070-1071), failing assertion at line 2333.
+  **What:** `futureStart` and `futureEnd` each call `Date.now()`. If the millisecond ticks between the two calls, `durationMs` is 60 minutes plus 1 ms, and `Math.ceil((durationMins + 30) / 30)` gives 4 while the window still has 3 keys. That is exactly the failure seen ("Expected: 4, Received: 3") in `slot_keys (quick 260804-qo6): sets NEW keys in the guarded UPDATE and releases OLD holds (array form)`, and it fits a failure that shows up under load. Read from the code; not reproduced by forcing the tick. It does not explain the `connectWebhooks.test.js` failures in the same run, whose first failure was a 5 s timeout.
+  **Why deferred:** test infrastructure outside this plan's files, and no production behavior is involved. Likely fix: derive `futureEnd` from one captured timestamp.
+
+- `ensureExpert.js` header does not mention the one read that uses the write gate
+  status: open
+  **Found in:** plan 01-21 (BACK-08), backend `src/middleware/ensureExpert.js`.
+  **What:** the header says client-only reads pass through and `expertGate`'s comment says the method selects the gate. Both are true of the default export, but `GET /expert/tax-profile` now mounts `expertWriteGate` explicitly. The route file and table test record the exception.
+  **Why deferred:** comment only and outside this plan's named files. Plan 01-22 touches `src/middleware` and can add one line.

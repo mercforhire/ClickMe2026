@@ -10,39 +10,143 @@ requires:
   - phase: 01-backend-fixes/01-14
     provides: "last wave-2 code plan (BACK-18); wave 2 = plans 01-11 to 01-14"
 provides:
-  - "Wave-2 push bundle and smoke checklist (below), full gate green at 7fdc7c4"
+  - "Wave 2 live in production: pushed at 7fdc7c4 (full gate green); origin/main and production /health are now at ddfe5bf, one test-only commit later"
+  - "Wave-2 smoke checklist reported all passed by the user, with no per-step notes and no 'not offered by the client' notes"
 affects: [01-16 (deploy wave 3 starts only after wave 2 is verified)]
 
 actuals:
-  tokens: 3433
-  tasks: 1
+  tokens: 5113
+  tasks: 2
   commits: 1
+
+tech-stack:
+  added: []
+  patterns: []
 
 key-files:
   created:
     - ".planning/phases/01-backend-fixes/01-15-SUMMARY.md"
   modified:
     - ".planning/STATE.md"
+    - ".planning/ROADMAP.md"
+    - ".planning/REQUIREMENTS.md"
+    - ".planning/WINDOWS.md"
 
 key-decisions:
   - "Smoke checklist assigns each step to a specific booking, because a paid booking whose call connected, or whose end time has passed, can no longer be released by a client cancel and is captured at end+15"
   - "Android unread step adds a force-quit, because the Android badge is max(server, session-local) and would otherwise pass without the server count"
+  - "Wave 2 deployed: production moved from a92acba to 7fdc7c4, then to ddfe5bf (test-only commit outside this plan); smoke checklist user-reported all passed, with no per-step notes"
 
-requirements-completed: []
-requirements-pending-checkpoint: [BACK-09, BACK-12, BACK-14, BACK-15, BACK-18]
+requirements-completed: [BACK-09, BACK-12, BACK-14, BACK-15, BACK-18]
 
+coverage:
+  - id: D1
+    description: "Wave 2 passed the full backend gate at 7fdc7c4 and was packaged with every commit mapped to plans 01-11 to 01-14"
+    verification:
+      - kind: unit
+        ref: "npm test with tests/services/redis.test.js excluded (2932 passed), check-openapi-coverage and check-doc-coverage (128 endpoints) at 7fdc7c4, before the push"
+        status: pass
+    human_judgment: false
+  - id: D2
+    description: "Wave 2 is deployed: origin/main equals local master and production /health reports the master SHA"
+    verification:
+      - kind: other
+        ref: "git rev-list --count origin/main..master = 0, master..origin/main = 0; git ls-remote origin main = ddfe5bf; GET /health = {\"status\":\"success\",\"commit\":\"ddfe5bf\"}; re-run 2026-11-09T00:17Z. All 10 wave-2 commits are ancestors of origin/main"
+        status: pass
+    human_judgment: false
+  - id: D3
+    description: "The wave-2 smoke checklist passes on App Store build 6 and the current Android build"
+    verification:
+      - kind: manual_procedural
+        ref: "User-reported \"wave 2 deployed\", then \"all passed\" when asked for the smoke result, with no per-step notes"
+        status: pass
+    human_judgment: true
+    rationale: "Device behavior across real client and expert accounts is only observable by the user. The report is one overall result that does not separate the two clients, so individual steps cannot be audited from this file."
+  - id: D4
+    description: "BACK-15 confirm replay behaves correctly on the deployed code"
+    requirement: BACK-15
+    verification:
+      - kind: unit
+        ref: "tests/booking.test.js#BACK-15 ownership-checked replay, in the 7fdc7c4 gate run"
+        status: pass
+    human_judgment: true
+    rationale: "The wave-2 checklist has no step that drives a confirm retry against production, and the tests mock Stripe and Supabase. Deployed replay behavior has not been directly observed."
+
+# plan_head_before / plan_head_after are the iOS repo (planning docs) and pair with commits: 1,
+# measured with git rev-list at SUMMARY write, so the close-out commits that follow are not counted.
+# This plan makes no backend commits. ddfe5bf is on backend master and production but is not from this plan.
 plan_head_before: d4c9db80faf76b8c4cc5960aee69235f30760e2b
-# plan_head_after and the final commits count: set when the plan completes after the checkpoint resumes.
-# commits counts the iOS repo only (this partial SUMMARY). This plan makes no backend commits; backend master stays at 7fdc7c4.
+plan_head_after: 3d6c5c6848b90872a0a37dc316d002d0a828c923
 
-status: in-progress
+duration: ~6h 20m wall clock (almost all of it waiting on the user's push and smoke test)
+completed: 2026-11-08
+status: complete
 ---
 
-# Phase 1 Plan 15: Wave 2 close-out Summary (PARTIAL, awaiting Task 2)
+# Phase 1 Plan 15: Wave 2 close-out Summary
 
-**Wave 2 (BACK-09 join gate, BACK-12 cancel guard, BACK-14 reason storage, BACK-15 confirm replay, BACK-18 unread counts) is gate-green at `7fdc7c4` and packaged for the user to push and smoke-test. It has no migration.**
+**Deploy wave 2 (BACK-09 join gate, BACK-12 cancel guard, BACK-14 reason storage, BACK-15 confirm replay, BACK-18 unread counts) moved production from `a92acba` to `7fdc7c4`, with the user reporting the smoke checklist all passed. Production now reports `ddfe5bf`, one later test-only commit with the same runtime code.**
 
-Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is waiting on the user. Nothing was pushed or deployed by Claude (D-11). No requirement is marked complete.
+## Performance
+
+- **Duration:** ~6h 20m wall clock, from 2026-11-08T18:00Z to 2026-11-09T00:20Z, almost all of it the Task 2 wait on the user
+- **Tasks:** 2 of 2 (Task 1 by Claude, Task 2 by the user)
+- **Files modified:** 5, all planning docs (this SUMMARY, `STATE.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `WINDOWS.md`). No backend files.
+
+## Accomplishments
+
+- The full gate was green at `7fdc7c4`, and the bundle listed 10 commits, all from plans 01-11 to 01-14.
+- The user pushed wave 2 with no migration needed.
+- The user reported the smoke checklist all passed.
+
+## Task Commits
+
+1. **Task 1: Wave-2 pre-push gate and push bundle** - `3d6c5c6` (docs, iOS repo)
+2. **Task 2: User pushes wave 2 and runs the smoke checklist** - user action, no Claude commit
+
+## Task 2: Results
+
+### Smoke result: what the user reported
+
+The user replied "wave 2 deployed", then, when asked for the smoke result, "all passed".
+
+- There is no per-step detail.
+- There were no "not offered by the client" notes.
+- The reply does not say which client exercised which step, including steps 3 and 5, so this file does not say either.
+- The paid booking P being cancelled (step 8) rests only on "all passed". Claude did not check Stripe or Supabase.
+
+### Deploy verification (read-only, re-run 2026-11-09T00:17Z)
+
+| Check | Result |
+|-------|--------|
+| `git rev-list --count origin/main..master` | `0` |
+| `git rev-list --count master..origin/main` | `0` |
+| `git rev-parse --short=7 master` | `ddfe5bf` |
+| `git ls-remote origin refs/heads/main` | `ddfe5bf338b12f9af1518ed1c09606269678a1b5` |
+| `GET /health` | `200 {"status":"success","commit":"ddfe5bf"}` |
+| All 10 wave-2 commits are ancestors of `origin/main` | Yes |
+
+The plan's check, that `/health` reports the short SHA of master, passes.
+
+### Production is at ddfe5bf, not 7fdc7c4
+
+The dispatch for this continuation recorded both master and `/health` at `7fdc7c4`. Both were at `ddfe5bf` when re-checked, so the Task 2 text's literal `"commit":"7fdc7c4"` no longer matches.
+
+| Time (local, 2026-11-08) | `origin/main` tracking ref (backend reflog, "update by push") |
+|-------------------------|---------------------------------------------------------------|
+| 12:13:40 | `a92acba` (wave 1) |
+| 13:20:58 | `7fdc7c4` (wave 2, exactly the 10-commit bundle) |
+| 14:11:22 | `ddfe5bf` |
+
+- `ddfe5bf` is `fix(tests): use one clock read in clientBooking date fixtures`, committed at 14:05:15. It changes only `tests/clientBooking.test.js`, so the code under `src` is the same as `7fdc7c4`.
+- It is not part of the wave-2 bundle or of this plan, and no planning file mentions it. This executor did not make or push it. Who pushed it is not established here.
+- Which of the two SHAs the smoke test ran against is not known. Either way the runtime code is the same.
+- The full gate ran at `7fdc7c4`, not at `ddfe5bf`. `tests/clientBooking.test.js` was re-run on its own at `ddfe5bf`: 141 passed.
+
+### Open decisions (flagged to the user, not answered)
+
+1. **`pending_approval` hold after `end_time` (handoff note 1).** Accepted in effect by pushing, but the user did not explicitly confirm it. It stays open.
+2. **Confirm orphaned hold (handoff note 2).** A decision is needed before Phase 4 payment UAT.
 
 ## Task 1: Gate and push bundle (done)
 
@@ -58,13 +162,13 @@ Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is wa
 | `npm run check-openapi-coverage` | `OK: all 128 endpoints present in spec (routes === spec paths).` |
 | `npm run check-doc-coverage` | `OK: all 128 endpoints covered 1:1 (routes === doc headings).` |
 
-- `tests/services/redis.test.js` did not run (needs REDIS_URL, so the plan's literal `REDIS_URL=... npm test` command was not used).
+- `tests/services/redis.test.js` did not run (needs REDIS_URL, so the plan's literal `REDIS_URL=... npm test` command was not used). Logged in `.planning/WINDOWS.md` as entry 2, as 01-10 did with entry 1.
 - No flaky file appeared in this run, so no isolated rerun was needed.
 - `git status --porcelain -- src tests openapi docs supabase scripts` prints one line: `?? scripts/uat-seed-profile.js`. It is the same pre-existing untracked file noted in 01-10, not part of the push. No tracked file is modified.
 
 ### Push bundle
 
-- Production SHA now (`GET /health`): `a92acba` (read 2026-11-08, `{"status":"success","commit":"a92acba"}`)
+- Production SHA before the push (`GET /health`): `a92acba` (read 2026-11-08, `{"status":"success","commit":"a92acba"}`)
 - Target SHA (`git rev-parse --short=7 master`): `7fdc7c4`
 - `git status -sb`: `## master...origin/main [ahead 10]`. `master..origin/main` is 0, so the push is a fast-forward.
 - 10 commits, all with an `ios-p1/` scope for BACK-09, 12, 14, 15 or 18, and all mapped to plans 01-11 to 01-14. Nothing else is in the range.
@@ -85,20 +189,21 @@ Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is wa
 | fbf8ce7 | 01-14 | fix(ios-p1/BACK-18): reset the reader's unread count on message.read; make the handler testable |
 | 7fdc7c4 | 01-14 | fix(ios-p1/BACK-18): recount on thread open; document maintained unread counts |
 
-### Handoff notes: read before pushing
+### Handoff notes: written before the push, still in force
 
 1. **Pending request holds after the end time (01-12).** A client can no longer cancel a `pending_approval` booking after `end_time`. The hold stays until `expireBookings` voids it, up to about 12 hours after the request. Nothing is captured. The expert side of the time guard has no dedicated test.
 2. **Confirm can leave a hold behind (01-13, `deferred-items.md`).** When the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent. Whether a webhook or sweep clears it is unchecked. This predates the phase and needs a decision before Phase 4 payment UAT. Separately, confirm Step 1 ignores a read error on its idempotency select.
 3. **Android unread badge can stick (01-14).** The count covers the whole thread, but Android emits `message.read` only for loaded messages. A thread with unread messages older than the loaded page keeps a non-zero badge after opening. Existing threads keep their stored value until their first send, read or page-1 open. Step 7 covers this.
 4. **Join window and call end (01-11).**
-   - Production keeps the old `[start-120, end+120]` window until this push.
+   - Production kept the old `[start-120, end+120]` window until this push.
    - `scripts/uat-demo-shoot-check.js` still mirrors the old window after it.
    - `/end` overwrites `end_reason` `auto_completed` with `completed` for overtime hang-ups.
    - `POST /end` has no limit for `dropped` and `manual_exit` (predates this phase).
 5. **What the tests do not prove.** The full suite has pre-existing parallel flakiness. Failures seen, in files whose isolated rerun then passed: connectWebhooks, adminPayouts, clientBooking, expertBooking, connect, webhooks, call (401), expertTopics (15 failures, 404). The root cause is not established. Tests mock Stripe and Supabase, so the real `cancellation_reason` write and the replay on deployed code are proven only by the smoke test.
+   - **Correction at close-out:** the checklist below has no step that drives a confirm retry. "All passed" therefore does not show BACK-15 replay working in production. Its evidence is the mocked tests in the gate (coverage D4).
 6. **Real money in the checklist.** Client cancel now refuses a booking past its end time (new), and it already refused `in_progress`. Either way the hold is captured at end+15. See "Keep the bookings separate" below.
 
-## Task 2: Checkpoint (PENDING, user action)
+### The checklist the user was given
 
 **A. Push wave 2:** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`, then wait for Railway to report the deploy healthy. There is no migration to apply first.
 
@@ -126,28 +231,45 @@ Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is wa
    - On build 6, chat behaves as before. It decodes the count but does not display it.
 8. Cancel P before its end time to release the hold. If it ever shows `in_progress`, or the end time has passed, the cancel is refused and the card is charged at end+15. Tell Claude if that happens.
 
-**After you reply, Claude runs (read-only):** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" rev-list --count origin/main..master` must print 0, and `curl -fsS https://clickme-backend-production.up.railway.app/health` must contain `"commit":"7fdc7c4"`. Claude then records your results here.
+## Requirements Status
 
-**Resume signal:** reply "wave 2 deployed" with any checklist step that failed (or "all passed"), plus any "not offered by the client" notes.
+- **Complete in REQUIREMENTS.md:** BACK-09, BACK-12, BACK-14, BACK-15, BACK-18. `requirements.ready-ids` returned all five as ready and none blocked, because every plan declaring them (01-10 to 01-15) now has a SUMMARY.
+- **BACK-15 caveat:** complete under the gate, but deployed behavior rests on mocked tests (coverage D4).
 
 ## Deviations from Plan
 
+- **Production SHA differs from the planned target.** `/health` reports `ddfe5bf`, not `7fdc7c4`. See "Production is at ddfe5bf, not 7fdc7c4". The plan's check against master's short SHA passes, and no code changed in this plan.
 - **Gate command:** ran with `--testPathIgnorePatterns=tests/services/redis.test.js` instead of `REDIS_URL=redis://localhost:6379 npm test` (no local Redis; the dispatch named this as the gate), so `redis.test.js` did not run.
 - **`status --porcelain` not literally empty:** the pre-existing untracked `scripts/uat-seed-profile.js`, left untouched.
 - **[Rule 2 - Missing critical] Checklist tightened from the plan's text.** The plan's step 1 did not say which booking to join on, and its step 8 cancels "the paid booking from step 1". Read together, a paid booking with a connected call cannot be cancelled, and the card is charged at end+15. From `clientBooking.controller.js` `cancellableStatuses`, `call.controller.js` confirm-connection and `expirePastSessions.js` Sweep C. Added the booking table, narrowed step 5 to a free booking with no call, and added the warning to step 8.
 - **Checklist addition for step 7.** Added the force-quit, because `displayUnread` in Android's `ConversationsUiState.kt` returns `maxOf(server, local)`, so the plan's step could pass with the server count still at 0.
 - **New-config scan not completed.** A grep of the diff for new environment variables was blocked by the secret-read guard, and was not reworded to get around it. Evidence that no new config is needed is indirect: no package or config file changed, and the 01-11 to 01-14 SUMMARYs list no user setup (01-13 says so explicitly about environment variables).
 - **Commits on `main`:** `git.base-branch --is-protected main` returns `true`, but `branching_strategy` is `none`, the dispatch named this branch, and plans 01-01 to 01-14 ran the same way. Only planning docs were committed.
-- **`01-USER-SETUP.md` not generated** even though the plan has `user_setup`. The push is the only step and it is fully written in Task 2 above.
+- **`01-USER-SETUP.md` not generated** even though the plan has `user_setup`. The push was the only step and the user has done it, so a file with status "Incomplete" would be wrong.
+
+**Total deviations:** 8, none needing a code fix. **Impact on plan:** `redis.test.js` is the one check that did not run before the push.
+
+## Issues Encountered
+
+None beyond the SHA difference above. The checkpoint resumed as designed.
+
+## User Setup Required
+
+None remaining. The push and smoke test were done by the user in Task 2.
 
 ## Next Phase Readiness
 
-Blocked on Task 2. Deploy wave 3 must not start until wave 2 is pushed, `/health` reports `7fdc7c4`, and the smoke results are recorded here.
+Ready for plan 01-16 (deploy wave 3). Two decisions remain open: the `pending_approval` hold after `end_time`, and the confirm orphaned hold, which needs an answer before Phase 4 payment UAT.
+
+---
+*Phase: 01-backend-fixes*
+*Completed: 2026-11-08*
 
 ## Self-Check: PASSED
 
-- FOUND: this SUMMARY contains "wave 2" and lists every commit in `origin/main..master` with its plan id, the production SHA and the target SHA.
-- `git log origin/main..master` holds exactly the 10 listed commits, all from plans 01-11 to 01-14.
-- `git rev-list --count master..origin/main` = 0; nothing pushed by Claude (`origin/main` still `a92acba`).
-- The checklist's quoted server messages match `call.controller.js` and `clientBooking.controller.js`.
-- Task 2 is not done, so `status: in-progress`, `requirements-completed: []`, and no requirement is marked complete.
+- FOUND: this SUMMARY contains "wave 2" and lists every commit in the pushed bundle with its plan id, the production SHA and the target SHA.
+- FOUND: iOS commit `3d6c5c6`, an ancestor of HEAD. `git rev-list --count d4c9db8..3d6c5c6` = 1, matching `commits: 1`.
+- FOUND: all 10 backend wave-2 commits are ancestors of `origin/main`.
+- `origin/main..master` = 0 and `master..origin/main` = 0; `/health` reports master's short SHA, `ddfe5bf`.
+- FOUND: `.planning/WINDOWS.md` entry 2 records this plan's gate exclusion.
+- Nothing was pushed or deployed by this executor.

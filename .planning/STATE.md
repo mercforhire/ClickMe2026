@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: "Completed 01-18-PLAN.md (wave 3b code committed locally, not deployed). Next: 01-19"
-last_updated: "2026-11-09T01:08:00.020Z"
+stopped_at: 01-19 paused at Task 2 checkpoint (user decides refund retry, pushes wave 3b, runs expert-cancel smoke)
+last_updated: "2026-11-09T01:16:27.687Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: e7784f37dd55cefb2f2dd4725391467d4a7f2c50
+state_head: fa3f552fb7b7dadb7bfc640ae0cb0695af328575
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 18
+  completed_plans: 19
   percent: 0
 ---
 
@@ -150,7 +150,7 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
 - [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
-- [Phase 1]: Open decision from 01-18, before wave 3b is pushed: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; BACK-19 widens it. Also open: PATCH /expert/bookings/:id/status with cancelled moves no money.
+- [Phase 1]: Open decision from 01-18, before wave 3b is pushed: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; from the 01-19 code read, BACK-19 widens it only slightly because capture happens after a booking stops being cancellable. Options and read-only sizing queries are in 01-19-SUMMARY.md. (Correction: PATCH /expert/bookings/:id/status rejects cancelled, so that item is closed.)
 
 ## Deferred Items
 
@@ -162,6 +162,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T01:07:59.990Z
-Stopped at: Completed 01-18-PLAN.md (wave 3b code committed locally, not deployed). Next: 01-19
-Resume file: None
+Last session: 2026-11-09T01:16:27.645Z
+Stopped at: 01-19 paused at Task 2 checkpoint (user decides refund retry, pushes wave 3b, runs expert-cancel smoke)
+Resume file: .planning/phases/01-backend-fixes/01-19-SUMMARY.md

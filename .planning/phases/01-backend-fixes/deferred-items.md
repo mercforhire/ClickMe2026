@@ -53,10 +53,22 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Why deferred:** the plan says to leave the CR-06 error handling untouched, and the behavior predates it. The obvious fix, writing the amount in the catch, is not safe alone: when `retrievePI` fails on an uncaptured booking the handler assumes `succeeded`, and that row needs the void retry. A money-path decision for the user, needed before wave 3b ships if the guarantee has to hold when Stripe fails.
 
 - `PATCH /expert/bookings/:id/status` with `cancelled` moves no money
-  status: open
+  status: resolved
   **Found in:** plan 01-18 (BACK-19), backend `src/controllers/expertBooking.controller.js` `patchStatus`.
-  **What:** an expert can mark any past session `cancelled`, with no check on its current status. The handler makes no refund or void, so a captured booking stays charged. D-17 was implemented on `POST /expert/bookings/:id/cancel` only.
-  **Why deferred:** outside this plan's scope. Whether D-17 covers this route is a product decision for the user.
+  **What:** the item said an expert can mark a past session `cancelled` with no money moving. That was wrong.
+  **Resolution (plan 01-19):** `statusSchema` in `src/schemas/booking.schema.js` allows only `missed` and `completed` (CR-06), and the route applies it through `validate`, which returns 422. Confirmed by parsing the schema; the route was not called with `cancelled`. The handler alone looked reachable. No code changed.
+
+- PATCH status docs still list `cancelled`, and `missed` after capture moves no money
+  status: open
+  **Found in:** plan 01-19 review of the item above, backend `openapi/clickme-api.yaml` (`/expert/bookings/{id}/status`) and the `patchStatus` docblock.
+  **What:** both say `cancelled` is accepted, but the schema rejects it. Separately, `missed` on an already captured past session makes no refund, and the handler has no check on the current status. Neither client calls this route (iOS `main` has an unused API method; Android HEAD `2d04c4ce` has none).
+  **Why deferred:** a doc fix in the backend repo, plus a low-priority product question. No current client reaches it.
+
+- Client cancel can leave a hold with no flag when `retrievePI` fails within 24 hours
+  status: open
+  **Found in:** plan 01-19 review, backend `src/controllers/clientBooking.controller.js` `cancel`.
+  **What:** a `retrievePI` failure on a non-pending booking falls back to `succeeded`. `computeRefundAmountMinorUnits` then returns 0 within 24 hours, so no Stripe call is made and `refund_failed` is not set. `cancelScheduledPayment` leaves a PaymentIntent the caller already knew about, and the capture sweeps skip `cancelled` rows. The hold stays on the card with nothing retrying it, until the authorization lapses. No charge results. Read from the code, not run on real Stripe.
+  **Why deferred:** behavior that predates this project and is outside wave 3b. It belongs with the failed-refund fix above, because the same PaymentIntent read in the handler and sweep would address it.
 
 - Comments still describe the old expert refund rule
   status: open

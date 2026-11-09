@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 8
+open_count: 10
 waived_count: 0
 fixed_count: 0
-total_count: 8
-last_updated: 2026-11-09T01:06:43.585Z
+total_count: 10
+last_updated: 2026-11-09T01:16:27.542Z
 ---
 
 # Broken Windows Ledger
@@ -23,6 +23,8 @@ last_updated: 2026-11-09T01:06:43.585Z
 | 6 | 01 | deviation | .planning/phases/01-backend-fixes/01-18-SUMMARY.md |  | 01-18 BACK-19 D-13 deviation: verified with mocked Stripe only; the captured refund branch has never run against real Stripe and cannot be reached safely on live data | open |  | 2026-11-09T01:06:43.406Z |  |
 | 7 | 01 | unrun-verify | tests/services/redis.test.js |  | 01-18 wave-3b gate excluded tests/services/redis.test.js (no local Redis) | open |  | 2026-11-09T01:06:43.491Z |  |
 | 8 | 01 | fixme | src/controllers/expertBooking.controller.js |  | 01-18 BACK-19: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI instead of a refund and the client is not refunded; see deferred-items.md | open |  | 2026-11-09T01:06:43.585Z |  |
+| 9 | 01 | deviation | tests/services/redis.test.js |  | 01-19 wave-3b gate excluded tests/services/redis.test.js (no local Redis) | open |  | 2026-11-09T01:16:27.446Z |  |
+| 10 | 01 | fixme | src/controllers/clientBooking.controller.js |  | 01-19: client cancel within 24h with a retrievePI failure leaves the hold with no flag and no retry until the authorization lapses; see deferred-items.md | open |  | 2026-11-09T01:16:27.542Z |  |
 
 ````json
 [
@@ -127,6 +129,32 @@ last_updated: 2026-11-09T01:06:43.585Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-09T01:06:43.585Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 9,
+    "kind": "deviation",
+    "phase": "01",
+    "file": "tests/services/redis.test.js",
+    "line": null,
+    "description": "01-19 wave-3b gate excluded tests/services/redis.test.js (no local Redis)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-09T01:16:27.446Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 10,
+    "kind": "fixme",
+    "phase": "01",
+    "file": "src/controllers/clientBooking.controller.js",
+    "line": null,
+    "description": "01-19: client cancel within 24h with a retrievePI failure leaves the hold with no flag and no retry until the authorization lapses; see deferred-items.md",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-09T01:16:27.542Z",
     "resolved_at": null,
     "milestone": null
   }

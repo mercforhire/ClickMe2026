@@ -53,7 +53,7 @@ Task IDs are filled in by the planner; the requirement → suite mapping is fixe
 | TBD | TBD | TBD | CALL-09 | — | Lookalike hosts are not trusted providers | unit | `-only-testing:ClickMe2026Tests/ExternalMeetingProviderTests` | ❌ W0 | ⬜ pending |
 | 02-05 T1-T3 | 02-05 | 2 | BOOK-10 | T-02-10, T-02-11 | N/A | unit | `-only-testing:ClickMe2026Tests/MoneyTests` | ❌ W0 | ⬜ pending |
 | 02-06 T1, T2 | 02-06 | 3 | BOOK-10 | T-02-12 | Each expert site uses the entry point for its unit | unit | `-only-testing:ClickMe2026Tests/MoneyCallSiteTests` | ❌ W0 | ⬜ pending |
-| 02-06 T3 | 02-06 | 3 | BOOK-10 | T-02-30 | An unedited topic save keeps its stored price | unit + grep gate | `-only-testing:ClickMe2026Tests/MoneyCallSiteTests` | ❌ W0 | ⬜ pending |
+| 02-06 T3 | 02-06 | 3 | BOOK-10 | T-02-30 | An unedited topic save keeps its stored price amount and currency (D-19) | unit + grep gate | `-only-testing:ClickMe2026Tests/MoneyCallSiteTests` | ❌ W0 | ⬜ pending |
 | 02-15 T1 | 02-15 | 3 | BOOK-10 | T-02-33 | Unknown earnings show "—", never a made-up $0 | unit + grep gate | `-only-testing:ClickMe2026Tests/ClientProfileBookingCardTests` | ❌ W0 | ⬜ pending |
 | 02-03 T1, T2 | 02-03 | 1 | BOOK-18 | T-02-06, T-02-07 | Unknown statuses decode instead of dropping the event | unit | `-only-testing:ClickMe2026Tests/BookingStatusDecodingTests` | ❌ W0 | ⬜ pending |
 | 02-03 T2 | 02-03 | 1 | BOOK-18 | T-02-27 | Only the newest overlapping refetch writes the expert Upcoming list | unit + grep gate | `-only-testing:ClickMe2026Tests/ReloadGenerationTests` | ❌ W0 | ⬜ pending |
@@ -90,7 +90,7 @@ Task IDs are filled in by the planner; the requirement → suite mapping is fixe
 | After logout the old account's pushes do not arrive | PUSH-04 | Needs real APNs/FCM delivery | Log out, trigger a push to the old account, confirm nothing arrives |
 | No banner for the chat already on screen | CHAT-09 | Foreground notification presentation | Open a chat, send a message from the other side, confirm no banner |
 | Join button at the window edges | CALL-02 | Live booking timing | Check Join at start−60, during the session, and after end on a long session, on the lists and on the Explore and dashboard strips |
-| Money on screen; topic reopen-and-save; Client Profile history | BOOK-10 | Rendering, and a real topic PATCH against production data | Check cents and CA$ on each money screen; open a topic priced with cents, change only the title, save, confirm the price is unchanged; confirm Client Profile history rows show "—" |
+| Money on screen; topic reopen-and-save; Client Profile history | BOOK-10 | Rendering, and a real topic PATCH against production data | Check cents and CA$ on each money screen; open a topic priced with cents, change only the title, save, confirm the price and its currency are unchanged; confirm Client Profile history rows show "—" |
 
 ---
 

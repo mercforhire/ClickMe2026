@@ -2,7 +2,7 @@
 phase: 01-backend-fixes
 verified: 2026-11-09T03:45:00Z
 status: gaps_found
-score: 13/19 must-haves verified
+score: 15/19 must-haves verified (2 by override, not delivered)
 covered_files:
   - .planning/REQUIREMENTS.md
   - .planning/ROADMAP.md
@@ -54,10 +54,19 @@ covered_files:
   - .planning/phases/01-backend-fixes/01-23-SUMMARY.md
 covered_digest: "v3:sha256:5ec457da5f5626c7a7199bf7665893856704ae634fd9d948d7f8c21870834ef9"
 behavior_unverified: 3
-overrides_applied: 0
+overrides_applied: 2
+overrides:
+  - must_have: "BACK-08: A client account is never shown the Stripe tax-ID prompt"
+    reason: "Wave 3c dropped by user decision to protect App Store build 6, because it stops client-only accounts from becoming experts there. Not delivered: first-touch promotion and the tax-ID prompt remain in production. Code parked on backend branch wave-3c."
+    accepted_by: "Leon chen"
+    accepted_at: "2026-11-09T04:14:07Z"
+  - must_have: "BACK-13: A client becomes an expert only through an explicit setup call"
+    reason: "Wave 3c dropped by user decision to protect App Store build 6, because it stops client-only accounts from becoming experts there. Not delivered: first-touch promotion and the tax-ID prompt remain in production. Code parked on backend branch wave-3c."
+    accepted_by: "Leon chen"
+    accepted_at: "2026-11-09T04:14:07Z"
 gaps:
   - truth: "BACK-08: A client account is never shown the Stripe tax-ID prompt (ROADMAP success criterion 2)"
-    status: failed
+    status: overridden
     reason: "Not delivered. Wave 3c was dropped by user decision on 2026-11-08 and never pushed. Production (master 3899d63 = origin/main, /health reports 3899d63) has no expertWriteGate, no non-expert refusal in postOnboard, and no EXPERT_SETUP_REQUIRED code in src or openapi. Plans 01-21 and 01-22 are marked complete, but their code exists only on local branch wave-3c."
     artifacts:
       - path: "src/routes/index.js"
@@ -67,7 +76,7 @@ gaps:
     missing:
       - "A new user decision: ship wave-3c in some form that keeps build 6 client-only accounts able to become experts, or defer BACK-08 with a reason (REL-02 already says this must be decided before release)"
   - truth: "BACK-13: A client becomes an expert only through an explicit setup call, not any /expert/* call (ROADMAP success criterion 3)"
-    status: failed
+    status: overridden
     reason: "Not delivered, same decision as BACK-08. On master, src/middleware/ensureExpert.js still upserts expert_profiles and writes app_metadata roles [client, expert] and profiles.roles on the first /expert/* call (lines 80-98). grep of tests/ for BACK-13 returns 0 files on master."
     artifacts:
       - path: "src/middleware/ensureExpert.js"
@@ -273,7 +282,7 @@ overrides:
     accepted_at: "{ISO timestamp}"
 ```
 
-I did not add these. An override needs the user's own acceptance, and the drop decision is recorded in STATE.md but not as an override of these truths. Even with the overrides, the phase would be `human_needed` because of CR-01 and the three behavior-unverified money items.
+The user accepted both overrides on 2026-11-09 (UTC); they are now in the frontmatter. The text below is the verifier's note from before that. I did not add these. An override needs the user's own acceptance, and the drop decision is recorded in STATE.md but not as an override of these truths. Even with the overrides, the phase would be `human_needed` because of CR-01 and the three behavior-unverified money items.
 
 ---
 
@@ -285,3 +294,7 @@ _Verifier: Claude (gsd-verifier)_
 **Update 2026-11-08: reproduced and fixed.** The user reproduced this on App Store build 6: a client-mode tap on a booking push landed on SwiftUI's yellow warning page in the Bookings tab. Backend commit `215adcb`, pushed by the user, sends `route_category` and `route_sub_category` to iOS and legacy tokens instead of `category` and `sub_category`. `/health` reports `215adcb`. User-run device results after the deploy: a new booking push on build 6 in client mode opens the app on the client home page with no warning; a chat push opens the chat screen; an Android booking push opens the right screen. Expert-mode taps on build 6 no longer navigate either. This replaces D-01's "same keys on every platform" while build 6 is in use.
 
 This closes the CR-01 human-verification item and the build 6 safety question on BACK-17. The verdict and score above are not recomputed: status stays `gaps_found` for BACK-08 and BACK-13, and BACK-06, BACK-07 and BACK-19 stay unproven on real Stripe. Other sections above that describe `category` on iOS predate this fix. REQUIREMENTS.md and ROADMAP.md were left unedited here, so the covered-input fingerprint still holds.
+
+## Overrides accepted (2026-11-09 UTC)
+
+The user replied "accept the BACK-08 and BACK-13 override". Both now count as PASSED (override), and neither is delivered. Status stays `gaps_found` because BACK-19's "always refunds" does not hold when a refund fails (the refund retry bug, user option A), and that fix still needs a plan. BACK-06, BACK-07 and BACK-19 stay unproven on real Stripe. REQUIREMENTS.md keeps BACK-08 and BACK-13 unchecked, because they are not delivered. WINDOWS.md #12 stays open. Phase 5 SIGN-06 still needs a new decision.

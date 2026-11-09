@@ -511,28 +511,28 @@ final class MeetingCallViewModel: ObservableObject {
     /// (preview / legacy call sites).
     private func recomputeElapsed() {
         let anchor = scheduledStart ?? joinStartTime ?? Date()
-        elapsedSeconds = Int(Date().timeIntervalSince(anchor))
-        enforceMaxOvertimeCutoff()
+        let now = Date()
+        elapsedSeconds = Int(now.timeIntervalSince(anchor))
+        applyOvertimePolicy(now: now)
     }
 
-    /// Abuse guard — force-close the call if it has been running more
-    /// than the overtime cutoff past `scheduledEnd`. Belt-and-suspenders
-    /// alongside the Agora RTC token's own expiry (which handles
-    /// in_app_voice) and, for the Skype/Zoom variant, the only backstop
-    /// we have since there's no server-controlled session on that path.
+    /// Abuse guard — force-close the call once it has run past the
+    /// overtime cutoff in `CallOvertimePolicy` (60 minutes after
+    /// `scheduledEnd`). Belt-and-suspenders alongside the Agora RTC
+    /// token's own expiry (which handles in_app_voice) and, for the
+    /// Skype/Zoom variant, the only backstop we have since there's no
+    /// server-controlled session on that path.
     /// Fires exactly once — the `isEndingCall` / `.ended` guards keep
     /// the per-second timer tick from re-invoking `endCall` while the
     /// teardown is in flight.
-    ///
-    /// TEMP: cutoff is 5 min for testing; revert to 3600 (1 hour) for
-    /// production.
-    private func enforceMaxOvertimeCutoff() {
-        guard let scheduledEnd else { return }
+    private func applyOvertimePolicy(now: Date) {
         guard callStatus != .ended, !isEndingCall else { return }
-        let overtimeCutoffSeconds: TimeInterval = 5 * 60 // TEMP: was 3600
-        let cutoff = scheduledEnd.addingTimeInterval(overtimeCutoffSeconds)
-        guard Date() >= cutoff else { return }
-        CallCenter.shared.endCall()
+        switch CallOvertimePolicy.action(scheduledEnd: scheduledEnd, now: now) {
+        case .end:
+            CallCenter.shared.endCall()
+        case .warn, .none:
+            break
+        }
     }
 
     func stopTimer() {

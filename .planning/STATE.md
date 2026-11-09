@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: "Completed 01-17-PLAN.md (wave 3a deployed; smoke not run by user decision). Next: 01-18"
-last_updated: "2026-11-09T01:00:39.289Z"
+stopped_at: "Completed 01-18-PLAN.md (wave 3b code committed locally, not deployed). Next: 01-19"
+last_updated: "2026-11-09T01:08:00.020Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 73d38d299a3801a5fea80e98ac570a7882686aa5
+state_head: e7784f37dd55cefb2f2dd4725391467d4a7f2c50
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 17
+  completed_plans: 18
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 18 of 23
+Plan: 19 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -73,6 +73,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P15 | ~6h 20m wall clock (user wait) | 2 tasks | 5 files |
 | Phase 01 P16 | 6 min | 2 tasks | 8 files |
 | Phase 01 P17 | ~30 min wall clock (user wait) | 1 of 2 (Task 2 deployed, smoke not run) tasks | 1 files |
+| Phase 01 P18 | 5 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-17: the smoke checklist reads the clone id from connected_pm_clones before the card is removed, because eviction deletes the only record of it and a count of 0 afterwards proves nothing if no clone existed
 - [Phase 01]: 01-17: the checklist's paid booking starts 2 to 5 days out and is never joined or rescheduled, because a connected call or client no-show is captured at end+15 and a reschedule can convert it to a T-24h charge
 - [Phase 01]: 01-17: the checklist proves a hold released from the PaymentIntent state, not the app, because client cancel returns 200 even when the Stripe void failed (it sets refund_failed)
+- [Phase 01]: 01-18 BACK-19: POST /expert/bookings/:id/cancel refunds amount_paid_minor_units in full on a captured PaymentIntent at any time and moves captured to refunded; a zero amount still makes no Stripe call; client cancel keeps the 24-hour rule; committed locally at 3899d63, not deployed, mocked Stripe only
+- [Phase 01]: 01-18 BACK-19: a retrievePI failure on a non-pending booking still falls back to the captured branch, so that case now attempts a full refund at any time; a rejected refund flags refund_failed and the sweep's cancelPI then applies to an uncaptured hold
 
 ### Pending Todos
 
@@ -147,6 +150,7 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
 - [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
+- [Phase 1]: Open decision from 01-18, before wave 3b is pushed: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; BACK-19 widens it. Also open: PATCH /expert/bookings/:id/status with cancelled moves no money.
 
 ## Deferred Items
 
@@ -158,6 +162,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T01:00:39.260Z
-Stopped at: Completed 01-17-PLAN.md (wave 3a deployed; smoke not run by user decision). Next: 01-18
+Last session: 2026-11-09T01:07:59.990Z
+Stopped at: Completed 01-18-PLAN.md (wave 3b code committed locally, not deployed). Next: 01-19
 Resume file: None

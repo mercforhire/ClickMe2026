@@ -125,8 +125,8 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BACK-03** [K3]: Expert booking detail and lists expose whether the client left a review (`has_review`)
 - [x] **BACK-04** [K4]: An expert can clear `meeting_url` (null or "")
 - [x] **BACK-05** [K5]: `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol
-- [ ] **BACK-06** [K6]: A lone saved card is made the default
-- [ ] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone
+- [ ] **BACK-06** [K6]: A lone saved card is made the default *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Do not close until the 01-17 checklist has been run.)*
+- [ ] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Do not close until the 01-17 checklist has been run.)*
 - [ ] **BACK-08** [K8]: A client account is never shown the Stripe tax-ID prompt
 - [x] **BACK-09** [K9]: The join window matches the client rule in CALL-02, and `/bookings/:id/join` checks booking status
 - [x] **BACK-10** [K10]: `POST /bookings/request` validates `duration_minutes` and rejects a past `scheduled_start`
@@ -284,4 +284,4 @@ Which phases cover which requirements. Filled in during roadmap creation.
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-07 — D-15/D-17 (Phase 1 plan-phase)*
+*Last updated: 2026-11-08 — BACK-06 and BACK-07 kept Pending after the wave-3a smoke was skipped by user decision (01-17)*

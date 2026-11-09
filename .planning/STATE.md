@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: 01-17 paused at Task 2 checkpoint (user pushes wave 3a, runs real-card smoke)
-last_updated: "2026-11-09T00:34:50.033Z"
+stopped_at: "Completed 01-17-PLAN.md (wave 3a deployed; smoke not run by user decision). Next: 01-18"
+last_updated: "2026-11-09T01:00:39.289Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 6e0d306f891ee3916d0b7982c1866f280556c4aa
+state_head: 73d38d299a3801a5fea80e98ac570a7882686aa5
 progress:
   total_phases: 8
   completed_phases: 0
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 17 of 23
+Plan: 18 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -72,6 +72,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P14 | 5 min | 3 tasks | 10 files |
 | Phase 01 P15 | ~6h 20m wall clock (user wait) | 2 tasks | 5 files |
 | Phase 01 P16 | 6 min | 2 tasks | 8 files |
+| Phase 01 P17 | ~30 min wall clock (user wait) | 1 of 2 (Task 2 deployed, smoke not run) tasks | 1 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,10 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-16 BACK-07: only resource_missing and payment_method_unexpected_state count as a clone already gone; any other Stripe error returns 502 and keeps the card, so an unreachable connected account could make a card undeletable (logged in deferred-items.md)
 - [Phase 01]: 01-16 BACK-06: a lone card with no default is promoted on GET and after a delete; failures to list or promote after the detach do not fail the DELETE, because the card is already gone and a retry would 404
 - [Phase 01]: 01-16: D-13 local Stripe test-mode run dropped by user decision (Open Q7); Stripe behavior is proven only against mocks until the 01-17 real-card smoke
+- [Phase 01]: 01-17: wave 3a deployed by the user, production moved from ddfe5bf to d356fdc; the real-card smoke was NOT RUN by user decision (2026-11-08), so BACK-06 and BACK-07 stay Pending and the real clone detach has never run against real Stripe
+- [Phase 01]: 01-17: the smoke checklist reads the clone id from connected_pm_clones before the card is removed, because eviction deletes the only record of it and a count of 0 afterwards proves nothing if no clone existed
+- [Phase 01]: 01-17: the checklist's paid booking starts 2 to 5 days out and is never joined or rescheduled, because a connected call or client no-show is captured at end+15 and a reschedule can convert it to a T-24h charge
+- [Phase 01]: 01-17: the checklist proves a hold released from the PaymentIntent state, not the app, because client cancel returns 200 even when the Stripe void failed (it sets refund_failed)
 
 ### Pending Todos
 
@@ -141,6 +146,7 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 7]: CHAT-08 needs a device re-test before planning (Q8).
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
+- [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
 
 ## Deferred Items
 
@@ -152,6 +158,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T00:34:49.993Z
-Stopped at: 01-17 paused at Task 2 checkpoint (user pushes wave 3a, runs real-card smoke)
-Resume file: .planning/phases/01-backend-fixes/01-17-SUMMARY.md
+Last session: 2026-11-09T01:00:39.260Z
+Stopped at: Completed 01-17-PLAN.md (wave 3a deployed; smoke not run by user decision). Next: 01-18
+Resume file: None

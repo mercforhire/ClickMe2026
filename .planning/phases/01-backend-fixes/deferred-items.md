@@ -27,3 +27,15 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-13 (BACK-15), backend `src/controllers/booking.controller.js` `confirm` Step 1.
   **What:** the select destructures only `data`, so a read error looks like "no booking" and the request goes on to the payment work. The unique constraint still blocks a second row, and that insert error now replays for the owner, so no double booking results. The new `findReplayableBooking` read does throw on error.
   **Why deferred:** behavior that predates this plan, and the plan said to keep the existing select.
+
+- A saved card can become undeletable if one of its connected accounts is unreachable
+  status: open
+  **Found in:** plan 01-16 (BACK-07), backend `src/services/connectedPaymentMethodClone.js` `evictClonesForPlatformPaymentMethod`.
+  **What:** only `resource_missing` and `payment_method_unexpected_state` count as "already gone". Any other Stripe error returns 502 and keeps the card, as the plan decided. If an expert's connected account is closed or the platform loses access to it, a client with a clone there may be unable to delete that card. Which error Stripe returns in that case was not established.
+  **Why deferred:** the plan fixes this behavior on purpose. Widening the tolerated list is a money-path decision for the user, ideally informed by the 01-17 smoke.
+
+- In-use check and clone eviction on card delete are not atomic
+  status: open
+  **Found in:** plan 01-16 (BACK-07), backend `src/controllers/paymentMethods.controller.js` `deletePaymentMethod`.
+  **What:** a long-lead confirm for the same card that lands after the bookings check can create a booking, or a clone row after the eviction, with no lock to stop it. A cached clone could then be charged by the T-24h sweep after the client removed the card. It needs one client to book and delete the same card at the same moment.
+  **Why deferred:** closing it needs a lock or a re-check across the delete and confirm paths, which goes beyond this plan.

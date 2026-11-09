@@ -279,3 +279,9 @@ I did not add these. An override needs the user's own acceptance, and the drop d
 
 _Verified: 2026-11-09T03:45:00Z_
 _Verifier: Claude (gsd-verifier)_
+
+## Update after verification (2026-11-08)
+
+**Update 2026-11-08: reproduced and fixed.** The user reproduced this on App Store build 6: a client-mode tap on a booking push landed on SwiftUI's yellow warning page in the Bookings tab. Backend commit `215adcb`, pushed by the user, sends `route_category` and `route_sub_category` to iOS and legacy tokens instead of `category` and `sub_category`. `/health` reports `215adcb`. User-run device results after the deploy: a new booking push on build 6 in client mode opens the app on the client home page with no warning; a chat push opens the chat screen; an Android booking push opens the right screen. Expert-mode taps on build 6 no longer navigate either. This replaces D-01's "same keys on every platform" while build 6 is in use.
+
+This closes the CR-01 human-verification item and the build 6 safety question on BACK-17. The verdict and score above are not recomputed: status stays `gaps_found` for BACK-08 and BACK-13, and BACK-06, BACK-07 and BACK-19 stay unproven on real Stripe. Other sections above that describe `category` on iOS predate this fix. REQUIREMENTS.md and ROADMAP.md were left unedited here, so the covered-input fingerprint still holds.

@@ -4,10 +4,10 @@ current_phase: 01
 current_phase_name: Backend Fixes
 status: verifying
 stopped_at: Completed 01-23-PLAN.md (wave 3c dropped by user decision, not deployed). 23 of 23 plans run; awaiting phase verification
-last_updated: "2026-11-09T04:06:46.337Z"
+last_updated: "2026-11-09T04:13:22.501Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 30ca4a9542d8dd8d88a83dc53b2799fb781d51b6
+state_head: c55d2840278cae10d217edbefb940c68df67ef5f
 progress:
   total_phases: 8
   completed_phases: 0
@@ -147,6 +147,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
+iOS Phase 2 PUSH-01 must read `route_category` and `route_sub_category`, not `category`, and must register a destination for every route pushed onto each stack (client Bookings registers only `BookingRoute`). Otherwise CR-01 returns in the new build. Contract: backend `docs/ios/PUSH-ROUTING.md`. Backend `src/services/push.js` and its CR-01 test must keep `category` away from iOS tokens while build 6 is in use.
+
 Android follow-ups from Phase 1 (logged, not built):
 
 - Decline note display on Android booking detail (BACK-02)
@@ -159,6 +161,7 @@ Android follow-ups from Phase 1 (logged, not built):
 
 ### Blockers/Concerns
 
+- [Phase 1]: CR-01 fixed 2026-11-08 (backend `215adcb`, live, user device check passed): build 6 booking push taps open the app without navigating, in client and expert mode, until the new iOS build. Production is at `215adcb`; `master` matches it; `wave-3c` remains parked and unshipped.
 - [Phase 1]: Q6 must be settled before BACK-17 is planned. It decides whether PUSH-01 (Phase 2) uses a backend `category` or a wider iOS parser.
 - [Phase 1]: BACK-09 (tighter `/join` window plus a status check) can conflict with CALL-01 overtime to end+60, because the cron completes bookings at end+15. Settle the rejoin rule in discuss.
 - [Phase 1]: The backend is live production and also serves App Store build 6, so every change must be safe for build 6 and current Android. BACK-13 (expert promotion) carries the most risk.
@@ -177,6 +180,7 @@ Android follow-ups from Phase 1 (logged, not built):
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 261108-vrh | Prompt for push permission on every signed-in launch | 2026-11-08 | 30ca4a9 | [261108-vrh-prompt-for-push-permission-on-every-sign](./quick/261108-vrh-prompt-for-push-permission-on-every-sign/) |
+| 2 | Backend hotfix for CR-01: stop sending category to iOS tokens (215adcb) | 2026-11-08 | c55d284 | — |
 
 ## Deferred Items
 

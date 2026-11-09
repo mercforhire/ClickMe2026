@@ -80,6 +80,8 @@ No structural findings or external reviewer evidence were provided, so everythin
 
 ### CR-01: Client-mode taps on booking pushes go to a route the Bookings tab cannot show on build 6
 
+**Update 2026-11-08: reproduced and fixed.** The user reproduced this on App Store build 6: a client-mode tap on a booking push landed on SwiftUI's yellow warning page in the Bookings tab. Backend commit `215adcb`, pushed by the user, sends `route_category` and `route_sub_category` to iOS and legacy tokens instead of `category` and `sub_category`. `/health` reports `215adcb`. User-run device results after the deploy: a new booking push on build 6 in client mode opens the app on the client home page with no warning; a chat push opens the chat screen; an Android booking push opens the right screen. Expert-mode taps on build 6 no longer navigate either. This replaces D-01's "same keys on every platform" while build 6 is in use.
+
 **File:** `src/services/push.js:322-327`; iOS `ClickMe2026/Views/Screens/Client Mode/Home/HomeClientView.swift:140-142,155-159,205-210`; iOS `ClickMe2026/Views/Screens/Client Mode/My Bookings/MyBookingsView.swift:102`
 
 **Issue:** BACK-17 adds `category` and `sub_category` for iOS tokens. Build 6's `PushEvent` reads `category` first (`PushEvent.swift:61-65`), so pushes that used to parse to `nil`, and did nothing on tap, now reach `PushRouter`. This much was known and accepted (RESEARCH F1), but on the belief that these taps open the booking: `docs/ios/PUSH-ROUTING.md` says so, and smoke step 6 expects "each opens that booking".

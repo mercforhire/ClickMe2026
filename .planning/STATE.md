@@ -4,10 +4,10 @@ current_phase: 01
 current_phase_name: Backend Fixes
 status: verifying
 stopped_at: Completed 01-23-PLAN.md (wave 3c dropped by user decision, not deployed). 23 of 23 plans run; awaiting phase verification
-last_updated: "2026-11-09T03:17:24.399Z"
+last_updated: "2026-11-09T04:06:46.337Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: b38a4a97e74fdfac1d702a13a0374c2e03d98855
+state_head: 30ca4a9542d8dd8d88a83dc53b2799fb781d51b6
 progress:
   total_phases: 8
   completed_phases: 0
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 Phase: 01 (Backend Fixes) — EXECUTING
 Plan: 23 of 23
 Status: 23 of 23 plans run, awaiting phase verification. Phase 1 is not complete: BACK-06, BACK-07 and BACK-19 have skipped smokes, and BACK-08 and BACK-13 are not delivered
-Last activity: 2026-11-08 — Phase 01 execution started
+Last activity: 2026-11-08 - Completed quick task 261108-vrh: Prompt for push permission on every signed-in launch
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -171,6 +171,12 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 1]: Refund retry fix (user chose option A, 2026-11-08): failed refunds are not retried as refunds; needs its own plan and deploy before Phase 4 payment UAT. No phase or plan for it exists yet; one still needs creating. A failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; from the 01-19 code read, BACK-19 widens it only slightly because capture happens after a booking stops being cancellable. Analysis and the shape of the fix are in 01-19-SUMMARY.md. (Correction: PATCH /expert/bookings/:id/status rejects cancelled, so that item is closed.)
 - [Phase 1]: BACK-19 production smoke not run (user skip 2026-11-08); run the 01-19 checklist before it closes, at the latest during Phase 4 payment UAT.
 - BACK-08 and BACK-13 not delivered (wave 3c dropped 2026-11-08). The silent client-to-expert promotion and the tax-ID prompt remain in production. Phase 5 SIGN-06 pairs with BACK-13 and needs a re-decision. Code parked on backend branch wave-3c.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 261108-vrh | Prompt for push permission on every signed-in launch | 2026-11-08 | 30ca4a9 | [261108-vrh-prompt-for-push-permission-on-every-sign](./quick/261108-vrh-prompt-for-push-permission-on-every-sign/) |
 
 ## Deferred Items
 

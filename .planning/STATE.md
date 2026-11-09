@@ -147,6 +147,20 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
+iOS Phase 2 PUSH-01 must read `route_category` and `route_sub_category`, not `category`, and must register a destination for every route pushed onto each stack (client Bookings registers only `BookingRoute`). Otherwise CR-01 returns in the new build. Contract: backend `docs/ios/PUSH-ROUTING.md`. Backend `src/services/push.js` and its CR-01 test must keep `category` away from iOS tokens while build 6 is in use.
+
+Android follow-ups from Phase 1 (logged, not built):
+
+- Decline note display on Android booking detail (BACK-02)
+- Switch `displayUnread` to the server count once BACK-18 is live (BACK-18)
+- Expert-cancel copy promises a full refund (D-17/BACK-19)
+- Map PAYMENT_METHOD_IN_USE on card delete (BACK-07)
+- Map EXPERT_SETUP_REQUIRED and route to the setup hub (BACK-13). Only if wave-3c is revived; production does not return this code
+- Map SESSION_ALREADY_ENDED on client cancel (BACK-12)
+- Route payment-intent 409 DUPLICATE_BOOKING to detail.booking_id (BACK-15)
+
+Captured todos:
+
 - [2026-11-09] [general] Check the Android push prompt after a reinstall — [todo file](.planning/todos/pending/2026-11-08-check-the-android-push-prompt-after-a-reinstall.md)
 - [2026-11-09] [auth] Show the suspension message on a cold launch — [todo file](.planning/todos/pending/2026-11-08-show-the-suspension-message-on-a-cold-launch.md)
 

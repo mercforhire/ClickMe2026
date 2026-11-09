@@ -123,3 +123,21 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-22 (BACK-13) comment sweep, backend `src/routes/index.js` lines 81, 131, 139, 148, 153 and `src/controllers/analytics.controller.js` line 18.
   **What:** they say expert routes self-gate with `roleCheck('expert')`. Those routes use the BACK-13 expert gate, and `roleCheck` is mounted only with `'client'` on the booking routes. Comments only. They do not describe convert-on-demand, so the sweep does not cover them.
   **Why deferred:** outside this plan's files, and more than a one-line correction.
+
+- After wave 3c, a client-only account on build 6 has no way to become an expert
+  status: open
+  **Found in:** plan 01-23 code read, iOS `SplashViewModel.swift` and `LoginView.swift` (both check `roles.contains(.expert)` before opening setup) and `SignupInitialViewModel.swift` (signup always sends `role: .expert`).
+  **What:** the old first-touch promotion is what used to carry such an account into the setup flow on its next launch. Without it, build 6 shows the expert home with the setup message on writes, but no screen opens setup. Android does open its setup hub. SIGN-06 fixes iOS, in the one release at the end of the project. How many accounts this touches is what query Q0 in `01-23-SUMMARY.md` counts; both apps sign up with the expert role, so the number may be small.
+  **Why deferred:** D-08 accepts this until SIGN-06. Logged so it is not read as a smoke failure.
+
+- BACK-08 does not cover an account that signed up through an app, and an expert role alone does not show silent promotion
+  status: open
+  **Found in:** plan 01-23 code read, backend `src/controllers/auth.controller.js` signup, iOS `SignupInitialViewModel.swift`, Android `SignupRequests.kt`.
+  **What:** both apps sign up with `role: expert`, which writes roles `[client, expert]` at signup. So such an account passes the gate and can still open the tax form and Connect onboarding, even if its owner thinks of it as a client account. Plan 01-23 says an expert role on account B confirms the silent-promotion path. That is too strong: signup gives the same role values, and an `expert_profiles` row can come from first touch, publish or a profile edit. `01-23-SUMMARY.md` has the reading guide.
+  **Why deferred:** whether an expert-role account that never finished setup should see these screens is a product decision, and it may answer BUG-03 once the account B results are in.
+
+- Full-suite flakes continue at wave 3c's final commit, with one new file
+  status: open
+  **Found in:** plan 01-23 gate, nine full runs of `8407402`: seven passed 3099 of 3099, two failed one test each.
+  **What:** `tests/moderationGates.test.js`, `reportLimiter › counts reports (10/hour) but never action != report`, "Expected: 429, Received: 401". `tests/connectWebhooks.test.js`, `POST /webhooks/stripe-connect — payout.paid › updates withdrawals.status to "paid" when payout.paid fires`, a 5 s timeout, followed by Jest's forced worker exit warning. Each passes alone (14 of 14, 107 of 107). Neither file changed in this wave. Cause not established. The unexpected 401 matches the symptom in the earlier `clientBooking.test.js` entry, which is a clue and not a finding.
+  **Why deferred:** test infrastructure is outside this plan, which changes no backend code.

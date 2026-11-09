@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-22-PLAN.md
-last_updated: "2026-11-09T02:43:31.319Z"
+stopped_at: "01-23 Task 2 checkpoint: wave 3c ready to push, awaiting user decision on setup promotion, push and smoke"
+last_updated: "2026-11-09T02:55:16.038Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: fe4059b7c55046691ee610209b6369f6d994c84f
+state_head: 958ab2ebccc449ad1a59f2b456375ccd6ef8034e
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 22
+  completed_plans: 23
   percent: 0
 ---
 
@@ -166,6 +166,7 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
 - [Phase 1]: Refund retry fix (user chose option A, 2026-11-08): failed refunds are not retried as refunds; needs its own plan and deploy before Phase 4 payment UAT. No phase or plan for it exists yet; one still needs creating. A failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; from the 01-19 code read, BACK-19 widens it only slightly because capture happens after a booking stops being cancellable. Analysis and the shape of the fix are in 01-19-SUMMARY.md. (Correction: PATCH /expert/bookings/:id/status rejects cancelled, so that item is closed.)
 - [Phase 1]: BACK-19 production smoke not run (user skip 2026-11-08); run the 01-19 checklist before it closes, at the latest during Phase 4 payment UAT.
+- Wave 3c (BACK-13, BACK-08) is packaged at 8407402 and not pushed. User decides setup-route promotion option A, B or C, then pushes and runs the 01-23 smoke
 
 ## Deferred Items
 
@@ -177,6 +178,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T02:43:31.289Z
-Stopped at: Completed 01-22-PLAN.md
-Resume file: None
+Last session: 2026-11-09T02:55:15.876Z
+Stopped at: 01-23 Task 2 checkpoint: wave 3c ready to push, awaiting user decision on setup promotion, push and smoke
+Resume file: .planning/phases/01-backend-fixes/01-23-SUMMARY.md

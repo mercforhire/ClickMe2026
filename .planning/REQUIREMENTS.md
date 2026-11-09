@@ -138,7 +138,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
 - [x] **BACK-17** [N1 backend half]: Push payloads carry the routing fields iOS needs (if decision Q6 picks the backend route)
 - [x] **BACK-18** [H7 backend half] **[major]**: Unread counts increment on send and reset on `message.read`
-- [ ] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule
+- [ ] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule *(Pending on purpose: deployed at 3899d63, but the production smoke was not run by user decision on 2026-11-08. Do not close until the 01-19 checklist has been run.)*
 
 ### Release
 
@@ -284,4 +284,4 @@ Which phases cover which requirements. Filled in during roadmap creation.
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-08 — BACK-06 and BACK-07 kept Pending after the wave-3a smoke was skipped by user decision (01-17)*
+*Last updated: 2026-11-08 — BACK-19 kept Pending after the wave-3b smoke was skipped by user decision (01-19)*

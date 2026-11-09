@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 10
+open_count: 11
 waived_count: 0
 fixed_count: 0
-total_count: 10
-last_updated: 2026-11-09T01:16:27.542Z
+total_count: 11
+last_updated: 2026-11-09T02:16:24.413Z
 ---
 
 # Broken Windows Ledger
@@ -22,9 +22,10 @@ last_updated: 2026-11-09T01:16:27.542Z
 | 5 | 01 | unrun-verify | .planning/phases/01-backend-fixes/01-17-SUMMARY.md |  | 01-17 wave-3a real-card smoke not run (user skip 2026-11-08): BACK-06/BACK-07 stay Pending; real clone detach never run against real Stripe; run the 01-17 checklist, at the latest during Phase 4 payment UAT | open |  | 2026-11-09T01:00:39.518Z |  |
 | 6 | 01 | deviation | .planning/phases/01-backend-fixes/01-18-SUMMARY.md |  | 01-18 BACK-19 D-13 deviation: verified with mocked Stripe only; the captured refund branch has never run against real Stripe and cannot be reached safely on live data | open |  | 2026-11-09T01:06:43.406Z |  |
 | 7 | 01 | unrun-verify | tests/services/redis.test.js |  | 01-18 wave-3b gate excluded tests/services/redis.test.js (no local Redis) | open |  | 2026-11-09T01:06:43.491Z |  |
-| 8 | 01 | fixme | src/controllers/expertBooking.controller.js |  | 01-18 BACK-19: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI instead of a refund and the client is not refunded; see deferred-items.md | open |  | 2026-11-09T01:06:43.585Z |  |
+| 8 | 01 | fixme | src/controllers/expertBooking.controller.js |  | 01-18 BACK-19: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI instead of a refund and the client is not refunded. User chose option A (2026-11-08): the fix needs its own plan and deploy before Phase 4 payment UAT, and that plan still needs creating; see deferred-items.md | open |  | 2026-11-09T01:06:43.585Z |  |
 | 9 | 01 | deviation | tests/services/redis.test.js |  | 01-19 wave-3b gate excluded tests/services/redis.test.js (no local Redis) | open |  | 2026-11-09T01:16:27.446Z |  |
 | 10 | 01 | fixme | src/controllers/clientBooking.controller.js |  | 01-19: client cancel within 24h with a retrievePI failure leaves the hold with no flag and no retry until the authorization lapses; see deferred-items.md | open |  | 2026-11-09T01:16:27.542Z |  |
+| 11 | 01 | unrun-verify | .planning/phases/01-backend-fixes/01-19-SUMMARY.md |  | 01-19 wave-3b production smoke not run (user skip 2026-11-08): BACK-19 stays Pending; expert-cancel hold release not confirmed on production; run the 01-19 checklist, at the latest during Phase 4 payment UAT | open |  | 2026-11-09T02:16:24.413Z |  |
 
 ````json
 [
@@ -125,7 +126,7 @@ last_updated: 2026-11-09T01:16:27.542Z
     "phase": "01",
     "file": "src/controllers/expertBooking.controller.js",
     "line": null,
-    "description": "01-18 BACK-19: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI instead of a refund and the client is not refunded; see deferred-items.md",
+    "description": "01-18 BACK-19: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI instead of a refund and the client is not refunded. User chose option A (2026-11-08): the fix needs its own plan and deploy before Phase 4 payment UAT, and that plan still needs creating; see deferred-items.md",
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-09T01:06:43.585Z",
@@ -155,6 +156,19 @@ last_updated: 2026-11-09T01:16:27.542Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-09T01:16:27.542Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 11,
+    "kind": "unrun-verify",
+    "phase": "01",
+    "file": ".planning/phases/01-backend-fixes/01-19-SUMMARY.md",
+    "line": null,
+    "description": "01-19 wave-3b production smoke not run (user skip 2026-11-08): BACK-19 stays Pending; expert-cancel hold release not confirmed on production; run the 01-19 checklist, at the latest during Phase 4 payment UAT",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-09T02:16:24.413Z",
     "resolved_at": null,
     "milestone": null
   }

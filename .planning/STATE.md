@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: 01-19 paused at Task 2 checkpoint (user decides refund retry, pushes wave 3b, runs expert-cancel smoke)
-last_updated: "2026-11-09T01:16:27.687Z"
+stopped_at: "Completed 01-19-PLAN.md (wave 3b deployed; smoke not run by user decision). Next: 01-20"
+last_updated: "2026-11-09T02:16:24.177Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: fa3f552fb7b7dadb7bfc640ae0cb0695af328575
+state_head: babb17cee91179392a5ae0ed9ac1557f12cd2fd2
 progress:
   total_phases: 8
   completed_phases: 0
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 19 of 23
+Plan: 20 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -74,6 +74,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P16 | 6 min | 2 tasks | 8 files |
 | Phase 01 P17 | ~30 min wall clock (user wait) | 1 of 2 (Task 2 deployed, smoke not run) tasks | 1 files |
 | Phase 01 P18 | 5 min | 2 tasks | 5 files |
+| Phase 01 P19 | ~1h 10m wall clock (user wait) | 1 of 2 (Task 2 deployed, smoke not run) tasks | 1 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-17: the checklist proves a hold released from the PaymentIntent state, not the app, because client cancel returns 200 even when the Stripe void failed (it sets refund_failed)
 - [Phase 01]: 01-18 BACK-19: POST /expert/bookings/:id/cancel refunds amount_paid_minor_units in full on a captured PaymentIntent at any time and moves captured to refunded; a zero amount still makes no Stripe call; client cancel keeps the 24-hour rule; committed locally at 3899d63, not deployed, mocked Stripe only
 - [Phase 01]: 01-18 BACK-19: a retrievePI failure on a non-pending booking still falls back to the captured branch, so that case now attempts a full refund at any time; a rejected refund flags refund_failed and the sweep's cancelPI then applies to an uncaptured hold
+- [Phase 01]: 01-19: wave 3b deployed by the user, production moved from d356fdc to 3899d63; the production smoke was NOT RUN by user decision (2026-11-08), so BACK-19 stays Pending. Wave 3a and wave 3b are both live with no real-Stripe check; d356fdc is the rollback target for this wave and contains unverified card code
+- [Phase 01]: 01-19: user chose option A on the refund retry (2026-11-08): push now, fix next. Failed refunds are not retried as refunds until a separate plan and deploy, before Phase 4 payment UAT; that plan still needs creating
+- [Phase 01]: 01-19: read-only queries QA and QB were user-run and reported empty after the push; their order relative to the push is not known. An empty QA is strong evidence, not proof, since an old row's payment_status can be stale
 
 ### Pending Todos
 
@@ -150,7 +154,8 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
 - [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
-- [Phase 1]: Open decision from 01-18, before wave 3b is pushed: a failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; from the 01-19 code read, BACK-19 widens it only slightly because capture happens after a booking stops being cancellable. Options and read-only sizing queries are in 01-19-SUMMARY.md. (Correction: PATCH /expert/bookings/:id/status rejects cancelled, so that item is closed.)
+- [Phase 1]: Refund retry fix (user chose option A, 2026-11-08): failed refunds are not retried as refunds; needs its own plan and deploy before Phase 4 payment UAT. No phase or plan for it exists yet; one still needs creating. A failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; from the 01-19 code read, BACK-19 widens it only slightly because capture happens after a booking stops being cancellable. Analysis and the shape of the fix are in 01-19-SUMMARY.md. (Correction: PATCH /expert/bookings/:id/status rejects cancelled, so that item is closed.)
+- [Phase 1]: BACK-19 production smoke not run (user skip 2026-11-08); run the 01-19 checklist before it closes, at the latest during Phase 4 payment UAT.
 
 ## Deferred Items
 
@@ -162,6 +167,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T01:16:27.645Z
-Stopped at: 01-19 paused at Task 2 checkpoint (user decides refund retry, pushes wave 3b, runs expert-cancel smoke)
-Resume file: .planning/phases/01-backend-fixes/01-19-SUMMARY.md
+Last session: 2026-11-09T02:16:24.148Z
+Stopped at: Completed 01-19-PLAN.md (wave 3b deployed; smoke not run by user decision). Next: 01-20
+Resume file: None

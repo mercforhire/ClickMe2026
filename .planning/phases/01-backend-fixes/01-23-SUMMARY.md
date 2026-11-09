@@ -2,100 +2,203 @@
 phase: 01-backend-fixes
 plan: 23
 subsystem: auth
-tags: [deploy-handoff, wave-3c, smoke-checklist, expert-gate, BACK-13, BACK-08, BUG-03]
+tags: [wave-3c, dropped, not-deployed, expert-gate, BACK-13, BACK-08, BUG-03]
 
 requires:
   - phase: 01-backend-fixes/01-19
     provides: "wave 3b live; production and origin/main at 3899d63, production smoke not run by user decision"
   - phase: 01-backend-fixes/01-20
-    provides: "BACK-13 gate commits 2b5f9ea, f14f9d0, bdc580f"
+    provides: "BACK-13 gate commits 2b5f9ea, f14f9d0, bdc580f (now only on backend branch wave-3c)"
   - phase: 01-backend-fixes/01-21
-    provides: "BACK-08 seam commits de662e9, e1eb483 (option-a, decision record 01-21-D1)"
+    provides: "BACK-08 seam commits de662e9, e1eb483, option-a, decision record 01-21-D1 (now only on backend branch wave-3c)"
   - phase: 01-backend-fixes/01-22
-    provides: "contract doc commits 730a1f0, 3f076e9, 8407402"
+    provides: "contract doc commits 730a1f0, 3f076e9, 8407402 (now only on backend branch wave-3c)"
 provides:
-  - "Wave-3c push bundle and a no-money smoke checklist with minimum and full levels (below)"
-  - "Setup-route promotion analysis against build 6 and current Android, with options for the user's decision before the push"
-affects: [Phase 1 close, Phase 5 SIGN-06, Android EXPERT_SETUP_REQUIRED follow-up, BUG-03 in the Android bug log, Phase 4 payment UAT]
+  - "The user's decision to drop wave 3c, with what stays in production and what stays undelivered"
+  - "Backend state check: master, origin/main and production at 3899d63; the eight wave 3c commits on local branch wave-3c at 8407402, never pushed"
+  - "The wave-3c push bundle and smoke checklist, archived for any later decision to revive it. Never run"
+affects: [Phase 1 verification (BACK-08 and BACK-13 undelivered), Phase 5 SIGN-06 (pairing needs a decision), Phase 8 REL-02 (not every backend change is live), Android EXPERT_SETUP_REQUIRED follow-up (moot unless revived), BUG-03 in the Android bug log (unexplained)]
 
 actuals:
-  tokens: 8374
+  # chars/4 over the lines this plan added to its docs, measured at SUMMARY write, before the STATE.md and ROADMAP.md updates. No code changed.
+  tokens: 12630
+  # tasks counts Task 1 only. Task 2 did not happen: no push, no deploy, no smoke.
   tasks: 1
-  # Measured at partial-SUMMARY write, before this file's own commit. Final count is set at resume.
-  commits: 0
+  commits: 2
 
 key-files:
   created:
     - ".planning/phases/01-backend-fixes/01-23-SUMMARY.md"
   modified:
     - ".planning/phases/01-backend-fixes/deferred-items.md"
+    - ".planning/phases/01-backend-fixes/01-20-SUMMARY.md"
+    - ".planning/phases/01-backend-fixes/01-21-SUMMARY.md"
+    - ".planning/phases/01-backend-fixes/01-22-SUMMARY.md"
     - ".planning/STATE.md"
+    - ".planning/ROADMAP.md"
+    - ".planning/REQUIREMENTS.md"
+    - ".planning/WINDOWS.md"
 
 key-decisions:
-  - "The checklist needs no card: the plan's paid booking and hold are removed, because the wave changes no payment code (the only controller diff is the postOnboard role check)"
-  - "One client-only test account covers both clients, because B5, which promotes it for good, now runs last. The plan needed a second account only because B5 came before B7"
-  - "B5 cannot run on build 6: no screen there opens setup for a client-only account. Android runs setup, and the same account stays signed in on the iPhone to check the stale-token path on build 6"
-  - "An expert role on account B does not by itself confirm silent promotion, because both apps sign up with the expert role. The summary gives a reading guide instead of the plan's rule"
+  - "User decision 2026-11-08: wave 3c dropped, never pushed. BACK-08 and BACK-13 are not delivered; the silent client-to-expert promotion and the tax-ID prompt remain in production; the eight commits are parked on local backend branch wave-3c and need a new decision"
+  - "Standing constraint (user, 2026-11-08): backend changes must not break the live App Store iOS build; app review is slow"
+  - "User's earlier answer A on the setup route (leave it unchanged) is superseded, because the gate is not shipping"
+  - "Archived checklist only: it needed no card, one client-only test account covered both clients with B5 last, and B5 could not run on build 6. An expert role on account B does not by itself confirm silent promotion, because both apps sign up with the expert role"
 
+# status: complete below only means the plan is finished for position purposes. It does not mean anything was deployed or delivered.
+deploy: dropped-user-decision
+smoke: not-run-wave-dropped
 requirements-completed: []
-requirements-pending-checkpoint: [BACK-13, BACK-08]
+requirements-not-delivered: [BACK-13, BACK-08]
 
 coverage:
   - id: D1
-    description: "Full gate at 8407402; push range is exactly the eight wave 3c commits; production and target SHAs recorded"
+    description: "Full gate at 8407402, now the tip of branch wave-3c. The range held exactly the eight wave 3c commits"
     requirement: BACK-13
     verification:
       - kind: other
-        ref: "REDIS_URL=redis://localhost:6379 npm test (nine runs: seven passed 3099 of 3099, two failed one test each, each passing alone); check-openapi-coverage; check-doc-coverage; git log origin/main..master; git ls-remote origin main; GET /health"
+        ref: "REDIS_URL=redis://localhost:6379 npm test (nine runs: seven passed 3099 of 3099, two failed one test each, each passing alone); check-openapi-coverage; check-doc-coverage"
         status: unknown
     human_judgment: true
-    rationale: "Two of nine runs of the same commit failed one test each, in files this wave did not change, with no established cause. Whether that is acceptable for a push is the user's call."
+    rationale: "Two of nine runs failed one test each, in files this wave did not change, with no established cause. No push followed, so nobody had to accept this."
   - id: D2
     description: "On production, a client-only account is not promoted by opening Expert mode, is refused on writes, and an existing expert keeps every feature, on build 6 and current Android"
     requirement: BACK-13
     verification: []
     human_judgment: true
-    rationale: "Tests mock Supabase, and only the user can push and use the devices. Pending Task 2."
+    rationale: "NOT DELIVERED. The wave was dropped on 2026-11-08, so production still promotes and no result exists."
   - id: D3
     description: "A newly promoted account with a client-only token can write right away (stale-token path)"
     requirement: BACK-13
     verification: []
     human_judgment: true
-    rationale: "Only mocks have exercised profiles.roles. B5 is the first real check. Pending Task 2."
+    rationale: "NOT RUN, wave dropped. Only mocks have exercised this path on the branch."
   - id: D4
     description: "BACK-08 seams on production: no Stripe page and no payout_accounts row, and on build 6 an error view with no TIN field; Android blocks the account at the setup hub"
     requirement: BACK-08
     verification: []
     human_judgment: true
-    rationale: "Neither client has run against these responses. B7 and B8 decide BACK-08. Pending Task 2."
+    rationale: "NOT DELIVERED. The wave was dropped on 2026-11-08, so the seams stay open in production and B7 and B8 have no result."
   - id: D5
     description: "Account B background result recorded as the explanation of BUG-03"
     requirement: BACK-08
     verification: []
     human_judgment: true
-    rationale: "Read-only production queries only the user runs. Informational; it does not decide BACK-08."
+    rationale: "NOT RUN. QB was not reported, so BUG-03 stays unexplained."
+  - id: D6
+    description: "Not deployed: master, origin/main and production all at 3899d63; wave-3c holds the eight commits and is not on the remote. This says nothing about how production behaves."
+    verification:
+      - kind: other
+        ref: "git rev-list --count origin/main..master; git rev-list --count master..origin/main; git log master..wave-3c; git ls-remote origin main; git ls-remote origin wave-3c; GET /health"
+        status: pass
+    human_judgment: false
+  - id: D7
+    description: "The Redis test no longer needs excluding, and its files are unchanged since before wave 1. WINDOWS.md #1, #2, #4, #7 and #9 cleared"
+    verification:
+      - kind: unit
+        ref: "REDIS_URL=redis://localhost:6379 npm test -- tests/services/redis.test.js at 3899d63 (6 of 6); git diff 2ec82af master -- src/services/redis.js tests/services/redis.test.js (empty)"
+        status: pass
+    human_judgment: false
 
 plan_head_before: 958ab2ebccc449ad1a59f2b456375ccd6ef8034e
-# plan_head_after and the final commits count: set when the plan completes after the checkpoint resumes.
-# plan_head_before is an iOS repo SHA. This plan makes no backend commits; backend master stays at 8407402.
+plan_head_after: 8759ed2ff42841ada727cbf15b841199d0962334
+# commits counts the iOS repo only, measured from plan_head_before to plan_head_after at SUMMARY write. The two close-out commits come after it. This plan makes no backend commits; backend master stays at 3899d63 and wave-3c at 8407402.
 
-status: in-progress
+duration: ~35 min wall clock (Task 1 about 12 min, the rest waiting on the user decision)
+completed: 2026-11-08
+status: complete
 ---
 
-# Phase 1 Plan 23: Wave 3c close-out Summary (PARTIAL, awaiting Task 2)
+# Phase 1 Plan 23: Wave 3c Dropped by User Decision, Never Deployed Summary
 
-**Wave 3c (the expert promotion gate and the tax-ID seams) is packaged for your push at `8407402`, with no migration. One decision is yours before the push. The smoke needs no card and creates no hold or charge.**
+**The user dropped wave 3c on 2026-11-08, and it was never pushed. Production stays at `3899d63`. BACK-08 and BACK-13 are not delivered, so the silent client-to-expert promotion and the tax-ID prompt remain in production. No smoke was run.**
 
-Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is waiting on you. Claude pushed and deployed nothing (D-11), and no backend code changed in this plan. No requirement is marked complete.
+## The decision
 
-## Read this before pushing
+The user, verbatim, 2026-11-08:
+
+> "Don't do anything that can break the existing iOS release because the app review takes a long time. I need the current version to work."
+
+- Asked when wave 3c should ship (hold until the new iOS is live; check Q0 then decide; drop), the user chose **"Drop wave 3c"**.
+- Asked about the commits on `master`, the user chose **"Move to a branch"**.
+- The user's earlier answer of **A** (setup route unchanged) is superseded, because the gate is not shipping.
+
+**Why:** wave 3c stops client-only accounts on App Store build 6 from becoming experts. Build 6 has no way to reach setup for them, and first-touch promotion would be gone. The Phase 1 note in `ROADMAP.md` already says BACK-13 must not break signup or the mode switch on build 6 or Android, so the drop follows that rule.
+
+## Where things stand
+
+| Item | State |
+|------|-------|
+| Production | `3899d63`. Automatic promotion on first touch stays |
+| Backend `master`, `origin/main` | Both `3899d63`. The orchestrator moved `master` back with `git reset --keep` |
+| Backend branch `wave-3c` | Tip `8407402`, the eight commits below. **Local only:** it has no copy on the remote |
+| BACK-08, BACK-13 | Pending, not delivered. They need a new decision |
+| Phase 1 | Not complete. All 23 plans have run, and it awaits phase verification |
+| Phase 5 SIGN-06 | Pairs with BACK-13, so it needs a new decision. Its plans and scope are unchanged |
+| Phase 8 REL-02 | Assumes every backend change is live, which is no longer true. A note was added; its scope is unchanged |
+| Android `EXPERT_SETUP_REQUIRED` follow-up | Moot unless `wave-3c` is revived |
+
+## What stays in production
+
+Read from the code on `master`, not run:
+
+- **Silent promotion.** A client-only account becomes an expert for good on its first `/expert/*` call, reads included. Build 6 triggers this just by opening Expert mode, because the expert home calls `GET /expert/profile`. There is no way back (D-09).
+- **The tax-ID seams.** `POST /expert/connect/onboard` and both `/expert/tax-profile` routes still go through the converting `ensureExpert`. So a client-only account that reaches them is converted and can then reach Connect onboarding and the tax form. BUG-03 can still happen.
+
+## What is not known
+
+- **Q0, QB and every smoke step have no results.** None was reported, and none is inferred here.
+- **The two Q0 counts are unknown, so the number of client-only accounts is unknown.** That applies both to who would have been stranded and to who can still be promoted.
+- **BUG-03's origin is unexplained,** because QB was not reported.
+- **The gate has never run against real Supabase or a real client.** Only mocked tests have exercised it, on the branch.
+- **The flaky tests (note 4) are still unexplained.** They apply to `master` too, since neither test file differs between it and `wave-3c`. The full suite was not rerun for this close-out, only the Redis test.
+- **Whether and when wave 3c comes back.** No decision exists.
+
+## Read-only checks at this close
+
+Run by Claude on 2026-11-08. These show which code is where, not how it behaves.
+
+| Check | Result |
+|-------|--------|
+| `GET /health` | `{"status":"success","commit":"3899d63"}` |
+| `git rev-parse master origin/main`, `git ls-remote origin main` | All `3899d63ca7…` |
+| `git rev-list --count origin/main..master`, then `master..origin/main` | 0 and 0 |
+| `git log master..wave-3c` | Exactly the eight commits, tip `8407402` |
+| `git ls-remote origin wave-3c` | Nothing, so it was never pushed |
+| `git grep EXPERT_SETUP_REQUIRED master -- src` | No match |
+| `git grep "provisionExpert\|expertWriteGate" master -- src` | No match |
+| `docs/ios/EXPERT-SETUP-GATE.md` | Not on `master`; on `wave-3c` |
+
+Claude pushed nothing, deployed nothing and changed no backend file or branch in this close-out. It did not touch Stripe and wrote nothing to Supabase.
+
+## WINDOWS.md
+
+`gsd-tools windows fixed` takes no reason, so the evidence for the five Redis entries (#1, #2, #4, #7, #9) is here:
+
+- `REDIS_URL=redis://localhost:6379 npm test -- tests/services/redis.test.js`, rerun on 2026-11-08 at `3899d63` against local Redis: 1 suite, 6 of 6 passed. `redis-cli ping` answered `PONG`.
+- `git log 2ec82af..master` and `git diff 2ec82af master` for `src/services/redis.js` and `tests/services/redis.test.js` are both empty, and neither file has uncommitted changes. `2ec82af` is the production commit from before wave 1.
+
+**Limit:** this shows the test passes today on unchanged files. The test still did not run in those waves' gates.
+
+Entries #3, #5, #6, #8, #10 and #11 stay open. New entry #12 records BACK-08 and BACK-13 as undelivered.
+
+## Next steps
+
+- **Phase verification** must report BACK-06, BACK-07 and BACK-19 (smokes skipped) and BACK-08 and BACK-13 (not delivered) as open. Do not call Phase 1 complete on the plan count.
+- **A new decision is needed** on BACK-08, BACK-13 and SIGN-06's pairing.
+- **Not changed:** the refund retry fix still needs its own plan before Phase 4 payment UAT. Note 7 below lists the other open items.
+
+## Archive: the handoff as written before the drop
+
+**None of this happened: no push, no queries and no smoke.** It is kept only for a future decision on `wave-3c`. "After this deploy" and similar wording describe the plan as it stood. `master` no longer holds these commits, and every SHA below was read before the move.
+
 
 **Sources.** Everything about client behavior below comes from reading code, not from running it:
 
 - **Build 6:** iOS `main`. Its last app-code commit is `a48c664`, "Build 6 release config". There is no release tag, so that this is the shipped code is an inference.
 - **Android:** HEAD `2d04c4ce`, whose build number is vc 6. Which build your Samsung runs is not known here.
 
-### 1. DECISION NEEDED: what the setup route accepts as a promotion
+### 1. SUPERSEDED: what the setup route accepts as a promotion
 
 **What happens today, in plain terms.** `PATCH /expert/profile/setup` promotes any request that passes validation, and every field is optional:
 
@@ -134,7 +237,7 @@ This matches the plan's wording (validate, then promote). It is looser than "onl
 
 **Why A:** no shipped client can reach B's case, and an attacker gains nothing that signup does not already give. B only closes a hypothetical. If you want the rule to mean what it says, C is the real fix. It fits best with SIGN-06 in Phase 5, when iOS gets the same hub path. It needs no migration, and it can be added later. The cost of waiting is that accounts promoted in the meantime stay promoted.
 
-Nothing is implemented. Say A, B or C when you reply. B or C means no push yet.
+Nothing was implemented. The user answered A (setup route unchanged). That answer is superseded, because the gate is not shipping. Ask again if `wave-3c` is revived.
 
 ### 2. Promotion is one-way, and the gate reaches every shipped app
 
@@ -192,7 +295,7 @@ Earlier waves excluded `tests/services/redis.test.js` with the reason "no local 
 - Without `REDIS_URL` it fails 6 of 6. With it, it passes 6 of 6, and `redis-cli ping` answers `PONG`.
 - `git log 2ec82af..master -- src/services/redis.js tests/services/redis.test.js` is empty, so neither file changed since `2ec82af`.
 - So this says the test passes today. It does not retroactively run it against those waves, though neither file changed.
-- The `WINDOWS.md` entries stay open until phase close.
+- The `WINDOWS.md` entries were cleared at this close. See "WINDOWS.md" above.
 
 ## Task 1: Gate and push bundle (done)
 
@@ -218,7 +321,7 @@ The first run was clean. The extra runs were added to measure the flake rate, be
 - **Runtime change:** `src/middleware/ensureExpert.js`, `src/routes/onboarding.js`, the mount on `src/routes/expertTaxProfile.js`, and the role check in `src/controllers/connect.controller.js`. The other route files changed in comments only.
 - **No migration or dependency change:** `git diff --name-status 3899d63 master -- supabase package.json package-lock.json railway.json` prints nothing.
 - **No money path changed:** `git diff --stat 3899d63 master -- src/controllers src/services src/cron src/utils src/schemas` shows only `connect.controller.js`, 10 added lines, 3 of them code. Expert money actions such as accept and cancel do pass through the gate, but a token with the expert role takes the fast path with no database read.
-- **Push command (you only):** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`
+- **Push command as written:** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`. **Do not use it.** `master` no longer holds these commits, so it would push nothing. Any revival needs a new decision and a new bundle.
 
 | Commit | Plan | Subject |
 |---|---|---|
@@ -231,7 +334,7 @@ The first run was clean. The extra runs were added to measure the flake rate, be
 | 3f076e9 | 01-22 | docs(ios-p1/BACK-13): refresh expert route headers for the BACK-13 gate |
 | 8407402 | 01-22 | docs(ios-p1/BACK-13): correct remaining first-touch wording in middleware and docs |
 
-## Task 2: Checkpoint (PENDING, user action)
+## Task 2: Checkpoint (NOT RUN, wave dropped)
 
 **This smoke needs no real card and can create no hold or charge.** I checked the diff (above) and removed the plan's paid booking from B1, because this wave changes no payment code. Use free topics only. If a payment sheet ever appears, back out; see S6.
 
@@ -306,7 +409,7 @@ Run the steps in the order below. **B5 goes last because it cannot be undone.**
 
 1. Run Q0. Choose T. Note the two counts for me.
 2. Decide note 1.
-3. Push: `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`. Wait for Railway to report the deploy healthy.
+3. Push (the command in the push bundle, no longer valid). Wait for Railway to report the deploy healthy.
 4. Open https://clickme-backend-production.up.railway.app/health. It must show `"commit":"8407402"` before you go on.
 
 ### Existing expert
@@ -421,19 +524,14 @@ Run QB. **Nothing identifying account B is written down.** The Android docs name
 - No test topic or free booking is left active. Throwaway accounts, if you made them, are deleted or noted.
 - No card was used. Nothing moved on Stripe, so there is no Dashboard check to do.
 
-**After you reply, Claude runs (read-only):** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" rev-list --count origin/main..master` must print 0, and `curl -fsS https://clickme-backend-production.up.railway.app/health` must contain `"commit":"8407402"`. Claude then records your results here. BACK-08 is recorded as delivered only if B7 and B8 pass on both clients.
-
-**Resume signal:** reply "wave 3c deployed" with:
-- your choice on note 1;
-- which level you ran;
-- the results of B7 and B8;
-- the two Q0 counts and the QB results;
-- any step that failed, or "all passed".
-
-If you choose B or C, reply with that instead and do not push.
+**If revived:** BACK-08 is recorded as delivered only if B7 and B8 pass on both clients.
 
 ## Deviations from Plan
 
+- **[User decision] Task 2 was not run, and the wave was dropped.** Every after-push truth in the plan is unmet: nothing was deployed, `/health` reports `3899d63`, not `8407402`, and no smoke or account B result exists. Following the plan's prohibition, BACK-08 is not recorded as delivered.
+- **[User decision] `master` moved back to `3899d63`.** The orchestrator did this after the user chose "Move to a branch". So `origin/main` equals `master` because nothing was pushed, not because the plan's push happened.
+- **[Close-out] Frontmatter of 01-20, 01-21 and 01-22 corrected.** `requirements-completed` is now empty, because `audit-milestone` reads that field as a claim of delivery. No tool reads it to mark anything complete. Each also gets a `one-liner`, because milestone summaries would otherwise quote its bold line as though the gate shipped.
+- **[Close-out] `WINDOWS.md` #12 added** for the undelivered requirements, so the ship gate still sees them. Note 8's "stay open until phase close" is replaced by clearing the five Redis entries now.
 - **[Dispatch] Paid booking and hold removed from B1.** The plan asked for a real hold. The diff confirms no money path changed, so a hold would add cost and prove nothing about this wave. This departs from D-12's "book (free and paid), pay".
 - **[Rule 1 - Plan correction] B5 cannot run on build 6.** No screen there opens setup for a client-only account. Replaced by the stale-token check in B5 step 5. The plan's truth that a client-only account completes setup holds on Android only.
 - **[Rule 1 - Plan correction] "A fresh signup as client" is not possible in either app.** T comes from Q0, or from the curl fallback, which you would run.
@@ -441,25 +539,25 @@ If you choose B or C, reply with that instead and do not push.
 - **[Rule 2 - Missing critical] Order and accounts.** B5 moved last, so one test account covers B3, B7 and B8 on both clients, instead of the plan's second account. A warning not to touch T before the deploy is live is added, because old production would promote it on the first read.
 - **[Rule 2 - Missing critical] Added:** Q0, B3-walk for the other error states, two levels, stop conditions, topic deletion after B5, and instructions not to tap Continue or save the form as A.
 - **Account B has no identifying detail on record.** The plan asks to copy one from the Android bug log, which has none. The docs name accounts by role only (D-03), so the checklist describes the account instead.
-- **The gate was not clean on every run.** Two of nine runs failed one test each (note 4). The plan's prohibition says not to hand off on a red gate. I am handing off because the dispatch says to capture and rerun, each file passes alone, and the wave did not change those files. **The call on whether that is acceptable is yours.**
+- **The gate was not clean on every run.** Two of nine runs failed one test each (note 4). The plan's prohibition says not to hand off on a red gate. I am handing off because the dispatch says to capture and rerun, each file passes alone, and the wave did not change those files. That call is moot now, since nothing was pushed.
 - **[Rule 3 - Out of scope, logged] New deferred items:** build 6 client-only accounts cannot reach setup, the expert-role limit on BACK-08, and the flakes above. Added to `deferred-items.md`.
 - **`01-USER-SETUP.md` not generated,** even though the plan has `user_setup`. The push and queries are fully written in Task 2, as in 01-17 and 01-19.
-- **Commits on `main`:** same as earlier plans. `branching_strategy` is `none` and the dispatch named this branch. Only planning docs were committed.
+- **Commits on `main`:** same as earlier plans. `git.base-branch --is-protected main` returns `true`, but `branching_strategy` is `none`, the dispatch named this branch, and `git.allow_default_branch_commits` is unset. These commits proceed past that check on the dispatch's instruction, not on a config override. Only planning docs were committed, and nothing was pushed.
 
 ## Threat Coverage
 
-- **T-01-44 (wave-3c deploy):** the isolated push range is done. The gate is green in seven of nine runs (note 4). The `/health` check and the two-client smoke are Task 2.
+- **T-01-44 (wave-3c deploy), high severity:** **not mitigated in production.** The elevation path it names stays live, by user decision, because the wave was not deployed. The same goes for T-01-40 and T-01-41 (01-20) and T-01-48 and T-01-49 (01-21). The gate at the branch tip was green in seven of nine runs (note 4).
 - **T-01-45 (information disclosure):** the checklist's queries are read-only `SELECT`s. It names accounts by email pattern or role, and points to the backend doc for test logins instead of copying any credential.
 - No new security surface: this plan changes no code.
 
-## Next Phase Readiness
+## Self-Check: PARTIAL
 
-Blocked on Task 2 and on your choice in note 1. BACK-13 and BACK-08 stay Pending until the push and the results are recorded here. BACK-06, BACK-07 and BACK-19 stay Pending. This is the last plan in Phase 1.
+**Checked:**
 
-## Self-Check: PASSED (record checks only; Task 2 not run)
+- The commits `1b27996`, `8759ed2` and the plan base `958ab2e` are all in `HEAD`'s history. `plan_head_after` and the commit count were read from git when this file was written.
+- This file and the three other summaries it edits exist. The backend facts are in "Read-only checks at this close".
 
-- This SUMMARY contains `BACK-08`, the production and target SHAs, every commit in `origin/main..master` with its plan id, how to identify account B, and the B8 option-a expected result.
-- `git log origin/main..master` holds exactly the eight expected commits. `git rev-list --count master..origin/main` = 0, and `git ls-remote origin main` = `3899d63`; nothing pushed by Claude.
-- No backend file changed in this plan: `git status --porcelain` in the backend shows no tracked change.
-- The tables and columns in Q0, Q1, Q2 and QB match the migrations and the code that uses them. None of the queries were run; only you can run them.
-- Task 2 is not done, so `status: in-progress`, `requirements-completed: []`, and no requirement is marked complete.
+**Not established, because the wave was dropped:**
+
+- Every plan truth about production: the deploy, the gate on build 6 and Android, the stale-token path, the BACK-08 seam smoke and the account B result.
+- That is why this is PARTIAL. `status: complete` only says the plan is finished.

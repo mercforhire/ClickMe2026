@@ -60,6 +60,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **EXPL-04** [X4]: Search result tag pills show their full text
 - [ ] **EXPL-05** [X5] **[major]**: Favorites shows all favorites (paged), its empty-state buttons work, its copy is correct, and favorite state comes from the profile's `is_favorite`
 - [ ] **EXPL-06** [X6]: The full reviews list loads more than 20 reviews (paging)
+- [ ] **EXPL-07** **[major]**: Explore loads when the home feed has a free topic with no currency or one bad featured topic. The free topic shows "Free", a bad topic is dropped alone, a failed load shows readable text, and no stale Featured Topics sit beside section errors
 
 ### Signup and Mode Switch
 
@@ -213,6 +214,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXPL-04 | Phase 4 | Pending |
 | EXPL-05 | Phase 4 | Pending |
 | EXPL-06 | Phase 4 | Pending |
+| EXPL-07 | Phase 4 | Pending |
 | SIGN-01 | Phase 5 | Pending |
 | SIGN-02 | Phase 5 | Pending |
 | SIGN-03 | Phase 5 | Pending |
@@ -278,10 +280,10 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | REL-02 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 103 total
-- Mapped to phases: 103
+- v1 requirements: 104 total
+- Mapped to phases: 104
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-08 — BACK-08 and BACK-13 kept Pending and undelivered after wave 3c was dropped by user decision (01-23)*
+*Last updated: 2026-11-09 — added EXPL-07 (Explore home feed decode, quick 261109-323); stays Pending until a device check*

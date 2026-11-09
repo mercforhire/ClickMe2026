@@ -190,7 +190,7 @@ Plans:
 
 **Goal**: Clients can find an expert, book and pay without double submissions, unintended holds, misleading errors or missing profile data
 **Depends on**: Phase 2 (and Phase 1 for BACK-06, BACK-07, BACK-10, BACK-15)
-**Requirements**: BOOK-01, BOOK-02, BOOK-03, BOOK-04, BOOK-05, BOOK-19, PAY-01, PAY-02, PAY-03, PAY-04, EXPL-01, EXPL-02, EXPL-03, EXPL-04, EXPL-05, EXPL-06
+**Requirements**: BOOK-01, BOOK-02, BOOK-03, BOOK-04, BOOK-05, BOOK-19, PAY-01, PAY-02, PAY-03, PAY-04, EXPL-01, EXPL-02, EXPL-03, EXPL-04, EXPL-05, EXPL-06, EXPL-07
 **Success Criteria** (what must be TRUE):
   1. Closing the payment sheet without tapping pay never places a hold (behavior per Q4). A confirm that times out and is retried takes the user to their pending booking instead of showing "slot taken".
   2. After a request is sent, the user cannot go Back and submit it again. Request Sent reads "Loading booking…", and its payment card describes what actually happened (hold vs charge, including older long-lead bookings). A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab.
@@ -205,6 +205,7 @@ Plans:
 - PAY-01 and PAY-02 involve real holds. Every environment points at the production backend with live Stripe keys, so plan device tests to place and release real holds on your own accounts.
 - PAY-02 builds on BACK-15's idempotent replay.
 - EXPL-02 is a LIKELY item. Confirm it on a device first.
+- EXPL-07 and the EXPL-03 "Free" label were built in quick 261109-323. Phase 4 only needs to device-check them, and both stay unchecked until it does.
 - PAY-04 is a comment-only change, verified in code review.
 
 ### Phase 5: Signup, Mode Switch and Account

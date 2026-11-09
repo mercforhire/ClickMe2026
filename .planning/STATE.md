@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-24-PLAN.md (BACK-19 expert-cancel refund retry; mocked Stripe only, not deployed, BACK-19 Pending)
-last_updated: "2026-11-09T04:58:33.571Z"
+stopped_at: Completed 01-25-PLAN.md (BACK-19 client-cancel refund retry, ledger and docs; mocked Stripe only, not deployed, BACK-19 Pending)
+last_updated: "2026-11-09T05:03:21.488Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: f041695c7d99a636f987eeb8ec90b520d81681ca
+state_head: d08db360a24e10d7f39c968f1b0c60884046b1d2
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 26
-  completed_plans: 24
+  completed_plans: 25
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 25 of 26
+Plan: 26 of 26
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -80,6 +80,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P22 | 8 min | 2 tasks | 13 files |
 | Phase 01 P23 | ~35 min wall clock (user wait) | 1 of 2 (Task 2 dropped, not run) tasks | 9 files |
 | Phase 01 P24 | 5 min | 2 tasks | 7 files |
+| Phase 01 P25 | 10 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -146,6 +147,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-23: standing constraint (user, 2026-11-08): Backend changes must not break the live App Store iOS build; app review is slow
 - [Phase 01]: 01-23: the user's earlier answer A on the setup route (leave it unchanged) is superseded, because the gate is not shipping; Q0, QB and the smoke were not run or reported, so the number of client-only accounts and BUG-03's origin stay unknown
 - [Phase 01]: 01-24: refundReconciliation reads the PaymentIntent and Charge before any money call; clearFlag throws on a Supabase error so a failed flag write is logged and the flag stays
+- [Phase 01]: 01-25: client cancel keeps the 24-hour rule; the saved amount on a failed refund is exactly computeRefundAmountMinorUnits, and an unreadable PaymentIntent with nothing refunded is flagged with a saved 0 for the sweep to resolve
+- [Phase 01]: 01-25: GET /client/transactions reports refunded_amount 0 while refund_failed is true; refund_failed stays server-side and payment_status stays the raw column
 
 ### Pending Todos
 
@@ -200,6 +203,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T04:58:33.538Z
-Stopped at: Completed 01-24-PLAN.md (BACK-19 expert-cancel refund retry; mocked Stripe only, not deployed, BACK-19 Pending)
+Last session: 2026-11-09T05:03:21.456Z
+Stopped at: Completed 01-25-PLAN.md (BACK-19 client-cancel refund retry, ledger and docs; mocked Stripe only, not deployed, BACK-19 Pending)
 Resume file: None

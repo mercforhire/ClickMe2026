@@ -119,7 +119,7 @@ This matches the plan's wording (validate, then promote). It is looser than "onl
 **Consequence if someone does it.**
 
 - The account passes all 20 refused routes, including Connect onboarding and the tax form, with no way back (D-09).
-- Nothing outside setup and `GET /expert/profile` reads `setup_completed`, so nothing hides an unfinished expert for that reason. I did not trace whether one with no topics appears in search.
+- Nothing in `src` outside setup and `GET /expert/profile` reads `setup_completed`, and migration `20260726120000` removed the home feed's filter on it, so nothing hides an unfinished expert for that reason. I did not trace whether one with no topics appears in search.
 - This grants nothing new: `POST /auth/signup` with `role: expert` already gives any new account the same role, and both apps sign up that way.
 
 **The case a real user can hit is a different one.** On Android, the first saved step in the setup hub promotes. A client-only user who saves one step and taps "Not now" is an expert for good, with setup unfinished. Rejecting `{}` does not change this. Only option C does.
@@ -217,7 +217,7 @@ The first run was clean. The extra runs were added to measure the flake rate, be
 - **Diff:** 28 files, 1470 insertions, 315 deletions.
 - **Runtime change:** `src/middleware/ensureExpert.js`, `src/routes/onboarding.js`, the mount on `src/routes/expertTaxProfile.js`, and the role check in `src/controllers/connect.controller.js`. The other route files changed in comments only.
 - **No migration or dependency change:** `git diff --name-status 3899d63 master -- supabase package.json package-lock.json railway.json` prints nothing.
-- **No money path changed:** `git diff --stat 3899d63 master -- src/controllers src/services src/cron src/utils src/schemas` shows only `connect.controller.js`, 10 added lines, 4 of them comments. Expert money actions such as accept and cancel do pass through the gate, but a token with the expert role takes the fast path with no database read.
+- **No money path changed:** `git diff --stat 3899d63 master -- src/controllers src/services src/cron src/utils src/schemas` shows only `connect.controller.js`, 10 added lines, 3 of them code. Expert money actions such as accept and cancel do pass through the gate, but a token with the expert role takes the fast path with no database read.
 - **Push command (you only):** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`
 
 | Commit | Plan | Subject |

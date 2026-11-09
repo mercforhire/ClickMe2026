@@ -4,10 +4,10 @@ current_phase: 01
 current_phase_name: Backend Fixes
 status: verifying
 stopped_at: Completed 01-26-PLAN.md (BACK-19 refund retry deployed at d86bf97, mocked Stripe only, BACK-19 Pending; Phase 1 plans complete, next is phase verification)
-last_updated: "2026-11-09T05:35:44.992Z"
+last_updated: "2026-11-09T07:39:54.496Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: bba486df0ca870ea2f561d3d44075b07505c0b4a
+state_head: 77178f569ec41ce4b4b07e3679cc7226924e9058
 progress:
   total_phases: 8
   completed_phases: 0
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 Phase: 01 (Backend Fixes) — EXECUTING
 Plan: 26 of 26
 Status: Phase complete — ready for verification
-Last activity: 2026-11-08 — Phase 01 execution started
+Last activity: 2026-11-09 - Completed quick task 261109-323: Fix Explore home feed decode failure on free topics with no currency
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -196,6 +196,7 @@ Captured todos:
 |---|-------------|------|--------|-----------|
 | 261108-vrh | Prompt for push permission on every signed-in launch | 2026-11-08 | 30ca4a9 | [261108-vrh-prompt-for-push-permission-on-every-sign](./quick/261108-vrh-prompt-for-push-permission-on-every-sign/) |
 | 2 | Backend hotfix for CR-01: stop sending category to iOS tokens (215adcb) | 2026-11-08 | c55d284 | — |
+| 261109-323 | Fix Explore home feed decode failure on free topics with no currency | 2026-11-09 | 77178f5 | [261109-323-explore-home-feed-free-topic-decode](./quick/261109-323-explore-home-feed-free-topic-decode/) |
 
 ## Deferred Items
 

@@ -227,21 +227,17 @@ final class UserManager {
     /// terrible UX — a user who opens the app in airplane mode would
     /// have to log in again on next online launch, even though their
     /// session is perfectly valid.
+    ///
+    /// Every launch that stays signed in, including the transient-failure
+    /// case, also runs the push permission check. iOS resets notification
+    /// permission when the app is deleted and reinstalled, but the
+    /// keychain session survives, so this is the only place such a user
+    /// is ever asked. A launch that ends logged out never prompts.
     @discardableResult
     func tryAutoLogin() async -> Bool {
         guard hasStoredToken else { return false }
         do {
             try await refreshMe()
-            // If the user has previously granted push, silently refresh
-            // the APNs token — the OS token can rotate across launches
-            // (backup restore, iOS update), so we re-upload every time.
-            // If they've denied or never been asked, this is a no-op.
-            reRegisterPushIfAuthorized()
-            // Same reason as `apply(loginData:)`: Firebase's delegate
-            // may have fired before this auto-login completed. Fetch
-            // and upload now to close the gap.
-            fetchAndUploadFCMToken()
-            return true
         } catch {
             // Branch: real auth failure vs. transient network failure.
             if Self.isAuthRejection(error) {
@@ -253,8 +249,24 @@ final class UserManager {
             // the next time any screen's `.task` fires a `/me` or any
             // other authed request succeeds, which hydrates `me` for
             // real. Until then the app renders cached profile data.
-            return true
         }
+        // A 403 ACCOUNT_SUSPENDED lands in the transient branch above
+        // after the suspension handler has already logged out, so the
+        // token check is what keeps a logged-out user from being
+        // prompted. It can't be `isLoggedIn`: `me` is nil on the
+        // transient path, so that is false for a user who is still
+        // signed in.
+        if hasStoredToken {
+            // Prompts on `.notDetermined` (fresh install, or reinstall),
+            // and re-registers when already granted: the OS token can
+            // rotate across launches (backup restore, iOS update).
+            requestPushPermissionIfNeeded()
+            // Same reason as `apply(loginData:)`: Firebase's delegate
+            // may have fired before this auto-login completed. Fetch
+            // and upload now to close the gap.
+            fetchAndUploadFCMToken()
+        }
+        return true
     }
 
     /// True when the error is a hard credential rejection (401 or non-
@@ -470,9 +482,14 @@ final class UserManager {
 
     /// Fires the OS permission prompt if the user hasn't answered yet,
     /// and calls `registerForRemoteNotifications()` on grant. Idempotent
-    /// — safe to call from every login / signup path. On subsequent
-    /// launches with a previously-granted permission, iOS silently
-    /// hands us a fresh device token via `AppDelegate.didRegister…`.
+    /// — safe to call from every login / signup path and from
+    /// `tryAutoLogin`. On subsequent launches with a previously-granted
+    /// permission, iOS silently hands us a fresh device token via
+    /// `AppDelegate.didRegister…`. Users who denied are not asked again.
+    ///
+    /// Keep this on the cold-launch path and out of
+    /// `applicationDidBecomeActive`: dismissing the OS prompt fires
+    /// didBecomeActive again.
     func requestPushPermissionIfNeeded() {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             #if DEBUG
@@ -527,22 +544,6 @@ final class UserManager {
         }
     }
     #endif
-
-    /// Same as above but silent when the user hasn't answered yet
-    /// (never triggers the prompt). Used by `tryAutoLogin` to refresh
-    /// the token on cold start without pestering users who declined.
-    private func reRegisterPushIfAuthorized() {
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            switch settings.authorizationStatus {
-            case .authorized, .provisional, .ephemeral:
-                DispatchQueue.main.async {
-                    UIApplication.shared.registerForRemoteNotifications()
-                }
-            default:
-                break
-            }
-        }
-    }
 
     /// Called by `AppDelegate` (via the `MessagingDelegate` callback) or
     /// `fetchAndUploadFCMToken` with the current FCM registration token.

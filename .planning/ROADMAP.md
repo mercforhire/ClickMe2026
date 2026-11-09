@@ -159,26 +159,29 @@ Plans:
   4. Paid booking and reschedule pickers offer no slot more than 6 days ahead. The long-lead error codes show a clear error instead of an invalid confirm. Paid and free booking paths show the same slot-taken and meeting-link copy.
   5. Tapping any push switches to the right mode and opens the right screen: a booking-request push opens that request, `booking/payment_actions` opens that booking, and unknown types open the notifications list. No banner appears for the chat already on screen, and after logout the device stops receiving the old account's pushes.
 
-**Plans**: 12 plans in 3 waves (iOS only, no backend change)
+**Plans**: 15 plans in 3 waves (iOS only, no backend change)
 
 Plans:
 **Wave 1**
 - [ ] 02-01-PLAN.md — CALL-01 first: 60-minute overtime cutoff, end + 55 notice, 1-second minimum on /end (CALL-04)
-- [ ] 02-03-PLAN.md — BOOK-18 tolerant booking status (rescheduled and unknown) and every exhaustive switch decided
+- [ ] 02-03-PLAN.md — BOOK-18 tolerant booking status (rescheduled and unknown), every exhaustive switch decided, newest-refetch helper on the expert Upcoming list
 - [ ] 02-07-PLAN.md — BOOK-14 and PAY-05 on Make a Booking: shared error mapper, long-lead fall-through removed, 6-day paid picker cap
 - [ ] 02-09-PLAN.md — CR-01 and D-04: HomeRoute registered on every tab, tab-owned destinations, one push destination table (PUSH-01, PUSH-03, BOOK-15)
 
 **Wave 2** *(each plan waits for the wave 1 plan it names)*
 - [ ] 02-02-PLAN.md — CALL-05 Agora failure reaches Ended; CALL-09 exact host matching (after 02-01)
-- [ ] 02-04-PLAN.md — CALL-02 one join window with the server reconnect flag, live Join buttons, D-12 (after 02-03)
+- [ ] 02-04-PLAN.md — CALL-02 one join window with the server reconnect flag, live Join on the client and expert lists, D-12 (after 02-03)
 - [ ] 02-05-PLAN.md — BOOK-10 shared Money formatter and the client money sites (after 02-03)
 - [ ] 02-08-PLAN.md — BOOK-14 client reschedule cap and shared copy on both reschedule screens (after 02-07)
 - [ ] 02-10-PLAN.md — PUSH-01/02/03, BOOK-15: route_category parse, target_role mode switch, cold-launch queue (after 02-09)
 
 **Wave 3**
-- [ ] 02-06-PLAN.md — BOOK-10 expert money sites and the app-wide formatter gate (after 02-04, 02-05)
+- [ ] 02-06-PLAN.md — BOOK-10 expert money sites, lossless topic-editor price seed, app-wide formatter gate (after 02-04, 02-05)
 - [ ] 02-11-PLAN.md — CHAT-09 no banner for the chat on screen (after 02-10)
 - [ ] 02-12-PLAN.md — PUSH-04 logout push cleanup; Phase 2 device checklist; Q3 recorded as route only (after 02-10)
+- [ ] 02-13-PLAN.md — BOOK-18 newest refetch on the client detail, summary and My Bookings screens (after 02-03, 02-05)
+- [ ] 02-14-PLAN.md — CALL-02 Explore and expert dashboard strips on the shared join window; client detail can_join (after 02-04)
+- [ ] 02-15-PLAN.md — BOOK-10 Client Profile history card through the shared formatter (after 02-03, 02-05)
 
 **Notes**:
 - Plan CALL-01 first. It is critical and was confirmed on a production iPhone.

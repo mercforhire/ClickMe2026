@@ -10,15 +10,18 @@ requires:
   - phase: 01-backend-fixes/01-18
     provides: "BACK-19 commits ccd586e and 3899d63 on backend master"
 provides:
-  - "Wave-3b push bundle and expert-cancel smoke checklist (below), full gate green at 3899d63"
-  - "Refund retry analysis and options for the user's decision before the push"
-affects: [01-20 onward (later deploy waves start only after 3b is handled), Phase 3 EXP-11 and BOOK-08 copy, Phase 4 payment UAT]
+  - "Wave-3b push bundle, full gate green at 3899d63"
+  - "Wave 3b live in production at 3899d63 (the user pushed; /health and git checked by Claude). Production smoke not run, by user decision"
+  - "Refund retry analysis, with the user's decision recorded (option A: push now, fix next)"
+  - "The expert-cancel smoke checklist below, still to be run before BACK-19 closes"
+affects: [01-20 onward (the user chose to continue without the 3b smoke), Phase 3 EXP-11 and BOOK-08 copy, Phase 4 payment UAT (latest point to run the checklist; the refund retry fix must deploy before it)]
 
 actuals:
-  tokens: 6218
+  # chars/4 over the lines this plan added to its docs, measured at SUMMARY write. No code changed.
+  tokens: 9201
+  # tasks counts Task 1 only. Task 2 is half done: deployment yes, smoke no.
   tasks: 1
-  # Measured at partial-SUMMARY write, before this file's own commit. Final count is set at resume.
-  commits: 0
+  commits: 1
 
 key-files:
   created:
@@ -26,6 +29,8 @@ key-files:
   modified:
     - ".planning/phases/01-backend-fixes/deferred-items.md"
     - ".planning/STATE.md"
+    - ".planning/ROADMAP.md"
+    - ".planning/REQUIREMENTS.md"
     - ".planning/WINDOWS.md"
 
 key-decisions:
@@ -33,7 +38,11 @@ key-decisions:
   - "The void is proven from the PaymentIntent state and refund_failed, not the app, because expert cancel returns 200 even when the Stripe call failed"
   - "Correction to 01-18: PATCH /expert/bookings/:id/status does not accept cancelled. The Zod schema allows only missed and completed, so that item is closed in deferred-items.md"
   - "Correction to the D-17 premise: capture happens only from completed, in_progress or client-no-show missed, none of which an expert can cancel, and the T-24h sweep only authorizes. So a normal expert cancel was already a full release, and the refund branch is rarely reached"
+  - "User decision 2026-11-08 on the refund retry: option A, push now and fix next. Failed refunds are not retried as refunds until a separate plan and deploy, before Phase 4 payment UAT. That plan does not exist yet and still needs creating"
+  - "User decision 2026-11-08: skip the wave-3b smoke. BACK-19 stays Pending until the checklist has been run, at the latest during Phase 4 payment UAT"
 
+# status: complete below only means the plan is finished for position purposes. It does not mean the smoke was run.
+smoke: not-run-user-decision
 requirements-completed: []
 requirements-pending-checkpoint: [BACK-19]
 
@@ -51,30 +60,88 @@ coverage:
     requirement: BACK-19
     verification: []
     human_judgment: true
-    rationale: "Every test mocks Stripe, and only the user can push and hold the card. Pending Task 2."
+    rationale: "NOT RUN: the user skipped this on 2026-11-08, so no result exists. Every test mocks Stripe, and only the user can hold the card."
   - id: D3
     description: "A captured booking is refunded in full by an expert cancel, on real Stripe"
     requirement: BACK-19
     verification: []
     human_judgment: true
-    rationale: "NOT covered by this smoke. No safe route to a captured, still cancellable booking exists on live data. Only mocked tests cover it (D-13 deviation, Open Q7)."
+    rationale: "NOT covered by this smoke, even once it is run. No safe route to a captured, still cancellable booking exists on live data. Only mocked tests cover it (D-13 deviation, Open Q7)."
+  - id: D4
+    description: "Deployment only: origin/main and master both at 3899d63, and production /health reports 3899d63. This says nothing about how the deployed code behaves."
+    verification:
+      - kind: other
+        ref: "git rev-list --count origin/main..master; git rev-list --count master..origin/main; git ls-remote origin main; GET /health"
+        status: pass
+    human_judgment: false
 
 plan_head_before: fa3f552fb7b7dadb7bfc640ae0cb0695af328575
-# plan_head_after and the final commits count: set when the plan completes after the checkpoint resumes.
-# plan_head_before is an iOS repo SHA. This plan makes no backend commits; backend master stays at 3899d63.
+plan_head_after: 7c9cac603f67ea185ec4b7ada3e1e81fb4ffd279
+# commits counts the iOS repo only, measured from plan_head_before to plan_head_after at SUMMARY write. This plan makes no backend commits; backend master stays at 3899d63.
 
-status: in-progress
+duration: ~1h 10m wall clock (Task 1 about 8 min, the rest waiting on the user's decision, push and queries)
+completed: 2026-11-08
+status: complete
 ---
 
-# Phase 1 Plan 19: Wave 3b close-out Summary (PARTIAL, awaiting Task 2)
+# Phase 1 Plan 19: Wave 3b close-out Summary (smoke not run by user decision)
 
-**Wave 3b (BACK-19: an expert cancel fully refunds a captured booking) is gate-green at `3899d63` and packaged for your push. It has no migration. One decision is yours before the push. The smoke proves the hold release only, not the refund.**
+**Wave 3b (BACK-19: an expert cancel fully refunds a captured booking) is live in production at `3899d63`, pushed by the user. The production smoke was not run, by user decision, so BACK-19 stays Pending. The user chose option A on the refund retry, so failed refunds are still not retried as refunds until a separate fix ships.**
 
-Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is waiting on you. Claude pushed and deployed nothing (D-11), and no backend code changed in this plan. No requirement is marked complete.
+## Smoke not run by user decision
 
-## Read this before pushing
+- `status: complete` means only that this plan is finished for position purposes, so 01-20 can start. It does not mean the smoke was run.
+- **User, verbatim:** refund decision "A: Push now, fix next (Recommended)"; deployment "wave 3b deployed"; queries QA "Success. No rows returned" and QB "Success. No rows returned"; smoke "skip".
+- **Task 1:** done.
+- **Task 2, deployment:** done by the user. Claude did not push or deploy (D-11).
+- **Task 2, smoke:** not run at any level (minimum, full or no-money). None of steps 1 to 5 has a result on build 6 or Android, and no end-state confirmation exists.
+- **BACK-19:** still Pending. `requirements.ready-ids` reports it as ready (`{"ready":["BACK-19"],"blocked":[],"total":1}`), but it only checks whether sibling plans have finished, not whether a skipped check was run, so it was deliberately not marked complete.
 
-### 1. DECISION NEEDED: failed refunds are not retried as refunds
+### Read-only queries QA and QB
+
+The user ran both and reported them empty on 2026-11-08. Both results were reported after the push. The order of running them relative to the push is not known, so this is not a pre-push check.
+
+- **QA empty:** no booking matched the query for reaching the refund branch if an expert cancelled. This is strong evidence that the exposure is small, not proof, because an old row's `payment_status` can be stale.
+- **QB empty:** no row had `refund_failed = true` when it ran. It says nothing about rows flagged since.
+
+### Refund retry: option A chosen, fix not built
+
+- **Commitment:** failed refunds are not retried as refunds. The fix needs its own plan and deploy before Phase 4 payment UAT. **No phase or plan for it exists yet, and one still needs creating.**
+- **Accepted cost until then:** a failed refund needs a manual refund, and the API overstates it by returning the full `refund_amount`. If you refund by hand, refund the full amount (note 1).
+- **Logged in:** STATE.md blockers, `deferred-items.md` and `.planning/WINDOWS.md`. The existing entries were updated rather than duplicated.
+
+### What is still unknown
+
+- **Wave 3a and wave 3b are both live with no real-Stripe check.** Neither smoke was run, so the deployed payment code from both waves has only mocked tests behind it.
+- **`d356fdc` is the rollback target for this wave, and it contains the unverified card code.** Going back to `ddfe5bf` would also remove BACK-06, BACK-07 and BACK-19. A later smoke could not tell by itself which wave caused a failure, which weakens the D-10 isolation.
+- **Holds and paid bookings:** it is unknown whether any paid booking was made during this wave, so nothing can be said about holds from this wave. That includes whether any exist.
+- **The void path after this deploy:** nobody has run an expert cancel on production since the push. The branch was not changed by this wave (note 4), but that comes from the diff, not from a run.
+- **The captured-refund branch has never run on real Stripe.** The checklist would not reach it either (note 4).
+- **Plan must-haves not established:** an expert cancel on production releasing the full hold, with the PaymentIntent canceled. The plan's success criterion, "live and confirmed on production", is met for "live" only.
+
+### Items that stay open
+
+- The `pending_approval` hold after `end_time` stays until `expireBookings` voids it, up to about 12 hours after the request (note 6, STATE.md).
+- The confirm orphaned hold: when the confirm insert fails with no replay, the authorized PaymentIntent is not voided. Needs a user decision before Phase 4 payment UAT (note 6, STATE.md).
+- The client-cancel `retrievePI` failure within 24 hours leaves a hold with no flag and no retry (note 3, `deferred-items.md`, `.planning/WINDOWS.md`).
+
+### What was checked after the push
+
+Claude re-ran these read-only on 2026-11-08, and they match what the orchestrator reported:
+
+| Check | Result |
+|-------|--------|
+| `git rev-list --count origin/main..master` | 0 |
+| `git rev-list --count master..origin/main` | 0 |
+| `master`, `origin/main`, and `git ls-remote origin main` | all `3899d63` |
+| `git log d356fdc..origin/main` | exactly `ccd586e` and `3899d63` |
+| `GET /health` | 200 `{"status":"success","commit":"3899d63"}` |
+
+These show which code is deployed. They do not show how it behaves.
+
+## Handoff notes: written before the push, read before running the checklist
+
+### 1. DECIDED (option A): failed refunds are not retried as refunds
 
 **Confirmed by reading the code. Nothing here was run on real Stripe.**
 
@@ -98,7 +165,7 @@ From reading the code, a booking can be captured and still cancellable in only t
 - A capture made outside this code, such as in the Dashboard, which the webhook records.
 - A narrow case: `authExpirySweep` captures an `in_progress` or `completed` row, which is then rescheduled before its end time.
 
-**Two read-only queries size this (Supabase SQL editor). They need no hold:**
+**Two read-only queries size this (Supabase SQL editor). They need no hold. The user reported both empty after the push; see the top of this file. Re-running them before the fix ships is cheap:**
 
 ```sql
 -- QA: bookings that would reach the refund branch if an expert cancelled now
@@ -118,11 +185,11 @@ order by updated_at desc;
 - An empty QA is strong evidence that the exposure is small. It is not proof, because an old row's `payment_status` can be stale.
 - A QB row with `status = cancelled`, `payment_status = captured` and a NULL amount is a client who may be owed money today, whatever you decide about this wave. Tell Claude.
 
-**Options:**
+**Options, as offered. The user chose A on 2026-11-08:**
 
 | Option | What happens | Cost |
 |--------|--------------|------|
-| **A. Push now, fix next (my recommendation if QA and QB are empty)** | Wave 3b ships. The fix becomes its own small plan and deploy, before Phase 4 payment UAT | Until then a failed refund needs a manual refund, and the API overstates it |
+| **A. Push now, fix next (CHOSEN; recommended if QA and QB are empty)** | Wave 3b ships. The fix becomes its own small plan and deploy, before Phase 4 payment UAT | Until then a failed refund needs a manual refund, and the API overstates it |
 | B. Fix first | The fix joins this push | Client cancel and the sweep join the wave, so it is no longer expert-cancel only (D-10). The gate and this bundle must be redone |
 | C. Accept it | No fix. Check QB periodically and refund by hand | A client can wait on a manual step while the API said refunded |
 
@@ -165,7 +232,7 @@ The captured-refund branch has **never run on real Stripe**, and the smoke canno
 
 - Its real-card smoke was not run, by your decision, so BACK-06 and BACK-07 stay Pending. This smoke does not cover them.
 - Whether a paid booking was made during wave 3a is unknown.
-- **Rollback:** after this push, `ddfe5bf` is no longer a clean way back. `d356fdc` is the target for this wave, and it contains the unverified card code.
+- **Rollback:** `ddfe5bf` is no longer a clean way back. `d356fdc` is the target for this wave, and it contains the unverified card code.
 
 ### 6. Still open from wave 2
 
@@ -188,24 +255,26 @@ The captured-refund branch has **never run on real Stripe**, and the smoke canno
 
 ### Push bundle
 
-- Production SHA now (`GET /health`): `d356fdc` (`{"status":"success","commit":"d356fdc"}`). `git ls-remote origin main` also shows `d356fdc`, after a fetch, so no other session has moved it.
+Recorded before the push. The current state is at the top of this file.
+
+- Production SHA before the push (`GET /health`): `d356fdc` (`{"status":"success","commit":"d356fdc"}`). `git ls-remote origin main` also showed `d356fdc`, after a fetch, so no other session had moved it.
 - Target SHA (`git rev-parse --short=7 master`): `3899d63`
-- `git status -sb`: `## master...origin/main [ahead 2]`. `master..origin/main` is 0, so the push is a fast-forward.
-- Diff against origin/main: 5 files, 226 insertions, 58 deletions. **The only runtime file is `src/controllers/expertBooking.controller.js`.**
-- **No migration or dependency change:** `git diff --name-status origin/main master -- supabase package.json package-lock.json railway.json` prints nothing.
+- `git status -sb` before the push: `## master...origin/main [ahead 2]`. `master..origin/main` was 0, so the push was a fast-forward.
+- Diff against origin/main before the push: 5 files, 226 insertions, 58 deletions. **The only runtime file is `src/controllers/expertBooking.controller.js`.**
+- **No migration or dependency change:** `git diff --name-status origin/main master -- supabase package.json package-lock.json railway.json` printed nothing.
 - **Going back is code-only:** the previous state is `d356fdc`.
-- Push command (you only): `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`
+- Push command (run by the user): `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`
 
 | Commit | Plan | Subject |
 |--------|------|---------|
 | ccd586e | 01-18 | fix(ios-p1/BACK-19): expert-initiated cancel always refunds the client in full (D-17) |
 | 3899d63 | 01-18 | docs(ios-p1/BACK-19): document the expert-cancel full refund policy |
 
-## Task 2: Checkpoint (PENDING, user action)
+## Task 2: Deployment done, smoke NOT RUN
 
-**A. Decide note 1**, then push: `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`, and wait for Railway to report the deploy healthy. There is no migration to apply first.
+**A. Decision and push: done by the user.** Option A on note 1. See "What was checked after the push" above.
 
-**B. Smoke.** Production runs live Stripe with a real card you own.
+**B. Smoke checklist: NOT RUN (user decision, 2026-11-08). Kept here to run later.** Production runs live Stripe with a real card you own. Before running it, check the SHAs and notes against what has been deployed since: S4's way back to `d356fdc` only holds until the next push.
 
 ### What to run
 
@@ -287,12 +356,12 @@ order by created_at desc limit 1;
 - No charge from this smoke on your card. A pending line that later drops off is fine.
 - Saved cards are untouched by this smoke. Cancel the free booking if you do not want it.
 
-**After you reply, Claude runs (read-only):** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" rev-list --count origin/main..master` must print 0, and `curl -fsS https://clickme-backend-production.up.railway.app/health` must contain `"commit":"3899d63"`. Claude then records your results here.
-
-**Resume signal:** reply "wave 3b deployed" with your choice on note 1, then any step that failed (or "all passed"), which level you ran, and whether the end state holds.
+**When the checklist is run:** report any step that failed (or "all passed"), which level you ran, and whether the end state holds. BACK-19 can close only after that, and even then the captured-refund branch stays proven by mocked tests alone.
 
 ## Deviations from Plan
 
+- **Task 2 smoke not run, by user decision.** Quoted at the top of this file. Steps 1 to 5 and the end state have no results. This is a user-authorized skip, not a result. It is logged in STATE.md and `.planning/WINDOWS.md`.
+- **SUMMARY status:** `complete` is used so 01-20 can start, as in 01-17. The skip is recorded in the title, at the top of the body and in the `smoke` frontmatter field.
 - **Gate command:** ran with `--testPathIgnorePatterns=tests/services/redis.test.js` instead of `REDIS_URL=redis://localhost:6379 npm test` (no local Redis; the dispatch named this as the gate), so `redis.test.js` did not run. Recorded in `.planning/WINDOWS.md`.
 - **`status --porcelain` not literally empty:** the pre-existing untracked `scripts/uat-seed-profile.js`, left untouched.
 - **[Rule 2 - Missing critical] Checklist tightened from the plan's text.** Read together, the plan's steps could charge the card, leave a hold, or pass when the Stripe call failed. Changes:
@@ -309,17 +378,32 @@ order by created_at desc limit 1;
 
 ## Threat Coverage
 
-T-01-39 (wave-3b deploy): the isolated push range and green gate are done. The post-deploy `/health` check and the live expert-cancel smoke are Task 2. The smoke covers a full release only, so for a captured booking this threat stays mitigated by mocked tests alone. No new security surface: this plan changes no code.
+T-01-39 (wave-3b deploy) is only partly mitigated. The isolated push range, green gate and post-deploy `/health` check are done. The live expert-cancel smoke, the part of the mitigation that confirms a full release on real Stripe, was not run. This remains open until the checklist is run, and even then a captured booking stays covered by mocked tests alone. No new security surface: this plan changes no code.
 
 ## Next Phase Readiness
 
-Blocked on Task 2 and on your choice in note 1. BACK-19 stays Pending until the push and the smoke results are recorded here. BACK-06 and BACK-07 stay Pending.
+- 01-20 can start. The user chose to skip this smoke, and no further check blocks the position.
+- Open debt: BACK-19 stays Pending until the checklist above has been run, at the latest during Phase 4 payment UAT. Logged in STATE.md and `.planning/WINDOWS.md`.
+- Open commitment: the refund retry fix (option A) needs its own plan and deploy before Phase 4 payment UAT. No plan exists yet.
+- BACK-06 and BACK-07 also stay Pending (01-17).
 
-## Self-Check: PASSED (record checks only; Task 2 not run)
+## Self-Check: PARTIAL (record checks only, smoke checks NOT RUN)
 
-- This SUMMARY contains `BACK-19` and lists every commit in `origin/main..master` with its plan id, the production SHA and the target SHA.
-- `git log origin/main..master` holds exactly `ccd586e` and `3899d63`, both from plan 01-18.
-- `git rev-list --count master..origin/main` = 0, and `git ls-remote origin main` = `d356fdc`; nothing pushed by Claude.
-- No backend file changed in this plan: `git status --porcelain` in the backend shows no tracked change.
-- The columns in Q1, QA and QB match the code that reads and writes them.
-- Task 2 is not done, so `status: in-progress`, `requirements-completed: []`, and no requirement is marked complete.
+This covers what could be checked. It does not cover the behavior of the deployed code, which nobody has checked.
+
+**Checked:**
+
+- This file exists and contains `BACK-19`.
+- Commit `7c9cac6` is an ancestor of HEAD, and `git rev-list --count fa3f552..7c9cac6` = 1.
+- Deployment: origin/main and master both at `3899d63`, 0 commits apart in either direction, and `/health` reports `3899d63`.
+- `git log d356fdc..origin/main` holds exactly `ccd586e` and `3899d63`, both from plan 01-18.
+- No tracked backend file is modified. `git status --porcelain -- src tests openapi docs supabase scripts` prints only the pre-existing untracked `scripts/uat-seed-profile.js`. Claude did not push or deploy.
+- `requirements-completed` is `[]`, and no requirement was marked complete by this plan.
+
+**Not checked, because the user skipped the smoke:**
+
+- Steps 1 to 5 on build 6 and on Android.
+- An expert cancel on production releasing the full hold, the PaymentIntent state and `refund_failed` after it.
+- Whether any hold exists from this wave, and the required end state.
+
+**Not checked by Claude:** the QA and QB results are the user's report. Claude did not query production Supabase.

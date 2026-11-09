@@ -3,7 +3,7 @@ phase: "01"
 slug: "backend-fixes"
 status: draft
 # threats_open = count of OPEN threats at or above workflow.security_block_on severity (the blocking gate)
-threats_open: 1
+threats_open: 0
 asvs_level: 1
 created: "2026-11-09"
 ---
@@ -56,7 +56,7 @@ created: "2026-11-09"
 | T-01-15 | Spoofing | accept message sender | low | mitigate | sender_id is req.user.id of the authenticated expert whose expert_id scoped the booking read; no client-supplied sender | closed |
 | T-01-16 | Elevation of privilege | blocked or moderated recipient bypass | high | mitigate | The accept path re-applies the same is_blocked and getAccountStatus checks chats.send uses before calling postUserMessage; tests cover both skips | closed |
 | T-01-17 | Tampering | message content | low | accept | Stored as plain text with the schema's 1000-character cap (chat allows 10000); rendered as text by both clients | closed |
-| T-01-18 | Tampering | production schema change | high | mitigate | Additive, idempotent ADD COLUMN IF NOT EXISTS only; the user confirms with `supabase migration list` that it is the only pending migration, applies it, and verifies the column before any dependent code ships | open |
+| T-01-18 | Tampering | production schema change | high | mitigate | Additive, idempotent ADD COLUMN IF NOT EXISTS only; the user confirms with `supabase migration list` that it is the only pending migration, applies it, and verifies the column before any dependent code ships | closed (user check) |
 | T-01-19 | Repudiation | deploy without verification | medium | mitigate | The push bundle records every commit and SHA; after the push Claude confirms /health reports the expected SHA and records the smoke results | closed |
 | T-01-20 | Elevation of privilege | call.controller.js join | high | mitigate | Participant check stays first; then JOINABLE_BOOKING_STATUSES rejects cancelled, declined, expired, missed and pending bookings before any token is minted; then the two-tier window | closed |
 | T-01-21 | Spoofing | Agora token lifetime | medium | mitigate | Token expiry is bounded at end+70min (TOKEN_TTL_AFTER_END_SECONDS 4200), shorter than today's end+130min | closed |
@@ -111,7 +111,6 @@ created: "2026-11-09"
 
 | ID | Severity | What is missing | What closes it |
 |----|----------|-----------------|----------------|
-| T-01-18 | high (blocking) | The additive migration happened and the user confirmed the column, but the `supabase migration list` check is not shown (`01-10-SUMMARY.md:129`) | The user runs read-only `supabase migration list`. Only `20261109000000` may be pending, and not even that once it has been applied |
 | T-01-55 | low | `refundReconciliation.js:253` logs `rowErr.message`, which can carry Stripe text; the header claim at `:55` is false and untested (B19-WR-03) | Log only booking id and status on that path |
 | T-01-41 | medium | Moot in production: the DB role fallback exists only on `wave-3c` | Revisit with `wave-3c` |
 | T-01-49 | medium | Live: `src/routes/expertTaxProfile.js:31,34` promote, then serve POST and GET. The read gate is only on `wave-3c` | Deploy `wave-3c` after SIGN-06 |
@@ -138,6 +137,7 @@ Paths are relative to the backend repo. Lower-severity threats were checked in t
 | T-01-53 | `refundReconciliation.js:133-139`; `tests/refundReconciliation.test.js:487` |
 | T-01-56 | `clientBooking.controller.js:816-821,945-946,978`; `tests/clientBooking.test.js:1709,1738` |
 | T-01-59 | Push range `215adcb..d86bf97` is 5 commits, 4 `src` files, no migration or dependency change; gate and `/health` from `01-26-SUMMARY.md` |
+| T-01-18 | Additive migration `20261107000000_bookings_cancellation_reason.sql`; the user ran `supabase migration list` on 2026-11-09: 111 local, 111 remote, 0 mismatches, latest `20261109000000` |
 | T-01-60 | First-sweep table matches `refundReconciliation.js`. The user confirmed on 2026-11-09 that the flagged-row query, which returned no rows, ran before the push |
 | T-01-61 | `wave-3c` is not an ancestor of `master` or `origin/main`, and no parked symbols are in `src` or `openapi` |
 
@@ -182,3 +182,11 @@ Paths are relative to the backend repo. Lower-severity threats were checked in t
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-11-09 | 61 | 57 | 4 (1 blocking) | gsd-security-auditor, with user decisions recorded the same day |
+
+## Security Audit 2026-11-09
+
+| Metric | Count |
+|---|---|
+| Threats found | 61 |
+| Closed | 58 |
+| Open | 3 |

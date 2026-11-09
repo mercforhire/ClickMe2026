@@ -82,12 +82,17 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-20 (BACK-13), backend `src/routes/onboarding.js` and `src/controllers/onboarding.controller.js` `setupProfile`.
   **What:** every field in `onboardingSchema` is optional, so `{}` is a valid body and promotes a client-only account. `{ "setup_completed": true }` on an incomplete record also promotes, because the controller's 422 with `missing_fields` runs after `provisionExpert`; that 422 keeps the other fields it already saved, by design (quick-260715-vta). Only a schema failure promotes nothing.
   **Why deferred:** this matches the plan's wording (validate, then provision) and D-07 names the route, not a required field. A stricter rule would change the setup contract both shipped clients use, so it is a user decision. No promotion is possible from any other route.
+  **Update (plan 01-22):** the behavior is unchanged and now stated in `docs/ios/EXPERT-SETUP-GATE.md` section 3 and on the OpenAPI setup operation. Whether to tighten it is a user decision at 01-23.
 
 - Live UAT scripts and docs still assume a first `/expert/*` call converts the account
   status: open
   **Found in:** plan 01-20 (BACK-13), backend `scripts/uat-convert-expert.js`, `scripts/uat-topic-tags.js`, `scripts/uat-topic-owned-tags.js`, `scripts/uat-seed-notifications.js`, `docs/UAT-ACCOUNTS.md`, `docs/ios/EXPERT-EARNINGS-TRANSACTIONS.md` line 22.
   **What:** after wave 3c deploys, a client-only account is not converted by these paths, so a script that relies on it fails or reports the wrong result, and the transactions doc states the old behavior to client developers. Plan 01-22 sweeps `src/routes` and `src/middleware` and does not list these files.
   **Why deferred:** outside this plan's files, with no effect on production behavior. The doc line should be fixed alongside 01-22's contract docs.
+  **Update (plan 01-22):** both docs are corrected in backend commit `8407402`, so only the scripts remain, and their behavior was not changed. Read from the code; none were run, because they call production. After wave 3c deploys:
+  - `scripts/uat-convert-expert.js` **would fail.** It exists to prove first-touch conversion, and it hard-checks that `POST /expert/connect/onboard` is never a 403. It needs a rewrite or retirement.
+  - `scripts/uat-topic-tags.js` and `scripts/uat-topic-owned-tags.js` should still pass with their defaults, `uat.expert@clickme.test` and `seed-expert-001@clickme.test`, as long as those accounts hold the expert role (not checked against production). Their comments saying any account works are now wrong: a client-only override account gets 403 on `POST /expert/topics`.
+  - `scripts/uat-seed-notifications.js` **would not fail.** It makes no `/expert/*` call, and only its comment explaining `--as` mentions conversion.
 
 - `src/services/stripeEvents.js` cites an old line number in `ensureExpert.js`
   status: open
@@ -102,7 +107,19 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Why deferred:** test infrastructure outside this plan's files, and no production behavior is involved. Likely fix: derive `futureEnd` from one captured timestamp.
 
 - `ensureExpert.js` header does not mention the one read that uses the write gate
-  status: open
+  status: resolved
   **Found in:** plan 01-21 (BACK-08), backend `src/middleware/ensureExpert.js`.
   **What:** the header says client-only reads pass through and `expertGate`'s comment says the method selects the gate. Both are true of the default export, but `GET /expert/tax-profile` now mounts `expertWriteGate` explicitly. The route file and table test record the exception.
-  **Why deferred:** comment only and outside this plan's named files. Plan 01-22 touches `src/middleware` and can add one line.
+  **Resolution (plan 01-22):** the header's `expertWriteGate` entry now names that read, in backend commit `8407402`.
+
+- `clientBooking.test.js` failed 40 tests in one full-suite run and passed alone
+  status: open
+  **Found in:** plan 01-22 full-suite run, backend `tests/clientBooking.test.js`.
+  **What:** the first of three full runs in this plan failed 40 of 3099 tests, all in this file (for example `BACK-14 cancel reason › applies the 500 character limit after trimming`, "Expected: 200, Received: 401", under a mocked `authenticate` that never returns 401). The same code passed 143 of 143 alone, and the next two full runs passed 3099 of 3099. Root cause not established. The failures look like one test's queued `mockReturnValueOnce` values leaking into the next, but that was not shown. The only uncommitted changes in that run were comments, so this plan did not cause it. This file was not on the known-flake list before.
+  **Why deferred:** test infrastructure outside this plan's files, and no production behavior is involved.
+
+- Comments still name a `roleCheck('expert')` that no expert route mounts
+  status: open
+  **Found in:** plan 01-22 (BACK-13) comment sweep, backend `src/routes/index.js` lines 81, 131, 139, 148, 153 and `src/controllers/analytics.controller.js` line 18.
+  **What:** they say expert routes self-gate with `roleCheck('expert')`. Those routes use the BACK-13 expert gate, and `roleCheck` is mounted only with `'client'` on the booking routes. Comments only. They do not describe convert-on-demand, so the sweep does not cover them.
+  **Why deferred:** outside this plan's files, and more than a one-line correction.

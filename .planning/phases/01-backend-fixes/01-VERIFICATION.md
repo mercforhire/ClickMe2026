@@ -83,6 +83,22 @@ gaps:
         issue: "First-touch promotion still active for every /expert/* route"
     missing:
       - "A new user decision on BACK-13 (revive wave-3c, redesign, or defer). Phase 5 SIGN-06 pairs with it and needs the same re-decision"
+  - truth: "BACK-19: A failed refund on a cancel is retried as a refund, so an expert-initiated cancel always refunds the client in full"
+    status: failed
+    reason: "When createRefund throws, the expert and client cancel handlers set only refund_failed, and the API still returns the full refund_amount. refundReconciliation.js reads the NULL refund_amount_minor_units as a failed void and calls cancelPI, which should keep failing on a captured PaymentIntent, so the client gets no money unless someone refunds by hand. Read from code, not run on real Stripe. User chose option A: fix in its own plan and deploy before Phase 4 payment UAT. QA and QB returned no rows on 2026-11-08."
+    artifacts:
+      - path: "src/controllers/expertBooking.controller.js"
+        issue: "catch block sets only refund_failed and reports the full refund_amount"
+      - path: "src/controllers/clientBooking.controller.js"
+        issue: "same, for client cancels more than 24 hours out"
+      - path: "src/cron/refundReconciliation.js"
+        issue: "NULL amount is always treated as a failed void"
+    missing:
+      - "Handlers save the intended amount in the catch block"
+      - "Sweep reads the PaymentIntent first, then voids, refunds or clears the flag"
+      - "Read paths (derivePaymentStatus, clientTransactions) also check refund_failed"
+      - "API returns refund_amount 0 when the refund failed"
+      - "Safe for App Store build 6 and current Android, and shipped from backend master without wave-3c"
 deferred: []
 behavior_unverified_items:
   - truth: "BACK-06: A lone saved card is made the default"

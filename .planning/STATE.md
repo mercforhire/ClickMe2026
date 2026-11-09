@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: 01-15 paused at Task 2 checkpoint (user pushes wave 2, runs smoke)
-last_updated: "2026-11-08T18:05:29.007Z"
+stopped_at: Completed 01-15-PLAN.md
+last_updated: "2026-11-09T00:19:17.225Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: d4c9db80faf76b8c4cc5960aee69235f30760e2b
+state_head: a4f437f8e16177347ce940ec7130b1f96acb42e7
 progress:
   total_phases: 8
   completed_phases: 0
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 15 of 23
+Plan: 16 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -70,6 +70,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P12 | 4 min | 2 tasks | 6 files |
 | Phase 01 P13 | 7 min | 2 tasks | 4 files |
 | Phase 01 P14 | 5 min | 3 tasks | 10 files |
+| Phase 01 P15 | ~6h 20m wall clock (user wait) | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-14 BACK-18: unread_count is recomputed from messages.status on send (recipient), message.read (reader) and GET /chats/:id/messages page 1 (caller), with no increment RPC and no migration; simultaneous sends can undercount by one until the next event
 - [Phase 01]: 01-14 BACK-18: opening a thread recomputes the caller's counter and marks nothing read (Open Q6 default); partner messages a client never emits message.read for stay in the count, including older pages; Phase 7 CHAT-07/08 may revisit
 - [Phase 01]: 01-14 BACK-18: countUnreadFor throws when a query returns no count, so a missing count is never written to the counter as 0
+- [Phase 01]: 01-15: wave 2 deployed, production moved from a92acba to 7fdc7c4, then to ddfe5bf (test-only commit outside the plan, same runtime code); smoke checklist user-reported all passed, with no per-step notes
+- [Phase 01]: 01-15: smoke checklist assigns each step to a specific booking, because a paid booking whose call connected, or whose end time has passed, can no longer be released by a client cancel and is captured at end+15
+- [Phase 01]: 01-15: Android unread smoke step adds a force-quit, because the Android badge is max(server, session-local) and would otherwise pass without the server count
 
 ### Pending Todos
 
@@ -130,6 +134,8 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 3]: If Q2 changes the backend refund policy, that is backend work outside Phase 1. It can be pulled forward into Phase 1's discuss step.
 - [Phase 4]: Every environment points at the production backend and live Stripe, so payment UAT places real holds.
 - [Phase 7]: CHAT-08 needs a device re-test before planning (Q8).
+- [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
+- [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
 
 ## Deferred Items
 
@@ -141,6 +147,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-08T18:05:28.971Z
-Stopped at: 01-15 paused at Task 2 checkpoint (user pushes wave 2, runs smoke)
-Resume file: .planning/phases/01-backend-fixes/01-15-SUMMARY.md
+Last session: 2026-11-09T00:19:17.196Z
+Stopped at: Completed 01-15-PLAN.md
+Resume file: None

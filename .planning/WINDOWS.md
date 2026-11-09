@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 1
+open_count: 2
 waived_count: 0
 fixed_count: 0
-total_count: 1
-last_updated: 2026-11-08T17:25:53.004Z
+total_count: 2
+last_updated: 2026-11-09T00:17:57.404Z
 ---
 
 # Broken Windows Ledger
@@ -16,6 +16,7 @@ last_updated: 2026-11-08T17:25:53.004Z
 | id | phase | kind | file | line | description | status | reason | recorded_at | resolved_at |
 |----|-------|------|------|------|-------------|--------|--------|-------------|-------------|
 | 1 | 01 | deviation | tests/services/redis.test.js |  | 01-10 wave-1 gate excluded tests/services/redis.test.js (no local Redis) | open |  | 2026-11-08T17:25:53.004Z |  |
+| 2 | 01 | deviation | tests/services/redis.test.js |  | 01-15 wave-2 gate excluded tests/services/redis.test.js (no local Redis) | open |  | 2026-11-09T00:17:57.404Z |  |
 
 ````json
 [
@@ -29,6 +30,19 @@ last_updated: 2026-11-08T17:25:53.004Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-08T17:25:53.004Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 2,
+    "kind": "deviation",
+    "phase": "01",
+    "file": "tests/services/redis.test.js",
+    "line": null,
+    "description": "01-15 wave-2 gate excluded tests/services/redis.test.js (no local Redis)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-09T00:17:57.404Z",
     "resolved_at": null,
     "milestone": null
   }

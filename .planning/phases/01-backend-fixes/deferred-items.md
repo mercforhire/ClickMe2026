@@ -49,11 +49,12 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Why deferred:** no money moves and the failure needs a prior partial delete. Changing the key or the eviction order is a money-path change for a planned item.
 
 - A failed cancel refund is never retried as a refund
-  status: open
+  status: resolved
   **Found in:** plan 01-18 (BACK-19), backend `src/controllers/expertBooking.controller.js` `cancel` and `src/controllers/clientBooking.controller.js` `cancel`, catch blocks; `src/cron/refundReconciliation.js`.
   **What:** when `createRefund` throws, both handlers set `refund_failed: true` but leave `refund_amount_minor_units` NULL. The sweep reads NULL as a failed void and calls `cancelPI`, not `createRefund`. On a captured PaymentIntent that call should fail on every 30-minute sweep (not run against real Stripe), so the flag never clears and the client is not refunded unless someone does it by hand. The code comment saying the cron retries is wrong for this branch. The same failed call also returns `refund_amount` as the full amount, because the value is set before `createRefund` runs. From the 01-19 code read, BACK-19 widens this path only slightly, because capture happens after a booking stops being cancellable.
   **Why deferred:** the plan says to leave the CR-06 error handling untouched, and the behavior predates it. The obvious fix, writing the amount in the catch, is not safe alone: when `retrievePI` fails on an uncaptured booking the handler assumes `succeeded`, and that row needs the void retry.
   **Decision (user, 2026-11-08, option A):** push now, fix next. Wave 3b shipped without this fix. It needs its own plan and deploy before Phase 4 payment UAT. No phase or plan for it exists yet; one still needs creating. The shape of the fix is in `01-19-SUMMARY.md` note 1.
+  **Resolution (plans 01-24 to 01-26):** expert and client cancels now save the intended refund before calling Stripe, and the sweep reads the PaymentIntent and Charge before any money call, retrying a captured row as a refund. Deployed to production at backend `d86bf97` (confirmed by `GET /health` and `git ls-remote origin main`, 2026-11-09). **Proof is mocked Stripe only.** No real failed refund has been retried on production, and none can be forced safely on live data. BACK-19 stays Pending until the 01-19 checklist is run on real Stripe.
 
 - `PATCH /expert/bookings/:id/status` with `cancelled` moves no money
   status: resolved
@@ -68,10 +69,11 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Why deferred:** a doc fix in the backend repo, plus a low-priority product question. No current client reaches it.
 
 - Client cancel can leave a hold with no flag when `retrievePI` fails within 24 hours
-  status: open
+  status: resolved
   **Found in:** plan 01-19 review, backend `src/controllers/clientBooking.controller.js` `cancel`.
   **What:** a `retrievePI` failure on a non-pending booking falls back to `succeeded`. `computeRefundAmountMinorUnits` then returns 0 within 24 hours, so no Stripe call is made and `refund_failed` is not set. `cancelScheduledPayment` leaves a PaymentIntent the caller already knew about, and the capture sweeps skip `cancelled` rows. The hold stays on the card with nothing retrying it, until the authorization lapses. No charge results. Read from the code, not run on real Stripe.
   **Why deferred:** behavior that predates this project and is outside wave 3b. It belongs with the failed-refund fix above, because the same PaymentIntent read in the handler and sweep would address it.
+  **Resolution (plan 01-25, deployed in 01-26):** client cancel now saves the intended refund and flags an unreadable PaymentIntent (saved 0) for the sweep to resolve. Deployed to production at backend `d86bf97` (2026-11-09). **Proof is mocked Stripe only.** `accountCascade.cancelActiveBookingsForUser` has the same gap and is logged as its own open entry below.
 
 - Comments still describe the old expert refund rule
   status: open
@@ -151,3 +153,27 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **What:** `tests/moderationGates.test.js`, `reportLimiter › counts reports (10/hour) but never action != report`, "Expected: 429, Received: 401". `tests/connectWebhooks.test.js`, `POST /webhooks/stripe-connect — payout.paid › updates withdrawals.status to "paid" when payout.paid fires`, a 5 s timeout, followed by Jest's forced worker exit warning. Each passes alone (14 of 14, 107 of 107). Neither file changed in this wave. Cause not established. The unexpected 401 matches the symptom in the earlier `clientBooking.test.js` entry, which is a clue and not a finding.
   **Why deferred:** test infrastructure is outside this plan, which changes no backend code.
   **Update (01-23 close):** this still applies. The runs were at `8407402`, but neither test file differs between `wave-3c` and `master`.
+
+- `accountCascade.cancelActiveBookingsForUser` has the same gap as the resolved client-cancel hold item
+  status: open
+  **Found in:** plans 01-24 to 01-26, backend `src/services/accountCascade.js` `cancelActiveBookingsForUser`.
+  **What:** for a user cancelled as a client inside 24 hours, when `retrievePI` fails the intended refund is 0, no Stripe call is made and no flag is set. The hold stays on the card with nothing retrying it until the authorization lapses. This is the gap plan 01-25 closed in `clientBooking.controller.js`, left in place here. Read from the code, not run on real Stripe.
+  **Why deferred:** outside the four runtime files of the BACK-19 fix, and a money-path change that needs its own plan and deploy.
+
+- A refund Stripe accepted but that fails later at the bank is not retried
+  status: open
+  **Found in:** plans 01-24 to 01-26, backend `src/cron/refundReconciliation.js` and the refund webhooks, named in the 01-24 and 01-25 summaries. Read from the code, not run on real Stripe.
+  **What:** the sweep and the cancel handlers treat a refund Stripe accepted as done. If Stripe later reports that refund as failed at the bank, nothing in the backend retries it or flags the booking, so the client may not receive the money without manual action.
+  **Why deferred:** a different failure than the one BACK-19 fixes, and it needs a webhook-side design decision.
+
+- After a sweep's own `createRefund` fails, later runs can replay Stripe's saved error
+  status: open
+  **Found in:** plans 01-24 to 01-26, backend `src/cron/refundReconciliation.js` (idempotency key `reconcile-refund-{pi}-{amount}`).
+  **What:** Stripe replays the saved result of a request made with the same idempotency key. If a sweep refund fails, the next runs, every 30 minutes, may get that same error back until the key is pruned, at least 24 hours. A flagged row can therefore wait a day or more after the underlying cause is fixed. Not observed on real Stripe.
+  **Why deferred:** changing the key scheme is a money-path change, and the delay is bounded.
+
+- `reconcileDirectChargeRefunded` sends no push
+  status: open
+  **Found in:** plans 01-24 to 01-26, backend `src/controllers/connectWebhooks.controller.js` `reconcileDirectChargeRefunded` (the `charge.refunded` handler for direct charges).
+  **What:** a client is not told when a refund, or a retried refund, goes through on a direct charge. The refund push exists only on the legacy platform webhook.
+  **Why deferred:** a notification gap, not a money bug, and outside the BACK-19 files.

@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-16-PLAN.md
-last_updated: "2026-11-09T00:28:15.504Z"
+stopped_at: 01-17 paused at Task 2 checkpoint (user pushes wave 3a, runs real-card smoke)
+last_updated: "2026-11-09T00:34:50.033Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: ae759f759d6158b46ebace4d4dd79979b6f51055
+state_head: 6e0d306f891ee3916d0b7982c1866f280556c4aa
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 16
+  completed_plans: 17
   percent: 0
 ---
 
@@ -152,6 +152,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T00:28:15.475Z
-Stopped at: Completed 01-16-PLAN.md
-Resume file: None
+Last session: 2026-11-09T00:34:49.993Z
+Stopped at: 01-17 paused at Task 2 checkpoint (user pushes wave 3a, runs real-card smoke)
+Resume file: .planning/phases/01-backend-fixes/01-17-SUMMARY.md

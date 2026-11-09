@@ -39,3 +39,9 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-16 (BACK-07), backend `src/controllers/paymentMethods.controller.js` `deletePaymentMethod`.
   **What:** a long-lead confirm for the same card that lands after the bookings check can create a booking, or a clone row after the eviction, with no lock to stop it. A cached clone could then be charged by the T-24h sweep after the client removed the card. It needs one client to book and delete the same card at the same moment.
   **Why deferred:** closing it needs a lock or a re-check across the delete and confirm paths, which goes beyond this plan.
+
+- A partly failed card delete can spoil the saved card for one expert
+  status: open
+  **Found in:** plan 01-17 review of BACK-07, backend `src/services/connectedPaymentMethodClone.js` `evictClonesForPlatformPaymentMethod` and `src/services/stripe.js` `clonePaymentMethodToConnectedAccount`.
+  **What:** eviction detaches a clone and deletes its row one account at a time. If a later step fails (a 502 on another account's clone, or the platform detach), the card stays saved with that clone gone. The clone call uses the fixed idempotency key `clone-{pm}-on-{acct}`, so a later booking with that card and expert may get the old, detached clone back from Stripe within the key's retention window, and the attach would then fail before any hold. Removing and re-adding the card gives a new pm id and avoids it. Inferred from the code, not tested against Stripe.
+  **Why deferred:** no money moves and the failure needs a prior partial delete. Changing the key or the eviction order is a money-path change for a planned item.

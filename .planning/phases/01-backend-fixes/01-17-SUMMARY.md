@@ -10,11 +10,14 @@ requires:
   - phase: 01-backend-fixes/01-16
     provides: "BACK-06 and BACK-07 commits 0a18772 and d356fdc on backend master"
 provides:
-  - "Wave-3a push bundle and real-card smoke checklist (below), full gate green at d356fdc"
-affects: [01-18 onward (later deploy waves start only after 3a is verified), Phase 4 payment methods UI and payment UAT]
+  - "Wave-3a push bundle, full gate green at d356fdc"
+  - "Wave 3a live in production at d356fdc (the user pushed; /health and git checked by Claude). Real-card smoke not run, by user decision"
+  - "The real-card smoke checklist below, still to be run before BACK-06 and BACK-07 close"
+affects: [01-18 onward (the user chose to continue without the 3a smoke), Phase 4 payment methods UI and payment UAT (latest point to run the checklist)]
 
 actuals:
-  tokens: 5525
+  tokens: 6432
+  # tasks counts Task 1 only. Task 2 is half done: deployment yes, smoke no.
   tasks: 1
   commits: 1
 
@@ -30,7 +33,10 @@ key-decisions:
   - "The smoke checklist reads the clone id out of connected_pm_clones before the card is removed, because eviction deletes the only record of it and a count of 0 afterwards proves nothing if no clone existed"
   - "The paid booking must start 2 to 5 days out and is never joined by either side or rescheduled, because a connected call or a client no-show is captured at end+15 and a reschedule can convert it to a T-24h charge"
   - "The hold is proven released from the PaymentIntent state, not the app, because client cancel returns 200 even when the Stripe void failed (it sets refund_failed)"
+  - "User decision 2026-11-08: skip the wave-3a smoke and continue to the next wave. BACK-06 and BACK-07 stay Pending until the checklist has been run, at the latest during Phase 4 payment UAT"
 
+# status: complete below only means the plan is finished for position purposes. It does not mean the smoke was run.
+smoke: not-run-user-decision
 requirements-completed: []
 requirements-pending-checkpoint: [BACK-06, BACK-07]
 
@@ -48,20 +54,58 @@ coverage:
     requirement: BACK-07
     verification: []
     human_judgment: true
-    rationale: "Every test mocks Stripe and Supabase, and the D-13 local test-mode run was dropped by user decision (Open Q7). Task 2 is the first real check, and only the user pushes and holds the card."
+    rationale: "NOT RUN: the user skipped this on 2026-11-08, so no result exists. Every test mocks Stripe and Supabase, and the D-13 local test-mode run was dropped by user decision (Open Q7). This checklist remains the first real check, and only the user holds the card."
+  - id: D3
+    description: "Deployment only: origin/main and master both at d356fdc, and production /health reports d356fdc. This says nothing about how the deployed code behaves."
+    verification:
+      - kind: other
+        ref: "git rev-list --count origin/main..master; git rev-list --count master..origin/main; git ls-remote origin main; GET /health"
+        status: pass
+    human_judgment: false
 
 plan_head_before: 6e0d306f891ee3916d0b7982c1866f280556c4aa
-# plan_head_after and the final commits count: set when the plan completes after the checkpoint resumes.
-# commits counts the iOS repo only (this partial SUMMARY). This plan makes no backend commits; backend master stays at d356fdc.
+plan_head_after: 73628a123bc4e516745d80923af68fb6b7971b49
+# commits counts the iOS repo only, measured from plan_head_before to plan_head_after at SUMMARY write. This plan makes no backend commits; backend master stays at d356fdc.
 
-status: in-progress
+duration: ~30 min wall clock (Task 1 about 6 min, the rest waiting on the user's push)
+completed: 2026-11-08
+status: complete
 ---
 
-# Phase 1 Plan 17: Wave 3a close-out Summary (PARTIAL, awaiting Task 2)
+# Phase 1 Plan 17: Wave 3a close-out Summary (smoke not run by user decision)
 
-**Wave 3a (BACK-06 lone-card default, BACK-07 409 `PAYMENT_METHOD_IN_USE` and clone eviction) is gate-green at `d356fdc` and packaged for the user to push and smoke-test with a real card. It has no migration.**
+**Wave 3a (BACK-06 lone-card default, BACK-07 409 `PAYMENT_METHOD_IN_USE` and clone eviction) is live in production at `d356fdc`, pushed by the user. The real-card smoke was not run, by user decision, so BACK-06 and BACK-07 stay Pending.**
 
-Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is waiting on the user. Nothing was pushed or deployed by Claude (D-11). No requirement is marked complete.
+## Smoke not run by user decision
+
+- `status: complete` means only that this plan is finished for position purposes, so 01-18 can start. `halted` would block every plan that depends on this one, which is the opposite of what the user asked for.
+- **User, verbatim:** "wave 3a deployed", then, when asked for results: "Skip the testing for this wave and continue to the next wave."
+- **Task 1:** done.
+- **Task 2, deployment:** done by the user. Claude did not push or deploy (D-11).
+- **Task 2, smoke:** not run. No per-client results, no answer on the clone, and no end-state confirmation exist. None of steps 1 to 9 has a result on build 6 or Android.
+- **BACK-06 and BACK-07:** still Pending. `requirements.ready-ids` reports both as ready, but it only checks whether sibling plans have finished, not whether a skipped check was run, so they were deliberately not marked complete.
+
+### What is still unknown
+
+- **The real clone detach on a connected account is live in production and has never run against real Stripe.** The mocked tests from 01-16 are the only evidence. D-13's local test-mode run was dropped because this smoke was going to replace it, and now neither has happened.
+- **Handoff notes 2, 3, 4, 5 and 7 stay open.** Note 6 stays open too, and is tracked in the STATE.md blockers.
+- **Holds:** it is unknown whether the user made any paid booking during this wave, so nothing can be said about holds from this wave. That includes whether any exist.
+- **Plan must-haves not established:** the app behavior on both clients (blocked removal, removal after cancel), and the detached card and clone with no `connected_pm_clones` row. The plan's success criterion, "verified with a real card on both shipped clients", is not met.
+- **Later waves stack on top of this.** `ddfe5bf` is a clean way back only until the next push. After wave 3b, going back to it would also remove BACK-19, so a problem found later needs a forward fix or a targeted revert. A later smoke also could not tell by itself which wave caused a failure, which weakens the D-10 isolation.
+
+### What was checked after the push
+
+Claude re-ran these read-only on 2026-11-08, and they match what the orchestrator reported:
+
+| Check | Result |
+|-------|--------|
+| `git rev-list --count origin/main..master` | 0 |
+| `git rev-list --count master..origin/main` | 0 |
+| `master`, `origin/main`, and `git ls-remote origin main` | all `d356fdc` |
+| `git log ddfe5bf..origin/main` | exactly `0a18772` and `d356fdc` |
+| `GET /health` | 200 `{"status":"success","commit":"d356fdc"}` |
+
+These show which code is deployed. They do not show how it behaves.
 
 ## Task 1: Gate and push bundle (done)
 
@@ -79,7 +123,9 @@ Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is wa
 
 ### Push bundle
 
-- Production SHA now (`GET /health`): `ddfe5bf` (read 2026-11-08, `{"status":"success","commit":"ddfe5bf"}`). `git ls-remote origin main` also shows `ddfe5bf`, so no other session has moved it.
+This section records the state before the push.
+
+- Production SHA before the push (`GET /health`): `ddfe5bf` (read 2026-11-08, `{"status":"success","commit":"ddfe5bf"}`). `git ls-remote origin main` also shows `ddfe5bf`, so no other session has moved it.
 - Target SHA (`git rev-parse --short=7 master`): `d356fdc`
 - `git status -sb`: `## master...origin/main [ahead 2]`. `master..origin/main` is 0, so the push is a fast-forward.
 - Diff against origin/main: 8 files, 733 insertions, 28 deletions, under `src`, `tests`, `openapi` and `docs`.
@@ -92,9 +138,9 @@ Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is wa
 | 0a18772 | 01-16 | fix(ios-p1/BACK-07): detach on connected accounts and evict clones of a deleted card |
 | d356fdc | 01-16 | fix(ios-p1/BACK-06,BACK-07): block deleting in-use cards, evict clones, default the lone card |
 
-## Handoff notes: read before pushing
+## Handoff notes: written before the push, read before running the checklist
 
-1. **The clone detach has only run against mocks.** The local test-mode run from D-13 was dropped by your decision (Open Q7), so Task 2 is the first real check. Getting a real clone needs no special setup: on both clients a paid booking goes through `/bookings/confirm` with a card attached to your platform customer, which creates and caches a clone on the expert's connected account (`booking.controller.js` Path 1). The cost is one real authorization hold for that topic's full price, one per client run, released when you cancel. Nothing is captured if you follow the rules in Task 2. The clone stays after the cancel, so removing the card then hits the real detach.
+1. **The clone detach has only run against mocks.** The local test-mode run from D-13 was dropped by your decision (Open Q7), so the checklist below is the first real check, whenever it is run. Getting a real clone needs no special setup: on both clients a paid booking goes through `/bookings/confirm` with a card attached to your platform customer, which creates and caches a clone on the expert's connected account (`booking.controller.js` Path 1). The cost is one real authorization hold for that topic's full price, one per client run, released when you cancel. Nothing is captured if you follow the rules in Task 2. The clone stays after the cancel, so removing the card then hits the real detach.
 2. **A card could become undeletable.** Any Stripe error other than `resource_missing` or `payment_method_unexpected_state` returns 502 and keeps the card. If an expert's connected account is closed or unreachable, a client with a clone there may not be able to remove that card. Which error Stripe returns in that case is not established, and the smoke cannot force it. Logged in `deferred-items.md`.
 3. **Narrow race.** The in-use check and the eviction are not atomic. If the same client confirms a long-lead booking on a card while deleting it, a new clone could survive and the T-24h sweep could later charge it. Paid long-lead creation is already refused (`LONG_LEAD_NOT_AVAILABLE`), so the remaining route I can see is a reschedule conversion. I did not work through that route in full. Logged in `deferred-items.md`.
 4. **Path 3 clones are invisible to eviction.** Fresh-card clones from confirm Path 3 are never cached. The comments call them single-use, and that is untested against Stripe. Both current clients collect cards through a setup-mode sheet on the platform customer, so from reading the code their cards take Path 1, not Path 3. The smoke does not exercise Path 3. Older bookings may have used it.
@@ -106,11 +152,11 @@ Status: Task 1 done. Task 2 (`checkpoint:human-action`, `gate="blocking"`) is wa
    - The confirm orphaned hold: when the confirm insert fails with no replay, the authorized PaymentIntent is not voided. This needs your decision before Phase 4 payment UAT. It also applies to step 3 below, see stop condition S2.
 7. **New from this review: a partly failed delete can spoil a card for one expert.** If eviction detaches a clone and removes its row, and then a later step fails (a second account's 502, or the platform detach), the card stays saved with that clone gone. The clone call uses the fixed idempotency key `clone-{pm}-on-{acct}`, so a later booking with the same card and expert may get the old, detached clone back from Stripe within the key's retention window, and the attach would then fail. Booking with that card and expert would then fail before any hold. Removing and re-adding the card avoids it, because the new card has a new id. This is inferred from the code and untested against Stripe. Logged in `deferred-items.md`.
 
-## Task 2: Checkpoint (PENDING, user action)
+## Task 2: Deployment done, smoke NOT RUN
 
-**A. Push wave 3a:** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main`, then wait for Railway to report the deploy healthy. There is no migration to apply first.
+**A. Push wave 3a: done by the user.** See "What was checked after the push" above.
 
-**B. Smoke checklist, on BOTH App Store build 6 and the current Android build (D-12).** Production runs live Stripe with a real card you own.
+**B. Smoke checklist: NOT RUN (user decision, 2026-11-08). Kept here to run later, on BOTH App Store build 6 and the current Android build (D-12).** Production runs live Stripe with a real card you own. Before running it, check the SHAs and notes against what has been deployed since: S1's way back to `ddfe5bf` only holds until the next push.
 
 ### What this costs
 
@@ -202,12 +248,12 @@ Before starting the other client, remove the remaining card so that client start
 - Saved cards back to how you want them. Removed cards are gone for good. Re-adding one creates a new `pm` id with no clone until its next paid booking. If you had a default before, set it again.
 - F needs no cleanup for money. Cancel it if it is still upcoming and you do not want it.
 
-**After you reply, Claude runs (read-only):** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" rev-list --count origin/main..master` must print 0, and `curl -fsS https://clickme-backend-production.up.railway.app/health` must contain `"commit":"d356fdc"`. Claude then records your results here.
-
-**Resume signal:** reply "wave 3a deployed" with any step that failed (or "all passed"), per client, plus "step 9 not run" if it applies, and whether the end state holds.
+**When the checklist is run:** report any step that failed (or "all passed"), per client, plus "step 9 not run" if it applies, and whether the end state holds. BACK-06 and BACK-07 can close only after that.
 
 ## Deviations from Plan
 
+- **Task 2 smoke not run, by user decision.** Quoted at the top of this file. Steps 1 to 9, the clone answer and the end state have no results. This is a user-authorized skip, not a result. It is logged in STATE.md and `.planning/WINDOWS.md`.
+- **SUMMARY status:** the template allows only `complete` or `halted`. `complete` is used so 01-18 can start, and the skip is recorded in the title, at the top of the body and in the `smoke` frontmatter field.
 - **Gate command:** ran with `--testPathIgnorePatterns=tests/services/redis.test.js` instead of `REDIS_URL=redis://localhost:6379 npm test` (no local Redis; the dispatch named this as the gate), so `redis.test.js` did not run. Recorded in `.planning/WINDOWS.md`.
 - **`status --porcelain` not literally empty:** the pre-existing untracked `scripts/uat-seed-profile.js`, left untouched.
 - **[Rule 2 - Missing critical] Checklist tightened from the plan's text.** Read together, the plan's steps could charge the card, leave a hold, or pass without testing the clone. Changes:
@@ -223,16 +269,28 @@ Before starting the other client, remove the remaining card so that client start
 
 ## Threat Coverage
 
-T-01-36 (wave-3a deploy): isolated push range and green gate are done. The post-deploy `/health` check and real-card smoke are Task 2. No new security surface: this plan changes no code.
+T-01-36 (wave-3a deploy) is only partly mitigated. The isolated push range, green gate and post-deploy `/health` check are done. The real-card smoke, the part of the mitigation that confirms block, eviction and detach on live Stripe, was not run. This remains open until the checklist is run. No new security surface: this plan changes no code.
 
 ## Next Phase Readiness
 
-Blocked on Task 2. Later deploy waves must not start until wave 3a is pushed, `/health` reports `d356fdc`, and the smoke results are recorded here.
+- 01-18 can start, by user decision: "continue to the next wave."
+- Open debt: BACK-06 and BACK-07 stay Pending until the checklist above has been run, at the latest during Phase 4 payment UAT. Logged in STATE.md and `.planning/WINDOWS.md`.
+- Phase 1 cannot honestly close those two requirements until then.
 
-## Self-Check: PASSED
+## Self-Check: PARTIAL (record checks only, smoke checks NOT RUN)
 
-- FOUND: this SUMMARY contains `PAYMENT_METHOD_IN_USE`, and lists every commit in `origin/main..master` with its plan id, the production SHA and the target SHA.
-- `git log origin/main..master` holds exactly `0a18772` and `d356fdc`, both from plan 01-16.
-- `git rev-list --count master..origin/main` = 0, and `git ls-remote origin main` = `ddfe5bf`; nothing pushed by Claude.
-- The step 5 message matches `paymentMethods.controller.js`. The columns in Q1 and Q2 match the code that reads and writes them.
-- Task 2 is not done, so `status: in-progress`, `requirements-completed: []`, and no requirement is marked complete.
+This covers what could be checked. It does not cover the behavior of the deployed code, which nobody has checked.
+
+**Checked:**
+
+- This file exists and contains `PAYMENT_METHOD_IN_USE`.
+- Commit `73628a1` is an ancestor of HEAD, and `git rev-list --count 6e0d306..73628a1` = 1.
+- Deployment: origin/main and master both at `d356fdc`, 0 commits apart in either direction, and `/health` reports `d356fdc`.
+- `git log ddfe5bf..origin/main` holds exactly `0a18772` and `d356fdc`, both from plan 01-16.
+- `requirements-completed` is `[]`, and no requirement was marked complete by this plan.
+
+**Not checked, because the user skipped the smoke:**
+
+- Steps 1 to 9 on build 6 and on Android.
+- A real clone detach, the block on removing an in-use card, and the lone or remaining card default, on live Stripe.
+- Whether any hold exists from this wave, and the required end state.

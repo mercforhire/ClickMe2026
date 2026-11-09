@@ -24,14 +24,14 @@
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "container:ClickMe2026.xcodeproj",
+        "containerPath" : "container:ClickMe.xcodeproj",
         "identifier" : "D5284F3B2B57C6B700BB32E7",
         "name" : "ClickMe2026Tests"
       }
     },
     {
       "target" : {
-        "containerPath" : "container:ClickMe2026.xcodeproj",
+        "containerPath" : "container:ClickMe.xcodeproj",
         "identifier" : "D5284F452B57C6B700BB32E7",
         "name" : "ClickMe2026UITests"
       }

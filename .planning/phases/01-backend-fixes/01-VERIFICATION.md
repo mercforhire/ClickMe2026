@@ -1,8 +1,8 @@
 ---
 phase: 01-backend-fixes
-verified: 2026-11-09T03:45:00Z
-status: gaps_found
-score: 15/19 must-haves verified (2 by override, not delivered)
+verified: 2026-11-09T05:45:22Z
+status: human_needed
+score: 16/19 must-haves verified (2 by override, not delivered; 3 present, behavior-unverified on real Stripe)
 covered_files:
   - .planning/REQUIREMENTS.md
   - .planning/ROADMAP.md
@@ -52,7 +52,13 @@ covered_files:
   - .planning/phases/01-backend-fixes/01-22-SUMMARY.md
   - .planning/phases/01-backend-fixes/01-23-PLAN.md
   - .planning/phases/01-backend-fixes/01-23-SUMMARY.md
-covered_digest: "v3:sha256:5ec457da5f5626c7a7199bf7665893856704ae634fd9d948d7f8c21870834ef9"
+  - .planning/phases/01-backend-fixes/01-24-PLAN.md
+  - .planning/phases/01-backend-fixes/01-24-SUMMARY.md
+  - .planning/phases/01-backend-fixes/01-25-PLAN.md
+  - .planning/phases/01-backend-fixes/01-25-SUMMARY.md
+  - .planning/phases/01-backend-fixes/01-26-PLAN.md
+  - .planning/phases/01-backend-fixes/01-26-SUMMARY.md
+covered_digest: "v3:sha256:d26ffdf21d3a0c2053d3e9e7674c80afbe8b290bc3bc886abc61a1a2491df8ab"
 behavior_unverified: 3
 overrides_applied: 2
 overrides:
@@ -64,253 +70,222 @@ overrides:
     reason: "Wave 3c dropped by user decision to protect App Store build 6, because it stops client-only accounts from becoming experts there. Not delivered: first-touch promotion and the tax-ID prompt remain in production. Code parked on backend branch wave-3c."
     accepted_by: "Leon chen"
     accepted_at: "2026-11-09T04:14:07Z"
-gaps:
-  - truth: "BACK-08: A client account is never shown the Stripe tax-ID prompt (ROADMAP success criterion 2)"
-    status: overridden
-    reason: "Not delivered. Wave 3c was dropped by user decision on 2026-11-08 and never pushed. Production (master 3899d63 = origin/main, /health reports 3899d63) has no expertWriteGate, no non-expert refusal in postOnboard, and no EXPERT_SETUP_REQUIRED code in src or openapi. Plans 01-21 and 01-22 are marked complete, but their code exists only on local branch wave-3c."
-    artifacts:
-      - path: "src/routes/index.js"
-        issue: "GET /expert/tax-profile still mounts ensureExpert on master, so a client-only account is promoted and can open the tax form"
-      - path: "src/controllers/connect.controller.js"
-        issue: "postOnboard has no check that req.user.roles contains expert (that check exists only on wave-3c)"
-    missing:
-      - "A new user decision: ship wave-3c in some form that keeps build 6 client-only accounts able to become experts, or defer BACK-08 with a reason (REL-02 already says this must be decided before release)"
-  - truth: "BACK-13: A client becomes an expert only through an explicit setup call, not any /expert/* call (ROADMAP success criterion 3)"
-    status: overridden
-    reason: "Not delivered, same decision as BACK-08. On master, src/middleware/ensureExpert.js still upserts expert_profiles and writes app_metadata roles [client, expert] and profiles.roles on the first /expert/* call (lines 80-98). grep of tests/ for BACK-13 returns 0 files on master."
-    artifacts:
-      - path: "src/middleware/ensureExpert.js"
-        issue: "First-touch promotion still active for every /expert/* route"
-    missing:
-      - "A new user decision on BACK-13 (revive wave-3c, redesign, or defer). Phase 5 SIGN-06 pairs with it and needs the same re-decision"
-  - truth: "BACK-19: A failed refund on a cancel is retried as a refund, so an expert-initiated cancel always refunds the client in full"
-    status: failed
-    reason: "When createRefund throws, the expert and client cancel handlers set only refund_failed, and the API still returns the full refund_amount. refundReconciliation.js reads the NULL refund_amount_minor_units as a failed void and calls cancelPI, which should keep failing on a captured PaymentIntent, so the client gets no money unless someone refunds by hand. Read from code, not run on real Stripe. User chose option A: fix in its own plan and deploy before Phase 4 payment UAT. QA and QB returned no rows on 2026-11-08."
-    artifacts:
-      - path: "src/controllers/expertBooking.controller.js"
-        issue: "catch block sets only refund_failed and reports the full refund_amount"
-      - path: "src/controllers/clientBooking.controller.js"
-        issue: "same, for client cancels more than 24 hours out"
-      - path: "src/cron/refundReconciliation.js"
-        issue: "NULL amount is always treated as a failed void"
-    missing:
-      - "Handlers save the intended amount in the catch block"
-      - "Sweep reads the PaymentIntent first, then voids, refunds or clears the flag"
-      - "Read paths (derivePaymentStatus, clientTransactions) also check refund_failed"
-      - "API returns refund_amount 0 when the refund failed"
-      - "Safe for App Store build 6 and current Android, and shipped from backend master without wave-3c"
+re_verification:
+  previous_status: gaps_found
+  previous_score: 15/19
+  gaps_closed:
+    - "BACK-19: A failed refund on a cancel is retried as a refund (code delivered at d86bf97, proven on mocked Stripe only)"
+    - "BACK-17: build 6 safety question (CR-01) closed by backend 215adcb, which is in production"
+  gaps_remaining: []
+  regressions: []
+gaps: []
 deferred: []
 behavior_unverified_items:
+  - truth: "BACK-19: A real failed cancel refund is retried as a refund by the sweep, with no second refund"
+    test: "Run the 01-19 checklist on real Stripe in test mode (or a low-value live booking): make createRefund fail once on an expert cancel of a captured booking, then let the 30-minute sweep run. Also watch Railway logs for [cron:refundReconciliation] after any real failure"
+    expected: "The row ends with refund_failed false and refund_amount_minor_units equal to the amount Stripe shows refunded; the client is refunded once; a repeated reconcile-refund key does not make a second refund; a held booking is voided instead"
+    why_human: "Every test mocks Stripe. The Idempotency-Key replay behavior and Charge.amount_refunded semantics are Stripe facts the plan itself marks as backstop. No real failed refund has been observed in production and the user's reply was 'no rows'. The user deferred this to Phase 4 payment UAT"
   - truth: "BACK-06: A lone saved card is made the default"
-    test: "On a real test account, add one card through PaymentSheet and call GET /me/payment-methods; then add a second card, delete one, and read the list again (01-17 checklist)"
+    test: "01-17 checklist: add one card through PaymentSheet, GET /me/payment-methods, add a second card, delete one, read again"
     expected: "The lone card has is_default true after the first read and after the delete; two cards leave the choice to the user"
-    why_human: "Deployed at d356fdc and covered by mocked-Stripe tests only. The real-card smoke was skipped by user decision on 2026-11-08, so promoteLoneCard has never run against real Stripe"
+    why_human: "Deployed at d356fdc, mocked Stripe only; the real-card smoke was skipped by user decision on 2026-11-08"
   - truth: "BACK-07: A deleted card can no longer be charged through its connected-account clone"
-    test: "Run the 01-17 checklist: read the clone id from connected_pm_clones, delete the card, then confirm the clone is detached on the expert's connected account and the row is gone"
-    expected: "The clone is detached in Stripe and its cache row removed; a card tied to an active booking returns 409 PAYMENT_METHOD_IN_USE"
-    why_human: "The CLONE_ALREADY_GONE_CODES values come from in-repo code and are not confirmed against Stripe (the source says so). The real clone detach has never run. Windows ledger #3 and #5 stay open"
-  - truth: "BACK-19: An expert-initiated cancel always refunds the client in full or releases the hold"
-    test: "Run the 01-19 checklist on production with a low-value or no-money booking: expert cancels a held booking, and a captured one"
-    expected: "A held booking is voided and a captured one is fully refunded, whatever the time to start"
-    why_human: "Deployed at 3899d63, mocked Stripe only. The captured-refund branch cannot be reached safely on live data. Windows ledger #6 and #11 stay open. The failure path is also not retried as a refund (see warnings)"
+    test: "01-17 checklist: read the clone id from connected_pm_clones, delete the card, confirm the clone is detached on the expert's connected account and the row is gone"
+    expected: "Clone detached in Stripe, cache row removed; a card tied to an active booking returns 409 PAYMENT_METHOD_IN_USE"
+    why_human: "CLONE_ALREADY_GONE_CODES come from in-repo code, not confirmed against Stripe. The real clone detach has never run"
 human_verification:
-  - test: "CR-01 / BACK-17: on App Store build 6 in client mode, tap a Booking Confirmed push, then a session push, then a review-nudge push"
-    expected: "Each opens the booking (or at least lands somewhere sensible). If it shows a blank or warning page, build 6 users are affected right now"
-    why_human: "BACK-17 puts category on iOS pushes, so build 6 now routes taps to HomeClientView.handlePushDestination, which pushes HomeRoute.upcomingBooking onto bookingsPath. The client Bookings stack registers only BookingRoute (MyBookingsView.swift:102); HomeRoute destinations are registered on Explore, Chats and Profile only (HomeClientView.swift:191,218,228). iOS app code at HEAD equals build 6 (git diff a48c664..HEAD for ClickMe2026/ is empty). This conflicts with the user-reported wave-1 smoke step 6 pass. I read the code and did not run a device, so I do not resolve it either way"
-  - test: "Decide the fix if CR-01 reproduces: restore the old behavior for non-Android tokens by sending route_category / route_sub_category to iOS, and give Phase 2 PUSH-01 those keys"
-    expected: "Build 6 keeps its pre-BACK-17 tap behavior; Phase 2 reads the new keys"
-    why_human: "It changes D-01, so it is a user decision. The backend change can reach live users before the end-of-project iOS release; an iOS fix cannot"
   - test: "Run the real-Stripe checklists 01-17 (BACK-06, BACK-07) and 01-19 (BACK-19), at the latest during Phase 4 payment UAT"
     expected: "See behavior_unverified_items"
-    why_human: "Skipped by user decision; money behavior on live Stripe"
+    why_human: "Money behavior on live Stripe; skipped by user decision. BACK-06, BACK-07 and BACK-19 stay Pending in REQUIREMENTS.md until then, which is correct"
+  - test: "Optional no-money check of the BACK-19 contract change on App Store build 6 and on current Android: cancel a free or no-payment booking and open Payments history"
+    expected: "Cancel completes with no error; a ledger row with refunded_amount 0 renders as it does today"
+    why_human: "The user did not report this check (step C of plan 01-26). My code read says both clients cope (see Safety section), but it is a read, not a run on a shipped artifact"
   - test: "BACK-15 confirm replay and BACK-12 late-cancel guard on a device, after a forced confirm timeout"
     expected: "A retried confirm lands on the pending booking; a cancel after end returns SESSION_ALREADY_ENDED with the server message shown"
-    why_human: "Waves 1 and 2 smoke is the user's 'all passed' with no per-step notes, and BACK-15 replay has no smoke step at all. Unit tests with mocks pass, so this is a confidence gap and not a failure"
+    why_human: "Waves 1 and 2 smoke was reported 'all passed' with no per-step notes, and replay has no smoke step. Confidence gap, not a failure"
 ---
 
 # Phase 1: Backend Fixes Verification Report
 
 **Phase Goal:** The production backend validates, stores and returns everything the iOS fixes depend on, and every change stays safe for the current Android build
-**Verified:** 2026-11-09T03:45:00Z
-**Status:** gaps_found
-**Re-verification:** No, initial verification
+**Verified:** 2026-11-09T05:45:22Z
+**Status:** human_needed
+**Re-verification:** Yes, after gap closure (plans 01-24, 01-25, 01-26). Previous status gaps_found, 15/19.
 
 ## Verification basis
 
-- Backend repo `/Users/LeonChen/Documents/ClickMe2026 Backend`, branch `master` at `3899d63`. `git rev-parse` gives the same SHA for HEAD, master and origin/main. Read-only git only.
-- `GET https://clickme-backend-production.up.railway.app/health` returned `{"status":"success","commit":"3899d63"}` with HTTP 200, so production runs this code.
-- `REDIS_URL=redis://localhost:6379 npm test` ran once at `3899d63`: 129 of 129 suites and 2974 of 2974 tests passed. The suite has known parallel flakes; none appeared in this run.
-- Plans 01-20 to 01-23 (BACK-13, BACK-08) were dropped by user decision on 2026-11-08. Their code is on local branch `wave-3c` (8 commits ahead of master). I did not verify them against that branch as if they had shipped.
-- Nothing was run on a device or against real Stripe or Supabase. Every money statement below rests on code and mocks.
+- Backend repo `/Users/LeonChen/Documents/ClickMe2026 Backend`. `git rev-parse` gives `d86bf97328a81d34b9533b0aee4234fc5522e272` for HEAD, `master` and `origin/main`. `git rev-list --count origin/main..master` is 0. Branch `wave-3c` still exists locally and is not an ancestor of master.
+- `GET https://clickme-backend-production.up.railway.app/health` returned `{"status":"success","commit":"d86bf97"}`. Production runs the code I read.
+- `REDIS_URL=redis://localhost:6379 npm test`, run once at `d86bf97` with Redis answering PONG: 130 of 130 suites, 3019 of 3019 tests passed (previous run at `3899d63`: 129 suites, 2974 tests).
+- `grep -rn "provisionExpert\|expertWriteGate\|EXPERT_SETUP_REQUIRED" src` finds nothing. No wave-3c code is in production.
+- `git diff --stat 3899d63..d86bf97 -- src supabase package.json` touches five src files only (the four BACK-19 files plus `push.js` from 215adcb), no migration, no dependency change. `git diff 2ec82af..d86bf97 -- src` adds no TBD, FIXME, XXX, TODO or HACK lines.
+- Nothing ran on a device or against real Stripe or Supabase. Every money statement rests on code and mocks.
+- The covered-input fingerprint covers planning inputs only. The implementation files live in the backend repo, outside this repo's root, so the fingerprint command cannot cover them. The backend SHA above stands in for them.
 
 ## Goal Achievement
+
+### The gap this round re-checked: BACK-19 refund retry
+
+The old defect was: when `createRefund` threw, both cancel handlers set only `refund_failed`, the API reported the full `refund_amount`, and the sweep read the NULL amount as a failed void and retried `cancelPI` on a captured PaymentIntent, so the client was never refunded. I read the code at `d86bf97` against each part of it.
+
+| Plan truth (01-24 / 01-25) | Status | Evidence in code |
+|----------------------------|--------|------------------|
+| Expert cancel: failed `createRefund` saves `refund_amount_minor_units = amount_paid` with the flag, API returns 200 with `refund_amount` 0 | VERIFIED (mocked) | `expertBooking.controller.js:1183-1185,1232,1250-1262`: `intendedRefundMinorUnits` set after the amount is read, added to `flagUpdate` only when not null, then `refundAmountMinorUnits = 0` |
+| Failed void or REFUND_AMOUNT_MISSING writes exactly `{ refund_failed: true }` | VERIFIED (mocked) | `intendedRefundMinorUnits` is set only in the captured branch after the missing-amount throw, so those paths leave it null |
+| Sweep reads the PaymentIntent before any money call | VERIFIED | `refundReconciliation.js reconcileBooking`: `retrievePI` is the first Stripe call after the no-PI clear; a throw reaches the per-row catch with the flag left set |
+| Succeeded, saved > 0: refund `min(saved - amount_refunded, captured - amount_refunded)` with key `reconcile-refund-{pi}-{toRefund}`, then clear | VERIFIED (mocked) | `reconcileCaptured`; tests for full, already-refunded, partial, partial-capture, expanded charge, no charge, transition rejected |
+| Uncaptured: `cancelPI`, never `createRefund`, move to canceled, amount reset to 0, clear | VERIFIED (mocked) | `reconcileBooking` uncaptured branch, `moveToCanceled`, `clearFlag({refund_amount_minor_units: 0})` |
+| Canceled PI: no money call, amount 0, flag clears | VERIFIED (mocked) | `reconcileBooking` canceled branch |
+| Succeeded with NULL amount: no money call, flag stays, OPS line with booking id | VERIFIED (mocked) | `reconcileCaptured` first guard logs `OPS: captured PaymentIntent with no saved refund amount` |
+| `derivePaymentStatus` never returns refunded while `refund_failed` is true | VERIFIED | `clientBooking.controller.js`: `refundLanded = refund_failed !== true && amount > 0`; `getDetail` select now includes `refund_failed`; NULL is treated as not failed |
+| Overlap and interruption make no second refund | VERIFIED (mocked) | The amount is derived from `Charge.amount_refunded`, so the second run computes 0. Tests `interrupted after a successful refund` and `two overlapping sweeps` exist |
+| Client cancel saves the computed refund with the flag, returns `refund_amount` 0 on failure | VERIFIED (mocked) | `clientBooking.controller.js` catch block, same shape as the expert one; amount is `computeRefundAmountMinorUnits(booking)` |
+| Client cancel with `retrievePI` failure inside 24 hours is flagged with amount 0 so the sweep decides from real state | VERIFIED (mocked) | `piReadFailed` guard throws only when the guessed branch owes 0. See B19-WR-01 for a side effect |
+| Client cancel inside 24 hours with a working `retrievePI` still makes no Stripe call and sets no flag | VERIFIED | The new throw is gated on `piReadFailed`; `intendedRefundMinorUnits` is set to 0 and no flag results |
+| `GET /client/transactions` reports `refunded_amount` 0 while flagged, same keys | VERIFIED | `refund_failed === true ? 0 : (refund_amount_minor_units ?? 0)`; `refund_failed` is selected, never returned |
+| Prohibition: never void a client sole no-show hold | VERIFIED | `classifyCaptureEligibility(booking) === 'capture'` clears the flag and returns before `cancelPI`; test `a missed row with no_show_party client is left for Sweep C` exists |
+| Prohibition: never refund more than saved minus already refunded | VERIFIED (mocked) | The `Math.min` expression above |
+| Prohibition: never refund a captured row with NULL amount | VERIFIED | Same OPS guard |
+| Prohibition: no new response field or changed key; `refund_failed` stays server-side | VERIFIED | The diff adds no key to any response |
+| Prohibition: no agent push or deploy (D-11) | VERIFIED | The user pushed; `/health`, `origin/main` and `master` agree on `d86bf97` and the range was isolated to the five BACK-19 commits |
+| On real Stripe a failed cancel refund is retried, a repeated key makes no second refund, `amount_refunded` reflects prior refunds | PRESENT_BEHAVIOR_UNVERIFIED | Backstop truth in plans 01-24 and 01-26. Mocks cannot show Stripe's behavior. No safe way to force a failure on live data exists. Routes to human verification |
+
+Result: the bug as written is fixed in the code that is deployed. The sweep no longer retries `cancelPI` on a captured PaymentIntent. What is not proven is that Stripe behaves as the mocks assume.
 
 ### Observable Truths (one per phase requirement)
 
 | # | Requirement | Status | Evidence |
 |---|-------------|--------|----------|
-| 1 | BACK-01 accept message reaches the client | VERIFIED | `bookingRequests.controller.js` `postAcceptMessage` posts through `postUserMessage` with `client_msg_id` `booking-accept:<id>`, after block and moderation checks, non-fatal. `acceptSchema` allows `message` (max 1000). Tests present |
-| 2 | BACK-02 decline note on client detail and notification | VERIFIED | `clientBooking.controller.js` getDetail returns `decline_reason_code/text` only when status is `declined`. `events.js` puts the text in `in_app_meta` and chat `event_data`, only the code in the FCM map. Fields in openapi |
-| 3 | BACK-03 `has_review` on expert detail and lists | VERIFIED | `fetchClientReviewedBookingIds` (reviewer_role `client`, one read per page) feeds feed, details and summary |
-| 4 | BACK-04 expert can clear `meeting_url` | VERIFIED | Schema accepts `null` and `""`; controller stores `meeting_url \|\| null`. Non-empty values still need a valid URL |
-| 5 | BACK-05 currency digits and symbol | VERIFIED | `potential_earnings` divides by `10^minorUnitDigitsFor(currency)`; fee label uses `currencySymbolFor(currency)` with the booking's digits |
-| 6 | BACK-06 lone card becomes default | PRESENT_BEHAVIOR_UNVERIFIED | `promoteLoneCard` on GET (one card, no default) and after delete. Mocked Stripe only; real-card smoke skipped by user |
-| 7 | BACK-07 deleted card not chargeable via clone | PRESENT_BEHAVIOR_UNVERIFIED | 409 `PAYMENT_METHOD_IN_USE` check, `evictClonesForPlatformPaymentMethod` before the platform detach. Mocked Stripe only. See WR-01: removal inside PaymentSheet bypasses this path |
-| 8 | BACK-08 client never shown tax-ID prompt | FAILED | Not delivered by user decision (wave 3c dropped). Not in master |
-| 9 | BACK-09 join window and status check | VERIFIED | `evaluateJoinWindow`: first join in [start-60, max(end, start+60)], reconnect to end+60 per party; `/join` rejects statuses outside confirmed, in_progress, completed with 403 `SESSION_NOT_ACTIVE`; `can_join` flags use the same function. `call.test.js` present. Window narrowed from the old plus or minus 120 min, so build 6 and Android joins that were allowed at start-120 or end+120 are now refused. See WR-06 |
-| 10 | BACK-10 request validation | VERIFIED | `createRequest` rejects start at or before now and a duration different from the topic's with 422 `VALIDATION_ERROR` before any Redis hold. Both clients send `topic.durationMins` (iOS `MakeABookingViewModel.swift:389,431`; Android `MakeABookingViewModel.kt:403,435`) |
-| 11 | BACK-11 upper bounds | VERIFIED | `price_amount` max 2147483647; languages and expertise_tags max 50 on both profile and onboarding schemas. IN-02: the price cap is above Stripe's limit |
-| 12 | BACK-12 client cancel after end rejected | VERIFIED | `clientBooking.cancel` throws 409 `SESSION_ALREADY_ENDED` at or after `end_time`, after the status guard. WR-02 below |
-| 13 | BACK-13 explicit setup call only | FAILED | Not delivered by user decision. `ensureExpert.js` on master still promotes on first `/expert/*` call |
-| 14 | BACK-14 cancel reason stored | VERIFIED | Migration `20261107000000_bookings_cancellation_reason.sql` (applied before wave 2 per 01-10); both cancel handlers write `cancellation_reason`; returned on client detail (cancelled only) and expert summary; never in push or chat data |
-| 15 | BACK-15 confirm retry replay | VERIFIED (mocks only) | `findReplayableBooking` is ownership-checked and active-status only; replays 201 at the idempotency check, the conflict check, and the 23505 and 23P01 insert errors. `booking.test.js` describes each path. No smoke step exists |
-| 16 | BACK-16 empty threads and feedback limit | VERIFIED | `GET /chats` drops the not-null filter and orders `last_msg_at desc nullsFirst:false`, `created_at desc`. `feedbackLimiter` (5 per 15 min per user, in-memory, valid while one replica) mounted before `validate`. Notification mark-read dropped by D-15 |
-| 17 | BACK-17 push routing fields | UNCERTAIN | Payload side verified: `category`, `sub_category` and `target_role` go to every token, `target_role` allow-listed, `in_app_meta` never reaches FCM. The "safe for build 6" clause is open: CR-01, see Human Verification |
-| 18 | BACK-18 unread counts | VERIFIED | `recomputeUnreadFor` runs on send (recipient), `handleMessageRead` (reader) and page 1 of messages. `GET /chats` reads the maintained counter. WR-04: counts can stay above zero for history nobody acks |
-| 19 | BACK-19 expert cancel full refund | PRESENT_BEHAVIOR_UNVERIFIED | Captured PI refunds `amount_paid_minor_units` in full at any time and moves `captured` to `refunded`; authorized PI is voided; client cancel still uses `computeRefundAmountMinorUnits`. Mocked Stripe only; production smoke skipped by user |
+| 1 | BACK-01 accept message reaches the client | VERIFIED | Carried forward from the first verification; `src` for the area is unchanged since `3899d63` except the five files listed above, and the full suite is green |
+| 2 | BACK-02 decline note on client detail and notification | VERIFIED | Carried forward; `clientBooking.controller.js` changed only in the BACK-19 hunks (diff read in full) |
+| 3 | BACK-03 `has_review` | VERIFIED | Carried forward, suite green |
+| 4 | BACK-04 expert can clear `meeting_url` | VERIFIED | Carried forward, suite green |
+| 5 | BACK-05 currency digits and symbol | VERIFIED | Carried forward, suite green |
+| 6 | BACK-06 lone card becomes default | PRESENT_BEHAVIOR_UNVERIFIED | Mocked Stripe only; real-card smoke skipped by user |
+| 7 | BACK-07 deleted card not chargeable via clone | PRESENT_BEHAVIOR_UNVERIFIED | Mocked Stripe only; real detach never run. See WR-01 in `01-REVIEW.md` (card removal inside PaymentSheet bypasses this path) |
+| 8 | BACK-08 client never shown tax-ID prompt | PASSED (override) | Not delivered; user accepted 2026-11-09. Confirmed absent from master and production |
+| 9 | BACK-09 join window and status check | VERIFIED | Carried forward, suite green. WR-06 caveat stands |
+| 10 | BACK-10 request validation | VERIFIED | Carried forward, suite green |
+| 11 | BACK-11 upper bounds | VERIFIED | Carried forward, suite green |
+| 12 | BACK-12 client cancel after end rejected | VERIFIED | Carried forward; the `SESSION_ALREADY_ENDED` guard sits before the BACK-19 hunks and the cancel diff does not touch it |
+| 13 | BACK-13 explicit setup call only | PASSED (override) | Not delivered; user accepted 2026-11-09. Phase 5 SIGN-06 still needs a new decision |
+| 14 | BACK-14 cancel reason stored | VERIFIED | Carried forward, suite green |
+| 15 | BACK-15 confirm retry replay | VERIFIED (mocks only) | Carried forward, suite green; no smoke step exists |
+| 16 | BACK-16 empty threads and feedback limit | VERIFIED | Carried forward, suite green |
+| 17 | BACK-17 push routing fields | VERIFIED | Payload verified. `push.js:316-324` sends `category`/`sub_category` to Android tokens and `route_category`/`route_sub_category` to iOS and legacy tokens, so build 6 does not receive `category`. That is the pre-phase state for build 6, so no change for shipped builds. The earlier device result (booking push on build 6 lands on client home with no warning) is the user's own report, not something I ran |
+| 18 | BACK-18 unread counts | VERIFIED | Carried forward, suite green. WR-04 caveat stands |
+| 19 | BACK-19 expert cancel full refund | PRESENT_BEHAVIOR_UNVERIFIED | Code path and failure retry verified above; real Stripe unproven; REQUIREMENTS.md keeps it Pending, which is correct |
 
-**Score:** 13/19 truths verified (3 present, behavior-unverified; 1 uncertain; 2 failed)
+**Score:** 16/19 truths verified (2 of them by override, not delivered), 3 present and behavior-unverified (BACK-06, BACK-07, BACK-19).
 
 ### ROADMAP success criteria
 
 | SC | Result | Why |
 |----|--------|-----|
 | 1 Booking requests, cancels, confirms and joins validated and recorded | VERIFIED | Rows 9, 10, 12, 14, 15 |
-| 2 Saved cards safe on live Stripe; no tax-ID prompt; expert cancel refunds in full | FAILED | Tax-ID clause (BACK-08) not delivered; BACK-06, 07 and 19 unproven on real Stripe |
-| 3 Booking and expert data complete; client becomes expert only via setup | FAILED | Everything but the explicit-setup clause (BACK-13) is verified |
-| 4 Chat and push data correct | VERIFIED | Rows 16, 17 (payload), 18 |
-| 5 Backend tests for every change; Android and build 6 still work | UNCERTAIN | Tests exist for every delivered requirement and pass. "Still work" rests on a user-reported smoke with no notes for waves 1 and 2, no smoke for 3a and 3b, and an open CR-01 |
+| 2 Saved cards safe on live Stripe; no tax-ID prompt; expert cancel refunds in full | HUMAN NEEDED | Tax-ID clause covered by the BACK-08 override (not delivered). BACK-06, 07 and 19 are code-complete but unproven on real Stripe |
+| 3 Booking and expert data complete; client becomes expert only via setup | VERIFIED with override | Everything but the explicit-setup clause is verified; that clause (BACK-13) is overridden, not delivered |
+| 4 Chat and push data correct | VERIFIED | Rows 16, 17, 18 |
+| 5 Backend tests for every change; Android and build 6 still work | VERIFIED in code, human confidence gaps | 3019 of 3019 tests pass. "Still work" rests on code reads plus user-reported smoke; see Safety section |
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `supabase/migrations/20261107000000_bookings_cancellation_reason.sql` | BACK-14 column | VERIFIED | Additive `ADD COLUMN IF NOT EXISTS` |
-| `src/services/chatMessages.js` | single chat message path | VERIFIED | Used by `chats.send` and the accept message |
-| `src/services/unreadCounts.js` | unread recompute | VERIFIED | Wired in chatMessages, socket, chats.controller |
-| `src/utils/pushTargetRole.js` | target_role helpers | VERIFIED | Wired in push.js and every sender |
-| `src/services/connectedPaymentMethodClone.js` `evict...` | BACK-07 eviction | VERIFIED (code) | Called only from `deletePaymentMethod` |
-| `src/middleware/rateLimiter.js` `feedbackLimiter` | BACK-16 limit | VERIFIED | Mounted on `/feedback/submit` |
-| `openapi/clickme-api.yaml`, `docs/SOCKET-CONTRACT.md`, `docs/ios/PUSH-ROUTING.md` | contract docs | VERIFIED | `SESSION_ALREADY_ENDED`, `PAYMENT_METHOD_IN_USE`, `has_review`, `cancellation_reason`, `decline_reason_text`, `target_role` are present. `EXPERT_SETUP_REQUIRED` is absent, matching production |
-| `provisionExpert` / `expertWriteGate` (BACK-13, BACK-08) | explicit promotion and gate | MISSING on master | On `wave-3c` only |
+| `src/cron/refundReconciliation.js` | read-first sweep | VERIFIED | Contains `retrievePI`, `retrieveCharge`, `reconcileBooking`, `reconcileCaptured`; wired into `startRefundReconciliationJob`, which `app.js` starts |
+| `src/controllers/expertBooking.controller.js` | saves intent, reports 0 | VERIFIED | `intendedRefundMinorUnits` present |
+| `src/controllers/clientBooking.controller.js` | saves intent, `refund_failed` in read path | VERIFIED | Present, `getDetail` select includes `refund_failed` |
+| `src/controllers/clientTransactions.controller.js` | ledger hides unreturned refund | VERIFIED | Present |
+| `tests/refundRetryFlow.test.js` | route-to-sweep proof on mocked Stripe | VERIFIED | Flow A and Flow B drive the real route and real sweep. See IN-03 for what it hides |
+| Earlier artifacts (migration, `chatMessages`, `unreadCounts`, `pushTargetRole`, `feedbackLimiter`, contract docs) | see first verification | VERIFIED | Unchanged since; suite green |
+| `provisionExpert` / `expertWriteGate` (BACK-13, BACK-08) | explicit promotion and gate | MISSING on master (overridden) | On `wave-3c` only |
 
 ### Key Link Verification
 
 | From | To | Via | Status |
 |------|----|-----|--------|
-| `call.controller.join` | `agora.evaluateJoinWindow` + `JOINABLE_BOOKING_STATUSES` | per-party joined_at | WIRED |
-| `clientBooking` / `expertBooking` `can_join` | same `evaluateJoinWindow` | joined_at selected for the flag only | WIRED |
-| `bookingRequests.accept` | `postUserMessage` | `postAcceptMessage` | WIRED |
-| every `sendPushToUser` caller | `targetRoleFor` / `targetRoleForAccount` | explicit `target_role` | WIRED (see WR-05) |
-| `chats.send` and `message.read` | `recomputeUnreadFor` | send, handler, page 1 | WIRED |
-| `deletePaymentMethod` | `evictClonesForPlatformPaymentMethod` | before platform detach | WIRED |
-| `PATCH /expert/profile/setup` | `provisionExpert` | validate then promote | NOT PRESENT on master |
+| expert `cancel` catch block | `sweepFailedRefunds` | `refund_failed` + `refund_amount_minor_units` | WIRED (sweep selects both) |
+| client `cancel` catch block | `sweepFailedRefunds` | same | WIRED |
+| `refundReconciliation` | `stripe.retrievePI/retrieveCharge/createRefund/cancelPI` | PI status decides action, Charge decides amount | WIRED |
+| `getDetail` select | `derivePaymentStatus` | `refund_failed` column | WIRED (single caller) |
+| `getClientTransactions` select | `refunded_amount` mapping | `refund_failed` column | WIRED |
+| `expirePastSessions` / `accountCascade` flag writers | new sweep | already save amount or NULL | WIRED, behavior preserved |
+| earlier links | see first verification | unchanged | WIRED |
+
+### Data-Flow Trace (Level 4)
+
+`refund_failed` and `refund_amount_minor_units` come from the `bookings` table in both writers and both readers; the sweep's final `refund_amount_minor_units` write comes from `Charge.amount_refunded` plus the amount just refunded, not from a literal. No hollow or static source found.
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Production runs the verified commit | `GET /health` | commit 3899d63 | PASS |
-| Backend suite | `REDIS_URL=redis://localhost:6379 npm test` | 129/129 suites, 2974/2974 tests | PASS |
-| BACK-13 absent in production code | `grep -rn "provisionExpert\|expertWriteGate\|EXPERT_SETUP_REQUIRED" src` on master | no matches | CONFIRMS GAP |
+| Production runs the verified commit | `GET /health` | commit d86bf97 | PASS |
+| Master equals origin/main | `git rev-parse`, `git rev-list --count origin/main..master` | same SHA, 0 | PASS |
+| Backend suite | `REDIS_URL=redis://localhost:6379 npm test` | 130/130 suites, 3019/3019 tests | PASS |
+| Wave 3c absent | grep for its symbols in `src` | no matches | PASS (confirms the overrides' factual basis) |
+| Refund retry behaves on real Stripe | n/a | not run | SKIP, routed to human |
 
 ### Probe Execution
 
-No probes declared by the phase. Step 7c: SKIPPED.
+No probes declared. Step 7c: SKIPPED.
 
 ### Requirements Coverage
 
-Every ID from the phase and the PLAN frontmatter is accounted for in REQUIREMENTS.md. No orphans: the traceability table maps exactly BACK-01 to BACK-19 to Phase 1, and the plans claim all of them (BACK-13 and BACK-08 through 01-20 to 01-23).
+All 19 IDs (BACK-01 to BACK-19) appear in the PLAN frontmatter of this phase and in REQUIREMENTS.md. Plans 01-24, 01-25 and 01-26 each claim only BACK-19. No orphans.
 
 | Requirement | Source plans | REQUIREMENTS.md | Verified status |
 |-------------|--------------|-----------------|-----------------|
-| BACK-01 | 01-09, 01-10 | Complete | SATISFIED |
-| BACK-02 | 01-06, 01-10 | Complete | SATISFIED |
-| BACK-03 | 01-05, 01-10 | Complete | SATISFIED |
-| BACK-04 | 01-01, 01-10 | Complete | SATISFIED |
-| BACK-05 | 01-05, 01-10 | Complete | SATISFIED |
-| BACK-06 | 01-16, 01-17 | Pending | UNPROVEN (mocks only). Pending is correct |
-| BACK-07 | 01-16, 01-17 | Pending | UNPROVEN (mocks only). Pending is correct |
-| BACK-08 | 01-21, 01-22, 01-23 | Pending | BLOCKED, not delivered. Pending is correct |
-| BACK-09 | 01-11, 01-15 | Complete | SATISFIED |
-| BACK-10 | 01-07, 01-10 | Complete | SATISFIED |
-| BACK-11 | 01-07, 01-10 | Complete | SATISFIED |
-| BACK-12 | 01-12, 01-15 | Complete | SATISFIED |
-| BACK-13 | 01-20 to 01-23 | Pending | BLOCKED, not delivered. Pending is correct |
-| BACK-14 | 01-10, 01-12, 01-15 | Complete | SATISFIED |
-| BACK-15 | 01-13, 01-15 | Complete | SATISFIED (mocks; no smoke) |
-| BACK-16 | 01-08, 01-10 | Complete | SATISFIED |
-| BACK-17 | 01-02 to 01-04, 01-10 | Complete | Payload SATISFIED; build-6 safety OPEN (CR-01). "Complete" is stronger than the evidence until the device check is done |
-| BACK-18 | 01-14, 01-15 | Complete | SATISFIED (WR-04 caveat) |
-| BACK-19 | 01-18, 01-19 | Pending | UNPROVEN (mocks only). Pending is correct |
+| BACK-01 to BACK-05 | 01-01, 01-05, 01-06, 01-09, 01-10 | unchecked box | SATISFIED in code |
+| BACK-06, BACK-07 | 01-16, 01-17 | Pending | UNPROVEN on real Stripe. Pending is correct |
+| BACK-08, BACK-13 | 01-20 to 01-23 | Pending | Not delivered, override accepted. Pending is correct |
+| BACK-09 to BACK-12, BACK-14 to BACK-16, BACK-18 | various | unchecked box | SATISFIED in code |
+| BACK-17 | 01-02 to 01-04, 01-10 | "Gaps Found" | SATISFIED; build 6 safety closed by 215adcb |
+| BACK-19 | 01-18, 01-19, 01-24, 01-25, 01-26 | Pending | Code delivered, UNPROVEN on real Stripe. Pending is correct |
 
-REQUIREMENTS.md statuses match what I found, except that BACK-17 should be read as conditional on CR-01.
+Housekeeping: the traceability table in REQUIREMENTS.md still says "Gaps Found" for 12 rows (BACK-01 to 05, 09 to 12, 14 to 18), left from the first verification, and none of the BACK checkboxes is ticked. I did not edit it. The orchestrator should decide whether to update those rows after this report.
 
-### Safety for App Store build 6 and Android
+### Safety for App Store build 6 and Android (BACK-19 contract change)
 
-Contract changes were checked against both clients by the code review (iOS at the build 6 commit `a48c664`, Android at `2d04c4ce`; I did not check Android against a shipped artifact). I confirmed these myself:
+The change is behavioral, not structural: no field is added, renamed or removed. Cancel responses can now carry `refund_amount` 0 where they used to carry the full amount after a Stripe failure, and the ledger can carry `refunded_amount` 0 for a flagged row. Both values already occur today (a client cancel inside 24 hours returns 0).
 
-- Both clients send `topic.durationMins` as `duration_minutes`, so the new 422 does not fire for them.
-- New error codes decode to nil on iOS and the server message is shown.
-- `PushEvent.swift` reads `category` first and falls back to `event_type` only for message and request events. Before BACK-17 iOS tokens got no `category`, so those pushes parsed to nil. They now route. That is the one behavior change for build 6 (CR-01).
-- BACK-09 narrows the join window. iOS and Android local rules are within it for the first join (iOS allows start-60 to start+60 at minimum), but WR-06 shows a gap after the Sweep A "missed" path.
+- iOS (`ClickMe2026/` at HEAD equals build 6): the cancel screen builds its refund text from the booking detail, not from the cancel response (`ClientCancellationViewModel.swift:108,117`). `ClientTransactionItem.refundedAmount` is a non-optional `Int`, decodes 0, and `isRefunded` is `refundedAmount > 0`. No decode failure is possible.
+- Android (`/Users/LeonChen/Documents/ClickMe_Android`): `CancelBookingData.refundAmount` is `Double = 0.0`, `ClientTransactionsData.refundedAmount` is `Long = 0L`, and unit tests already decode `refund_amount: 0` and `refunded_amount: 0`. The cancel view models show a refund notice only when the amount is above 0.
+- Pushes and BACK-17: unchanged by this round except as noted in row 17.
 
-I found no break in sign-in, booking, paying, or chat decoding. I could not rule out CR-01 without a device.
+This is a code read of the working trees, not of shipped artifacts. The user did not report the optional no-money check, so it stays a human item with low expected risk.
 
 ### Anti-Patterns Found
 
-None blocking. `git diff 2ec82af..3899d63 -- src` adds no `TBD`, `FIXME`, `XXX`, `TODO` or `HACK` lines. Known debts live in `deferred-items.md` and the Windows ledger (7 open, which will block `/gsd-ship` while `windows_enforce` is on).
+None blocking. I read both review reports and judged each finding against source.
 
-Warnings carried from `01-REVIEW.md` that I re-read in code and consider real:
+**`01-REVIEW-BACK-19.md` (range 215adcb..d86bf97), 0 critical, 3 warnings, 5 info.** My assessment:
 
-| Item | Severity | Impact |
-|------|----------|--------|
-| WR-01 card removal inside PaymentSheet skips BACK-07 | Warning | BACK-07's guarantee has a hole; a converted T-24h booking could charge a cached clone of a card the client removed |
-| WR-02 BACK-12 blocks release of an unanswered `pending_approval` hold after end | Warning | Hold stays up to about 12 h; no charge. Accepted in effect by pushing wave 2, not confirmed by the user |
-| Refund retry (deferred-items, ledger #8) | Warning | A failed expert-cancel refund is not retried as a refund, so BACK-19's "always refunds in full" does not hold on the failure path until a fix plan ships. Recorded user decision (option A), no plan exists yet |
-| WR-03 failed client cancel can report "already cancelled" | Warning | Predates the phase |
-| WR-04 unread counts stuck above zero | Warning | No visible effect on build 6; Android shows `max(server, local)` |
-| WR-05 `target_role` unreliable for account and chat pushes | Warning | No shipped client reads it; fix before Phase 2 PUSH-02 |
-| WR-06 first-join window past end vs Sweep A missed | Warning | Edge case: late joiner gets 403 "marked as missed" |
-| WR-07 card delete can still error after the card is gone | Warning | iOS rolls the row back; retry returns 404 |
+| Finding | My read of the source | Severity |
+|---------|----------------------|----------|
+| B19-WR-01 flagged row with no `stripe_account_id` can never clear; the new `piReadFailed` throw creates such rows | Confirmed. `retrievePI` throws `MISSING_STRIPE_ACCOUNT` before any SDK call, the old sweep cleared an amount-0 row with no Stripe call (`git show 215adcb:src/cron/refundReconciliation.js`), the new one reads first. Real, narrow: needs a pre-Phase-25 row with a PaymentIntent and no account. Effect is a stuck flag that hides a later manual refund in detail and ledger | Warning |
+| B19-WR-02 the flag write's `{ error }` is never checked in either cancel handler | Confirmed at `expertBooking.controller.js:1257-1260` and the client twin. A failed write would leave a cancelled, charged booking unflagged with a 200 response. This pattern predates the phase, but the write now carries the retry intent | Warning |
+| B19-WR-03 header claims logs carry no ids, but the per-row catch logs `rowErr.message`, which Stripe often fills with `pi_`/`ch_` ids | Confirmed as a doc-versus-code mismatch. The two handlers already log `stripeErr.message` the same way | Warning (low) |
+| IN-01 stuck flags are retried and logged every 30 minutes forever; an expert cancel whose void failed after the PI was captured elsewhere lands in the NULL plus succeeded OPS dead end | Confirmed. This is a narrow hole in "always refunds in full", handled by manual review | Info, worth tracking |
+| IN-02 to IN-05 docs, test fidelity, stale test header, four copies of the uncaptured-state list | Plausible and low impact. IN-03 is accurate: the flow test mocks the state machine, so Flow B's `captured` row with a `requires_capture` PI cannot occur in production | Info |
+
+**`01-REVIEW.md` (earlier range) findings** that I re-read still hold as recorded in the first verification: WR-01 (card removal in PaymentSheet skips BACK-07 checks), WR-02 (BACK-12 blocks release of an unanswered hold after end), WR-03 to WR-07. CR-01 is closed by 215adcb and the user's device results. None changes a verdict here.
+
+No debt markers added in `src` in the phase range.
 
 ### Human Verification Required
 
-1. **CR-01, BACK-17 on build 6.** On build 6 in client mode, tap Booking Confirmed, session and review-nudge pushes. Expected: each opens the booking. Why human: see the frontmatter. This is the only open item that can affect live App Store users today. If it fails, the only fix before the end-of-project release is a backend change (user decision on D-01).
-2. **Real-Stripe checklists** 01-17 and 01-19, at the latest during Phase 4 payment UAT.
-3. **BACK-15 replay and BACK-12 guard** on a device, since waves 1 and 2 smoke has no per-step notes and replay has no step.
+1. **Real-Stripe checklists 01-17 (BACK-06, BACK-07) and 01-19 (BACK-19)**, at the latest during Phase 4 payment UAT. The user chose that on 2026-11-09. Until then BACK-19 cannot be called proven: all refund tests mock Stripe, and no real failed refund has been seen.
+2. **Optional no-money check** of `refund_amount` 0 and `refunded_amount` 0 on App Store build 6 and on Android. Not reported by the user; my code read says safe.
+3. **BACK-15 replay and BACK-12 guard** on a device.
 
 ### Gaps Summary
 
-The backend is live at `3899d63` and 13 of 19 requirements are verified in code, with tests passing (2974 of 2974). Two requirements, BACK-08 and BACK-13, are not delivered, so success criteria 2 and 3 fail on their last clause. The user dropped wave 3c on purpose because the gate would leave build 6 client-only accounts unable to become experts, so this is a known decision and not a hidden regression. It is still a gap against this phase's goal text, and no later phase delivers it (Phase 5 SIGN-06 is the iOS half only). It needs a new decision before REL-02.
+No blocking gaps remain. The refund retry bug from the first verification is closed in the deployed code (`d86bf97`): a failed refund now saves the intended amount, the API stops claiming a refund, and the sweep reads Stripe first, then voids, refunds the remainder, or clears the flag. BACK-08 and BACK-13 are carried as accepted overrides and are not delivered. The status is `human_needed` rather than `passed` because BACK-06, BACK-07 and BACK-19 are present and wired but never exercised against real Stripe, and the phase's own plans mark that as a backstop truth that tests cannot establish.
 
-**This looks intentional.** If the user wants the phase to close with these two deferred, the override entries would be:
-
-```yaml
-overrides:
-  - must_have: "BACK-08: A client account is never shown the Stripe tax-ID prompt"
-    reason: "Wave 3c dropped to protect App Store build 6; code parked on backend branch wave-3c"
-    accepted_by: "{name}"
-    accepted_at: "{ISO timestamp}"
-  - must_have: "BACK-13: A client becomes an expert only through an explicit setup call"
-    reason: "Wave 3c dropped to protect App Store build 6; code parked on backend branch wave-3c"
-    accepted_by: "{name}"
-    accepted_at: "{ISO timestamp}"
-```
-
-The user accepted both overrides on 2026-11-09 (UTC); they are now in the frontmatter. The text below is the verifier's note from before that. I did not add these. An override needs the user's own acceptance, and the drop decision is recorded in STATE.md but not as an override of these truths. Even with the overrides, the phase would be `human_needed` because of CR-01 and the three behavior-unverified money items.
+Three review warnings (B19-WR-01 null-account rows, B19-WR-02 unchecked flag write, B19-WR-03 log scrubbing) are real but narrow and none breaks a delivered truth. They are worth a small follow-up plan before Phase 4 payment UAT. They are not gaps against the phase goal.
 
 ---
 
-_Verified: 2026-11-09T03:45:00Z_
+_Verified: 2026-11-09T05:45:22Z_
 _Verifier: Claude (gsd-verifier)_
-
-## Update after verification (2026-11-08)
-
-**Update 2026-11-08: reproduced and fixed.** The user reproduced this on App Store build 6: a client-mode tap on a booking push landed on SwiftUI's yellow warning page in the Bookings tab. Backend commit `215adcb`, pushed by the user, sends `route_category` and `route_sub_category` to iOS and legacy tokens instead of `category` and `sub_category`. `/health` reports `215adcb`. User-run device results after the deploy: a new booking push on build 6 in client mode opens the app on the client home page with no warning; a chat push opens the chat screen; an Android booking push opens the right screen. Expert-mode taps on build 6 no longer navigate either. This replaces D-01's "same keys on every platform" while build 6 is in use.
-
-This closes the CR-01 human-verification item and the build 6 safety question on BACK-17. The verdict and score above are not recomputed: status stays `gaps_found` for BACK-08 and BACK-13, and BACK-06, BACK-07 and BACK-19 stay unproven on real Stripe. Other sections above that describe `category` on iOS predate this fix. REQUIREMENTS.md and ROADMAP.md were left unedited here, so the covered-input fingerprint still holds.
-
-## Overrides accepted (2026-11-09 UTC)
-
-The user replied "accept the BACK-08 and BACK-13 override". Both now count as PASSED (override), and neither is delivered. Status stays `gaps_found` because BACK-19's "always refunds" does not hold when a refund fails (the refund retry bug, user option A), and that fix still needs a plan. BACK-06, BACK-07 and BACK-19 stay unproven on real Stripe. REQUIREMENTS.md keeps BACK-08 and BACK-13 unchecked, because they are not delivered. WINDOWS.md #12 stays open. Phase 5 SIGN-06 still needs a new decision.

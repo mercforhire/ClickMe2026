@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
 status: executing
-stopped_at: Completed 01-15-PLAN.md
-last_updated: "2026-11-09T00:19:17.225Z"
+stopped_at: Completed 01-16-PLAN.md
+last_updated: "2026-11-09T00:28:15.504Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: a4f437f8e16177347ce940ec7130b1f96acb42e7
+state_head: ae759f759d6158b46ebace4d4dd79979b6f51055
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 15
+  completed_plans: 16
   percent: 0
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 ## Current Position
 
 Phase: 01 (Backend Fixes) — EXECUTING
-Plan: 16 of 23
+Plan: 17 of 23
 Status: Ready to execute
 Last activity: 2026-11-08 — Phase 01 execution started
 
@@ -71,6 +71,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P13 | 7 min | 2 tasks | 4 files |
 | Phase 01 P14 | 5 min | 3 tasks | 10 files |
 | Phase 01 P15 | ~6h 20m wall clock (user wait) | 2 tasks | 5 files |
+| Phase 01 P16 | 6 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,10 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-15: wave 2 deployed, production moved from a92acba to 7fdc7c4, then to ddfe5bf (test-only commit outside the plan, same runtime code); smoke checklist user-reported all passed, with no per-step notes
 - [Phase 01]: 01-15: smoke checklist assigns each step to a specific booking, because a paid booking whose call connected, or whose end time has passed, can no longer be released by a client cancel and is captured at end+15
 - [Phase 01]: 01-15: Android unread smoke step adds a force-quit, because the Android badge is max(server, session-local) and would otherwise pass without the server count
+- [Phase 01]: 01-16 BACK-07: DELETE returns 409 PAYMENT_METHOD_IN_USE for a card referenced by the caller's booking in pending_approval, confirmed, pending_reschedule or in_progress, with no time filter; otherwise clones are evicted through evictClonesForPlatformPaymentMethod before the platform detach
+- [Phase 01]: 01-16 BACK-07: only resource_missing and payment_method_unexpected_state count as a clone already gone; any other Stripe error returns 502 and keeps the card, so an unreachable connected account could make a card undeletable (logged in deferred-items.md)
+- [Phase 01]: 01-16 BACK-06: a lone card with no default is promoted on GET and after a delete; failures to list or promote after the detach do not fail the DELETE, because the card is already gone and a retry would 404
+- [Phase 01]: 01-16: D-13 local Stripe test-mode run dropped by user decision (Open Q7); Stripe behavior is proven only against mocks until the 01-17 real-card smoke
 
 ### Pending Todos
 
@@ -147,6 +152,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T00:19:17.196Z
-Stopped at: Completed 01-15-PLAN.md
+Last session: 2026-11-09T00:28:15.475Z
+Stopped at: Completed 01-16-PLAN.md
 Resume file: None

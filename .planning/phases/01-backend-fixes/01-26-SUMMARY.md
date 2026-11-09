@@ -2,7 +2,7 @@
 phase: 01-backend-fixes
 plan: 26
 subsystem: payments
-tags: [deploy-handoff, stripe, refund, cron, BACK-19, D-10, D-11, gap-closure, mocked-stripe]
+tags: [deploy, stripe, refund, cron, BACK-19, D-10, D-11, gap-closure, mocked-stripe]
 
 requires:
   - phase: 01-backend-fixes/01-24
@@ -10,36 +10,42 @@ requires:
   - phase: 01-backend-fixes/01-25
     provides: "Client-cancel refund retry, ledger and docs, backend commits 6dc7256, 51f1c0f and d86bf97"
 provides:
-  - "Push bundle for the BACK-19 refund retry fix: production SHA, target SHA, commit list, runtime files, push command, first-sweep table (this file)"
-  - "Pre-push gate green at d86bf97 and a push range isolated to plans 01-24 and 01-25"
-affects: [Task 2 checkpoint (user query and push), Task 3 (ledger and deferred-items close-out after the deploy), Phase 4 payment UAT, BACK-19 verification]
+  - "The BACK-19 refund retry fix live in production at backend d86bf97 (user push, verified by /health, ls-remote and an empty push range)"
+  - "Push bundle, flagged-row query result as reported by the user, and first-sweep table"
+  - "WINDOWS #8 and #10 fixed; two deferred-items entries resolved (mocked Stripe only); four new open deferred entries"
+affects: [Phase 1 verification (BACK-19 gap can be re-verified from code), Phase 4 payment UAT (01-17 and 01-19 checklists), BACK-19 closure]
 
-# Actuals (#2632). Provisional while the plan is paused at the Task 2 checkpoint; the continuation agent re-measures all of it at completion.
+# Actuals (#2632). Same scale as the plan estimate: chars/4 over the files this plan changed (this file, WINDOWS.md and deferred-items.md added lines).
 actuals:
-  tokens: null      # measured at completion (chars/4 over the files this plan changes)
-  tasks: 1          # Task 1 only; Task 2 is the open checkpoint, Task 3 has not run
-  commits: 0        # MEASURED at SUMMARY write: git rev-list --count fd8225a..HEAD in the iOS repo, before this draft was committed. This plan makes no backend commits.
+  tokens: 6900
+  tasks: 3          # Tasks 1 and 3 by the agent, Task 2 by the user
+  commits: 2        # MEASURED: git rev-list --count fd8225a..HEAD in the iOS repo at SUMMARY write (e59c7d4 draft, 7e1bd65 ledger). This plan makes no backend commits.
 
 plan_head_before: fd8225ac70fb4f8f992827cbfaa272498bdc8391
-plan_head_after: fd8225ac70fb4f8f992827cbfaa272498bdc8391   # as of SUMMARY write, before the draft's own commit; re-measure at completion
+plan_head_after: 7e1bd6555cbd59dd44454ab21201e828db658304   # as of SUMMARY write, before the SUMMARY's own commit
 
 tech-stack:
   added: []
   patterns:
     - "Money deploys are handed off, not pushed: the user pushes (D-11), Claude verifies /health afterward"
     - "Read-only flagged-row query before the push, because the first sweep after the deploy acts on those rows"
+    - "A green /health says which code is deployed, not how it behaves; the record says so"
 
 key-files:
   created:
     - ".planning/phases/01-backend-fixes/01-26-SUMMARY.md"
-  modified: []
+  modified:
+    - ".planning/WINDOWS.md"
+    - ".planning/phases/01-backend-fixes/deferred-items.md"
 
 key-decisions:
-  - "Task 1 gate ran with REDIS_URL=redis://localhost:6379 exactly as the plan writes it. A local Redis answered PONG on that URL, so redis.test.js and meta.test.js ran instead of being skipped or failing for environment reasons."
-  - "The first-sweep table below was checked line by line against src/cron/refundReconciliation.js at d86bf97 instead of copied from the plan, and it matches. The code adds rows the plan table does not list (no payment_intent_id, an unexpected PaymentIntent status, a Stripe read failure); they are included."
+  - "Task 1 gate ran with REDIS_URL=redis://localhost:6379 exactly as the plan writes it. A local Redis answered PONG on that URL, so redis.test.js and meta.test.js ran instead of being skipped."
+  - "The first-sweep table was checked line by line against src/cron/refundReconciliation.js at d86bf97 instead of copied from the plan, and it matches. The code adds rows the plan table does not list; they are included."
+  - "WINDOWS #8 and #10 were marked fixed only after production /health reported d86bf97 and the push range was empty. #3, #5, #6, #11 and #12 stay open: real-Stripe proof is missing and wave 3c stays dropped."
+  - "BACK-19 stays Pending and requirements-completed stays empty. The two entries in deferred-items.md are marked resolved with a Resolution line that says the proof is mocked Stripe only."
 
 requirements-completed: []
-requirements-pending-checkpoint: [BACK-19]
+requirements-pending: [BACK-19]
 
 coverage:
   - id: D1
@@ -53,51 +59,116 @@ coverage:
   - id: D2
     description: "After the user's push, production GET /health reports d86bf97 and origin/main equals master"
     requirement: BACK-19
-    verification: []
-    human_judgment: true
-    rationale: "NOT RUN YET. The plan is paused at the Task 2 checkpoint. Only the user pushes (D-11)."
+    verification:
+      - kind: other
+        ref: "curl -fsS https://clickme-backend-production.up.railway.app/health -> {\"status\":\"success\",\"commit\":\"d86bf97\"}; git ls-remote origin main -> d86bf97328a81d34b9533b0aee4234fc5522e272; git rev-list --count origin/main..master -> 0 (re-run by the executor 2026-11-09 after a fetch)"
+        status: pass
+    human_judgment: false
   - id: D3
+    description: "WINDOWS #8 and #10 fixed with open_count 5; deferred-items.md has two resolved entries and four new open entries"
+    verification:
+      - kind: other
+        ref: "grep -c '^open_count: 5' .planning/WINDOWS.md -> 1; grep -c 'accountCascade.cancelActiveBookingsForUser' deferred-items.md -> 2"
+        status: pass
+    human_judgment: false
+  - id: D4
     description: "On production, a real failed cancel refund is retried as a refund by the sweep"
     requirement: BACK-19
     verification: []
     human_judgment: true
     rationale: "Backstop truth. Every test mocks Stripe, and no safe way to force a Stripe failure on live data exists. A green /health says which code is deployed, not how it behaves. BACK-19 stays Pending until the 01-19 checklist is run on real Stripe."
+  - id: D5
+    description: "App Store build 6 and current Android show refund_amount 0 and refunded_amount 0 without error"
+    verification: []
+    human_judgment: true
+    rationale: "The optional step C no-money check was not reported by the user, so this claim still rests on a code read only."
 
-duration: null
-completed: null
-# status: halted marks a designed stop at the Task 2 checkpoint, not a failure. The continuation agent sets it to complete after Task 3.
-status: halted
+# Metrics
+duration: "about 30 min wall clock (2026-11-09 05:04Z to 05:35Z), mostly the user's wait to push and deploy"
+completed: 2026-11-09
+status: complete
 ---
 
-# Phase 1 Plan 26: BACK-19 refund retry deploy handoff Summary (DRAFT, paused at the Task 2 checkpoint)
+# Phase 1 Plan 26: BACK-19 refund retry deploy Summary
 
-**The BACK-19 refund retry fix (five backend commits, four runtime files, no migration) passes the full gate at `d86bf97` and is isolated for its own push; nothing is pushed, production still runs `215adcb`, and the fix is proven on mocked Stripe only.**
+**The BACK-19 refund retry fix (five backend commits, four runtime files, no migration) is live in production at `d86bf97`, confirmed by `/health`, `git ls-remote` and an empty push range; WINDOWS #8 and #10 are fixed, and the fix is proven on mocked Stripe only, so BACK-19 stays Pending.**
 
-## Status
+## Performance
 
-- **Task 1:** done. This file is its output.
-- **Task 2:** open `checkpoint:human-action`. The user runs a read-only query, pushes, and waits for Railway.
-- **Task 3:** not run. It needs production `/health` to report the new SHA.
-- **Nothing was pushed or deployed** by Claude (D-11). The backend repo is untouched by this plan.
+- **Duration:** about 30 min wall clock, mostly the user's wait to run the query, push and let Railway deploy. Agent work was Task 1 (gate and bundle) and Task 3 (record).
+- **Started:** 2026-11-09T05:04Z (approximate; the Task 1 draft was committed at 05:07:51Z)
+- **Completed:** 2026-11-09T05:35Z
+- **Tasks:** 3 of 3 (Task 2 was done by the user)
+- **Files modified:** 3 (this file, `.planning/WINDOWS.md`, `deferred-items.md`). No code changed in either repo.
+
+## Accomplishments
+
+- The pre-push gate was green at `d86bf97` and the push range held only the five BACK-19 commits, so the money deploy was isolated (Task 1).
+- The user ran the flagged-row query, pushed and waited for the deploy (Task 2). Production now runs `d86bf97`, up from `215adcb`.
+- WINDOWS #8 and #10 are marked fixed, `open_count` is 5 (Task 3).
+- `deferred-items.md` closes the two entries this fix addresses, each with a Resolution line that names `d86bf97` and says the proof is mocked Stripe only, and adds four open entries found across plans 01-24 to 01-26.
+
+## Task Commits
+
+All commits are in the iOS repo on `main` (branching_strategy none, as in plans 01-01 to 01-25). Nothing was pushed by the agent in either repo (D-11). This plan makes no backend commits.
+
+1. **Task 1: Pre-push gate and push bundle** - `e59c7d4` (docs; draft of this file with `status: halted`)
+2. **Task 2: User checks flagged rows and pushes** - done by the user, no commit
+3. **Task 3: Record the deploy and close the ledger items** - `7e1bd65` (docs; `WINDOWS.md` and `deferred-items.md`)
+
+**Plan metadata:** the commit that adds this completed file, then the STATE.md and ROADMAP.md update commit.
+
+## Files Created/Modified
+
+- `.planning/phases/01-backend-fixes/01-26-SUMMARY.md` - this record
+- `.planning/WINDOWS.md` - items 8 and 10 set to `fixed` with `gsd-tools windows fixed`, one call per id; `open_count` 7 to 5, `fixed_count` 5 to 7
+- `.planning/phases/01-backend-fixes/deferred-items.md` - two entries set to `resolved`, four new `open` entries
+
+## User reply (recorded verbatim)
+
+Task 2 resume reply:
+
+> refund retry deployed, no rows
+
+How each part of the Task 2 instructions is recorded:
+
+| Step | What the user did | Recorded as |
+|------|-------------------|-------------|
+| A. Flagged-row query | Reported "no rows" | **No rows returned**, as reported by the user. Claude did not see the query output. The reply does not say whether the query ran before the push, so the order is not known. With no flagged rows the first sweep had nothing to act on from before the deploy, if the query ran first. |
+| B. Push and deploy | Reported "refund retry deployed" | Confirmed independently, see the deploy checks below. |
+| C. Optional no-money check on build 6 and Android | Not mentioned in the reply | **Not reported.** It is not recorded as passed and not recorded as skipped. |
+| D. Observing the fix afterward | Nothing to do now | Not applicable. Nobody has looked at the Railway logs for `[cron:refundReconciliation]` as far as this record knows. |
+
+## Deploy checks
+
+Run read-only on 2026-11-09. The orchestrator ran them after the user's reply, and the executor re-ran them after `git fetch origin` in the backend repo (`/Users/LeonChen/Documents/ClickMe2026 Backend`).
+
+| Check | Result |
+|-------|--------|
+| `git rev-list --count origin/main..master` | `0` (the plan's required value) |
+| `git rev-list --count master..origin/main` | `0` |
+| `git rev-parse --short=7 master` | `d86bf97` |
+| `git rev-parse origin/main` | `d86bf97328a81d34b9533b0aee4234fc5522e272` |
+| `git ls-remote origin main` | `d86bf97328a81d34b9533b0aee4234fc5522e272` |
+| `curl -fsS https://clickme-backend-production.up.railway.app/health` | `{"status":"success","commit":"d86bf97"}` |
+
+All five readings agree, so `origin/main` equals `master` and production runs the target SHA. The plan's precondition for Task 3 is met. The rollback target stays `215adcb`.
 
 ## Push bundle
 
-Recorded 2026-11-09 after `git fetch origin` in the backend repo (`/Users/LeonChen/Documents/ClickMe2026 Backend`, branch `master`).
+Recorded 2026-11-09 by Task 1, after `git fetch origin` in the backend repo, before the push.
 
 | Item | Value |
 |------|-------|
-| Production SHA now (`GET /health`) | `215adcb` (`{"status":"success","commit":"215adcb"}`) |
-| `git ls-remote origin main` | `215adcb2a4f26bdd428821771857b15316db4316` |
-| Local `origin/main` after fetch | `215adcb2a4f26bdd428821771857b15316db4316` |
+| Production SHA before the push (`GET /health`) | `215adcb` |
+| `git ls-remote origin main` before the push | `215adcb2a4f26bdd428821771857b15316db4316` |
 | **Rollback target** | `215adcb` |
-| **Target SHA** (`git rev-parse --short=7 master`) | `d86bf97` (`d86bf97328a81d34b9533b0aee4234fc5522e272`) |
-| `git rev-list --count origin/main..master` | 5 |
-| `git rev-list --count master..origin/main` | 0, so the push is a fast-forward |
-| Diff against `origin/main` | 12 files, 1120 insertions, 76 deletions |
+| **Target SHA** | `d86bf97` (`d86bf97328a81d34b9533b0aee4234fc5522e272`) |
+| `git rev-list --count origin/main..master` before the push | 5 |
+| `git rev-list --count master..origin/main` before the push | 0, a fast-forward |
+| Diff against `origin/main` before the push | 12 files, 1120 insertions, 76 deletions |
 
-All three production readings agree, so no other session moved production since the plan was written (it named `215adcb`).
-
-**Push command (the user runs it; Claude never does):**
+Push command (the user ran it; Claude never does):
 
 ```
 git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main
@@ -112,8 +183,6 @@ git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" push origin master:main
 | `6dc7256` | 01-25 | fix(ios-p1/BACK-19): client cancel saves the intended refund and flags an unknown payment state |
 | `51f1c0f` | 01-25 | fix(ios-p1/BACK-19): the transactions ledger reports no refund while it is being retried |
 | `d86bf97` | 01-25 | docs(ios-p1/BACK-19): document how a failed cancel refund is retried |
-
-These are exactly the five commits the 01-24 and 01-25 summaries list. No other commit is in the range.
 
 ### The four runtime files
 
@@ -144,11 +213,18 @@ Code-only: push the SHA `215adcb` over `main`. No migration is involved. After a
 | `git diff --diff-filter=D --name-only origin/main master` | 0 deletions |
 | `git status --porcelain -- src tests openapi docs supabase scripts` | only `?? scripts/uat-seed-profile.js`, the expected pre-existing untracked file, left out |
 
-`REDIS_URL` was set exactly as the plan writes it. A local Redis answered `PONG` on `localhost:6379`, so `tests/services/redis.test.js` and `tests/meta.test.js` ran for real.
+## Task 3 verify results
+
+| Check | Result |
+|-------|--------|
+| `grep -c "^open_count: 5" .planning/WINDOWS.md` | `1`. The plan expected 5 and the ledger reports 5, with no other item having changed since the plan was written (baseline 7, minus #8 and #10). |
+| `grep -c "accountCascade.cancelActiveBookingsForUser" deferred-items.md` | `2` (the new entry's title and its Found-in line). The plan's check needs a count above 0. |
+| WINDOWS status per item | #8 and #10 `fixed`; #3, #5, #6, #11 and #12 `open`; #1, #2, #4, #7 and #9 `fixed` (earlier plans) |
+| REQUIREMENTS.md | Not edited. BACK-19 is still Pending. |
 
 ## What the first sweep does with a flagged row
 
-The sweep (`sweepFailedRefunds`) runs every 30 minutes. It selects bookings with `status` in (`cancelled`, `missed`) and `refund_failed = true`, then reads the PaymentIntent from Stripe before any money call. This table was checked against `src/cron/refundReconciliation.js` at `d86bf97`.
+The sweep (`sweepFailedRefunds`) runs every 30 minutes. It selects bookings with `status` in (`cancelled`, `missed`) and `refund_failed = true`, then reads the PaymentIntent from Stripe before any money call. Checked against `src/cron/refundReconciliation.js` at `d86bf97`.
 
 | Stripe PaymentIntent state | Saved `refund_amount_minor_units` | What the sweep does |
 |----------------------------|-----------------------------------|---------------------|
@@ -164,48 +240,33 @@ Cases the code handles that the plan's table does not list:
 - Any other PaymentIntent state (for example `processing`): logs a warning with the booking id and status, keeps the flag.
 - A Stripe read or write failure, or a failed flag-clearing write: the per-row catch logs the booking id and message, the flag stays, and the next run reads the Charge again so no second refund is made.
 
-What this means for rows flagged before the deploy: the old handlers wrote only `refund_failed: true` on a failed cancel refund, so an old expert-cancel or client-cancel row has a NULL amount. If its hold was never captured, the new sweep voids it, which is the right outcome. If it was captured, the new sweep leaves it alone with an `OPS:` line, and the client may be owed money. Rows written by `expirePastSessions` and `accountCascade` already carry a saved amount and behave as they did before.
+For rows flagged before the deploy: the old handlers wrote only `refund_failed: true` on a failed cancel refund, so an old expert-cancel or client-cancel row has a NULL amount. If its hold was never captured, the new sweep voids it. If it was captured, the new sweep leaves it alone with an `OPS:` line, and the client may be owed money. The user reported no flagged rows.
 
-## Task 2: what the user is asked to do
+## What stays unknown
 
-**A. Before the push, read-only, in the Supabase SQL editor:**
+- **Real Stripe.** Every test mocks Stripe. Whether a repeated reconcile key yields no second refund, whether `Charge.amount_refunded` reads as expected after a real refund, and whether a failed cancel refund is retried as a refund on production have not been observed. No safe way to force a Stripe failure on live data exists, so this stays unobserved until a real failure happens or a test-mode run is done. A green `/health` says which code is deployed, not how it behaves. **BACK-19 stays Pending.**
+- **Whether App Store build 6 and current Android keep working with the deployed change.** Step C, the optional no-money check, was **not reported** by the user. The claim in the 01-25 summary that build 6 and current Android display `refund_amount` 0 and `refunded_amount` 0 without error therefore **still rests on a code read only**. iOS decodes only `status` and `message` on cancel and a required `Int` for `refunded_amount`. Android treats `refund_amount` 0 as the plain cancelled notice and reads `refunded_amount` as a `Long` defaulting to 0. Neither was run on a device or against the shipped build, and Android HEAD `2d04c4ce` is not a shipped binary. No field was added or removed, and 0 is a value both clients already meet for voided, free and already-cancelled bookings, but that is reasoning, not an observation.
+- **The order of the user's query and push.** The reply gives the query result and the deploy but not their order. "No rows" is the user's report; Claude did not see the output.
+- **What the first sweeps did after the deploy.** Nobody has reported the Railway logs for `[cron:refundReconciliation]`. With no flagged rows reported, a healthy system logs nothing, but that was not checked.
+- **Wave 3a and wave 3b are live with no real-Stripe check** (01-17 and 01-19, skipped by user decision). BACK-06, BACK-07 and BACK-19 stay Pending. WINDOWS #3, #5, #6 and #11 record this and stay open.
 
-```sql
-select id, status, payment_status, no_show_party, refund_amount_minor_units, amount_paid_minor_units, payment_intent_id, stripe_account_id, updated_at from bookings where refund_failed = true order by updated_at desc;
-```
+## Decisions Made
 
-- No rows: go on to step B.
-- Any row: send them to Claude and wait. Within 30 minutes of the deploy the sweep acts on each one as in the table above, and a refund it makes is real money. A row with `payment_status` captured and a NULL amount is a client who may be owed money; the sweep leaves it for the user.
-
-**B.** Run the push command above, then wait for Railway to report the deploy healthy.
-
-**C. Optional no-money check, about 5 minutes, on App Store build 6 and on current Android:** make a free booking and cancel it from the client side, make another and cancel it from the expert side, then open the client's Transactions list and a past booking's detail. Expected: no error on any screen. This shows the deployed handlers and read paths still work for both apps. It proves nothing about Stripe.
-
-**D. Observing the fix afterward:** in Railway logs filter on `[cron:refundReconciliation]`. A healthy system logs nothing. An `OPS:` line names a booking that needs manual review. Re-run the step A query at any time. If the user ever refunds a stuck row by hand, refund the full amount; the `charge.refunded` webhook records it and the next sweep clears the flag. The 01-17 and 01-19 real-Stripe checklists stay deferred to Phase 4 payment UAT.
-
-**After the reply, Claude runs (read-only):** `git -C "/Users/LeonChen/Documents/ClickMe2026 Backend" rev-list --count origin/main..master` must print 0, and `curl -fsS https://clickme-backend-production.up.railway.app/health` must contain `"commit":"d86bf97"`.
-
-## What is known and what is not
-
-**Known (from code and mocked tests):**
-
-- The gate is green and the range is isolated, as the tables above show.
-- The sweep's behavior per PaymentIntent state, as read in the code and covered by `tests/refundReconciliation.test.js` and `tests/refundRetryFlow.test.js` on mocked Stripe.
-
-**Not known:**
-
-- **Real Stripe.** Every test mocks Stripe. Whether a repeated reconcile key yields no second refund, whether `Charge.amount_refunded` reads as expected after a real refund, and whether a failed cancel refund is retried as a refund on production have not been observed. No safe way to force a Stripe failure on live data exists, so this stays unobserved until a real failure happens or a test-mode run is done.
-- **Whether the current App Store build keeps working.** Project memory says the current App Store build must keep working because review is slow and no quick client fix exists. The 01-25 summary's claim that App Store build 6 and current Android display `refund_amount` 0 and `refunded_amount` 0 without error **rests on a code read only**. iOS decodes only `status` and `message` on cancel and a required `Int` for `refunded_amount`. Android treats `refund_amount` 0 as the plain cancelled notice and reads `refunded_amount` as a `Long` defaulting to 0. It was **not run on a device or against the shipped build**, and Android HEAD `2d04c4ce` is not a shipped binary. No field is added or removed, and 0 is already a value both clients meet for voided, free and already-cancelled bookings, but that is reasoning, not an observation. The optional step C above is the only check of it.
-- **Wave 3a and wave 3b are live with no real-Stripe check** (01-17 and 01-19, skipped by user decision). BACK-06, BACK-07 and BACK-19 stay Pending.
+- WINDOWS #8 and #10 were closed only after production reported the target SHA and the push range was empty, as the plan requires.
+- #3, #5, #6, #11 and #12 stay open because real-Stripe proof is missing and wave 3c stays dropped.
+- The two resolved entries in `deferred-items.md` say "mocked Stripe only" in their Resolution lines, so a resolved entry is not read as a verified one.
+- `reconcileDirectChargeRefunded` is in `src/controllers/connectWebhooks.controller.js`, not in `stripeEvents.js` as one might guess; the new deferred entry names the file as found.
 
 ## Deviations from Plan
 
-**1. [Process] Task commit on `main`, which the protected-branch guard flags.**
-- **Found during:** the pre-commit check for this draft.
+**1. [Process] Commits on `main`, which the protected-branch guard flags.**
+- **Found during:** the pre-commit checks for Task 1 and again for Task 3.
 - **Issue:** `gsd_run query git.base-branch --is-protected main` returns `true` and `git.allow_default_branch_commits` is not set. The executor commit guard would refuse a commit on `main`.
-- **Handling:** `workflow` branching is `branching_strategy: none`, the dispatch ran this agent sequentially on the main working tree, the dispatch told it to commit this draft, and plans 01-01 to 01-25 committed planning docs on `main` the same way (01-19 recorded the same note). Only this one planning file is committed. Nothing is pushed. The config was not changed. If the user wants that guard to hold for planning docs, the switch is `git.allow_default_branch_commits` in `.planning/config.json`, which is the user's call, not an agent's.
+- **Handling:** `branching_strategy` is `none`, the dispatch ran this agent sequentially on the main working tree and told it to commit, and plans 01-01 to 01-25 committed planning docs on `main` the same way. Only this plan's planning files are committed. Nothing is pushed. The config was not changed. If the user wants that guard to hold for planning docs, the switch is `git.allow_default_branch_commits` in `.planning/config.json`, which is the user's call, not an agent's.
 
 **2. [Process] Gate command used `REDIS_URL` as written.** No deviation from the plan. Recorded because 01-19 had to skip `redis.test.js` for lack of a local Redis; this time Redis was running.
+
+**3. [Process] `status: halted` draft became `status: complete` here.** The draft committed in `e59c7d4` was a designed stop at the Task 2 checkpoint. This file replaces it after Task 3.
 
 No other deviations. No code changed in either repo.
 
@@ -215,34 +276,38 @@ None.
 
 ## Threat Coverage
 
-- **T-01-59** (money-wave deploy): the isolated push range, exact runtime file list, absence of a migration and the green gate are done. The `/health` SHA check and the user-only push are still ahead.
-- **T-01-60** (first sweep on rows flagged before the deploy): the first-sweep table is written and checked against the code. The user's read-only query and Claude's review of any row are the Task 2 step A.
-- **T-01-61** (parked branch shipping by accident): subject, ancestor and symbol checks pass.
+- **T-01-59** (money-wave deploy): isolated push range, exact runtime file list, no migration, green gate, the user-only push and the `/health` SHA check are all done.
+- **T-01-60** (first sweep on rows flagged before the deploy): the first-sweep table was written and checked against the code. The user reported no flagged rows. The query result is the user's report, and its timing relative to the push is not known.
+- **T-01-61** (parked branch shipping by accident): subject, ancestor and symbol checks passed before the handoff.
 - **T-01-SC:** no packages were installed or upgraded.
 
 No new security surface: this plan changes no code.
 
+## Known Stubs
+
+None. No code was created or modified.
+
 ## User Setup Required
 
-`user_setup` in the plan covers the user's own push to `origin/main` (GitHub and Railway) and a read-only Supabase query. Both are written out in full in the Task 2 section above, as in 01-17 and 01-19, so `01-USER-SETUP.md` is not generated.
+None remaining. The plan's `user_setup` (the user's push to `origin/main` and a read-only Supabase query) was carried out in Task 2 and is written out in the Task 2 section of the plan, so `01-USER-SETUP.md` is not generated.
 
 ## Next Phase Readiness
 
-- Waiting on the user. Resume signal: reply "refund retry deployed" with the query result (no rows, or the rows) and the no-money check (all passed, what failed, or skip).
-- Task 3 then records the deploy, marks WINDOWS #8 and #10 fixed, resolves two entries in `deferred-items.md`, adds four new open entries, and finishes this file. BACK-19 stays Pending.
+- Plan 26 of 26 in Phase 1 is complete. The refund retry gap in `01-VERIFICATION.md` can be re-verified from code. BACK-19 stays Pending until the 01-19 checklist is run on real Stripe.
+- Still open for the user, at the latest during Phase 4 payment UAT: the 01-17 checklist (BACK-06, BACK-07), the 01-19 checklist (BACK-19), and the optional no-money check on build 6 and Android (step C), which nobody has reported.
+- Four new open deferred entries need a decision before they are planned: the `accountCascade.cancelActiveBookingsForUser` gap, a refund that fails later at the bank, replayed Stripe errors on the sweep's idempotency key, and the missing push on direct-charge refunds.
+- WINDOWS has 5 open items: #3, #5, #6, #11 (real-Stripe proof) and #12 (wave 3c dropped). `/gsd-ship` blocks while `open_count > 0` with `workflow.windows_enforce` on.
 
-## Self-Check: PARTIAL (Task 1 only)
-
-**Checked:**
+## Self-Check: PASSED
 
 - This file exists and contains `BACK-19`.
-- The production SHA (`215adcb`), the target SHA (`d86bf97`), the commit list, the four runtime files, the push command, the Task 2 query and the first-sweep table are all in this file.
-- Nothing was pushed: `git rev-list --count origin/main..master` is still 5 in the backend, and production `/health` still reports `215adcb`.
-- All five commits in the range are ancestors of backend `master`, and `git log --format=%s origin/main..master` shows no commit outside plans 01-24 and 01-25.
+- `.planning/WINDOWS.md` shows `open_count: 5`; #8 and #10 `fixed`; #6 and #11 `open`.
+- `deferred-items.md` has the two entries `status: resolved` with Resolution lines naming `d86bf97`, and the four new `status: open` entries.
+- Commits exist: `e59c7d4` and `7e1bd65` are ancestors of iOS `HEAD`.
+- Production `/health` reports `d86bf97`; `git rev-list --count origin/main..master` in the backend is `0`.
 - `requirements-completed` is `[]`; REQUIREMENTS.md was not touched.
-
-**Not yet checked (later tasks):** the user's query result and push, `/health` reporting `d86bf97`, `origin/main` equal to `master`, and the ledger updates.
+- Nothing was pushed by the agent in either repo. `.DS_Store` files, `.planning/config.json`, `.planning/milestone.lock` and `.planning/state.json` were left out of every commit.
 
 ---
 *Phase: 01-backend-fixes*
-*Paused at Task 2 checkpoint: 2026-11-09*
+*Completed: 2026-11-09*

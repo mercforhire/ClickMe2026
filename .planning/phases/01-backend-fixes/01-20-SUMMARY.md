@@ -51,8 +51,8 @@ key-decisions:
 patterns-established:
   - "Each client-only route test scripts the gate's profiles.roles read and asserts no updateUserById, no expert_profiles upsert and no profiles update"
 
-# BACK-13 stays Pending in REQUIREMENTS.md until 01-21, which also declares it, has a SUMMARY.
-requirements-completed: [BACK-13]
+# Corrected at the 01-23 close, 2026-11-08: this listed BACK-13 as a template artifact. Wave 3c was dropped, so nothing here is delivered. See 01-23-SUMMARY.md.
+requirements-completed: []
 
 coverage:
   - id: D1
@@ -99,8 +99,11 @@ coverage:
 
 duration: 6 min
 completed: 2026-11-09
+one-liner: "BACK-13 expert gate split, parked on unshipped backend branch wave-3c; never deployed, wave dropped by user decision"
 status: complete
 ---
+
+> **Wave 3c dropped (user decision, 2026-11-08).** This plan's backend commits (`2b5f9ea`, `f14f9d0`, `bdc580f`) are on the local, unshipped branch `wave-3c`, not on `master`, and were never deployed. Everything below describes that branch, not production, where any `/expert/*` call still promotes. BACK-13 is not delivered. See `01-23-SUMMARY.md`.
 
 # Phase 1 Plan 20: Expert Gate Split Summary
 

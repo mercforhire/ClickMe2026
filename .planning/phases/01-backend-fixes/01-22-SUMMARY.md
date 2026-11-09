@@ -51,8 +51,8 @@ key-decisions:
 
 patterns-established: []
 
-# BACK-08 and BACK-13 are also declared by 01-23, so they stay Pending until it has a SUMMARY.
-requirements-completed: [BACK-13, BACK-08]
+# Corrected at the 01-23 close, 2026-11-08: this listed BACK-13 and BACK-08 as a template artifact. Wave 3c was dropped, so nothing here is delivered. See 01-23-SUMMARY.md.
+requirements-completed: []
 
 coverage:
   - id: D1
@@ -80,8 +80,11 @@ coverage:
 
 duration: 8 min
 completed: 2026-11-09
+one-liner: "BACK-13 and BACK-08 contract docs, parked on unshipped backend branch wave-3c; not on master, wave dropped by user decision"
 status: complete
 ---
+
+> **Wave 3c dropped (user decision, 2026-11-08).** This plan's backend commits (`730a1f0`, `3f076e9`, `8407402`) are on the local, unshipped branch `wave-3c`, not on `master`. The contract on `master` has no `EXPERT_SETUP_REQUIRED` and no `docs/ios/EXPERT-SETUP-GATE.md`. Everything below describes that branch, not production. See `01-23-SUMMARY.md`.
 
 # Phase 1 Plan 22: BACK-13 and BACK-08 Contract Docs Summary
 

@@ -127,12 +127,12 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BACK-05** [K5]: `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol
 - [ ] **BACK-06** [K6]: A lone saved card is made the default *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Do not close until the 01-17 checklist has been run.)*
 - [ ] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Do not close until the 01-17 checklist has been run.)*
-- [ ] **BACK-08** [K8]: A client account is never shown the Stripe tax-ID prompt
+- [ ] **BACK-08** [K8]: A client account is never shown the Stripe tax-ID prompt *(Pending, not delivered: wave 3c dropped by user decision 2026-11-08. Code parked on backend branch `wave-3c`. Needs a new decision.)*
 - [x] **BACK-09** [K9]: The join window matches the client rule in CALL-02, and `/bookings/:id/join` checks booking status
 - [x] **BACK-10** [K10]: `POST /bookings/request` validates `duration_minutes` and rejects a past `scheduled_start`
 - [x] **BACK-11** [K11]: `price_amount` and the tag-replace list have upper bounds
 - [x] **BACK-12** [K12]: Client cancel is rejected after the session's end time
-- [ ] **BACK-13** [K13] **[major]**: A client is promoted to expert only by an explicit setup call, not any `/expert/*` call
+- [ ] **BACK-13** [K13] **[major]**: A client is promoted to expert only by an explicit setup call, not any `/expert/*` call *(Pending, not delivered: wave 3c dropped by user decision 2026-11-08. Code parked on backend branch `wave-3c`. Needs a new decision.)*
 - [x] **BACK-14** [K14]: The cancel `reason` is stored
 - [x] **BACK-15** [K15]: A confirm retry with the same `booking_attempt_id` replays the original result
 - [x] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
@@ -143,7 +143,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 ### Release
 
 - [ ] **REL-01**: Every phase's fixes pass a device UAT checklist on a real iPhone
-- [ ] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first
+- [ ] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first *(Note 2026-11-08: BACK-08 and BACK-13 are not deployed, because wave 3c was dropped by user decision. Scope unchanged. They need a new decision before release: ship them, or defer them with a reason.)*
 
 ## v2 Requirements
 
@@ -284,4 +284,4 @@ Which phases cover which requirements. Filled in during roadmap creation.
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-08 — BACK-19 kept Pending after the wave-3b smoke was skipped by user decision (01-19)*
+*Last updated: 2026-11-08 — BACK-08 and BACK-13 kept Pending and undelivered after wave 3c was dropped by user decision (01-23)*

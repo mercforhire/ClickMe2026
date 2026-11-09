@@ -54,7 +54,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Chat and push data is correct: sending a message increments the recipient's unread count and `message.read` resets it, `GET /chats` lists empty threads, and `/feedback/submit` is rate-limited. Push payloads carry `category`, `sub_category` and a per-recipient `target_role` for iOS and Android alike (Q6 settled as the backend route, D-01/D-02).
   5. Every change has backend tests. The current Android build and the live iOS build 6 can still sign in, book, pay, join and chat against the updated backend.
 
-**Plans**: 22/23 plans executed (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)
+**Plans**: 23/23 plans executed (sequential; deploy waves 1, 2, 3a, 3b, 3c each end with a user push checkpoint)
 
 Plans:
 **Wave 1**
@@ -115,26 +115,26 @@ Plans:
 - [x] 01-19-PLAN.md — Deploy wave 3b handoff, expert-cancel smoke (checkpoint) — deployed; smoke NOT RUN by user decision, BACK-19 stays Pending
 
 **Wave 20** *(blocked on Wave 19 completion)*
-- [x] 01-20-PLAN.md — BACK-13 promotion only via setup; read/write expert gate; legacy convert-on-demand tests flipped
+- [x] 01-20-PLAN.md — BACK-13 promotion only via setup; read/write expert gate; legacy convert-on-demand tests flipped — NOT deployed; code parked on backend branch `wave-3c`, wave 3c dropped by user decision 2026-11-08
 
 **Wave 21** *(blocked on Wave 20 completion)*
-- [x] 01-21-PLAN.md — BACK-08 at its traced seams (no Connect account for non-experts; tax-profile GET per user decision); 38-route classification lock
+- [x] 01-21-PLAN.md — BACK-08 at its traced seams (no Connect account for non-experts; tax-profile GET per user decision); 38-route classification lock — NOT deployed; code parked on backend branch `wave-3c`, wave 3c dropped by user decision 2026-11-08
 
 **Wave 22** *(blocked on Wave 21 completion)*
-- [x] 01-22-PLAN.md — BACK-13/BACK-08 contract docs (EXPERT_SETUP_REQUIRED, EXPERT-SETUP-GATE.md) and route-header sweep
+- [x] 01-22-PLAN.md — BACK-13/BACK-08 contract docs (EXPERT_SETUP_REQUIRED, EXPERT-SETUP-GATE.md) and route-header sweep — NOT on backend `master`; parked on branch `wave-3c`, wave 3c dropped by user decision 2026-11-08
 
 **Wave 23** *(blocked on Wave 22 completion)*
-- [ ] 01-23-PLAN.md — Deploy wave 3c handoff, BACK-13 and BACK-08 seam smoke, account B background check (checkpoint)
+- [x] 01-23-PLAN.md — Deploy wave 3c handoff, BACK-13 and BACK-08 seam smoke, account B background check (checkpoint) — NOT deployed; wave 3c dropped by user decision. No smoke run; BACK-08 and BACK-13 stay Pending
 
 **Cross-cutting constraints:**
 - After the user's push, production GET /health reports the short SHA of local master
 
 **Notes**:
 - All work happens in the separate backend repo (`../ClickMe2026 Backend`) and is committed there. Update `openapi/clickme-api.yaml` and `docs/SOCKET-CONTRACT.md` with every contract change.
-- Every change must be additive or otherwise safe for the current Android build (Google Play launch ~2026-12-13). This backend is the live production one, so a deployed change also reaches App Store build 6 right away; check each change against build 6 too. Deploy timing is settled in this phase's discuss step. REL-02 requires every backend change to be live before the iOS build is submitted.
+- Every change must be additive or otherwise safe for the current Android build (Google Play launch ~2026-12-13). This backend is the live production one, so a deployed change also reaches App Store build 6 right away; check each change against build 6 too. Deploy timing is settled in this phase's discuss step. REL-02 requires every backend change to be live before the iOS build is submitted. **Note (2026-11-08):** that is not true today, because BACK-08 and BACK-13 are not live (wave 3c dropped by user decision). See the Phase 8 note. Standing constraint from the user: backend changes must not break the live App Store iOS build; app review is slow.
 - Q6 is settled in this phase's discuss step. **BACK-17 is conditional on Q6.** If Q6 picks the iOS-parser route, BACK-17 is closed as not needed and PUSH-01 (Phase 2) widens the iOS parser instead. The reminder, no-show and nudge crons send no `event_type`, so the iOS-only route can only send those pushes to the notifications list.
 - Conflict between BACK-09 and CALL-01: calls are allowed to run until end+60, but `cron/expirePastSessions.js` completes bookings at end+15. A `/join` window that closes at the end, plus a status check, could block a rejoin during overtime. Settle the server rule here.
-- BACK-13 must not break signup or the mode switch on current Android or on build 6. The "explicit setup call" has to be one those builds already make. Otherwise, hold the change until the iOS gate (SIGN-06) ships.
+- BACK-13 must not break signup or the mode switch on current Android or on build 6. The "explicit setup call" has to be one those builds already make. Otherwise, hold the change until the iOS gate (SIGN-06) ships. **Applied 2026-11-08:** the wave 3c gate would leave client-only accounts on build 6 with no way to become experts, so the user dropped the wave, which follows this rule. BACK-13 and BACK-08 are not delivered, so the BACK-13 clause of success criterion 3 and the tax-ID clause of success criterion 2 are unmet. They need a new decision.
 - BACK-07 and BACK-15 touch real holds and charges, so test them with care.
 - iOS pairs: BACK-02 → Phase 3 (decline note display), BACK-14 → BOOK-07, BACK-15 → PAY-02, BACK-12 → BOOK-13, BACK-09 → CALL-02, BACK-13 → SIGN-06, BACK-18 → CHAT-07, BACK-17 → PUSH-01. Android display follow-ups, such as the decline note and the unread badge, are logged, not built.
 
@@ -201,7 +201,7 @@ Plans:
 ### Phase 5: Signup, Mode Switch and Account
 
 **Goal**: Users can finish signup, enter Expert mode only with a complete setup, and edit or close their account with saves that stick and copy that tells the truth
-**Depends on**: Phase 2 (and Phase 1 for BACK-13)
+**Depends on**: Phase 2 (and Phase 1 for BACK-13) — needs a decision: BACK-13 is not delivered (wave 3c dropped 2026-11-08)
 **Requirements**: SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-05, SIGN-06, SET-01, SET-02, SET-03, SET-04, SET-05, SET-06, SET-07
 **Success Criteria** (what must be TRUE):
   1. An expert cannot publish without a photo, and the uploaded photo matches the crop they set. Expertise tags and languages are saved in tap order, so the first pick is primary. The country code is normalized on publish.
@@ -217,7 +217,7 @@ Plans:
   - Q5: the SIGN-06 gate, and whether S2's optional province moves in.
   - Q7: SET-07.
   - Q1: remember-login-email (T8), which stays out of scope unless Q1 moves it in.
-- SIGN-06 pairs with BACK-13 (Phase 1).
+- SIGN-06 pairs with BACK-13 (Phase 1). **Needs a decision:** BACK-13 is not delivered (wave 3c dropped by user decision 2026-11-08; code parked on backend branch `wave-3c`), so this pairing has to be decided again. This note does not change this phase's plans or scope.
 - The SET-06 copy must match what `services/accountCascade.js` keeps or anonymizes. Log the matching Android copy change as a follow-up.
 - SET-01: check the expert profile settings view model for the same missing languages save.
 
@@ -275,6 +275,7 @@ Plans:
 **Notes**:
 - No hotfix build comes before this one (user decision 2026-11-07).
 - `Environments.plist` stays on Production for the release build (P9, by design).
+- **Note (2026-11-08):** the goal, success criterion 3 and REL-02 assume every backend change is live. BACK-08 and BACK-13 are not, because wave 3c was dropped by user decision (code parked on backend branch `wave-3c`). Scope is unchanged. Before release they need a new decision: ship them, or defer them with a reason under success criterion 2.
 
 ## Progress
 
@@ -283,7 +284,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Fixes | 22/23 | In Progress | - |
+| 1. Backend Fixes | 23/23 | In Progress | - |
 | 2. Shared iOS Plumbing | 0/TBD | Not started | - |
 | 3. Booked Sessions and Joining | 0/TBD | Not started | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |

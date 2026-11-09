@@ -48,8 +48,8 @@ key-decisions:
 patterns-established:
   - "A /expert/* route added or reclassified later must change a row in tests/expertRoutesGate.test.js; moving a row changes a group size, which fails until updated"
 
-# BACK-08 and BACK-13 are also declared by 01-22 and 01-23, so they stay Pending until those have SUMMARYs.
-requirements-completed: [BACK-08, BACK-13]
+# Corrected at the 01-23 close, 2026-11-08: this listed BACK-08 and BACK-13 as a template artifact. Wave 3c was dropped, so nothing here is delivered. See 01-23-SUMMARY.md.
+requirements-completed: []
 
 coverage:
   - id: D1
@@ -99,8 +99,11 @@ coverage:
 
 duration: 5 min
 completed: 2026-11-09
+one-liner: "BACK-08 seams and the 38-route classification, parked on unshipped backend branch wave-3c; never deployed, wave dropped by user decision"
 status: complete
 ---
+
+> **Wave 3c dropped (user decision, 2026-11-08).** This plan's backend commits (`de662e9`, `e1eb483`) are on the local, unshipped branch `wave-3c`, not on `master`, and were never deployed. Everything below describes that branch, not production, where the tax-ID seams are still open. BACK-08 is not delivered. See `01-23-SUMMARY.md`.
 
 # Phase 1 Plan 21: BACK-08 Seams and Expert Route Classification Summary
 

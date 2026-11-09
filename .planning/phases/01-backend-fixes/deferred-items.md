@@ -2,6 +2,8 @@
 
 Out-of-scope discoveries logged during execution. Nothing here was changed.
 
+**Wave 3c was dropped by user decision on 2026-11-08.** Its code is parked on the local backend branch `wave-3c` (tip `8407402`) and is not on `master` or in production. Entries below marked "Only if wave-3c is revived" describe that branch, not production. They stay `open` so they are still listed if it comes back.
+
 ## Deferred Items
 
 - `scripts/uat-demo-shoot-check.js` still mirrors the old join window
@@ -83,6 +85,7 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **What:** every field in `onboardingSchema` is optional, so `{}` is a valid body and promotes a client-only account. `{ "setup_completed": true }` on an incomplete record also promotes, because the controller's 422 with `missing_fields` runs after `provisionExpert`; that 422 keeps the other fields it already saved, by design (quick-260715-vta). Only a schema failure promotes nothing.
   **Why deferred:** this matches the plan's wording (validate, then provision) and D-07 names the route, not a required field. A stricter rule would change the setup contract both shipped clients use, so it is a user decision. No promotion is possible from any other route.
   **Update (plan 01-22):** the behavior is unchanged and now stated in `docs/ios/EXPERT-SETUP-GATE.md` section 3 and on the OpenAPI setup operation. Whether to tighten it is a user decision at 01-23.
+  **Only if wave-3c is revived (dropped by user decision, 2026-11-08).** `provisionExpert`, this setup-route rule and `docs/ios/EXPERT-SETUP-GATE.md` exist only on that branch. On production any `/expert/*` call promotes. The user's earlier answer of A (setup route unchanged) is superseded; decide again on revival.
 
 - Live UAT scripts and docs still assume a first `/expert/*` call converts the account
   status: open
@@ -93,12 +96,14 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   - `scripts/uat-convert-expert.js` **would fail.** It exists to prove first-touch conversion, and it hard-checks that `POST /expert/connect/onboard` is never a 403. It needs a rewrite or retirement.
   - `scripts/uat-topic-tags.js` and `scripts/uat-topic-owned-tags.js` should still pass with their defaults, `uat.expert@clickme.test` and `seed-expert-001@clickme.test`, as long as those accounts hold the expert role (not checked against production). Their comments saying any account works are now wrong: a client-only override account gets 403 on `POST /expert/topics`.
   - `scripts/uat-seed-notifications.js` **would not fail.** It makes no `/expert/*` call, and only its comment explaining `--as` mentions conversion.
+  **Only if wave-3c is revived (dropped by user decision, 2026-11-08).** `scripts/uat-convert-expert.js` stays valid on production, because first-touch promotion stays. The doc corrections from `8407402` are parked too, so `master`'s docs still describe first-touch promotion, which matches production.
 
 - `src/services/stripeEvents.js` cites an old line number in `ensureExpert.js`
   status: open
   **Found in:** plan 01-20 (BACK-13), backend `src/services/stripeEvents.js` line 44.
   **What:** the comment points at `src/middleware/ensureExpert.js:82` for the upsert precedent, and that line moved when the file was rewritten. The upsert is now in `provisionExpert`. Comment only.
   **Why deferred:** outside this plan's files.
+  **Only if wave-3c is revived (dropped by user decision, 2026-11-08).** On `master`, line 82 of `ensureExpert.js` is still that upsert, so the comment is correct there.
 
 - One `expertBooking.test.js` flake has a likely cause: two separate `Date.now()` calls
   status: open
@@ -111,6 +116,7 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-21 (BACK-08), backend `src/middleware/ensureExpert.js`.
   **What:** the header says client-only reads pass through and `expertGate`'s comment says the method selects the gate. Both are true of the default export, but `GET /expert/tax-profile` now mounts `expertWriteGate` explicitly. The route file and table test record the exception.
   **Resolution (plan 01-22):** the header's `expertWriteGate` entry now names that read, in backend commit `8407402`.
+  **Only if wave-3c is revived (dropped by user decision, 2026-11-08).** `expertWriteGate` and this header exist only on that branch.
 
 - `clientBooking.test.js` failed 40 tests in one full-suite run and passed alone
   status: open
@@ -123,21 +129,25 @@ Out-of-scope discoveries logged during execution. Nothing here was changed.
   **Found in:** plan 01-22 (BACK-13) comment sweep, backend `src/routes/index.js` lines 81, 131, 139, 148, 153 and `src/controllers/analytics.controller.js` line 18.
   **What:** they say expert routes self-gate with `roleCheck('expert')`. Those routes use the BACK-13 expert gate, and `roleCheck` is mounted only with `'client'` on the booking routes. Comments only. They do not describe convert-on-demand, so the sweep does not cover them.
   **Why deferred:** outside this plan's files, and more than a one-line correction.
+  **Update (01-23 close):** this still applies on `master`, where the same comments exist and those routes use `ensureExpert`, not the BACK-13 gate.
 
 - After wave 3c, a client-only account on build 6 has no way to become an expert
   status: open
   **Found in:** plan 01-23 code read, iOS `SplashViewModel.swift` and `LoginView.swift` (both check `roles.contains(.expert)` before opening setup) and `SignupInitialViewModel.swift` (signup always sends `role: .expert`).
   **What:** the old first-touch promotion is what used to carry such an account into the setup flow on its next launch. Without it, build 6 shows the expert home with the setup message on writes, but no screen opens setup. Android does open its setup hub. SIGN-06 fixes iOS, in the one release at the end of the project. How many accounts this touches is what query Q0 in `01-23-SUMMARY.md` counts; both apps sign up with the expert role, so the number may be small.
   **Why deferred:** D-08 accepts this until SIGN-06. Logged so it is not read as a smoke failure.
+  **Only if wave-3c is revived (dropped by user decision, 2026-11-08).** This gap is why the user dropped the wave: "I need the current version to work." Q0 was not reported, so the number of accounts is unknown.
 
 - BACK-08 does not cover an account that signed up through an app, and an expert role alone does not show silent promotion
   status: open
   **Found in:** plan 01-23 code read, backend `src/controllers/auth.controller.js` signup, iOS `SignupInitialViewModel.swift`, Android `SignupRequests.kt`.
   **What:** both apps sign up with `role: expert`, which writes roles `[client, expert]` at signup. So such an account passes the gate and can still open the tax form and Connect onboarding, even if its owner thinks of it as a client account. Plan 01-23 says an expert role on account B confirms the silent-promotion path. That is too strong: signup gives the same role values, and an `expert_profiles` row can come from first touch, publish or a profile edit. `01-23-SUMMARY.md` has the reading guide.
   **Why deferred:** whether an expert-role account that never finished setup should see these screens is a product decision, and it may answer BUG-03 once the account B results are in.
+  **Update (01-23 close):** QB was not reported, so BUG-03 stays unexplained. BACK-08 is not delivered, so on production a client-only account can also reach these screens, through first-touch promotion.
 
 - Full-suite flakes continue at wave 3c's final commit, with one new file
   status: open
   **Found in:** plan 01-23 gate, nine full runs of `8407402`: seven passed 3099 of 3099, two failed one test each.
   **What:** `tests/moderationGates.test.js`, `reportLimiter › counts reports (10/hour) but never action != report`, "Expected: 429, Received: 401". `tests/connectWebhooks.test.js`, `POST /webhooks/stripe-connect — payout.paid › updates withdrawals.status to "paid" when payout.paid fires`, a 5 s timeout, followed by Jest's forced worker exit warning. Each passes alone (14 of 14, 107 of 107). Neither file changed in this wave. Cause not established. The unexpected 401 matches the symptom in the earlier `clientBooking.test.js` entry, which is a clue and not a finding.
   **Why deferred:** test infrastructure is outside this plan, which changes no backend code.
+  **Update (01-23 close):** this still applies. The runs were at `8407402`, but neither test file differs between `wave-3c` and `master`.

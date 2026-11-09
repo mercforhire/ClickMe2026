@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 01
 current_phase_name: Backend Fixes
-status: executing
-stopped_at: "01-23 Task 2 checkpoint: wave 3c ready to push, awaiting user decision on setup promotion, push and smoke"
-last_updated: "2026-11-09T02:55:16.038Z"
+status: verifying
+stopped_at: Completed 01-23-PLAN.md (wave 3c dropped by user decision, not deployed). 23 of 23 plans run; awaiting phase verification
+last_updated: "2026-11-09T03:17:24.399Z"
 last_activity: 2026-11-08
 last_activity_desc: Phase 01 execution started
-state_head: 958ab2ebccc449ad1a59f2b456375ccd6ef8034e
+state_head: b38a4a97e74fdfac1d702a13a0374c2e03d98855
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 23
-  completed_plans: 22
+  completed_plans: 23
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-07)
 
 Phase: 01 (Backend Fixes) — EXECUTING
 Plan: 23 of 23
-Status: Ready to execute
+Status: 23 of 23 plans run, awaiting phase verification. Phase 1 is not complete: BACK-06, BACK-07 and BACK-19 have skipped smokes, and BACK-08 and BACK-13 are not delivered
 Last activity: 2026-11-08 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -78,6 +78,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01 P20 | 6 min | 3 tasks | 9 files |
 | Phase 01 P21 | 5 min | 2 tasks | 8 files |
 | Phase 01 P22 | 8 min | 2 tasks | 13 files |
+| Phase 01 P23 | ~35 min wall clock (user wait) | 1 of 2 (Task 2 dropped, not run) tasks | 9 files |
 
 ## Accumulated Context
 
@@ -140,6 +141,9 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-21 BACK-08: postOnboard refuses a caller whose req.user.roles lacks expert (missing and empty included) before any payout_accounts or Stripe call; getConnectStatus and postRefreshLink need no such check because only postOnboard creates a payout_accounts row
 - [Phase 01]: 01-22 BACK-13: the two expert reschedule responses keep the shared 403 $ref and override its description, because their controllers also return 403 FORBIDDEN when the expert proposed the reschedule
 - [Phase 01]: 01-22 BACK-13: the 403 entries on 15 pass-through reads were removed and FORBIDDEN was dropped from GET /expert/clients/{id}, because the gate never refuses those reads; ACCOUNT_SUSPENDED stays covered by the API-level note
+- [Phase 01]: 01-23: USER DECISION 2026-11-08: wave 3c dropped, never pushed. BACK-08 and BACK-13 are not delivered; production stays at 3899d63, where first-touch promotion stays; the eight commits are parked on local backend branch wave-3c at 8407402 and need a new decision. Reason: the gate would leave client-only accounts on App Store build 6 with no way to become experts
+- [Phase 01]: 01-23: standing constraint (user, 2026-11-08): Backend changes must not break the live App Store iOS build; app review is slow
+- [Phase 01]: 01-23: the user's earlier answer A on the setup route (leave it unchanged) is superseded, because the gate is not shipping; Q0, QB and the smoke were not run or reported, so the number of client-only accounts and BUG-03's origin stay unknown
 
 ### Pending Todos
 
@@ -149,7 +153,7 @@ Android follow-ups from Phase 1 (logged, not built):
 - Switch `displayUnread` to the server count once BACK-18 is live (BACK-18)
 - Expert-cancel copy promises a full refund (D-17/BACK-19)
 - Map PAYMENT_METHOD_IN_USE on card delete (BACK-07)
-- Map EXPERT_SETUP_REQUIRED and route to the setup hub (BACK-13)
+- Map EXPERT_SETUP_REQUIRED and route to the setup hub (BACK-13). Only if wave-3c is revived; production does not return this code
 - Map SESSION_ALREADY_ENDED on client cancel (BACK-12)
 - Route payment-intent 409 DUPLICATE_BOOKING to detail.booking_id (BACK-15)
 
@@ -166,7 +170,7 @@ Android follow-ups from Phase 1 (logged, not built):
 - [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
 - [Phase 1]: Refund retry fix (user chose option A, 2026-11-08): failed refunds are not retried as refunds; needs its own plan and deploy before Phase 4 payment UAT. No phase or plan for it exists yet; one still needs creating. A failed cancel refund leaves refund_amount_minor_units NULL, so refundReconciliation retries cancelPI, not a refund, and the client is not refunded without manual action. Applies to expert and client cancels; from the 01-19 code read, BACK-19 widens it only slightly because capture happens after a booking stops being cancellable. Analysis and the shape of the fix are in 01-19-SUMMARY.md. (Correction: PATCH /expert/bookings/:id/status rejects cancelled, so that item is closed.)
 - [Phase 1]: BACK-19 production smoke not run (user skip 2026-11-08); run the 01-19 checklist before it closes, at the latest during Phase 4 payment UAT.
-- Wave 3c (BACK-13, BACK-08) is packaged at 8407402 and not pushed. User decides setup-route promotion option A, B or C, then pushes and runs the 01-23 smoke
+- BACK-08 and BACK-13 not delivered (wave 3c dropped 2026-11-08). The silent client-to-expert promotion and the tax-ID prompt remain in production. Phase 5 SIGN-06 pairs with BACK-13 and needs a re-decision. Code parked on backend branch wave-3c.
 
 ## Deferred Items
 
@@ -178,6 +182,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T02:55:15.876Z
-Stopped at: 01-23 Task 2 checkpoint: wave 3c ready to push, awaiting user decision on setup promotion, push and smoke
-Resume file: .planning/phases/01-backend-fixes/01-23-SUMMARY.md
+Last session: 2026-11-09T03:17:24.368Z
+Stopped at: Completed 01-23-PLAN.md (wave 3c dropped by user decision, not deployed). 23 of 23 plans run; awaiting phase verification
+Resume file: None

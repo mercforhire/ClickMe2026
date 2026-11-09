@@ -52,6 +52,7 @@ Task IDs are filled in by the planner; the requirement → suite mapping is fixe
 | TBD | TBD | TBD | CALL-09 | — | Lookalike hosts are not trusted providers | unit | `-only-testing:ClickMe2026Tests/ExternalMeetingProviderTests` | ❌ W0 | ⬜ pending |
 | TBD | TBD | TBD | BOOK-10 | — | N/A | unit | `-only-testing:ClickMe2026Tests/MoneyTests` | ❌ W0 | ⬜ pending |
 | TBD | TBD | TBD | BOOK-18 | — | N/A | unit | `-only-testing:ClickMe2026Tests/BookingStatusDecodingTests` | ❌ W0 | ⬜ pending |
+| 02-03 T2, T3 | 02-03 | 1 | BOOK-18 | T-02-27 | Only the newest overlapping refetch writes the screen | unit | `-only-testing:ClickMe2026Tests/ReloadGenerationTests` | ❌ W0 | ⬜ pending |
 | TBD | TBD | TBD | BOOK-14 | — | N/A | unit | `-only-testing:ClickMe2026Tests/PaidBookingWindowTests` + `BookingErrorMapperTests` | ❌ W0 | ⬜ pending |
 | TBD | TBD | TBD | PAY-05 | — | N/A | unit | `-only-testing:ClickMe2026Tests/BookingErrorMapperTests` | ❌ W0 | ⬜ pending |
 | TBD | TBD | TBD | PUSH-01 | — | Unknown push types fall back safely | unit | `-only-testing:ClickMe2026Tests/PushEventTests` + `PushRoutePlannerTests` | ❌ W0 | ⬜ pending |

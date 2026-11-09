@@ -530,30 +530,38 @@ Residual gap (document, do not fix): if the DELETE fails and `deleteToken` also 
 | A7 | CALL-05 ends the call through the normal end path with `EndReason.dropped` on `.failed`; the existing VM branch only sets the status. | Pattern 1 | If the planner only sets `.ended`, the screen stays on "Call Ended" with a live End button. |
 | A8 | `canUseExpertMode` treats a failed `expertProfile` fetch as "cannot" (opens the notifications list). | Pattern 7 | An established expert on a flaky network lands on the list instead of the request. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Thousands separators (A5).**
+All six questions were resolved at plan time (2026-11-09). Each carries its resolution inline.
+
+1. **Thousands separators (A5).** (RESOLVED)
    - What we know: D-09/specifics show `¥1200` and the backend labels also have none.
    - What's unclear: whether `$1,200.00` is wanted for large amounts.
    - Recommendation: build without grouping (matches the locked example) behind one `Money` constant so it is a one-line flip.
+   - **RESOLVED:** no grouping. Plan 02-05 builds `Money` with `static let thousandsSeparator: String? = nil`, so grouping is a one-line change later; the helper is tested with and without a separator.
 
-2. **Join for `pending_reschedule` (A4).**
+2. **Join for `pending_reschedule` (A4).** (RESOLVED)
    - Recommendation: follow the server (not joinable) and list it in the Phase 2 UAT as an intentional change.
+   - **RESOLVED by D-12:** the shared join helper follows the server's joinable statuses (`confirmed`, `in_progress`, `completed`); `pending_reschedule` is not joinable. Plan 02-04 implements it and the Phase 2 device checklist (plan 02-12, item 4) lists it as an intentional change.
 
-3. **CALL-05 device confirmation.**
+3. **CALL-05 device confirmation.** (RESOLVED)
    - What we know: the root cause is confirmed from the SDK header (`didOfflineOfUid` is remote-only), but `.failed` only appears after 20 minutes of failed reconnects or on join-failed/banned/token reasons, so a manual repro is slow.
    - Recommendation: fix with the unit-tested mapping; ask the user whether a 20-minute airplane-mode device check is required or whether the unit test plus one normal call regression check is enough to close it (REQUIREMENTS marks it "likely, may close as not reproducible").
+   - **RESOLVED by D-14:** CALL-05 closes on the unit-tested Agora connection-state mapping (plan 02-02) plus one normal-call regression check on the device (checklist item 2). No 20-minute airplane-mode repro.
 
-4. **Client Cancel/Reschedule/Join/Leave Review are inert on push-opened detail screens (Phase 3 wiring).**
+4. **Client Cancel/Reschedule/Join/Leave Review are inert on push-opened detail screens (Phase 3 wiring).** (RESOLVED)
    - Recommendation: do not widen Phase 2. Record it in the Phase 2 UAT notes so the CR-01 pass criterion is "opens the screen, no warning page".
+   - **RESOLVED:** Phase 2 is not widened. The pass criterion "opens the screen, no warning page" is set in plan 02-09 (assumptions) and plan 02-10 (device check), and recorded in checklist item 10 (plan 02-12). Phase 3 wires the buttons (CALL-03, BOOK-06, BOOK-16, BOOK-17).
 
-5. **Expert reschedule picker 6-day cap.**
+5. **Expert reschedule picker 6-day cap.** (RESOLVED)
    - What we know: server refuses paid reschedules beyond 6 days from both sides; Phase 3 owns EXP-13.
    - Recommendation: Phase 2 maps the code through the shared mapper on both sides and caps the client picker; the expert picker cap rides with EXP-13 unless the user wants it now.
+   - **RESOLVED by D-13:** Phase 2 caps the client paid booking and reschedule pickers (plans 02-07, 02-08) and maps the long-lead codes through the shared mapper on both sides. The expert reschedule picker cap ships with EXP-13 in Phase 3.
 
-6. **Broken test files.**
+6. **Broken test files.** (RESOLVED)
    - What we know: three test files do not compile; the workaround is a command-line exclusion.
    - Recommendation: keep the exclusion for Phase 2; optionally fix `LoginTests` and `AuthSmokeTests` (small) in Wave 0. Do not touch `SignupSmokeTests` (removed APIs).
+   - **RESOLVED:** keep `EXCLUDED_SOURCE_FILE_NAMES=LoginTests.swift AuthSmokeTests.swift SignupSmokeTests.swift` for Phase 2. No test file is fixed in this phase; every plan's test command passes the exclusion.
 
 ## Environment Availability
 

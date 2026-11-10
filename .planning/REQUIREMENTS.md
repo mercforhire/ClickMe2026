@@ -38,7 +38,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BOOK-12** [B12]: Keep Booking returns to the previous screen, not the My Bookings root
 - [ ] **BOOK-13** [B13]: Cancel is hidden on a booking whose session has already ended
 - [x] **BOOK-14** [B14] **[major]**: Paid booking and reschedule pickers allow slots at most 6 days ahead, and the long-lead error codes show a clear error instead of an invalid confirm
-- [ ] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (whether recovery is also built depends on decision Q3)
+- [ ] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (Q3 settled 2026-11-09 as route only, Phase 2 D-01: no recovery flow is built; an unanswered booking is cancelled by scaRecoveryWindowSweep)
 - [ ] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
 - [ ] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
 - [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped

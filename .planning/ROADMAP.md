@@ -16,7 +16,7 @@ This project fixes every confirmed and likely iOS bug that the Android port foun
 |----------|---------|------------|
 | Q1 Merge remember-login-email? | T8 (out of scope unless moved in) | Phase 5 |
 | Q2 Expert cancel: full refund or the 24 h rule? | BOOK-08, EXP-11 | Phase 1 (D-17) |
-| Q3 Long-lead SCA recovery, or route the push only? | BOOK-15 | Phase 2 |
+| Q3 Long-lead SCA recovery, or route the push only? | BOOK-15 | Phase 2 (settled 2026-11-09: route only, D-01) |
 | Q4 Dismissed payment sheet with a preselected card: cancel or confirm? | PAY-01 | Phase 4 |
 | Q5 Optional province, and a gated Expert-mode switch? | SIGN-06 (S2 out of scope unless moved in) | Phase 5 |
 | Q6 Fix dead pushes with a backend `category` or a wider iOS parser? | BACK-17, PUSH-01 | Phase 1 |
@@ -185,7 +185,7 @@ Plans:
 
 **Notes**:
 - Plan CALL-01 first. It is critical and was confirmed on a production iPhone.
-- The PUSH-01 approach follows Q6, which is settled in Phase 1. Q3 (BOOK-15: route only, or also build long-lead SCA recovery) is settled in this phase's discuss step.
+- The PUSH-01 approach follows Q6, which is settled in Phase 1. Q3 (BOOK-15: route only, or also build long-lead SCA recovery) is settled in this phase's discuss step. Settled as route only (D-01).
 - CALL-05 is a LIKELY item. Confirm it on a device first; it may close as not reproducible.
 - BOOK-10 replaces the per-screen `/100` math on client and expert screens (the inventory lists nine call sites). Later phases use the shared formatter.
 - Unit-testable: overtime cutoff, join window, money formatter, status decoding with an unknown fallback, provider host matching, error-code mapping, push parsing and routing.

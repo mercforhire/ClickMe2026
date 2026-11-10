@@ -294,15 +294,15 @@ final class ExpertRescheduleViewModel: ObservableObject {
     /// authorization can no longer cover a slot past its ~6-day window,
     /// so the counterparty must re-book. Expert-side surface tells the
     /// expert to ask the client to re-book (the expert can't do it for
-    /// them). Everything else falls through to the server message.
+    /// them). Every other code goes through `BookingErrorMapper`
+    /// (BOOK-14), so `RESCHEDULE_TOO_FAR_AHEAD` reads the same as on the
+    /// client side; a code with no entry shows the server message.
     static func rescheduleErrorMessage(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data),
-           response.code == .rescheduleOutsideAuthWindow
-        {
+        let code = BookingErrorMapper.code(for: error)
+        if code == .rescheduleOutsideAuthWindow {
             return "This time is past the payment hold on the original booking. Please cancel and ask the client to book a new session."
         }
-        return error.userMessage
+        return BookingErrorMapper.message(for: code, fallback: error.userMessage)
     }
 
     // MARK: - Derived

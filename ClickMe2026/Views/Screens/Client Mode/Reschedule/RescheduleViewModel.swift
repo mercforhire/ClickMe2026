@@ -325,7 +325,7 @@ final class RescheduleViewModel: ObservableObject {
             onSuccess()
             return
         } catch {
-            guard Self.errorCode(for: error) == .paymentMethodRequired else {
+            guard BookingErrorMapper.code(for: error) == .paymentMethodRequired else {
                 submitError = Self.rescheduleErrorMessage(for: error)
                 return
             }
@@ -365,31 +365,28 @@ final class RescheduleViewModel: ObservableObject {
         onSuccess()
     }
 
-    /// Maps reschedule submit failures to user-visible copy. Special
-    /// cases:
+    /// Maps reschedule submit failures to user-visible copy. Two codes are
+    /// reschedule-only and keep their client wording here:
     /// - `RESCHEDULE_OUTSIDE_AUTH_WINDOW` (Phase 27.1, now rare) — the
     ///   move is genuinely unconvertible (e.g. proposed <24h out); the
     ///   user must re-book.
     /// - `PAYMENT_METHOD_REQUIRED` on a retry — the picked card can't
     ///   be prepared for future billing (typically a one-off
     ///   PaymentSheet card); the user needs to add a reusable card.
-    /// Everything else falls through to the server message.
+    /// Every other code goes through `BookingErrorMapper` (BOOK-14,
+    /// PAY-05), so `RESCHEDULE_TOO_FAR_AHEAD` and `SLOT_UNAVAILABLE` read
+    /// the same as on Make a Booking; a code with no entry shows the
+    /// server message.
     static func rescheduleErrorMessage(for error: Error) -> String {
-        switch errorCode(for: error) {
+        let code = BookingErrorMapper.code(for: error)
+        switch code {
         case .rescheduleOutsideAuthWindow:
             return "This time is past the payment hold on your original booking. Please cancel and book again to authorize a new payment."
         case .paymentMethodRequired:
             return "The card on file can't be used for this reschedule. Please add a new payment method in Settings > Payment and try again."
         default:
-            return error.userMessage
+            return BookingErrorMapper.message(for: code, fallback: error.userMessage)
         }
-    }
-
-    private static func errorCode(for error: Error) -> ErrorCode? {
-        guard case let NetworkError.httpError(_, data) = error,
-              let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        else { return nil }
-        return response.code
     }
 
     // MARK: - Derived

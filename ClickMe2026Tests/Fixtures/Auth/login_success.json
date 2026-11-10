@@ -2,11 +2,14 @@
   "status": "success",
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature",
+    "refresh_token": "test-refresh-token",
+    "expires_at": 1893456000,
+    "expires_in": 3600,
     "user": {
       "id": "11111111-2222-3333-4444-555555555555",
       "first_name": "Ada",
       "last_name": "Lovelace",
-      "role": "expert",
+      "roles": ["client", "expert"],
       "avatar_url": "https://cdn.clickme.example/ada.png"
     }
   }

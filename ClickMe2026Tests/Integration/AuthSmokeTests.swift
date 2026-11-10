@@ -155,7 +155,7 @@ struct AuthSmokeTests {
         api.bearerToken = loginResponse.data.token
         let me = try await api.getMe()
         #expect(me.status == "success")
-        #expect(me.data.role == loginResponse.data.user.role)
+        #expect(Set(me.data.roles) == Set(loginResponse.data.user.roles))
         #expect(me.data.email.caseInsensitiveCompare(email) == .orderedSame)
     }
 

@@ -62,7 +62,7 @@ struct LoginTests {
         #expect(response.data.token.hasPrefix("eyJhbGciOi"))
         #expect(response.data.user.firstName == "Ada")
         #expect(response.data.user.lastName == "Lovelace")
-        #expect(response.data.user.role == .expert)
+        #expect(response.data.user.roles.contains(.expert))
     }
 
     // MARK: - Error mapping

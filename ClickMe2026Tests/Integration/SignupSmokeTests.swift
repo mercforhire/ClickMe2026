@@ -10,7 +10,7 @@
 //    2. GET  /auth/email/status            (poll — should be false right after)
 //    3. POST /auth/email/resend            (rate-limited on the server side)
 //    4. GET  /meta/languages, /meta/expertise-tags (fetch real ids for setup)
-//    5. PATCH /expert/profile/setup        (final publish, uses accumulator's builder)
+//    5. PATCH /expert/profile/setup        (final publish, uses accumulator.buildPublishRequest())
 //
 //  Each run creates a fresh DB row with a timestamped email. There
 //  is no explicit cleanup — talk to the backend team about a scheduled
@@ -49,7 +49,7 @@ struct SignupSmokeTests {
 
         #expect(response.status == "success")
         #expect(!response.data.token.isEmpty, "Backend did not return a bearer token.")
-        #expect(response.data.user.role == .expert)
+        #expect(response.data.user.roles.contains(.expert))
         #expect(response.data.emailVerified == false,
                 "Freshly created account should not be pre-verified.")
     }
@@ -148,13 +148,11 @@ struct SignupSmokeTests {
         accumulator.timezone = "America/Toronto"
         accumulator.languages = [firstLang, secondLang]
         accumulator.expertiseTags = [firstTag]
-        accumulator.hourlyRateAmount = 8000 // $80.00 in minor units
-        accumulator.hourlyRateCurrency = "USD"
 
         #expect(accumulator.isReadyToPublish,
                 "Accumulator should report ready with every required field set.")
 
-        let body = try #require(accumulator.buildSetupExpertProfileRequest())
+        let body = try #require(accumulator.buildPublishRequest())
         let response = try await api.setupExpertProfile(body)
 
         #expect(response.status == "success")
@@ -168,17 +166,17 @@ struct SignupSmokeTests {
 
     // MARK: - Guard: builder refuses an incomplete accumulator
 
-    @Test("buildSetupExpertProfileRequest returns nil when required fields are missing")
+    @Test("buildPublishRequest returns nil when required fields are missing")
     func builderRejectsIncomplete() {
         let accumulator = SignupAccumulator()
-        // Deliberately leave hourly rate / languages / tags unset.
+        // Deliberately leave timezone / languages / tags unset.
         accumulator.firstName = "Verify"
         accumulator.city = "Toronto"
         accumulator.provinceState = "ON"
         accumulator.countryCode = "CAN"
 
         #expect(!accumulator.isReadyToPublish)
-        #expect(accumulator.buildSetupExpertProfileRequest() == nil,
+        #expect(accumulator.buildPublishRequest() == nil,
                 "Builder should refuse to build when required fields are missing.")
     }
 

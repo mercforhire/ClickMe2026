@@ -27,7 +27,8 @@
         "containerPath" : "container:ClickMe.xcodeproj",
         "identifier" : "D5284F3B2B57C6B700BB32E7",
         "name" : "ClickMe2026Tests"
-      }
+      },
+      "parallelizable" : false
     },
     {
       "target" : {

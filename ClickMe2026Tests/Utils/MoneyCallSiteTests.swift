@@ -84,13 +84,16 @@ struct MoneyCallSiteTests {
         #expect(padded?.currency == "USD")
     }
 
-    @Test("a typed whole number is still parsed and priced in the default currency")
-    func typedWholeNumberUsesDefaultCurrency() throws {
+    @Test("a typed whole number is parsed and priced in the topic's own currency")
+    func typedWholeNumberKeepsTopicCurrency() throws {
+        // Backend phase 34 D-18: a retyped price must not re-label a USD
+        // topic as the account default (CAD in the test host).
         let vm = TopicEditorViewModel(topic: try Self.topic(Self.hourlyRate12550USD))
         vm.rate = "130"
         let validated = vm.validate()
         #expect(validated?.hourlyRateAmount == 13000)
-        #expect(validated?.currency == vm.defaultCurrency)
+        #expect(validated?.currency == "USD")
+        #expect(validated?.currency != vm.defaultCurrency)
     }
 
     @Test("typed decimal input is still rejected until Phase 6")

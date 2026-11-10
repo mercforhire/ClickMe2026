@@ -98,7 +98,7 @@ final class ClientProfileViewModel: ObservableObject {
 
     // MARK: - Mapping
 
-    private static func mapBooking(from item: ExpertBookingItem) -> ClientBookingHistory {
+    static func mapBooking(from item: ExpertBookingItem) -> ClientBookingHistory {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM d, yyyy"
         return ClientBookingHistory(

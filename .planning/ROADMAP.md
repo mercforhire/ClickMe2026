@@ -258,9 +258,9 @@ Plans:
 
 **Goal**: Experts can price, describe and schedule their topics correctly and handle requests, bookings, clients and notes without wrong amounts or dead ends
 **Depends on**: Phase 2 (and Phase 1 for BACK-01, BACK-05, BACK-11)
-**Requirements**: EXP-01, EXP-02, EXP-03, EXP-04, EXP-05, EXP-06, EXP-07, EXP-08, EXP-09, EXP-10, EXP-12, EXP-14, EXP-15, EXP-16
+**Requirements**: EXP-01, EXP-02, EXP-03, EXP-04, EXP-05, EXP-06, EXP-07, EXP-08, EXP-09, EXP-10, EXP-12, EXP-14, EXP-15, EXP-16, EXP-17
 **Success Criteria** (what must be TRUE):
-  1. An expert can enter a topic price with decimals (e.g. 12.50) in the topic's own currency, and editing a topic keeps that currency. The icon and description can be cleared. Deleting a topic asks for confirmation first.
+  1. An expert can enter a topic price with decimals (e.g. 12.50) in the topic's own currency, and editing a topic keeps that currency. When creating a topic, the expert can choose CAD or USD on both iOS and Android (EXP-17). The icon and description can be cleared. Deleting a topic asks for confirmation first.
   2. In availability, Cancel on the time-range picker reverts the change. No end time is produced that the picker can't show. An off-grid stored time such as 09:15 shows as selected.
   3. Accepting a request shows the booking-confirmed screen, and the calendar event created from it is titled with the client's name.
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.

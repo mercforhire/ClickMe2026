@@ -89,6 +89,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **EXP-14** [E16]: The expert-side Client Profile shows real earnings in the booking currency
 - [ ] **EXP-15** [E17]: The expert hub online dot reflects real presence, or is removed
 - [ ] **EXP-16** [E18]: The private booking note is capped at 5000 characters with a counter, trims whitespace, and asks before discarding edits
+- [ ] **EXP-17** [new, user request 2026-11-09]: When creating a topic, the expert can choose its currency from CAD or USD (default CAD), on both iOS and Android; the minimum-price hint and validation follow the chosen currency, and editing keeps the topic's currency. Backend already accepts `hourly_rate.currency` (seeded `currencies` table, per-currency floors in `src/utils/pricing.js`), so no backend change is expected
 
 ### Chat
 
@@ -237,6 +238,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXP-14 | Phase 6 | Pending |
 | EXP-15 | Phase 6 | Pending |
 | EXP-16 | Phase 6 | Pending |
+| EXP-17 | Phase 6 | Pending |
 | CHAT-01 | Phase 7 | Pending |
 | CHAT-02 | Phase 7 | Pending |
 | CHAT-03 | Phase 7 | Pending |
@@ -280,8 +282,8 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | REL-02 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 104 total
-- Mapped to phases: 104
+- v1 requirements: 105 total
+- Mapped to phases: 105
 - Unmapped: 0 ✓
 
 ---

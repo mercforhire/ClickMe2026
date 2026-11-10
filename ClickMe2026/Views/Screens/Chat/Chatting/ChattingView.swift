@@ -52,6 +52,14 @@ struct ChatView: View {
             content
         }
         .task { await viewModel.load() }
+        .onAppear {
+            // CHAT-09: mark this thread as on screen so a foreground push for
+            // it shows no banner. Preview seeds have no thread id and mark nothing.
+            if let threadId = viewModel.threadId { ChatPresence.shared.chatAppeared(threadId: threadId) }
+        }
+        .onDisappear {
+            if let threadId = viewModel.threadId { ChatPresence.shared.chatDisappeared(threadId: threadId) }
+        }
         .refreshable { await viewModel.reload() }
         .navigationTitle(viewModel.peerName)
         .navigationBarTitleDisplayMode(.inline)

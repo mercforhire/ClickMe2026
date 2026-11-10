@@ -137,13 +137,16 @@ class ClickMe2026AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificatio
 
     // MARK: - UNUserNotificationCenterDelegate
 
-    /// Foreground presentation policy. iOS 14+ uses `.banner + .list`
-    /// (banner slides down + goes into Notification Center) plus sound
-    /// and badge. Without this the app would silently swallow pushes
-    /// received while it's frontmost.
+    /// Foreground presentation policy. The options come from
+    /// `PushForegroundPolicy`: the full set (banner, Notification Center
+    /// entry, sound, badge) for every push except a `message` push for
+    /// the chat thread the user is already reading, which presents nothing
+    /// (CHAT-09). The visible thread is `ChatPresence.shared.visibleThreadId`,
+    /// read on the main actor, so the completion handler is called from the
+    /// same main-actor task; iOS waits briefly for it.
     ///
-    /// Also bumps `PushRouter.newNotificationTick` so
-    /// `NotificationsListView` refreshes if the user is sitting on it.
+    /// Always bumps `PushRouter.newNotificationTick` first, suppressed or
+    /// not, so `NotificationsListView` refreshes if the user is sitting on it.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -153,8 +156,11 @@ class ClickMe2026AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificatio
         let event = PushEvent(userInfo: userInfo)
         Task { @MainActor in
             PushRouter.shared.handleForegroundArrival(event)
+            completionHandler(PushForegroundPolicy.options(
+                for: event,
+                visibleChatThreadId: ChatPresence.shared.visibleThreadId
+            ))
         }
-        completionHandler([.banner, .list, .sound, .badge])
     }
 
     /// User tapped a notification. Parse the payload and hand off to

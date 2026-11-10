@@ -56,6 +56,11 @@ final class RescheduleViewModel: ObservableObject {
     /// realistic session end.
     private var originalSessionDuration: TimeInterval?
 
+    /// Whether the 6-day paid reschedule limit applies (BOOK-14). Set from
+    /// the booking detail through `PaidBookingWindow.isPaidReschedule`;
+    /// false until the detail loads, so nothing is hidden before we know.
+    @Published private(set) var isPaidBooking: Bool
+
     // MARK: Availability cache — keyed by "yyyy-MM-dd" in client's timezone
     @Published var availabilityByDate: [String: [BookingTimeSlot]]
     /// Set of month keys ("yyyy-MM") whose availability has already been
@@ -103,6 +108,7 @@ final class RescheduleViewModel: ObservableObject {
         self.currentSessionStart = nil
         self.authorizationExpiresAt = nil
         self.originalSessionDuration = nil
+        self.isPaidBooking = false
         self.api = api
     }
 
@@ -116,7 +122,8 @@ final class RescheduleViewModel: ObservableObject {
         selectedTime: BookingTimeSlot? = nil,
         message: String = "",
         availabilityByDate: [String: [BookingTimeSlot]] = [:],
-        currentSessionStart: Date? = nil
+        currentSessionStart: Date? = nil,
+        isPaidBooking: Bool = false
     ) {
         self.bookingId = nil
         self.booking = booking
@@ -134,6 +141,7 @@ final class RescheduleViewModel: ObservableObject {
         self.currentSessionStart = currentSessionStart
         self.authorizationExpiresAt = nil
         self.originalSessionDuration = nil
+        self.isPaidBooking = isPaidBooking
         self.api = .shared
     }
 
@@ -171,6 +179,10 @@ final class RescheduleViewModel: ObservableObject {
             currentSessionStart = startTime
             originalSessionDuration = response.data.endTime.timeIntervalSince(startTime)
             authorizationExpiresAt = response.data.authorizationExpiresAt
+            isPaidBooking = PaidBookingWindow.isPaidReschedule(
+                paymentStatus: response.data.paymentStatus,
+                topicIsFree: response.data.topic.isFree
+            )
             if let monthStart = calendar.date(
                 from: calendar.dateComponents([.year, .month], from: startTime)
             ) {
@@ -281,6 +293,13 @@ final class RescheduleViewModel: ObservableObject {
             return
         }
 
+        // The picker hides these; this catches a slot that drifted past the
+        // 6-day paid limit while the screen was open. No request is made.
+        guard isBookableStart(slot.startTime) else {
+            submitError = BookingErrorMapper.message(for: .rescheduleTooFarAhead, fallback: "")
+            return
+        }
+
         submitError = nil
         isSubmitting = true
         defer { isSubmitting = false }
@@ -377,19 +396,43 @@ final class RescheduleViewModel: ObservableObject {
         // the selected day, the morning grid should trim itself as the
         // day progresses so the user never sees a 9am chip at 11am.
         // Server should also reject these, but filtering here keeps the
-        // grid honest without waiting for a submit round-trip.
+        // grid honest without waiting for a submit round-trip. Slots a
+        // paid booking cannot move to (more than 6 days ahead, BOOK-14)
+        // are dropped the same way.
         let now = Date()
+        let latest = latestBookableStart
         return (availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? [])
-            .filter { $0.startTime > now }
+            .filter { $0.startTime > now && PaidBookingWindow.allows($0.startTime, latestStart: latest) }
     }
 
     /// Whether a calendar day has at least one selectable slot. Used to
     /// gray out unbookable days in the grid. Also returns `false` for
-    /// past days.
+    /// past days and for days past the paid reschedule limit.
     func hasSlots(on day: Date) -> Bool {
         if calendar.startOfDay(for: day) < calendar.startOfDay(for: Date()) { return false }
+        let latest = latestBookableStart
+        if PaidBookingWindow.isDayBeyond(day, latestStart: latest, calendar: calendar) { return false }
         let slots = availabilityByDate[Self.dateKey(day, calendar: calendar)] ?? []
-        return slots.contains { $0.isAvailable }
+        return slots.contains { $0.isAvailable && PaidBookingWindow.allows($0.startTime, latestStart: latest) }
+    }
+
+    // MARK: - Paid reschedule window (BOOK-14)
+
+    /// The latest start a paid booking can move to, or nil for no limit.
+    /// Read from the clock on every call so a screen left open never keeps a
+    /// stale limit.
+    private var latestBookableStart: Date? {
+        PaidBookingWindow.latestStart(isPaid: isPaidBooking, now: Date())
+    }
+
+    /// Whether the server would accept a reschedule to `start`.
+    func isBookableStart(_ start: Date) -> Bool {
+        PaidBookingWindow.allows(start, latestStart: latestBookableStart)
+    }
+
+    /// Whether the whole of `day` is past the limit, so the calendar blanks it.
+    func isBeyondBookingWindow(_ day: Date) -> Bool {
+        PaidBookingWindow.isDayBeyond(day, latestStart: latestBookableStart, calendar: calendar)
     }
 
     // MARK: - Payment-conversion disclosure (Phase 27.1)

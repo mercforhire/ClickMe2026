@@ -40,4 +40,16 @@ nonisolated enum PaidBookingWindow {
         guard let latestStart else { return false }
         return calendar.startOfDay(for: day) > latestStart
     }
+
+    /// Whether a booking counts as paid for the reschedule limit.
+    ///
+    /// A booking is paid when its `payment_status` is anything but `none`, or
+    /// when its topic is not free. The second test matters for a long-lead
+    /// paid booking: it has no PaymentIntent yet (it is charged at T-24h), so
+    /// its `payment_status` still reads `none` while the server applies the
+    /// 6-day limit to it. Over-capping is safe; the server stays the backstop.
+    /// Mirrors Android's `RescheduleRules.isPaid`.
+    static func isPaidReschedule(paymentStatus: String, topicIsFree: Bool) -> Bool {
+        paymentStatus != "none" || !topicIsFree
+    }
 }

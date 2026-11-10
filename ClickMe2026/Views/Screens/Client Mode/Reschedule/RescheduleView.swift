@@ -150,6 +150,7 @@ struct RescheduleView: View {
                     calendar: viewModel.calendar,
                     isSelected: { viewModel.isSelected($0) },
                     isBookable: { viewModel.hasSlots(on: $0) },
+                    isHidden: { viewModel.isBeyondBookingWindow($0) },
                     onPrevMonth: { viewModel.shiftMonth(-1) },
                     onNextMonth: { viewModel.shiftMonth(1) },
                     onSelectDay: { viewModel.select(date: $0) }

@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 9
+open_count: 10
 waived_count: 0
 fixed_count: 7
-total_count: 16
-last_updated: 2026-11-10T05:52:16.162Z
+total_count: 17
+last_updated: 2026-11-10T06:17:02.937Z
 ---
 
 # Broken Windows Ledger
@@ -31,6 +31,7 @@ last_updated: 2026-11-10T05:52:16.162Z
 | 14 | 02 | deviation | ClickMe2026/Views/Screens/Client Mode/Reschedule/Subviews/RescheduleCalendarCard.swift |  | 02-08: user-directed Android parity for the paid 6-day cap (days visible, slots dimmed, fixed note) supersedes the 02-07/02-08 blank-day rule; 02-UI-SPEC section 4 and W1-9/W1-10 need revising | open |  | 2026-11-10T04:38:43.121Z |  |
 | 15 | 02 | unrun-verify | ClickMe2026/Managers/PushRouter.swift |  | 02-10 PUSH-01 device check deferred (user, at the Task 1 tracer gate): backgrounded client-mode app, expert accepts a pending request, tap the booking-confirmed push; expected Bookings tab opens that booking with no warning page and Back returns to My Bookings. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-10T05:04:00.631Z |  |
 | 16 | 02 | unrun-verify | .planning/phases/02-shared-ios-plumbing/02-06-SUMMARY.md |  | 02-06 BOOK-10 expert device check not run (user approve and defer 2026-11-10): as an expert, Dashboard This Week earnings and available payout, Payouts available and pending balances and earnings rows, Topics tab cards, an incoming request earnings, the request-decision breakdown lines and Upcoming Bookings card earnings all show CA$x.xx (never CA$12, $12 or CAD 12); open a topic priced 12.50 (set from Android): field shows 12.50, change only the title and save, card still CA$12.50; a legacy USD topic on the CAD account saved with only the title changed still shows $ not CA$; add to 02-12 device UAT checklist | open |  | 2026-11-10T05:52:16.162Z |  |
+| 17 | 02 | unrun-verify | ClickMe2026/Managers/PushForegroundPolicy.swift |  | 02-11 CHAT-09 device check deferred (user approve and defer, at the Task 1 tracer gate): device 1 (account B) has the chat with A open and A sends a message; expected no banner, no sound, the message appears in the thread, nothing added to Notification Center. Control: from the conversations list a second message from A shows the banner and plays the sound. Edge cases: with chat A open switch to the Bookings tab and have A send, the banner must appear (assumption A3, onDisappear on tab switch); open chat B from a push or profile on top of chat A, go back to A, then A sends: no banner (stacked chats); a non-chat push (booking) while any chat is open still shows the banner. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-10T06:17:02.937Z |  |
 
 ````json
 [
@@ -239,6 +240,19 @@ last_updated: 2026-11-10T05:52:16.162Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-10T05:52:16.162Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 17,
+    "kind": "unrun-verify",
+    "phase": "02",
+    "file": "ClickMe2026/Managers/PushForegroundPolicy.swift",
+    "line": null,
+    "description": "02-11 CHAT-09 device check deferred (user approve and defer, at the Task 1 tracer gate): device 1 (account B) has the chat with A open and A sends a message; expected no banner, no sound, the message appears in the thread, nothing added to Notification Center. Control: from the conversations list a second message from A shows the banner and plays the sound. Edge cases: with chat A open switch to the Bookings tab and have A send, the banner must appear (assumption A3, onDisappear on tab switch); open chat B from a push or profile on top of chat A, go back to A, then A sends: no banner (stacked chats); a non-chat push (booking) while any chat is open still shows the banner. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-10T06:17:02.937Z",
     "resolved_at": null,
     "milestone": null
   }

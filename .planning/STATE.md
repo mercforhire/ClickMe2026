@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-06-PLAN.md
-last_updated: "2026-11-10T05:55:07.685Z"
+stopped_at: Completed 02-11-PLAN.md
+last_updated: "2026-11-10T06:19:14.316Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: 91dc466302ce512779ef14603f96d137c9387be4
+state_head: a9e554c743fa65db9a09ddf09449b48873fc5a51
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 36
+  completed_plans: 37
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 8 of 15
+Plan: 9 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -92,6 +92,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P08 | 21min | 2 tasks | 13 files |
 | Phase 02 P10 | ~15 min (continuation; Task 1 in prior session) | 2 tasks | 10 files |
 | Phase 02 P06 | ~30 min (continuation; Task 1 in prior session) | 3 tasks | 11 files |
+| Phase 02 P11 | ~5 min (continuation; Task 1 in prior session) | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -180,6 +181,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-10: D-03 applies only to the client-to-expert switch; an expert-targeted tap in client mode is never decided from a nil me (planPending reloads once, else stays queued for the next trigger); PUSH-01 device check deferred by the user, PENDING for 02-12
 - [Phase 02]: 02-06: an untouched topic-editor save sends the stored minor amount and stored currency (D-19); a typed price still parses whole units in defaultCurrency until Phase 6 (EXP-02, EXP-03). Android keeps the topic currency on edited prices and accepts decimals, so iOS differs there until Phase 6
 - [Phase 02]: 02-06: every NumberFormatter currency site in the app target is gone (app-wide count 0); major-unit server fields use Money.format(major:). BOOK-10 expert device check deferred by the user (approve and defer), PENDING for 02-12
+- [Phase 02]: 02-11: a foreground push presents nothing only when route_category is message, thread_id is present and equals ChatPresence.visibleThreadId; every other push, including a booking push with the same thread_id, keeps banner, list, sound and badge; ChatPresence.chatDisappeared clears only its own thread (Android ChatSessionState parity)
+- [Phase 02]: 02-11: CHAT-09 device check deferred by the user at the Task 1 tracer gate (approve and defer), PENDING for 02-12 incl. the tab-switch case (assumption A3); Task 2 presence rows passed first run because Task 1 built the rule, so Task 2 is a test-only commit
 
 ### Pending Todos
 
@@ -238,6 +241,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T05:55:07.627Z
-Stopped at: Completed 02-06-PLAN.md
+Last session: 2026-11-10T06:19:14.257Z
+Stopped at: Completed 02-11-PLAN.md
 Resume file: None

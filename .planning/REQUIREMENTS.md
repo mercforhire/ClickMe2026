@@ -101,7 +101,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **CHAT-06** [H6]: Loading earlier messages never duplicates messages
 - [ ] **CHAT-07** [H7] **[major]**: Conversation rows show an unread badge (backend increments on send and resets on read; iOS shows the badge)
 - [ ] **CHAT-08** [H8] (likely, re-test first per Q8): The "Read" label updates live while the chat is open
-- [ ] **CHAT-09** [H9]: No foreground push banner appears for the chat currently on screen
+- [x] **CHAT-09** [H9]: No foreground push banner appears for the chat currently on screen
 
 ### Push
 
@@ -247,7 +247,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | CHAT-06 | Phase 7 | Pending |
 | CHAT-07 | Phase 7 | Pending |
 | CHAT-08 | Phase 7 | Pending |
-| CHAT-09 | Phase 2 | Pending |
+| CHAT-09 | Phase 2 | Complete |
 | PUSH-01 | Phase 2 | Complete |
 | PUSH-02 | Phase 2 | Complete |
 | PUSH-03 | Phase 2 | Complete |

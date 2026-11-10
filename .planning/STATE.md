@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-11-10T00:38:58.854Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-11-10T01:49:51.174Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: 1a2148ae487e819892de3f017e0b06126df536d2
+state_head: c87cfeab1f24388d046aef964bb6807f475bbafd
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 27
+  completed_plans: 28
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 2 of 15
+Plan: 3 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -83,6 +83,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 01 P25 | 10 min | 3 tasks | 7 files |
 | Phase 01 P26 | ~30 min wall clock (user wait) | 3 of 3 (Task 2 by the user) tasks | 3 files |
 | Phase 02 P01 | 2h (incl. gate pause) | 2 tasks | 4 files |
+| Phase 02 P03 | 70 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -155,6 +156,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-26: user reported 'refund retry deployed, no rows' (flagged-row query returned no rows; its order relative to the push is unknown). The optional no-money check on build 6 and Android was not reported, so the claim that both display refund_amount 0 and refunded_amount 0 without error still rests on a code read only
 - [Phase 01]: 01-26: WINDOWS #8 and #10 fixed (open_count 5); #3, #5, #6, #11 and #12 stay open. Four new open entries in deferred-items.md: accountCascade.cancelActiveBookingsForUser gap, bank-side refund failure not retried, replayed Stripe error on the sweep key, no push on direct-charge refunds
 - [Phase 02]: 02-01: call overtime cutoff held at end + 60 min (server /end and Agora token valid to end + 70); never-joined leg sends no POST /end
+- [Phase 02]: [02-03] BookingStatus.rescheduled and .unknown are non-joinable and never strip members; expert Upcoming Bookings lists them under Upcoming until the session ends (Join decided by the 02-04 join helper)
+- [Phase 02]: [02-03] Overlapping refetches use a ReloadGeneration token (newest started wins, superseded fetch writes nothing, no cancellation); callers take the token and pass it to runFetch(token:) so forceLoad can tell superseded from a genuine failure
 
 ### Pending Todos
 
@@ -213,6 +216,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T00:38:58.803Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-11-10T01:49:47.342Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None

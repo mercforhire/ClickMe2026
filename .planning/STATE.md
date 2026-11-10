@@ -1,18 +1,18 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 2
+current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-11-09T20:02:37.906Z"
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-11-10T00:38:58.854Z"
 last_activity: 2026-11-09
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: 305cb2298fe93d8505b5ca1dd55c195a1b11dcbc
+last_activity_desc: Phase 02 execution started
+state_head: 1a2148ae487e819892de3f017e0b06126df536d2
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 26
+  completed_plans: 27
   percent: 13
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-09)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 2 — Shared iOS Plumbing
+**Current focus:** Phase 02 — Shared iOS Plumbing
 
 ## Current Position
 
-Phase: 2 (Shared iOS Plumbing) — READY TO EXECUTE
-Plan: Not started
+Phase: 02 (Shared iOS Plumbing) — EXECUTING
+Plan: 2 of 15
 Status: Ready to execute
-Last activity: 2026-11-09 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-11-09 — Phase 02 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -82,6 +82,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 01 P24 | 5 min | 2 tasks | 7 files |
 | Phase 01 P25 | 10 min | 3 tasks | 7 files |
 | Phase 01 P26 | ~30 min wall clock (user wait) | 3 of 3 (Task 2 by the user) tasks | 3 files |
+| Phase 02 P01 | 2h (incl. gate pause) | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,7 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-26: the BACK-19 refund retry fix is live in production at backend d86bf97 (user push 2026-11-09, production moved from 215adcb), confirmed by /health, ls-remote and an empty origin/main..master. Proof is mocked Stripe only, so BACK-19 stays Pending until the 01-19 checklist is run on real Stripe
 - [Phase 01]: 01-26: user reported 'refund retry deployed, no rows' (flagged-row query returned no rows; its order relative to the push is unknown). The optional no-money check on build 6 and Android was not reported, so the claim that both display refund_amount 0 and refunded_amount 0 without error still rests on a code read only
 - [Phase 01]: 01-26: WINDOWS #8 and #10 fixed (open_count 5); #3, #5, #6, #11 and #12 stay open. Four new open entries in deferred-items.md: accountCascade.cancelActiveBookingsForUser gap, bank-side refund failure not retried, replayed Stripe error on the sweep key, no push on direct-charge refunds
+- [Phase 02]: 02-01: call overtime cutoff held at end + 60 min (server /end and Agora token valid to end + 70); never-joined leg sends no POST /end
 
 ### Pending Todos
 
@@ -188,9 +190,10 @@ Captured todos:
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
 - [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
-- [Phase 1]: Refund retry fix (user chose option A, 2026-11-08) is live in production at backend `d86bf97` (plans 01-24 to 01-26, user push 2026-11-09). Mocked Stripe only: no real failed refund has been retried and none can be forced safely on live data. The user reported no flagged rows; the optional no-money check on build 6 and Android was not reported, so that claim rests on a code read. Four related gaps are open in deferred-items.md. BACK-19 stays Pending until the 01-19 checklist is run.
+- [Phase 1]: Refund retry fix (user chose option A, 2026-11-08) is live in production at backend `d86bf97` (plans 01-24 to 01-26, user push 2026-11-09). Mocked Stripe only: no real failed refund has been retried and can be forced safely on live data. The user reported no flagged rows; the optional no-money check on build 6 and Android was not reported, so that claim rests on a code read. Four related gaps are open in deferred-items.md. BACK-19 stays Pending until the 01-19 checklist is run.
 - [Phase 1]: BACK-19 production smoke not run (user skip 2026-11-08); run the 01-19 checklist before it closes, at the latest during Phase 4 payment UAT.
 - BACK-08 and BACK-13 not delivered (wave 3c dropped 2026-11-08). The silent client-to-expert promotion and the tax-ID prompt remain in production. Phase 5 SIGN-06 pairs with BACK-13 and needs a re-decision. Code parked on backend branch wave-3c.
+- 02-01 follow-up: Android peer stayed connected after iPhone auto-end; verify iOS POST /end vs Android call.ended handling in Phase 2 device UAT (CALL-01 device check also pending)
 
 ### Quick Tasks Completed
 
@@ -210,6 +213,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-09T17:28:05.677Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-shared-ios-plumbing/02-CONTEXT.md
+Last session: 2026-11-10T00:38:58.803Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None

@@ -150,4 +150,103 @@ struct PushTokenCleanupTests {
         #expect(stored.keys.sorted() == [PushTokenCleanup.pendingKey])
         #expect(stored[PushTokenCleanup.pendingKey] as? Bool == true)
     }
+
+    // MARK: forceSignOut (involuntary logout)
+
+    @Test("an involuntary sign-out clears the session before returning, sends no unregister, then deletes the token in the background")
+    func forceSignOutClearsFirstThenDeletesToken() async {
+        let h = Harness()
+        defer { h.tearDown() }
+
+        h.cleanup.forceSignOut(
+            deleteToken: { try await h.deleteToken() },
+            clearSession: { h.clearSession() }
+        )
+
+        // The session is gone synchronously: the caller (a 401 refresh
+        // failure, a rejected stored token, a suspension) must not wait on
+        // the network before the shell can route to Login.
+        #expect(h.events.first == "clear")
+        #expect(!h.events.contains("unregister"))
+
+        await waitUntil { h.events.contains("deleteToken") }
+        #expect(h.events == ["clear", "deleteToken"])
+        await waitUntil { h.cleanup.isPending == false }
+        #expect(h.cleanup.isPending == false)
+    }
+
+    @Test("an involuntary sign-out whose deleteToken fails leaves the retry marker")
+    func forceSignOutDeleteTokenThrows() async {
+        let h = Harness()
+        defer { h.tearDown() }
+
+        h.cleanup.forceSignOut(
+            deleteToken: {
+                try await h.deleteToken()
+                throw StepFailed()
+            },
+            clearSession: { h.clearSession() }
+        )
+
+        #expect(h.events.first == "clear")
+        await waitUntil { h.events.contains("deleteToken") }
+        #expect(h.events == ["clear", "deleteToken"])
+        #expect(h.cleanup.isPending == true)
+    }
+
+    // MARK: retryIfPending (launch and login)
+
+    @Test("a pending retry calls deleteToken once and clears the marker on success")
+    func retryWithMarkerSucceeds() async {
+        let h = Harness()
+        defer { h.tearDown() }
+        h.defaults.set(true, forKey: PushTokenCleanup.pendingKey)
+
+        await h.cleanup.retryIfPending(deleteToken: { try await h.deleteToken() })
+
+        #expect(h.events == ["deleteToken"])
+        #expect(h.cleanup.isPending == false)
+    }
+
+    @Test("with no marker the retry is a no-op and deleteToken is not called")
+    func retryWithoutMarkerIsNoOp() async {
+        let h = Harness()
+        defer { h.tearDown() }
+
+        await h.cleanup.retryIfPending(deleteToken: { try await h.deleteToken() })
+
+        #expect(h.events.isEmpty)
+        #expect(h.cleanup.isPending == false)
+    }
+
+    @Test("a pending retry whose deleteToken fails keeps the marker for the next launch or login")
+    func retryWithMarkerThrows() async {
+        let h = Harness()
+        defer { h.tearDown() }
+        h.defaults.set(true, forKey: PushTokenCleanup.pendingKey)
+
+        await h.cleanup.retryIfPending(deleteToken: {
+            try await h.deleteToken()
+            throw StepFailed()
+        })
+
+        #expect(h.events == ["deleteToken"])
+        #expect(h.cleanup.isPending == true)
+    }
+
+    // MARK: Helpers
+
+    /// Polls `condition` every 10 ms until it holds or `timeout` elapses.
+    /// Used for the steps `forceSignOut` runs in a background Task after it
+    /// has already returned.
+    private func waitUntil(
+        timeout: Duration = .seconds(1),
+        _ condition: @MainActor () -> Bool
+    ) async {
+        let clock = ContinuousClock()
+        let deadline = clock.now + timeout
+        while !condition(), clock.now < deadline {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
 }

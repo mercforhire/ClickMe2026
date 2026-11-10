@@ -92,6 +92,17 @@ final class PushTokenCleanup {
         }
     }
 
+    // MARK: - Involuntary logout
+
+    func forceSignOut(
+        deleteToken: @escaping @MainActor () async throws -> Void,
+        clearSession: () -> Void
+    ) {}
+
+    // MARK: - Retry at launch and login
+
+    func retryIfPending(deleteToken: @escaping @MainActor () async throws -> Void) async {}
+
     // MARK: - Bounded run
 
     /// Runs `work` and returns whether it finished without throwing within

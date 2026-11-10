@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-14-PLAN.md
-last_updated: "2026-11-10T16:52:37.420Z"
+stopped_at: Completed 02-15-PLAN.md
+last_updated: "2026-11-10T17:19:35.223Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: ddc0163b837a4ca594f52c77b4b6288941f30d88
+state_head: 63b743d24c10aea324be90b2e01756b9cd3a2401
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 39
+  completed_plans: 40
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 11 of 15
+Plan: 12 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -95,6 +95,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P11 | ~5 min (continuation; Task 1 in prior session) | 2 tasks | 5 files |
 | Phase 02 P13 | ~4 min (continuation; Task 1 in prior session) | 2 tasks | 3 files |
 | Phase 02 P14 | ~50 min (continuation; Task 1 in prior session) | 2 tasks | 8 files |
+| Phase 02 P15 | 23 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -190,6 +191,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-14: Join is shown DISABLED, not hidden, for non-joinable bookings (pending_reschedule included) on the expert dashboard strip, the client Explore strip, the client My Bookings card and the expert Upcoming list, matching Android on each screen (user decision 2026-11-10 at the Task 1 tracer gate); supersedes the presentation half of D-12 and the Hidden / Not rendered cells of 02-UI-SPEC section 2; the joining rule is unchanged (JoinWindow.isOpen still excludes pending_reschedule and honours the server can_join)
 - [Phase 02]: 02-14: JoinWindow.showsJoinButton(status:) is the one shown-versus-enabled predicate (every status but pending_approval renders Join); disabled Join relies on .disabled() for the VoiceOver dimmed announcement and adds Android's explore_join_call_state wording as an accessibility hint on all four surfaces
 - [Phase 02]: 02-14: CALL-02 device check DEFERRED by the user because the behavior changed after the checkpoint; PENDING for 02-12 (WINDOWS #19); the 02-04 wording 'no Join on pending_reschedule' is superseded by 'Join visible but disabled'
+- [Phase 02]: 02-15: Client Profile history rows show real net earnings now (Android parity, user decision at the tracer gate), gated to pending_approval/confirmed/pending_reschedule/in_progress/completed, dash otherwise; formatted through Money.format(major:) with fixed symbols, not the device locale; EXP-14 stays open for other Client Profile earnings surfaces
+- [Phase 02]: 02-15: BOOK-10 / EXP-14 Client Profile device check deferred by the user; PENDING for 02-12 with the Android-parity wording in WINDOWS.md
 
 ### Pending Todos
 
@@ -248,6 +251,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T16:52:37.365Z
-Stopped at: Completed 02-14-PLAN.md
+Last session: 2026-11-10T17:19:35.160Z
+Stopped at: Completed 02-15-PLAN.md
 Resume file: None

@@ -33,7 +33,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BOOK-07** [B7]: The client's cancellation comment is sent with the cancel request (depends on BACK-14 to be stored)
 - [ ] **BOOK-08** [B8] **[major]**: The client cancel screen previews the refund the backend will actually give (24-hour rule; a held booking shows as a release) — policy per decision Q2
 - [ ] **BOOK-09** [B9]: The Upcoming Booking status pill shows the booking's real status
-- [ ] **BOOK-10** [B10] **[major]**: Every money amount is shown with correct decimals for its currency (no dropped cents), using one shared formatter
+- [x] **BOOK-10** [B10] **[major]**: Every money amount is shown with correct decimals for its currency (no dropped cents), using one shared formatter
 - [ ] **BOOK-11** [B11]: The Past tab shows an empty state when there are no past bookings
 - [ ] **BOOK-12** [B12]: Keep Booking returns to the previous screen, not the My Bookings root
 - [ ] **BOOK-13** [B13]: Cancel is hidden on a booking whose session has already ended
@@ -87,6 +87,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **EXP-12** [E14] (likely): Expired request cards stay readable (no 55% dim on text)
 - [ ] **EXP-13** [E15] **[major]**: Reschedule on an expert Upcoming card opens the expert reschedule flow
 - [ ] **EXP-14** [E16]: The expert-side Client Profile shows real earnings in the booking currency
+  - Note (2026-11-10): the Client Profile *history* rows were delivered early in plan 02-15 (Android parity, user decision at the tracer gate): `earnings_breakdown.net_amount` in the breakdown currency, gated to pending_approval / confirmed / pending_reschedule / in_progress / completed, dash otherwise. Device check pending in 02-12. Phase 6 planning should cover any remaining Client Profile earnings surface (for example the relationship summary) rather than redo the history rows.
 - [ ] **EXP-15** [E17]: The expert hub online dot reflects real presence, or is removed
 - [ ] **EXP-16** [E18]: The private booking note is capped at 5000 characters with a counter, trims whitespace, and asks before discarding edits
 - [ ] **EXP-17** [new, user request 2026-11-09]: When creating a topic, the expert can choose its currency from CAD or USD (default CAD), on both iOS and Android; the minimum-price hint and validation follow the chosen currency, and editing keeps the topic's currency. Backend already accepts `hourly_rate.currency` (seeded `currencies` table, per-currency floors in `src/utils/pricing.js`), so no backend change is expected
@@ -194,7 +195,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-07 | Phase 3 | Pending |
 | BOOK-08 | Phase 3 | Pending |
 | BOOK-09 | Phase 3 | Pending |
-| BOOK-10 | Phase 2 | Pending |
+| BOOK-10 | Phase 2 | Complete |
 | BOOK-11 | Phase 3 | Pending |
 | BOOK-12 | Phase 3 | Pending |
 | BOOK-13 | Phase 3 | Pending |

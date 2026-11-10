@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 12
+open_count: 13
 waived_count: 0
 fixed_count: 7
-total_count: 19
-last_updated: 2026-11-10T16:49:52.107Z
+total_count: 20
+last_updated: 2026-11-10T17:16:48.018Z
 ---
 
 # Broken Windows Ledger
@@ -34,6 +34,7 @@ last_updated: 2026-11-10T16:49:52.107Z
 | 17 | 02 | unrun-verify | ClickMe2026/Managers/PushForegroundPolicy.swift |  | 02-11 CHAT-09 device check deferred (user approve and defer, at the Task 1 tracer gate): device 1 (account B) has the chat with A open and A sends a message; expected no banner, no sound, the message appears in the thread, nothing added to Notification Center. Control: from the conversations list a second message from A shows the banner and plays the sound. Edge cases: with chat A open switch to the Bookings tab and have A send, the banner must appear (assumption A3, onDisappear on tab switch); open chat B from a push or profile on top of chat A, go back to A, then A sends: no banner (stacked chats); a non-chat push (booking) while any chat is open still shows the banner. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-10T06:17:02.937Z |  |
 | 18 | 02 | unrun-verify | .planning/phases/02-shared-ios-plumbing/02-13-SUMMARY.md |  | 02-13 BOOK-18 client device check deferred (user approve and defer, at the Task 1 tracer gate): (1) with Upcoming Booking details open on the client, pull to refresh at the same moment the expert proposes a reschedule from another device; expected the screen ends on the rescheduled state and no spinner is left running. (2) with My Bookings open on the client, have the expert cancel or reschedule from the other device while you pull to refresh; expected the row ends in its new state and the list is not left on a spinner. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-10T06:32:57.972Z |  |
 | 19 | 02 | unrun-verify | .planning/phases/02-shared-ios-plumbing/02-14-SUMMARY.md |  | 02-14 CALL-02 device check DEFERRED (behavior changed after the Task 1 tracer gate: Join is now shown disabled, not hidden, for non-joinable bookings, as Android does): (1) expert Dashboard strip: Join Session turns enabled on its own within about a minute of start - 60 min, with no refresh; (2) expert Dashboard strip: a pending_reschedule card shows Join visible but dimmed and disabled, and VoiceOver reads it as dimmed; (3) client Explore today strip: the same two checks for Join Call; (4) client My Bookings and expert Upcoming list: a pending_reschedule card shows Join disabled (changed by fix(02-04) a620b92). Supersedes the 02-04 deferred wording 'no Join on pending_reschedule'. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-10T16:49:52.107Z |  |
+| 20 | 02 | unrun-verify | .planning/phases/02-shared-ios-plumbing/02-15-SUMMARY.md |  | 02-15 BOOK-10 / EXP-14 device check DEFERRED (approve and defer at the tracer gate; behavior then changed to Android parity): as an expert, open a client's profile from a booking. Confirmed, completed or other gated rows (pending_approval, pending_reschedule, in_progress) show the net earnings as CA$x.xx. Cancelled and other non-gated rows show —. No row shows $0 or CA$0.00 unless the net really is zero. The layout is unchanged. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-10T17:16:48.018Z |  |
 
 ````json
 [
@@ -281,6 +282,19 @@ last_updated: 2026-11-10T16:49:52.107Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-10T16:49:52.107Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 20,
+    "kind": "unrun-verify",
+    "phase": "02",
+    "file": ".planning/phases/02-shared-ios-plumbing/02-15-SUMMARY.md",
+    "line": null,
+    "description": "02-15 BOOK-10 / EXP-14 device check DEFERRED (approve and defer at the tracer gate; behavior then changed to Android parity): as an expert, open a client's profile from a booking. Confirmed, completed or other gated rows (pending_approval, pending_reschedule, in_progress) show the net earnings as CA$x.xx. Cancelled and other non-gated rows show —. No row shows $0 or CA$0.00 unless the net really is zero. The layout is unchanged. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-10T17:16:48.018Z",
     "resolved_at": null,
     "milestone": null
   }

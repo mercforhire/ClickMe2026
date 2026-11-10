@@ -105,9 +105,9 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Push
 
-- [ ] **PUSH-01** [N1] **[major]**: Tapping any push type opens the right screen, and unknown types open the notifications list (backend `category` for iOS or a wider iOS parser, per decision Q6)
-- [ ] **PUSH-02** [N2] **[major]**: A push tap switches to the right mode (client/expert) before routing
-- [ ] **PUSH-03** [N3]: A booking-request push opens that request, not the list
+- [x] **PUSH-01** [N1] **[major]**: Tapping any push type opens the right screen, and unknown types open the notifications list (backend `category` for iOS or a wider iOS parser, per decision Q6)
+- [x] **PUSH-02** [N2] **[major]**: A push tap switches to the right mode (client/expert) before routing
+- [x] **PUSH-03** [N3]: A booking-request push opens that request, not the list
 - [ ] **PUSH-04** [N4] **[major]**: After logout, the device stops receiving the old account's pushes (the token is unregistered before auth is cleared)
 
 ### Settings, Profile, Account
@@ -248,9 +248,9 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | CHAT-07 | Phase 7 | Pending |
 | CHAT-08 | Phase 7 | Pending |
 | CHAT-09 | Phase 2 | Pending |
-| PUSH-01 | Phase 2 | Pending |
-| PUSH-02 | Phase 2 | Pending |
-| PUSH-03 | Phase 2 | Pending |
+| PUSH-01 | Phase 2 | Complete |
+| PUSH-02 | Phase 2 | Complete |
+| PUSH-03 | Phase 2 | Complete |
 | PUSH-04 | Phase 2 | Pending |
 | SET-01 | Phase 5 | Pending |
 | SET-02 | Phase 5 | Pending |

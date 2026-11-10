@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-08-PLAN.md
-last_updated: "2026-11-10T04:39:15.872Z"
+stopped_at: Completed 02-10-PLAN.md
+last_updated: "2026-11-10T05:06:07.840Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: 204593585ca094ec9b17ec69cf317e8c7e14f15c
+state_head: deaa405fe4e9a02ec2be5c1b7a0c3f1b49fb8888
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 34
+  completed_plans: 35
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 6 of 15
+Plan: 7 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -90,6 +90,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P04 | 20min | 2 tasks | 6 files |
 | Phase 02 P05 | 12 min | 3 tasks | 9 files |
 | Phase 02 P08 | 21min | 2 tasks | 13 files |
+| Phase 02 P10 | ~15 min (continuation; Task 1 in prior session) | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -174,6 +175,8 @@ Recent decisions affecting current work:
 - [Phase 02]: [02-08] Paid 6-day cap on both client pickers matches Android (user, 2026-11-10): days never hidden or blanked, slots past now + 6 days listed but dimmed and untappable, fixed note 'Paid sessions can be booked/rescheduled up to 6 days ahead.' for a paid topic or booking; supersedes the 02-07 blank-day rule (W1-9, W1-10)
 - [Phase 02]: [02-08] Reschedule-only copy (RESCHEDULE_OUTSIDE_AUTH_WINDOW, PAYMENT_METHOD_REQUIRED) stays in each reschedule view model; every other code goes through BookingErrorMapper, so RESCHEDULE_TOO_FAR_AHEAD and SLOT_UNAVAILABLE read the same on Make a Booking and both reschedule screens
 - [Phase 02]: [02-08] The expert reschedule picker passes neither isBookable nor showsPaidWindowNote and stays uncapped (D-13, EXP-13 in Phase 3); 02-UI-SPEC section 4 and W1-9/W1-10 must be revised to the parity behavior before the Phase 02 UAT
+- [Phase 02]: 02-10: a push with no route_category and no known event_type but a valid booking_id routes as a booking push (user decision at the Task 1 gate, Android parity with PushEvent.kt RESEARCH F-1); supersedes the plan truth that sent it to the notifications list
+- [Phase 02]: 02-10: D-03 applies only to the client-to-expert switch; an expert-targeted tap in client mode is never decided from a nil me (planPending reloads once, else stays queued for the next trigger); PUSH-01 device check deferred by the user, PENDING for 02-12
 
 ### Pending Todos
 
@@ -232,6 +235,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T04:39:15.815Z
-Stopped at: Completed 02-08-PLAN.md
+Last session: 2026-11-10T05:06:07.787Z
+Stopped at: Completed 02-10-PLAN.md
 Resume file: None

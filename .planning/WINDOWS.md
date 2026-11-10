@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 7
+open_count: 8
 waived_count: 0
 fixed_count: 7
-total_count: 14
-last_updated: 2026-11-10T04:38:43.121Z
+total_count: 15
+last_updated: 2026-11-10T05:04:00.631Z
 ---
 
 # Broken Windows Ledger
@@ -29,6 +29,7 @@ last_updated: 2026-11-10T04:38:43.121Z
 | 12 | 01 | unmet-truth | .planning/phases/01-backend-fixes/01-23-SUMMARY.md |  | 01-23 wave 3c dropped by user decision (2026-11-08): BACK-08 and BACK-13 not delivered; silent client-to-expert promotion and the tax-ID prompt remain in production; code parked on local backend branch wave-3c; needs a new decision | open |  | 2026-11-09T03:13:09.977Z |  |
 | 13 | 02 | unrun-verify | .planning/phases/02-shared-ios-plumbing/02-05-SUMMARY.md |  | 02-05 BOOK-10 device check not run (user approve and defer 2026-11-09): CAD topic 12.50 shows CA$12.50 and 12.00 shows CA$12.00 on Make a Booking, Explore, Expert Profile, Payment History; add to 02-12 device UAT checklist | open |  | 2026-11-10T04:09:27.895Z |  |
 | 14 | 02 | deviation | ClickMe2026/Views/Screens/Client Mode/Reschedule/Subviews/RescheduleCalendarCard.swift |  | 02-08: user-directed Android parity for the paid 6-day cap (days visible, slots dimmed, fixed note) supersedes the 02-07/02-08 blank-day rule; 02-UI-SPEC section 4 and W1-9/W1-10 need revising | open |  | 2026-11-10T04:38:43.121Z |  |
+| 15 | 02 | unrun-verify | ClickMe2026/Managers/PushRouter.swift |  | 02-10 PUSH-01 device check deferred (user, at the Task 1 tracer gate): backgrounded client-mode app, expert accepts a pending request, tap the booking-confirmed push; expected Bookings tab opens that booking with no warning page and Back returns to My Bookings. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-10T05:04:00.631Z |  |
 
 ````json
 [
@@ -211,6 +212,19 @@ last_updated: 2026-11-10T04:38:43.121Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-10T04:38:43.121Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 15,
+    "kind": "unrun-verify",
+    "phase": "02",
+    "file": "ClickMe2026/Managers/PushRouter.swift",
+    "line": null,
+    "description": "02-10 PUSH-01 device check deferred (user, at the Task 1 tracer gate): backgrounded client-mode app, expert accepts a pending request, tap the booking-confirmed push; expected Bookings tab opens that booking with no warning page and Back returns to My Bookings. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-10T05:04:00.631Z",
     "resolved_at": null,
     "milestone": null
   }

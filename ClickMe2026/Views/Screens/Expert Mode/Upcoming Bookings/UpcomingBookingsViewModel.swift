@@ -52,6 +52,13 @@ final class UpcomingBookingsViewModel {
     @ObservationIgnored
     private var bookingUpdateSubscription: RealtimeSubscription?
 
+    /// Overlapping refetches (a `booking.update` during a load, a
+    /// pull-to-refresh during a socket refetch) can land out of order.
+    /// Only the most recently started fetch may write the lists or the
+    /// load state.
+    @ObservationIgnored
+    private var reloads = ReloadGeneration()
+
     // MARK: Init
 
     init(
@@ -112,21 +119,31 @@ final class UpcomingBookingsViewModel {
     /// view so a server-side status transition (e.g. `BOOKING_COMPLETED`
     /// ~15 min after `end_time`) plus a manual return to the tab both
     /// re-partition Upcoming/Past without visible chrome flicker.
-    /// Guarded on `.loaded` so it can't race the initial `.task`'s
-    /// `forceLoad`. Failure is intentionally silent — keep the
-    /// last-known-good list on screen rather than blanking on a
-    /// transient network blip.
+    /// While a forced load is in flight (`.loading`) this runs a forced
+    /// load instead, so a `booking.update` during a load supersedes that
+    /// load rather than being skipped. Otherwise it needs `.loaded`, so a
+    /// failed or idle screen isn't flipped by a background refresh.
+    /// Failure is intentionally silent — keep the last-known-good list on
+    /// screen rather than blanking on a transient network blip.
     func silentReload() async {
+        if case .loading = loadState {
+            await forceLoad()
+            return
+        }
         guard case .loaded = loadState else { return }
-        try? await runFetch()
+        try? await runFetch(token: reloads.begin())
     }
 
     private func forceLoad() async {
+        let token = reloads.begin()
         loadState = .loading
         do {
-            try await runFetch()
+            try await runFetch(token: token)
             loadState = .loaded
         } catch {
+            // A newer fetch owns the screen and will settle the load
+            // state itself; a superseded one writes nothing.
+            guard reloads.isCurrent(token) else { return }
             loadState = .failed(error.userMessage)
         }
     }
@@ -135,7 +152,12 @@ final class UpcomingBookingsViewModel {
     /// loading-state chrome) and `silentReload` (no chrome) share the
     /// same partitioning logic. Throws so callers own the failure
     /// surface.
-    private func runFetch() async throws {
+    ///
+    /// - Parameter token: from `reloads.begin()`, taken by the caller
+    ///   before this first `await`. When a newer fetch has started by the
+    ///   time the responses land, this one writes nothing and throws
+    ///   `CancellationError`.
+    private func runFetch(token: Int) async throws {
         do {
             // Two fetches — the server partitions upcoming vs past via
             // the required `type` query param (same contract as
@@ -144,6 +166,7 @@ final class UpcomingBookingsViewModel {
             // concurrent decodes.
             let upResponse = try await api.getExpertBookings(type: .upcoming, page: 1, limit: 50)
             let pastResponse = try await api.getExpertBookings(type: .past, page: 1, limit: 50)
+            guard reloads.isCurrent(token) else { throw CancellationError() }
             let currentTime = now()
 
             // Rejoinable completeds — status flipped to `.completed`
@@ -166,6 +189,8 @@ final class UpcomingBookingsViewModel {
                 .sorted { $0.session.startTime > $1.session.startTime }
                 .compactMap { Self.mapPastIfApplicable($0, now: currentTime) }
         } catch {
+            // An error from a superseded fetch is stale news too.
+            if !reloads.isCurrent(token) { throw CancellationError() }
             throw error
         }
     }

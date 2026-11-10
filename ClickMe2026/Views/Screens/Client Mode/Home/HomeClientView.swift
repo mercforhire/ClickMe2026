@@ -133,21 +133,28 @@ struct HomeClientView: View {
         }
     }
 
-    /// Route a tapped push notification to the appropriate tab + view.
+    /// Open a push or notifications-list destination on the tab that owns
+    /// it (D-04): select the tab, replace its stack with the destination in
+    /// one mutation, so Back returns to the tab's root. Ownership: booking
+    /// detail and leave-review on Bookings, chat on Chats, account security
+    /// on Profile, and the notifications list on Explore. Expert-only
+    /// destinations also land on Explore's notifications list, because the
+    /// client shell has no screen for them.
     private func handlePushDestination(_ destination: PushDestination?) {
         guard let destination else { return }
         switch destination {
         case let .bookingDetail(bookingId):
             selectedTab = .bookings
-            bookingsPath.push(HomeRoute.upcomingBooking(bookingId: bookingId))
+            bookingsPath.replace(with: HomeRoute.upcomingBooking(bookingId: bookingId))
         case .incomingRequests:
             // Expert-only push. If a client shell somehow receives it,
             // fall back to the notifications list rather than stranding
             // the user on a blank landing.
-            explorePath.push(HomeRoute.notifications)
+            selectedTab = .explore
+            explorePath.replace(with: HomeRoute.notifications)
         case let .chatThread(threadId):
             selectedTab = .chats
-            chatsPath.push(HomeRoute.chat(
+            chatsPath.replace(with: HomeRoute.chat(
                 threadId: threadId,
                 peerName: "",
                 peerAvatarURL: ""
@@ -156,28 +163,47 @@ struct HomeClientView: View {
             // Land on the past-summary — its Leave Review CTA takes
             // the client the rest of the way.
             selectedTab = .bookings
-            bookingsPath.push(HomeRoute.bookingSummary(bookingId: bookingId))
+            bookingsPath.replace(with: HomeRoute.bookingSummary(bookingId: bookingId))
         case .payouts, .kycOnboarding:
             // Client shell has no payout surface — payouts belong to
             // expert mode. Fall back to the notifications list so the
             // user isn't stranded on a blank landing.
-            explorePath.push(HomeRoute.notifications)
+            selectedTab = .explore
+            explorePath.replace(with: HomeRoute.notifications)
         case .accountSecurity:
             selectedTab = .profile
-            profilePath.push(HomeRoute.accountSecurity)
+            profilePath.replace(with: HomeRoute.accountSecurity)
         case .notificationsList:
-            explorePath.push(HomeRoute.notifications)
+            selectedTab = .explore
+            explorePath.replace(with: HomeRoute.notifications)
         }
         pushRouter.pendingDestination = nil
     }
 
     // MARK: - Tabs
 
-    /// Explore tab. Owns the branded top bar (only tab that shows it).
-    /// Registers `HomeRoute` destinations so the bell + avatar buttons
-    /// push notifications / mode-switch onto Explore's stack.
+    /// `homeStack(_:path:root:)` builds one `NavigationStack` per tab, with
+    /// `HomeRoute` registered exactly once. Every tab goes through it so no
+    /// routed destination can land on a stack that does not know it (CR-01).
+    private func homeStack<Root: View>(
+        _ nav: HomeNavigationPath,
+        path: Binding<NavigationPath>,
+        @ViewBuilder root: () -> Root
+    ) -> some View {
+        NavigationStack(path: path) {
+            root()
+                .navigationDestination(for: HomeRoute.self) { route in
+                    homeRouteDestination(route)
+                }
+        }
+        .environment(\.homeNavigationPath, nav)
+    }
+
+    /// Explore tab. Owns the branded top bar (only tab that shows it);
+    /// the bell + avatar buttons push notifications / mode-switch onto
+    /// Explore's stack.
     private var exploreTab: some View {
-        NavigationStack(path: $explorePath.path) {
+        homeStack(explorePath, path: $explorePath.path) {
             ExploreClientView(
                 onSeeAllExperts: { selectedTab = .search }
             )
@@ -188,48 +214,36 @@ struct HomeClientView: View {
                     onProfile: { explorePath.push(HomeRoute.modeSwitch) }
                 )
             }
-            .navigationDestination(for: HomeRoute.self) { route in
-                homeRouteDestination(route)
-            }
         }
-        .environment(\.homeNavigationPath, explorePath)
     }
 
     private var searchTab: some View {
-        NavigationStack(path: $searchPath.path) {
+        homeStack(searchPath, path: $searchPath.path) {
             SearchExpertView()
         }
-        .environment(\.homeNavigationPath, searchPath)
     }
 
+    /// Bookings tab. `MyBookingsView` registers its own `BookingRoute`
+    /// destinations; `HomeRoute` comes from `homeStack` so a push tap can
+    /// open a booking here.
     private var bookingsTab: some View {
-        NavigationStack(path: $bookingsPath.path) {
+        homeStack(bookingsPath, path: $bookingsPath.path) {
             MyBookingsView()
         }
-        .environment(\.homeNavigationPath, bookingsPath)
     }
 
-    /// Chats tab. Registers `HomeRoute` destinations so the `openChatThread`
-    /// shell action can push `.chat(...)` onto this tab's stack when
-    /// invoked from any other tab.
+    /// Chats tab. The `openChatThread` shell action pushes `.chat(...)`
+    /// onto this tab's stack when invoked from any other tab.
     private var chatsTab: some View {
-        NavigationStack(path: $chatsPath.path) {
+        homeStack(chatsPath, path: $chatsPath.path) {
             ChatConversationsView()
-                .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
-                }
         }
-        .environment(\.homeNavigationPath, chatsPath)
     }
 
     private var profileTab: some View {
-        NavigationStack(path: $profilePath.path) {
+        homeStack(profilePath, path: $profilePath.path) {
             ClientProfileHomeScreen()
-                .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
-                }
         }
-        .environment(\.homeNavigationPath, profilePath)
     }
 
     // MARK: - Shared HomeRoute destination

@@ -7,11 +7,16 @@
 
 import SwiftUI
 
-/// Shared `NavigationPath` holder injected into every child of a
-/// `HomeClientView` / `HomeExpertView`. Exists so tabs (Explore, Search,
-/// My Bookings, …) can push destinations onto their host shell's
-/// single `NavigationStack` instead of wrapping each tab in its own
-/// stack.
+/// One `NavigationPath` holder per tab of a `HomeClientView` /
+/// `HomeExpertView`. Each tab owns its own `NavigationStack` and its own
+/// path, so a tab keeps its trail when the user switches away and back.
+/// The shell injects the tab's holder into that tab's children through
+/// `@Environment(\.homeNavigationPath)`, and leaf views push onto it.
+///
+/// Every `HomeRoute` pushed onto a tab's path must be registered on that
+/// tab's stack. The shells do that once per tab through their `homeStack`
+/// helper; a route with no registration shows SwiftUI's
+/// unregistered-destination page (CR-01).
 ///
 /// Why not a plain `Binding<NavigationPath>`? Env values must be
 /// `Sendable` non-optional constants; an `ObservableObject` reference
@@ -43,6 +48,14 @@ final class HomeNavigationPath: ObservableObject {
     /// switch to another.
     func reset() {
         path = NavigationPath()
+    }
+
+    /// Make `value` the only entry on this tab's stack: `reset()` and
+    /// `push(_:)` in a single mutation, so SwiftUI never renders an empty
+    /// stack in between and Back returns to the tab's root (D-04). Used
+    /// when a push tap or a notifications-list row opens a destination.
+    func replace<V: Hashable>(with value: V) {
+        path = NavigationPath([value])
     }
 }
 

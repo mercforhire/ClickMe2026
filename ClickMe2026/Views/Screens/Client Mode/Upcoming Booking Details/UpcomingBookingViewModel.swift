@@ -183,11 +183,10 @@ final class UpcomingBookingViewModel: ObservableObject {
         // CALL" button in that case, so an empty string here is fine.
         joinLink = data.joinLink ?? ""
         preparationNote = data.clientNotes ?? ""
-        // Unknown-status rows shouldn't hit this view — the caller
-        // narrows to the upcoming bucket first — but fall back to
-        // `confirmed` so we render normally rather than mis-showing the
-        // waiting banner.
-        bookingStatus = BookingStatus(rawValue: data.status) ?? .confirmed
+        // A status this build doesn't know stays `.unknown` (BOOK-18), the
+        // same rule `BookingStatus.init(from:)` applies, so a new server
+        // state is never shown as a confirmed booking.
+        bookingStatus = BookingStatus(rawValue: data.status) ?? .unknown
     }
 
     // MARK: - Formatting helpers

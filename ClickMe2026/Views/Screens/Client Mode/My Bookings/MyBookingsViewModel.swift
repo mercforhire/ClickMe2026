@@ -208,10 +208,10 @@ final class MyBookingsViewModel: ObservableObject {
     // MARK: - Mapping
 
     private static func mapUpcoming(_ item: ClientBookingItem) -> UpcomingBooking {
-        // Unknown-status rows shouldn't get here — the caller filters to
-        // the "upcoming" bucket first — but fall back to `confirmed` to
-        // keep the card renderable rather than crashing.
-        let status = BookingStatus(rawValue: item.status) ?? .confirmed
+        // A status this build doesn't know stays `.unknown` (BOOK-18), the
+        // same rule `BookingStatus.init(from:)` applies, so the card never
+        // presents a new server state as confirmed.
+        let status = BookingStatus(rawValue: item.status) ?? .unknown
         return UpcomingBooking(
             id: item.bookingId,
             expertId: item.expert.id,

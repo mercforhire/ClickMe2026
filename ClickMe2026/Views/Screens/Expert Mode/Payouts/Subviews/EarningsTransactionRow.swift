@@ -131,15 +131,11 @@ struct EarningsTransactionRow: View {
 
     // MARK: - Money formatting
 
+    /// Formats a minor-unit amount through `Money` (BOOK-10): full minor
+    /// digits with a fixed symbol (`$12.50`, `CA$12.50`), and the backend's
+    /// zero-decimal set deciding the digit count (`¥1200`).
     static func formatMinorUnits(_ minorUnits: Int, currency: String) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        let digits = formatter.maximumFractionDigits
-        let divisor: Double = pow(10.0, Double(digits))
-        let major = Double(minorUnits) / divisor
-        return formatter.string(from: NSNumber(value: major))
-            ?? "\(currency) \(major)"
+        Money.format(minorUnits: minorUnits, currency: currency)
     }
 }
 

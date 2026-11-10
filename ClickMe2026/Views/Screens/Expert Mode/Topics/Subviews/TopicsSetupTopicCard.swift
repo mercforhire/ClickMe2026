@@ -13,19 +13,16 @@ struct TopicsSetupTopicCard: View {
     @ObservedObject var viewModel: TopicsSetupViewModel
 
     /// Per-session price display (the amount the client pays per booking).
-    /// Server sends `amount` in minor units (cents) — divide by 100 as a
-    /// Double so amounts like $180.50 aren't dropped by integer division.
-    /// The wire key is `hourly_rate` but the semantics are per-session; see
-    /// project memory `topic_price_semantics.md`.
+    /// Server sends `amount` in minor units (cents), so this goes through
+    /// `Money.format(minorUnits:currency:)` (BOOK-10): full minor digits
+    /// (`CA$180.50`, `CA$12.00`) with a fixed symbol, never the device
+    /// locale. Falls back to the server's `price.label` only when the
+    /// payload carries no `hourlyRate`. The wire key is `hourly_rate` but
+    /// the semantics are per-session; see project memory
+    /// `topic_price_semantics.md`.
     private var priceLabel: String {
         guard let rate = topic.hourlyRate else { return topic.price.label ?? "" }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = rate.currency
-        formatter.maximumFractionDigits = Double(rate.amount).truncatingRemainder(dividingBy: 100) == 0 ? 0 : 2
-        let value = Double(rate.amount) / 100.0
-        return formatter.string(from: NSNumber(value: value))
-            ?? "\(rate.currency) \(String(format: "%.0f", value))"
+        return Money.format(minorUnits: rate.amount, currency: rate.currency)
     }
 
     var body: some View {

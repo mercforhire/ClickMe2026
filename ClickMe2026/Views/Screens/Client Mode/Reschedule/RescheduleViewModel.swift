@@ -374,7 +374,7 @@ final class RescheduleViewModel: ObservableObject {
     ///   be prepared for future billing (typically a one-off
     ///   PaymentSheet card); the user needs to add a reusable card.
     /// Everything else falls through to the server message.
-    private static func rescheduleErrorMessage(for error: Error) -> String {
+    static func rescheduleErrorMessage(for error: Error) -> String {
         switch errorCode(for: error) {
         case .rescheduleOutsideAuthWindow:
             return "This time is past the payment hold on your original booking. Please cancel and book again to authorize a new payment."

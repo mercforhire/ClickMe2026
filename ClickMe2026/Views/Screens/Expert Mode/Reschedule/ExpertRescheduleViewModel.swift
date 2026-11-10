@@ -295,7 +295,7 @@ final class ExpertRescheduleViewModel: ObservableObject {
     /// so the counterparty must re-book. Expert-side surface tells the
     /// expert to ask the client to re-book (the expert can't do it for
     /// them). Everything else falls through to the server message.
-    private static func rescheduleErrorMessage(for error: Error) -> String {
+    static func rescheduleErrorMessage(for error: Error) -> String {
         if case let NetworkError.httpError(_, data) = error,
            let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data),
            response.code == .rescheduleOutsideAuthWindow

@@ -127,3 +127,75 @@ struct RescheduleWindowTests {
         #expect(viewModel.isBookableStart(Date().addingTimeInterval(30 * Self.day)))
     }
 }
+
+/// Error-copy rows live inside `RescheduleWindowTests` so one
+/// `-only-testing:` filter runs both suites.
+extension RescheduleWindowTests {
+
+@MainActor
+@Suite("Reschedule error copy")
+struct ErrorCopyRows {
+
+    private static let slotTaken = "That time slot was just taken. Please pick another."
+    private static let clientOutsideAuthWindow =
+        "This time is past the payment hold on your original booking. Please cancel and book again to authorize a new payment."
+    private static let clientPaymentMethodRequired =
+        "The card on file can't be used for this reschedule. Please add a new payment method in Settings > Payment and try again."
+    private static let expertOutsideAuthWindow =
+        "This time is past the payment hold on the original booking. Please cancel and ask the client to book a new session."
+
+    /// A `NetworkError.httpError` carrying the standard error body.
+    private func httpError(status: Int = 422, code: String, message: String = "server text") -> NetworkError {
+        let body = #"{"status":"error","code":"\#(code)","message":"\#(message)"}"#
+        return .httpError(statusCode: status, data: Data(body.utf8))
+    }
+
+    // MARK: - Client
+
+    @Test("client: RESCHEDULE_TOO_FAR_AHEAD shows the shared reschedule copy")
+    func clientTooFarAhead() {
+        #expect(RescheduleViewModel.rescheduleErrorMessage(for: httpError(code: "RESCHEDULE_TOO_FAR_AHEAD"))
+            == BookingErrorMapper.rescheduleTooFarAheadMessage)
+    }
+
+    @Test("client: the two reschedule-only codes keep their client copy")
+    func clientKeepsOwnCopy() {
+        #expect(RescheduleViewModel.rescheduleErrorMessage(for: httpError(code: "RESCHEDULE_OUTSIDE_AUTH_WINDOW"))
+            == Self.clientOutsideAuthWindow)
+        #expect(RescheduleViewModel.rescheduleErrorMessage(for: httpError(code: "PAYMENT_METHOD_REQUIRED"))
+            == Self.clientPaymentMethodRequired)
+    }
+
+    @Test("client: SLOT_UNAVAILABLE reads the same as on Make a Booking")
+    func clientSlotUnavailable() {
+        #expect(RescheduleViewModel.rescheduleErrorMessage(for: httpError(status: 409, code: "SLOT_UNAVAILABLE"))
+            == Self.slotTaken)
+    }
+
+    @Test("client: an unmapped code shows the server message")
+    func clientUnmappedCode() {
+        #expect(RescheduleViewModel.rescheduleErrorMessage(for: httpError(status: 400, code: "SOMETHING_ELSE"))
+            == "server text")
+    }
+
+    // MARK: - Expert
+
+    @Test("expert: RESCHEDULE_TOO_FAR_AHEAD shows the shared reschedule copy")
+    func expertTooFarAhead() {
+        #expect(ExpertRescheduleViewModel.rescheduleErrorMessage(for: httpError(code: "RESCHEDULE_TOO_FAR_AHEAD"))
+            == BookingErrorMapper.rescheduleTooFarAheadMessage)
+    }
+
+    @Test("expert: RESCHEDULE_OUTSIDE_AUTH_WINDOW keeps its expert copy")
+    func expertKeepsOwnCopy() {
+        #expect(ExpertRescheduleViewModel.rescheduleErrorMessage(for: httpError(code: "RESCHEDULE_OUTSIDE_AUTH_WINDOW"))
+            == Self.expertOutsideAuthWindow)
+    }
+
+    @Test("expert: an unmapped code shows the server message")
+    func expertUnmappedCode() {
+        #expect(ExpertRescheduleViewModel.rescheduleErrorMessage(for: httpError(status: 400, code: "SOMETHING_ELSE"))
+            == "server text")
+    }
+}
+}

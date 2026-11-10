@@ -20,13 +20,17 @@ enum ExternalMeetingProvider {
     case microsoftTeams
     case unknown
 
-    /// Match on the URL's scheme and host. Case-insensitive; tolerates
-    /// missing scheme by trying the raw string as a fallback.
+    /// Match on the URL's scheme and host. Matching is case-insensitive.
+    ///
+    /// A host counts as a provider only when it equals the provider's domain
+    /// or is a dotted subdomain of it, so `evilzoom.us` and `zoom.us.evil.com`
+    /// stay `.unknown`. A URL without a host (for example the bare string
+    /// `zoom.us/j/1`) is `.unknown` too, so the UI falls back to the generic
+    /// "Open Meeting" copy.
     static func detect(from url: URL?) -> ExternalMeetingProvider {
         guard let url else { return .unknown }
         let scheme = url.scheme?.lowercased() ?? ""
         let host = url.host?.lowercased() ?? ""
-        let raw = url.absoluteString.lowercased()
 
         // Native app schemes are the strongest signal.
         switch scheme {
@@ -37,19 +41,22 @@ enum ExternalMeetingProvider {
         }
 
         // https:// URLs — inspect host.
-        if host.contains("skype.com")             { return .skype }
-        if host.contains("zoom.us") || host.contains("zoom.com") { return .zoom }
-        if host.contains("meet.google.com")       { return .googleMeet }
-        if host.contains("teams.microsoft.com") ||
-           host.contains("teams.live.com")        { return .microsoftTeams }
-
-        // Last-ditch — no host but the substring is buried somewhere.
-        if raw.contains("skype")     { return .skype }
-        if raw.contains("zoom")      { return .zoom }
-        if raw.contains("meet.google") { return .googleMeet }
-        if raw.contains("teams.")    { return .microsoftTeams }
+        if Self.host(host, isOrEndsWith: "skype.com")             { return .skype }
+        if Self.host(host, isOrEndsWith: "zoom.us") ||
+           Self.host(host, isOrEndsWith: "zoom.com")              { return .zoom }
+        if Self.host(host, isOrEndsWith: "meet.google.com")       { return .googleMeet }
+        if Self.host(host, isOrEndsWith: "teams.microsoft.com") ||
+           Self.host(host, isOrEndsWith: "teams.live.com")        { return .microsoftTeams }
 
         return .unknown
+    }
+
+    /// True when `host` is `domain` or a subdomain of it. One trailing dot
+    /// (the fully qualified form, `zoom.us.`) is ignored.
+    private static func host(_ host: String, isOrEndsWith domain: String) -> Bool {
+        var normalized = host.lowercased()
+        if normalized.hasSuffix(".") { normalized.removeLast() }
+        return normalized == domain || normalized.hasSuffix("." + domain)
     }
 
     /// Display name used in button labels and status text.

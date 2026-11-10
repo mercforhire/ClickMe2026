@@ -320,6 +320,12 @@ final class TopicEditorViewModel: ObservableObject {
 
     // MARK: - Money formatting
 
+    /// Editable text for a stored minor-unit amount (compile-only seam for
+    /// the Task 3 RED rows; mirrors today's lossy seed until GREEN).
+    static func editableAmount(minorUnits: Int, currency: String) -> String {
+        String(minorUnits / 100)
+    }
+
     /// User-facing "below the minimum" message shown after a failed
     /// `validate()`. Backend also ships a display-ready message on the
     /// `PRICE_BELOW_MINIMUM` 422 (see spec §4) — save handlers should

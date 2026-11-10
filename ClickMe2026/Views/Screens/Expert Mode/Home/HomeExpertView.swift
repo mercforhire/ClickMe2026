@@ -103,6 +103,15 @@ struct HomeExpertView: View {
         case let .bookingDetail(bookingId):
             selectedTab = .bookings
             bookingsPath.replace(with: HomeRoute.expertBookingSummary(bookingId: bookingId))
+        case let .bookingSummary(bookingId):
+            // A declined, cancelled, expired or refunded booking.
+            selectedTab = .bookings
+            bookingsPath.replace(with: HomeRoute.expertBookingSummary(bookingId: bookingId))
+        case let .incomingRequest(bookingId):
+            // The request id is the bookings row id, so the push's booking
+            // id opens that request's decision screen directly.
+            selectedTab = .dashboard
+            dashboardPath.replace(with: HomeRoute.requestDecision(requestId: bookingId))
         case .incomingRequests:
             // Booking-request notifications land here — the pending
             // requests hub, reachable from the dashboard tab.

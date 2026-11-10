@@ -119,52 +119,17 @@ final class NotificationsListViewModel: ObservableObject {
     // MARK: - Tap routing
 
     /// Maps a notification row to the app-wide `PushDestination` used by
-    /// the shells' navigation logic. Reuses the same routing surface as
-    /// real push taps so tap-from-list and tap-from-push land on the
-    /// same screen.
-    ///
-    /// Mirrors the table in `PushRouter.destination(for:)` — when the
-    /// backend omits `subCategory` (older payloads), we fall back to a
-    /// coarse category-only mapping so the row is still tappable.
+    /// the shells' navigation logic. Goes through the same table as real
+    /// push taps (`PushRouter.destination(category:...)`) so tap-from-list
+    /// and tap-from-push land on the same screen. Ids come from the row's
+    /// `metaData`.
     static func destination(for item: NotificationItem) -> PushDestination? {
-        switch item.category {
-        case .booking:
-            // `booking/requests` is a pending expert-decision request —
-            // no confirmed booking to summarise, so land on the requests
-            // hub rather than a booking-summary view.
-            if item.subCategory == "requests" {
-                return .incomingRequests
-            }
-            guard let bookingId = bookingId(in: item.metaData) else { return nil }
-            return .bookingDetail(bookingId: bookingId)
-
-        case .session:
-            guard let bookingId = bookingId(in: item.metaData) else { return nil }
-            if item.subCategory == "ended" {
-                return .leaveReview(bookingId: bookingId)
-            }
-            return .bookingDetail(bookingId: bookingId)
-
-        case .message:
-            guard let threadId = threadId(in: item.metaData) else { return nil }
-            return .chatThread(threadId: threadId)
-
-        case .review:
-            guard let bookingId = bookingId(in: item.metaData) else { return nil }
-            if item.subCategory == "nudge" {
-                return .leaveReview(bookingId: bookingId)
-            }
-            return .bookingDetail(bookingId: bookingId)
-
-        case .payout:
-            if item.subCategory == "kyc_action" {
-                return .kycOnboarding
-            }
-            return .payouts
-
-        case .account:
-            return .accountSecurity
-        }
+        PushRouter.destination(
+            category: item.category.rawValue,
+            subCategory: item.subCategory,
+            bookingId: bookingId(in: item.metaData),
+            threadId: threadId(in: item.metaData)
+        )
     }
 
     /// The shared `NetworkService` decoder applies

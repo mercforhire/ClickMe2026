@@ -22,6 +22,16 @@ enum PushDestination: Equatable {
     /// matching `NEW_BOOKING_REQUEST`. Client shells fall back to the
     /// notifications list — clients don't have this screen.
     case incomingRequests
+    /// A single pending booking request, expert only — used by
+    /// `booking/requests` when the payload carries a booking id. The request
+    /// id is the bookings row id, so the shell opens that request's decision
+    /// screen. The client shell falls back to the notifications list.
+    case incomingRequest(bookingId: UUID)
+    /// A booking in a terminal state (declined, cancelled, expired or
+    /// refunded) — used by `booking/declines`, `booking/cancellations`,
+    /// `booking/expirations` and `booking/refunds`. Opens the booking
+    /// summary, not the upcoming-booking screen.
+    case bookingSummary(bookingId: UUID)
     /// Chat thread — used by `message/new_message`. The shell switches
     /// to the Chats tab first, then pushes the thread.
     case chatThread(threadId: UUID)
@@ -99,57 +109,88 @@ final class PushRouter: ObservableObject {
 
     // MARK: - Category → destination mapping
 
-    /// Backend spec (as of 2026-08-05):
-    ///
-    /// | category / sub_category                     | destination           |
-    /// |---------------------------------------------|-----------------------|
-    /// | booking/*                                   | bookingDetail         |
-    /// | session/reminder, session/no_show           | bookingDetail         |
-    /// | session/ended                               | leaveReview           |
-    /// | message/new_message                         | chatThread            |
-    /// | review/received                             | bookingDetail         |
-    /// | review/nudge                                | leaveReview           |
-    /// | payout/paid, payout/failed                  | payouts               |
-    /// | payout/kyc_action                           | kycOnboarding         |
-    /// | account/password_changed                    | accountSecurity       |
-    /// | account/deletion_requested                  | accountSecurity       |
-    /// | (anything else)                             | notificationsList     |
+    /// Maps a `PushEvent` to a destination through the shared table.
     static func destination(for event: PushEvent) -> PushDestination? {
-        switch event.category {
+        destination(
+            category: event.category,
+            subCategory: event.subCategory,
+            bookingId: event.bookingId,
+            threadId: event.threadId
+        )
+    }
+
+    /// The one category-to-destination table, shared by push taps and
+    /// notifications-list rows so both land on the same screen. Contract:
+    /// backend `docs/ios/PUSH-ROUTING.md`. Both strings are trimmed and
+    /// lowercased first; an empty, missing or unknown category returns `nil`
+    /// and the caller opens the notifications list.
+    ///
+    /// | category / sub_category                              | destination        |
+    /// |------------------------------------------------------|--------------------|
+    /// | booking/requests, with a booking id                  | incomingRequest    |
+    /// | booking/requests, no booking id                      | incomingRequests   |
+    /// | booking/declines, cancellations, expirations, refunds| bookingSummary     |
+    /// | booking/payment_actions (route only, D-01)           | bookingDetail      |
+    /// | booking/confirmations, reschedules, anything else    | bookingDetail      |
+    /// | session/reminder, session/no_show                    | bookingDetail      |
+    /// | session/ended                                        | leaveReview        |
+    /// | message/new_message                                  | chatThread         |
+    /// | review/received                                      | bookingDetail      |
+    /// | review/nudge                                         | leaveReview        |
+    /// | payout/paid, payout/failed, payout/dispute           | payouts            |
+    /// | payout/kyc_action                                    | kycOnboarding      |
+    /// | account/password_changed, account/deletion_requested | accountSecurity    |
+    /// | (anything else)                                      | nil                |
+    ///
+    /// A row that needs an id (booking detail, summary, review, chat) returns
+    /// `nil` when the id is missing.
+    static func destination(
+        category: String?,
+        subCategory: String?,
+        bookingId: UUID?,
+        threadId: UUID?
+    ) -> PushDestination? {
+        let category = category?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+        let subCategory = subCategory?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+
+        switch category {
         case "booking":
-            // `booking/requests` is a new incoming request awaiting
-            // the expert's decision — lands on the incoming-requests
-            // hub, not a booking-summary view (there's no confirmed
-            // booking to summarise yet).
-            if event.subCategory == "requests" {
+            // `booking/requests` is a pending expert-decision request — no
+            // confirmed booking yet. With an id it opens that request; without
+            // one, the requests hub.
+            if subCategory == "requests" {
+                if let bookingId { return .incomingRequest(bookingId: bookingId) }
                 return .incomingRequests
             }
-            guard let bookingId = event.bookingId else { return nil }
-            return .bookingDetail(bookingId: bookingId)
+            guard let bookingId else { return nil }
+            switch subCategory {
+            case "declines", "cancellations", "expirations", "refunds":
+                return .bookingSummary(bookingId: bookingId)
+            default:
+                return .bookingDetail(bookingId: bookingId)
+            }
 
         case "session":
-            guard let bookingId = event.bookingId else { return nil }
-            if event.subCategory == "ended" {
+            guard let bookingId else { return nil }
+            if subCategory == "ended" {
                 // Server flags a completed session as a review prompt.
                 return .leaveReview(bookingId: bookingId)
             }
             return .bookingDetail(bookingId: bookingId)
 
         case "message":
-            guard let threadId = event.threadId else { return nil }
+            guard let threadId else { return nil }
             return .chatThread(threadId: threadId)
 
         case "review":
-            if event.subCategory == "nudge", let bookingId = event.bookingId {
+            guard let bookingId else { return nil }
+            if subCategory == "nudge" {
                 return .leaveReview(bookingId: bookingId)
             }
-            if let bookingId = event.bookingId {
-                return .bookingDetail(bookingId: bookingId)
-            }
-            return nil
+            return .bookingDetail(bookingId: bookingId)
 
         case "payout":
-            if event.subCategory == "kyc_action" {
+            if subCategory == "kyc_action" {
                 return .kycOnboarding
             }
             return .payouts

@@ -146,7 +146,12 @@ struct HomeClientView: View {
         case let .bookingDetail(bookingId):
             selectedTab = .bookings
             bookingsPath.replace(with: HomeRoute.upcomingBooking(bookingId: bookingId))
-        case .incomingRequests:
+        case let .bookingSummary(bookingId):
+            // A declined, cancelled, expired or refunded booking — the
+            // read-only summary, not the upcoming-booking screen.
+            selectedTab = .bookings
+            bookingsPath.replace(with: HomeRoute.bookingSummary(bookingId: bookingId))
+        case .incomingRequests, .incomingRequest:
             // Expert-only push. If a client shell somehow receives it,
             // fall back to the notifications list rather than stranding
             // the user on a blank landing.

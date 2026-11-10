@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Phase 02 UI-SPEC approved
-last_updated: "2026-11-10T03:09:29.802Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-11-10T03:40:01.370Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: c93df0d0cbac03967ab1ebb46097f3cb5afd1444
+state_head: 3ec67f60118a5079343845085145e6c6eb6e0c69
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 30
+  completed_plans: 31
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 5 of 15
+Plan: 3 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -86,6 +86,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P03 | 70 min | 2 tasks | 9 files |
 | Phase 02 P07 | 10 min | 3 tasks | 8 files |
 | Phase 02 P09 | 55min | 3 tasks | 6 files |
+| Phase 02 P02 | 1h | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -163,6 +164,8 @@ Recent decisions affecting current work:
 - [Phase 02]: [02-07] Both long-lead codes are terminal: the no-PaymentIntent confirm is deleted; paid picker cap is inclusive at now + 6 days and read from Date() on every evaluation
 - [Phase 02]: [02-07] BookingErrorMapper is the single ErrorCode to copy table (paid copy is the base); test suites that share MockURLProtocol must live in one .serialized suite, and suites that never call the API must not use APITestFactory
 - [Phase 02]: 02-09: single-mutation replace(with:) stands (tracer device check showed no flash or dropped push); one homeStack helper per shell registers HomeRoute on every tab; PushRouter.destination(category:...) is the one table for push taps and notification rows
+- [Phase 02]: Plan 02-02: only Agora failed ends the call locally (dropped); disconnected maps to no change because it is the initial and post-leaveChannel state
+- [Phase 02]: Plan 02-02: meeting-link provider labels require host equal to the provider domain or a dotted subdomain; no raw-string fallback
 
 ### Pending Todos
 
@@ -221,6 +224,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T03:09:29.714Z
-Stopped at: Phase 02 UI-SPEC approved
-Resume file: .planning/phases/02-shared-ios-plumbing/02-UI-SPEC.md
+Last session: 2026-11-10T03:40:01.309Z
+Stopped at: Completed 02-02-PLAN.md
+Resume file: None

@@ -267,7 +267,7 @@ final class ExploreClientViewModel: ObservableObject {
         )
     }
 
-    /// Renders the topic's per-session flat price (e.g. `"$50"`). The
+    /// Renders the topic's per-session flat price (e.g. `"$50.00"`). The
     /// server ships this value under a `hourly_rate` key on
     /// `/client/home.featured_topics`, but the amount is what the client
     /// actually pays per booking — misleading key, per-session semantics.
@@ -277,13 +277,7 @@ final class ExploreClientViewModel: ObservableObject {
     ) -> String {
         if isFree == true { return "Free" }
         guard let amount = rate?.amount, let currency = rate?.currency else { return "—" }
-        let amountMajor = Double(amount) / 100.0
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        formatter.maximumFractionDigits = amountMajor.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 2
-        return formatter.string(from: NSNumber(value: amountMajor))
-            ?? "\(currency) \(String(format: "%.0f", amountMajor))"
+        return Money.format(minorUnits: amount, currency: currency)
     }
 
     // MARK: - Error helpers

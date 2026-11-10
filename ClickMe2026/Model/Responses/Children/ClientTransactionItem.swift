@@ -124,9 +124,9 @@ struct ClientTransactionItem: Decodable, Identifiable, Equatable {
     }
 
     /// Format `amount` as a currency string using the row's own
-    /// `currency`. Drives fraction-digit count off `NumberFormatter`
-    /// so zero-decimal currencies (JPY, KRW, VND, CLP, ISK, XOF, XAF)
-    /// render correctly. `nil` amount → `"—"` (never `"$0.00"`).
+    /// `currency`. Fraction digits follow the backend's zero-decimal set
+    /// (JPY, KRW, VND, CLP, ISK, XOF, XAF), not ICU, via `Money`.
+    /// `nil` amount → `"—"` (never `"$0.00"`).
     var formattedAmount: String {
         Self.format(minorUnits: amount, currency: currency)
     }
@@ -139,13 +139,6 @@ struct ClientTransactionItem: Decodable, Identifiable, Equatable {
 
     private static func format(minorUnits: Int?, currency: String) -> String {
         guard let minorUnits else { return "—" }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        let digits = formatter.maximumFractionDigits
-        let divisor: Double = pow(10.0, Double(digits))
-        let major = Double(minorUnits) / divisor
-        return formatter.string(from: NSNumber(value: major))
-            ?? "\(currency) \(major)"
+        return Money.format(minorUnits: minorUnits, currency: currency)
     }
 }

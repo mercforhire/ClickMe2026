@@ -188,17 +188,11 @@ final class ExpertProfileViewModel: ObservableObject {
         )
     }
 
-    /// `$50` for a 5000-cent CAD topic — per-session flat price, currency
-    /// formatted via `NumberFormatter`. Amount is minor units; currency is
+    /// `$50.00` for a 5000-cent USD topic (`CA$50.00` for CAD) — per-session
+    /// flat price, formatted by `Money`. Amount is minor units; currency is
     /// ISO-4217.
     private static func formatSessionPrice(amount: Int, currency: String) -> String {
-        let amountMajor = Double(amount) / 100.0
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        formatter.maximumFractionDigits = amountMajor.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 2
-        return formatter.string(from: NSNumber(value: amountMajor))
-            ?? "\(currency) \(String(format: "%.0f", amountMajor))"
+        Money.format(minorUnits: amount, currency: currency)
     }
 
     // MARK: Actions

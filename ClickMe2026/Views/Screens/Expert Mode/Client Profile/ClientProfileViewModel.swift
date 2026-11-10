@@ -98,17 +98,37 @@ final class ClientProfileViewModel: ObservableObject {
 
     // MARK: - Mapping
 
+    /// Statuses whose history row shows the expert's net earnings. Mirrors
+    /// Android `ClientHistory.AMOUNT_STATUSES`: the bookings feed populates
+    /// `earnings_breakdown` even on rows that never earned money, so this gate,
+    /// not the data, keeps the screen from implying money that was not earned.
+    /// `cancelled`, `declined`, `missed`, `expired`, `rescheduled` and any code
+    /// this build does not know show "—". (A client no-show `missed` row or a
+    /// late-cancel captured row was paid, but the list payload cannot tell
+    /// those apart from unpaid ones, so they show no amount either.)
+    static let earningsStatuses: Set<BookingStatus> = [
+        .pendingApproval, .confirmed, .pendingReschedule, .inProgress, .completed,
+    ]
+
+    /// Builds one history row. The amount is the expert's net earnings,
+    /// `earnings_breakdown.net_amount` in major units with the breakdown's
+    /// currency, as Android shows it (EXP-14 for this surface, delivered here
+    /// for parity). Gross never stands in for net under an earnings label.
+    /// Outside `earningsStatuses`, or when the breakdown has no net amount,
+    /// both fields are nil and the card shows "—".
     static func mapBooking(from item: ExpertBookingItem) -> ClientBookingHistory {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM d, yyyy"
+        let breakdown = earningsStatuses.contains(item.status.code)
+            ? item.session.earningsBreakdown
+            : nil
+        let netAmount = breakdown?.netAmount
         return ClientBookingHistory(
             title: item.session.topic ?? "Session",
             status: mapStatus(from: item.status.code),
             date: dateFormatter.string(from: item.session.startTime),
-            // Real earnings (`earnings_breakdown.net_amount` and its currency)
-            // are wired by EXP-14 in Phase 6; until then the card shows "—".
-            amountMajor: nil,
-            currency: nil
+            amountMajor: netAmount,
+            currency: netAmount == nil ? nil : breakdown?.currency
         )
     }
 

@@ -25,11 +25,11 @@ struct BookingTopic: Identifiable, Hashable {
     let currency: String?
     let isFree: Bool
 
-    /// Human-readable price label. "Free", "USD 50", or "—" when unknown.
+    /// Human-readable price label. "Free", "$50.00", or "—" when unknown.
     var priceLabel: String {
         if isFree { return "Free" }
         if let priceAmount, let currency {
-            return "\(currency) \(priceAmount / 100)"
+            return Money.format(minorUnits: priceAmount, currency: currency)
         }
         return "—"
     }

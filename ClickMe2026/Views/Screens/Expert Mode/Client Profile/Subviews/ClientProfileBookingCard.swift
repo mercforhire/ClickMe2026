@@ -13,10 +13,17 @@ import SwiftUI
 struct ClientProfileBookingCard: View {
     let booking: ClientBookingHistory
 
-    /// RED seam: mirrors the hard-coded dollar-sign label the card shows today
-    /// so the behavior rows compile and fail on their assertions.
+    /// Text for the amount on the right of the row.
+    ///
+    /// Every money display goes through `Money` (BOOK-10), so this card can't
+    /// hard-code a symbol or guess a currency. The amount is in major units
+    /// because that is how the bookings list sends `consultation_fee.amount`
+    /// and `earnings_breakdown.net_amount`. When the amount or the currency is
+    /// unknown the row shows "—", matching the other expert earnings sites,
+    /// instead of implying a figure the app never received.
     static func amountLabel(amountMajor: Double?, currency: String?) -> String {
-        "$\(Int(exactly: (amountMajor ?? 0).rounded()) ?? 0)"
+        guard let amountMajor, let currency else { return "—" }
+        return Money.format(major: amountMajor, currency: currency) ?? "—"
     }
 
     var body: some View {
@@ -36,7 +43,7 @@ struct ClientProfileBookingCard: View {
 
             Spacer()
 
-            Text("$\(booking.amount)")
+            Text(Self.amountLabel(amountMajor: booking.amountMajor, currency: booking.currency))
                 .font(.brand(.callout, weight: .bold))
                 .foregroundColor(ClientProfileBrand.onSurface)
         }

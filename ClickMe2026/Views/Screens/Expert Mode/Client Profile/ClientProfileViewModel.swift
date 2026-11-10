@@ -105,7 +105,10 @@ final class ClientProfileViewModel: ObservableObject {
             title: item.session.topic ?? "Session",
             status: mapStatus(from: item.status.code),
             date: dateFormatter.string(from: item.session.startTime),
-            amount: 0 // ExpertBookingItem doesn't expose an amount; leave as 0.
+            // Real earnings (`earnings_breakdown.net_amount` and its currency)
+            // are wired by EXP-14 in Phase 6; until then the card shows "—".
+            amountMajor: nil,
+            currency: nil
         )
     }
 
@@ -151,8 +154,17 @@ final class ClientProfileViewModel: ObservableObject {
     )
 
     static let sampleBookingHistory: [ClientBookingHistory] = [
-        ClientBookingHistory(title: "SEO Audit Review", status: .upcoming, date: "June 5, 2024", amount: 0),
-        ClientBookingHistory(title: "Digital Marketing Strategy", status: .completed, date: "May 12, 2024", amount: 0),
-        ClientBookingHistory(title: "Brand Growth Session", status: .completed, date: "Apr 3, 2024", amount: 0),
+        ClientBookingHistory(
+            title: "SEO Audit Review", status: .upcoming, date: "June 5, 2024",
+            amountMajor: 75.0, currency: "CAD"
+        ),
+        ClientBookingHistory(
+            title: "Digital Marketing Strategy", status: .completed, date: "May 12, 2024",
+            amountMajor: 120.5, currency: "CAD"
+        ),
+        ClientBookingHistory(
+            title: "Brand Growth Session", status: .completed, date: "Apr 3, 2024",
+            amountMajor: nil, currency: nil
+        ),
     ]
 }

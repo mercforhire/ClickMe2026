@@ -15,7 +15,14 @@ struct ClientBookingHistory: Identifiable {
     let title: String
     let status: BookingHistoryStatus
     let date: String
-    let amount: Int
+    /// The row's amount in major units (dollars, yen), the unit
+    /// `GET /expert/bookings` uses for `consultation_fee.amount` and
+    /// `earnings_breakdown.net_amount`. `nil` when the app does not know the
+    /// figure, in which case the card shows "—" rather than a made-up `$0`.
+    let amountMajor: Double?
+    /// ISO 4217 code for `amountMajor`. `nil` when unknown; the card then
+    /// shows "—" because an amount without a currency cannot be formatted.
+    let currency: String?
 }
 
 enum BookingHistoryStatus {

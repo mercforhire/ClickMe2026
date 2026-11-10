@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-13-PLAN.md
-last_updated: "2026-11-10T06:34:53.707Z"
+stopped_at: Completed 02-14-PLAN.md
+last_updated: "2026-11-10T16:52:37.420Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: ff4f3992404c6828ddbf606feaadb7704cf3cfbc
+state_head: ddc0163b837a4ca594f52c77b4b6288941f30d88
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 38
+  completed_plans: 39
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 10 of 15
+Plan: 11 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -94,6 +94,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P06 | ~30 min (continuation; Task 1 in prior session) | 3 tasks | 11 files |
 | Phase 02 P11 | ~5 min (continuation; Task 1 in prior session) | 2 tasks | 5 files |
 | Phase 02 P13 | ~4 min (continuation; Task 1 in prior session) | 2 tasks | 3 files |
+| Phase 02 P14 | ~50 min (continuation; Task 1 in prior session) | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -186,6 +187,9 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-11: CHAT-09 device check deferred by the user at the Task 1 tracer gate (approve and defer), PENDING for 02-12 incl. the tab-switch case (assumption A3); Task 2 presence rows passed first run because Task 1 built the rule, so Task 2 is a test-only commit
 - [Phase 02]: 02-13: the three client booking screens use the 02-03 ReloadGeneration counter (newest started wins, superseded fetch writes nothing, no task cancellation); Android reaches the same latest-wins outcome by cancelling the previous job, so no Android change is needed
 - [Phase 02]: 02-13: MyBookingsViewModel.silentReload() runs forceLoad() while state is .loading, so a booking.update during a pull-to-refresh supersedes that load and the newest call always settles the spinner; BOOK-18 client device check deferred by the user at the Task 1 tracer gate (approve and defer), PENDING for 02-12 (WINDOWS #18)
+- [Phase 02]: 02-14: Join is shown DISABLED, not hidden, for non-joinable bookings (pending_reschedule included) on the expert dashboard strip, the client Explore strip, the client My Bookings card and the expert Upcoming list, matching Android on each screen (user decision 2026-11-10 at the Task 1 tracer gate); supersedes the presentation half of D-12 and the Hidden / Not rendered cells of 02-UI-SPEC section 2; the joining rule is unchanged (JoinWindow.isOpen still excludes pending_reschedule and honours the server can_join)
+- [Phase 02]: 02-14: JoinWindow.showsJoinButton(status:) is the one shown-versus-enabled predicate (every status but pending_approval renders Join); disabled Join relies on .disabled() for the VoiceOver dimmed announcement and adds Android's explore_join_call_state wording as an accessibility hint on all four surfaces
+- [Phase 02]: 02-14: CALL-02 device check DEFERRED by the user because the behavior changed after the checkpoint; PENDING for 02-12 (WINDOWS #19); the 02-04 wording 'no Join on pending_reschedule' is superseded by 'Join visible but disabled'
 
 ### Pending Todos
 
@@ -244,6 +248,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T06:34:53.649Z
-Stopped at: Completed 02-13-PLAN.md
+Last session: 2026-11-10T16:52:37.365Z
+Stopped at: Completed 02-14-PLAN.md
 Resume file: None

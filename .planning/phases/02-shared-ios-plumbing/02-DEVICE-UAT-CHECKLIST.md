@@ -123,6 +123,12 @@ Expected, free: **no note**, nothing dimmed by the cap, the full month is bookab
 
 Unchanged: the **expert** reschedule picker (Phase 3, EXP-13).
 
+Expected, VoiceOver (02-UI-SPEC A1, C1; quick 261110-nzy):
+- With VoiceOver on, swiping through the Make a Booking grid reads only the displayed month's days; the dimmed previous-month and next-month numbers are skipped.
+- Past days read as dimmed, and days past the paid limit read normally.
+- The chevrons read "Previous month" and "Next month".
+- The client Reschedule calendar behaves the same.
+
 Result:
 
 ### 8. PAY-05 — same slot-taken copy on free and paid bookings (02-07) — *optional*

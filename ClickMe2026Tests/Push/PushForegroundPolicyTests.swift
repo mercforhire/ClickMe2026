@@ -6,6 +6,10 @@
 //  presented with no options (no banner, no sound, no Notification Center
 //  entry); every other push keeps the full presentation.
 //
+//  The presence rows below drive the shared `ChatPresence`, so the suite is
+//  serialized and every row leaves `visibleThreadId` nil through its own
+//  `chatDisappeared` calls.
+//
 
 import Foundation
 import Testing
@@ -13,7 +17,7 @@ import UserNotifications
 @testable import ClickMe2026
 
 @MainActor
-@Suite("Push foreground policy")
+@Suite("Push foreground policy", .serialized)
 struct PushForegroundPolicyTests {
 
     private static let threadT = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
@@ -98,5 +102,72 @@ struct PushForegroundPolicyTests {
             visibleChatThreadId: Self.threadT
         )
         #expect(options == [])
+    }
+
+    // MARK: Presence (stacked chats)
+
+    private static let threadA = UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!
+    private static let threadB = UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!
+
+    @Test("a second chat pushed on top keeps the top chat marked when the first one disappears")
+    func stackedChatKeepsTopThread() {
+        let presence = ChatPresence.shared
+        presence.chatAppeared(threadId: Self.threadA)
+        presence.chatAppeared(threadId: Self.threadB)
+        presence.chatDisappeared(threadId: Self.threadA)
+        #expect(presence.visibleThreadId == Self.threadB)
+
+        presence.chatDisappeared(threadId: Self.threadB)
+        #expect(presence.visibleThreadId == nil)
+    }
+
+    @Test("the top chat disappearing clears the visible thread")
+    func topChatDisappearingClears() {
+        let presence = ChatPresence.shared
+        presence.chatAppeared(threadId: Self.threadA)
+        presence.chatAppeared(threadId: Self.threadB)
+        presence.chatDisappeared(threadId: Self.threadA)
+        presence.chatDisappeared(threadId: Self.threadB)
+        #expect(presence.visibleThreadId == nil)
+    }
+
+    @Test("a stale disappear from a chat that is not on screen leaves the open chat marked")
+    func staleDisappearIgnored() {
+        let presence = ChatPresence.shared
+        presence.chatAppeared(threadId: Self.threadA)
+        presence.chatDisappeared(threadId: Self.threadB)
+        #expect(presence.visibleThreadId == Self.threadA)
+
+        presence.chatDisappeared(threadId: Self.threadA)
+        #expect(presence.visibleThreadId == nil)
+    }
+
+    @Test("a disappear with no chat open leaves nothing marked")
+    func disappearWithNothingOpenStaysNil() {
+        let presence = ChatPresence.shared
+        presence.chatDisappeared(threadId: Self.threadA)
+        #expect(presence.visibleThreadId == nil)
+    }
+
+    @Test("with chat B on top of chat A, a message for A presents and a message for B is quiet")
+    func stackedChatPolicyFollowsTopThread() {
+        let presence = ChatPresence.shared
+        presence.chatAppeared(threadId: Self.threadA)
+        presence.chatAppeared(threadId: Self.threadB)
+        presence.chatDisappeared(threadId: Self.threadA)
+
+        let forA = PushForegroundPolicy.options(
+            for: Self.messagePush(threadId: Self.threadA),
+            visibleChatThreadId: presence.visibleThreadId
+        )
+        let forB = PushForegroundPolicy.options(
+            for: Self.messagePush(threadId: Self.threadB),
+            visibleChatThreadId: presence.visibleThreadId
+        )
+        #expect(forA == Self.full)
+        #expect(forB == [])
+
+        presence.chatDisappeared(threadId: Self.threadB)
+        #expect(presence.visibleThreadId == nil)
     }
 }

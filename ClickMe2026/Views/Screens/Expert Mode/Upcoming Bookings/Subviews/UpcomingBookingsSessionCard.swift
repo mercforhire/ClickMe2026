@@ -35,11 +35,17 @@ struct UpcomingBookingsSessionCard: View {
                 rescheduleBadge(reschedule)
             }
 
-            // Join Session — only while the shared JoinWindow is open. The
-            // timeline re-evaluates every minute so the button appears and
-            // disappears as time passes, without a refresh.
-            TimelineView(.periodic(from: .now, by: 60)) { _ in
-                if session.isWithinJoinWindow {
+            // Join Session — rendered for every card and disabled (dimmed;
+            // VoiceOver announces "dimmed") while the shared JoinWindow is
+            // closed or the status is not joinable, so a pending_reschedule
+            // row shows a disabled button rather than none, as Android's
+            // expert Upcoming card does (user decision 2026-11-10,
+            // supersedes the D-12 hide). The timeline re-evaluates every
+            // minute so the button enables as time passes, without a
+            // refresh. The NOW badge below keeps hiding when closed.
+            if JoinWindow.showsJoinButton(status: session.status) {
+                TimelineView(.periodic(from: .now, by: 60)) { _ in
+                    let inWindow = session.isWithinJoinWindow
                     Button(action: onJoin) {
                         Text("Join Session")
                             .font(.brand(.callout, weight: .bold))
@@ -48,11 +54,18 @@ struct UpcomingBookingsSessionCard: View {
                             .frame(height: 50)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Brand.primary)
-                                    .shadow(color: Brand.primary.opacity(0.50), radius: 14, x: 0, y: 4)
+                                    .fill(Brand.primary.opacity(inWindow ? 1.0 : 0.55))
+                                    .shadow(
+                                        color: Brand.primary.opacity(inWindow ? 0.50 : 0),
+                                        radius: 14, x: 0, y: 4
+                                    )
                             )
                     }
                     .buttonStyle(PressScaleButtonStyle())
+                    .disabled(!inWindow)
+                    // Same disabled-state wording as Android's shared Join
+                    // button (`explore_join_call_state`).
+                    .accessibilityHint(inWindow ? "" : "Available closer to the session start")
                 }
             }
 

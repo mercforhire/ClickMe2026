@@ -42,13 +42,17 @@ struct UpcomingBookingCard: View {
                 // the button isn't there.
                 pendingApprovalBanner
             } else {
-                // Ticks once a minute so the button appears/disappears as
-                // the start time crosses the join window boundary, without
-                // needing a pull-to-refresh.
+                // Every other card renders Join Call and disables it
+                // (dimmed; VoiceOver announces "dimmed") while the shared
+                // `JoinWindow` is closed or the status is not joinable, so a
+                // pending_reschedule card shows a disabled button rather
+                // than none, as Android's My Bookings card does (user
+                // decision 2026-11-10, supersedes the D-12 hide;
+                // `JoinWindow.showsJoinButton`). Ticks once a minute so the
+                // button enables as the start time crosses the window edge,
+                // without a pull-to-refresh.
                 TimelineView(.periodic(from: .now, by: 60)) { _ in
-                    if booking.isWithinJoinWindow {
-                        joinCallButton
-                    }
+                    joinCallButton(enabled: booking.isWithinJoinWindow)
                 }
             }
             secondaryActions
@@ -187,7 +191,10 @@ struct UpcomingBookingCard: View {
 
     // MARK: Join call
 
-    private var joinCallButton: some View {
+    /// Full accent with glow while `enabled`; accent at 55% with no glow,
+    /// and disabled, otherwise (the same dimmed state as the Explore and
+    /// expert dashboard strips).
+    private func joinCallButton(enabled inWindow: Bool) -> some View {
         Button(action: onJoinCall) {
             HStack(spacing: 10) {
                 Image(systemName: "phone.fill")
@@ -201,11 +208,18 @@ struct UpcomingBookingCard: View {
             .frame(height: 50)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(MyBookingsBrand.brandGreen)
-                    .shadow(color: MyBookingsBrand.brandGreen.opacity(0.50), radius: 14, x: 0, y: 4)
+                    .fill(MyBookingsBrand.brandGreen.opacity(inWindow ? 1.0 : 0.55))
+                    .shadow(
+                        color: MyBookingsBrand.brandGreen.opacity(inWindow ? 0.50 : 0),
+                        radius: 14, x: 0, y: 4
+                    )
             )
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(!inWindow)
+        // Same disabled-state wording as Android's shared Join button
+        // (`explore_join_call_state`).
+        .accessibilityHint(inWindow ? "" : "Available closer to the session start")
     }
 
     // MARK: Private-note zone

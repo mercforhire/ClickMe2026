@@ -70,4 +70,10 @@ struct ClientBookingDetail: Decodable {
     /// remaining purpose is triggering the confirm-step payment-timing
     /// disclosure when the proposed session END is past this timestamp.
     let authorizationExpiresAt: Date?
+    /// The server's `can_join` (BACK-09): true exactly when `POST /join`
+    /// would accept this caller now, including the reconnect tier to
+    /// end + 60 minutes once this party has joined. Optional so older or
+    /// cached payloads still decode. Phase 3 reads it on Upcoming Booking
+    /// details (CALL-03, D-07).
+    let canJoin: Bool?
 }

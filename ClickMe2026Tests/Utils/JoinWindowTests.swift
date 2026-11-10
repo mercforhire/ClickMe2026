@@ -172,3 +172,66 @@ struct JoinWindowTests {
         #expect(Self.rendersJoin.count + 1 == 11)
     }
 }
+
+// MARK: - ClientBookingDetail can_join (CALL-02 for Phase 3 CALL-03)
+
+/// `GET /client/bookings/:id` returns `can_join` (BACK-09). The field is
+/// optional so a payload without it still decodes.
+@MainActor
+@Suite("ClientBookingDetail can_join")
+struct ClientBookingDetailCanJoinTests {
+
+    /// Configured like `NetworkService`'s decoder for the keys this fixture
+    /// needs (snake_case keys, ISO-8601 dates).
+    private static func makeDecoder() -> JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }
+
+    /// A minimal detail with every required field; `extra` is appended as
+    /// further members (`,"can_join":true` or nothing).
+    private static func detailJSON(extra: String) -> Data {
+        let json = """
+        {"booking_id":"11111111-1111-4111-8111-111111111111",
+         "status":"confirmed",
+         "start_time":"2027-01-15T18:00:00Z",
+         "end_time":"2027-01-15T18:30:00Z",
+         "meeting_type":"in_app_voice",
+         "payment_status":"held",
+         "topic":{"id":"22222222-2222-4222-8222-222222222222","title":"Algorithms","is_free":false},
+         "expert":{"id":"33333333-3333-4333-8333-333333333333"}\(extra)}
+        """
+        return Data(json.utf8)
+    }
+
+    @Test("decodes with can_join true")
+    func decodesCanJoinTrue() throws {
+        let detail = try Self.makeDecoder().decode(
+            ClientBookingDetail.self,
+            from: Self.detailJSON(extra: #","can_join":true"#)
+        )
+        #expect(detail.canJoin == true)
+        #expect(detail.status == "confirmed")
+    }
+
+    @Test("decodes with can_join false")
+    func decodesCanJoinFalse() throws {
+        let detail = try Self.makeDecoder().decode(
+            ClientBookingDetail.self,
+            from: Self.detailJSON(extra: #","can_join":false"#)
+        )
+        #expect(detail.canJoin == false)
+    }
+
+    @Test("decodes without can_join as nil")
+    func decodesWithoutCanJoin() throws {
+        let detail = try Self.makeDecoder().decode(
+            ClientBookingDetail.self,
+            from: Self.detailJSON(extra: "")
+        )
+        #expect(detail.canJoin == nil)
+        #expect(detail.bookingId == UUID(uuidString: "11111111-1111-4111-8111-111111111111"))
+    }
+}

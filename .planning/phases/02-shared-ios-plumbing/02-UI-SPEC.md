@@ -1,7 +1,7 @@
 ---
 phase: "02"
 slug: shared-ios-plumbing
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-11-09"
@@ -343,7 +343,7 @@ One primary focal point per screen Phase 02 changes. Nothing else on the screen 
 
 ## UI Considerations
 
-> Shape-rooted state coverage for the Phase 02 deltas. Copy for error and empty states lives in the Copywriting Contract above and is referenced, not restated. Hand-built by the researcher from the plans and shipped code, not from a probe run.
+> Shape-rooted state coverage for the Phase 02 deltas. Copy for error and empty states lives in the Copywriting Contract above and is referenced, not restated. Hand-built by the researcher from the plans and shipped code, then reconciled with a ui-consideration-probe run (see "Probe reconciliation" below).
 
 Applicable state considerations resolved: 12 covered, 3 backstop, 2 unresolved.
 
@@ -367,6 +367,28 @@ Applicable state considerations resolved: 12 covered, 3 backstop, 2 unresolved.
 | K1 | known limitation | Push-opened booking detail and summary with inert action buttons | ⚠ unresolved | Phase 3 (CALL-03, BOOK-06, BOOK-16, BOOK-17) owns the wiring; the UAT must say so |
 | K2 | partial | Skype/Zoom call layout shows no overtime banner | ⚠ unresolved | By 02-01 design the banner is in-app voice only; the Skype status text states the scheduled end only. Accepted; revisit only if the user asks |
 
+### Probe reconciliation (2026-11-09)
+
+`ui-consideration-probe` was run over seven surfaces (call screen, Join button, Money labels, calendar and slots, push navigation, foreground chat banner, status badge). It proposed 35 considerations (2 unclassified). The user accepted this resolution set; no new state was found beyond the table above.
+
+| Surface | Probe categories | Resolution |
+|---------|------------------|------------|
+| Call screen | unclassified | Covered by T2 (overtime), E2 (Agora failed), L1 (large type) |
+| Foreground chat banner | unclassified | Covered by P1 |
+| Join button | partial | Covered by S2 and S1 |
+| Join button | long-text, overflow | 🧪 backstop: L2 |
+| Join button | empty, loading, error, populated, zero-one-many | Dismissed: the phase changes button state only; the host lists' own states are unchanged |
+| Money labels | overflow | Covered by M1 |
+| Money labels | long-text | 🧪 backstop: L2 |
+| Calendar and slots | empty | Covered by E1 (caption plus slot-card copy) |
+| Calendar and slots | error | Covered by the `BookingErrorMapper` rows in the Copywriting Contract |
+| Calendar and slots | partial | Covered: paid topics capped, free topics uncapped (section 4) |
+| Calendar and slots | long-text | 🧪 backstop: the error and limit captions wrap at accessibility Dynamic Type sizes |
+| Calendar and slots | loading, populated, overflow, zero-one-many | Dismissed: unchanged by this phase |
+| Push navigation | empty, error | Covered by N1; each destination screen keeps its own load and error state; K1 records the inert action buttons |
+| Push navigation | loading, populated, partial, overflow, zero-one-many, long-text | Dismissed: navigation only, no list or text surface added |
+| Status badge | all | Covered by S1 (badge hidden, row kept) |
+
 <!-- Status vocabulary (locked by probe-core projectTruths):
      ✅ covered   → a plain truth string lifted into must_haves.truths
      🧪 backstop  → a flat scalar { statement, verification: backstop }
@@ -387,15 +409,15 @@ Phase 02 adds no packages (see 02-RESEARCH "Package Legitimacy Audit"). No `npx 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-11-09 (revision 1; FLAGs accepted: Dimension 2 Make a Booking half of E1/A1/C1 has no owning plan yet; Dimension 4 15 pt / 16 pt sizes are close)
 
 ---
 

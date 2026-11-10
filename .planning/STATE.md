@@ -4,10 +4,10 @@ current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
 stopped_at: Completed 02-12-PLAN.md (last plan of Phase 2; device UAT pending)
-last_updated: "2026-11-10T17:46:41.972Z"
+last_updated: "2026-11-10T21:55:08.843Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: 28af9548359cf1bcd5749be37bce28e82f9e1ca7
+state_head: 81f8797a7f880505978043e512ad24a5276e208f
 progress:
   total_phases: 8
   completed_phases: 1
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
 Plan: 13 of 15
 Status: Ready to execute
-Last activity: 2026-11-09 — Phase 02 execution started
+Last activity: 2026-11-10 - Completed quick task 261110-mmr: Fix WR-02 (fast re-login after logout skips push registration)
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -244,6 +244,7 @@ Captured todos:
 | 261108-vrh | Prompt for push permission on every signed-in launch | 2026-11-08 | 30ca4a9 | [261108-vrh-prompt-for-push-permission-on-every-sign](./quick/261108-vrh-prompt-for-push-permission-on-every-sign/) |
 | 2 | Backend hotfix for CR-01: stop sending category to iOS tokens (215adcb) | 2026-11-08 | c55d284 | — |
 | 261109-323 | Fix Explore home feed decode failure on free topics with no currency | 2026-11-09 | 77178f5 | [261109-323-explore-home-feed-free-topic-decode](./quick/261109-323-explore-home-feed-free-topic-decode/) |
+| 261110-mmr | Fix WR-02: logout waits for push cleanup (Android order) so a fast re-login keeps push registration; Log out shows progress (IN-02) | 2026-11-10 | 81f8797 | [261110-mmr-fix-wr-02-fast-re-login-after-logout-ski](./quick/261110-mmr-fix-wr-02-fast-re-login-after-logout-ski/) |
 
 ## Deferred Items
 

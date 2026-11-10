@@ -22,8 +22,8 @@ struct UpcomingBooking: Identifiable, Hashable {
     let date: String
     let timeRange: String
     let imageURL: String
-    /// Raw UTC start moment — the card uses this to decide whether the
-    /// "Join Call" button is currently in range (within one hour of start).
+    /// Raw UTC start moment — with `endTime`, `status` and `serverCanJoin`
+    /// it feeds `JoinWindow` to decide whether "Join Call" is offered.
     let startTime: Date
     /// Raw UTC end moment — plumbed into `MeetingCallView` so the call
     /// screen can render the scheduled time range and drive the
@@ -48,22 +48,25 @@ struct UpcomingBooking: Identifiable, Hashable {
     /// Drives the amber "Reschedule requested / proposed" badge on the
     /// card so the user notices without drilling into the summary.
     let reschedule: ReschedulePreview?
+    /// The booking's server `can_join`, when the payload has one. The client
+    /// bookings list never does, so it stays `nil` there and the reconnect
+    /// tier of `JoinWindow` stays closed.
+    var serverCanJoin: Bool? = nil
 
-    /// True when `now` is within one hour of `startTime` AND the booking
-    /// has been accepted by the expert. Symmetric window so the button
-    /// remains available for an hour after start too (bookings can run
-    /// late). `pendingApproval` bookings never open the join window —
-    /// the expert hasn't accepted yet, there's no channel to join.
-    ///
-    /// Completed sessions whose scheduled end is still in the future are
-    /// re-joinable: someone may have hung up early and want to resume.
-    /// The client shows the button; the server has the final say on
-    /// whether `POST /join` succeeds.
+    /// True when Join should be offered right now, per the shared
+    /// `JoinWindow` rule (CALL-02): from 60 minutes before the start until
+    /// the later of the scheduled end and start + 60 minutes, for a
+    /// `confirmed`, `in_progress` or `completed` booking. Statuses such as
+    /// `pendingApproval` and `pendingReschedule` never open it. The server
+    /// has the final say on whether `POST /join` succeeds.
     var isWithinJoinWindow: Bool {
-        if status == .pendingApproval { return false }
-        if status == .completed { return endTime > Date() }
-        let delta = startTime.timeIntervalSinceNow
-        return delta <= 3600 && delta >= -3600
+        JoinWindow.isOpen(
+            status: status,
+            start: startTime,
+            end: endTime,
+            now: Date(),
+            serverCanJoin: serverCanJoin
+        )
     }
 
     /// True when the booking is still awaiting the expert's decision.

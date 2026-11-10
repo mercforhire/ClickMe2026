@@ -12,7 +12,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 ### Calls
 
 - [x] **CALL-01** [C1] **[crit]**: A call keeps running until 60 minutes after its scheduled end, not 5 minutes (revert the TEMP `overtimeCutoffSeconds`)
-- [ ] **CALL-02** [C2] **[major]**: User can join a session from 60 minutes before start until its scheduled end, including the second half of sessions longer than an hour
+- [x] **CALL-02** [C2] **[major]**: User can join a session from 60 minutes before start until its scheduled end, including the second half of sessions longer than an hour
 - [ ] **CALL-03** [C3] **[major]**: Tapping Join on the client Upcoming Booking details screen starts the call
 - [x] **CALL-04** [C4]: Ending a call with a 0-second leg is accepted by the server (send at least 1 second)
 - [x] **CALL-05** [C5] (likely): The call screen reaches the Ended state when the Agora connection fails or is aborted
@@ -175,7 +175,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CALL-01 | Phase 2 | Complete |
-| CALL-02 | Phase 2 | Pending |
+| CALL-02 | Phase 2 | Complete |
 | CALL-03 | Phase 3 | Pending |
 | CALL-04 | Phase 2 | Complete |
 | CALL-05 | Phase 2 | Complete |

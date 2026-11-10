@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-11-10T03:40:01.370Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-11-10T03:57:41.844Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: 3ec67f60118a5079343845085145e6c6eb6e0c69
+state_head: c2a9eaf748b149dbca48c8dc57f14af783dd11d2
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 31
+  completed_plans: 32
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 3 of 15
+Plan: 4 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -87,6 +87,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P07 | 10 min | 3 tasks | 8 files |
 | Phase 02 P09 | 55min | 3 tasks | 6 files |
 | Phase 02 P02 | 1h | 2 tasks | 5 files |
+| Phase 02 P04 | 20min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -166,6 +167,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-09: single-mutation replace(with:) stands (tracer device check showed no flash or dropped push); one homeStack helper per shell registers HomeRoute on every tab; PushRouter.destination(category:...) is the one table for push taps and notification rows
 - [Phase 02]: Plan 02-02: only Agora failed ends the call locally (dropped); disconnected maps to no change because it is the initial and post-leaveChannel state
 - [Phase 02]: Plan 02-02: meeting-link provider labels require host equal to the provider domain or a dotted subdomain; no raw-string fallback
+- [Phase 02]: JoinWindow is a display gate only; pending_reschedule is not joinable (D-12), so list cards hide Join for it
 
 ### Pending Todos
 
@@ -224,6 +226,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T03:40:01.309Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-11-10T03:57:41.788Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None

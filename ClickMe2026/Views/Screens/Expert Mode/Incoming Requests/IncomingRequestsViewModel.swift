@@ -130,7 +130,7 @@ final class IncomingRequestsViewModel: ObservableObject {
     /// (`amount_paid_minor_units / 100`), unlike prices in `topic.price`
     /// which are minor units. NumberFormatter handles the cent
     /// suffix — `75.0` → `"$75"`, `75.5` → `"$75.50"`.
-    private static func formatEarnings(amountMajor: Double?, currency: String?) -> String {
+    static func formatEarnings(amountMajor: Double?, currency: String?) -> String {
         guard let amount = amountMajor, let currency = currency else { return "—" }
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency

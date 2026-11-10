@@ -325,7 +325,7 @@ final class UpcomingBookingsViewModel {
     /// XAF) off the ISO code — no hardcoded fraction count. Returns
     /// nil when either input is malformed so the caller can hide the
     /// amount instead of printing a bogus string.
-    private static func formatCurrency(_ amount: Double, code: String) -> String? {
+    static func formatCurrency(_ amount: Double, code: String) -> String? {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = code

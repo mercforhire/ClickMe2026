@@ -104,11 +104,36 @@ struct PushEventTests {
         #expect(event.category == "session")
     }
 
-    @Test("an unknown event_type with no route_category gives no category")
+    @Test("an unknown event_type with no route_category and no booking_id gives no category")
     func unknownEventType() {
-        let event = Self.parse(["event_type": "SOMETHING_ELSE", "booking_id": Self.a.uuidString])
+        let event = Self.parse(["event_type": "SOMETHING_ELSE"])
         #expect(event.category == nil)
         #expect(event.subCategory == nil)
+    }
+
+    // MARK: booking_id fallback (Android parity, RESEARCH F-1)
+
+    @Test("a payload with only a booking_id is a booking push, as on Android")
+    func bookingIdOnlyFallback() {
+        let event = Self.parse(["booking_id": Self.a.uuidString])
+        #expect(event.category == "booking")
+        #expect(event.subCategory == nil)
+        #expect(event.bookingId == Self.a)
+    }
+
+    @Test("an unknown event_type with a booking_id still routes as a booking")
+    func unknownEventTypeWithBookingId() {
+        let event = Self.parse(["event_type": "SOMETHING_ELSE", "booking_id": Self.a.uuidString])
+        #expect(event.category == "booking")
+        #expect(event.subCategory == nil)
+        #expect(event.bookingId == Self.a)
+    }
+
+    @Test("a malformed booking_id does not trigger the booking fallback")
+    func malformedBookingIdNoFallback() {
+        let event = Self.parse(["booking_id": "not-a-uuid"])
+        #expect(event.category == nil)
+        #expect(event.bookingId == nil)
     }
 
     // MARK: Payload shape

@@ -94,14 +94,48 @@ final class PushTokenCleanup {
 
     // MARK: - Involuntary logout
 
+    /// Cleanup for a logout the user did not ask for: a `403
+    /// ACCOUNT_SUSPENDED`, a stored token the server rejects at launch, a
+    /// refresh that comes back 401 or has no refresh token to try.
+    ///
+    /// No server DELETE: the bearer is already dead (or about to be), so the
+    /// server would reject it, and nothing would be gained by waiting on it.
+    /// The retry marker is set and `clearSession()` runs synchronously, so
+    /// the caller returns with the session gone and the shell routes to
+    /// Login at once. `deleteToken` then runs in a background Task, bounded
+    /// by `timeout`, and removes the marker only on success. Like
+    /// `signOut`, this keeps no credential (D-18); the deleteToken-only
+    /// marker is the whole retry state.
     func forceSignOut(
         deleteToken: @escaping @MainActor () async throws -> Void,
         clearSession: () -> Void
-    ) {}
+    ) {
+        defaults.set(true, forKey: Self.pendingKey)
+        clearSession()
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if await runBounded(deleteToken) {
+                defaults.removeObject(forKey: Self.pendingKey)
+            }
+        }
+    }
 
     // MARK: - Retry at launch and login
 
-    func retryIfPending(deleteToken: @escaping @MainActor () async throws -> Void) async {}
+    /// Retries the `deleteToken` half of an earlier cleanup that did not
+    /// finish (killed mid-logout, offline, Firebase error). A no-op without
+    /// the marker. Runs only at launch while signed out and at the next
+    /// login or signup before any token is registered (D-17): the caller
+    /// awaits it so the retry can never delete the token the new account is
+    /// about to register. Never re-sends the server DELETE (D-18): the old
+    /// bearer is gone, and the backend evicts the row itself when another
+    /// account registers this token or FCM reports it dead on the next send.
+    func retryIfPending(deleteToken: @escaping @MainActor () async throws -> Void) async {
+        guard isPending else { return }
+        if await runBounded(deleteToken) {
+            defaults.removeObject(forKey: Self.pendingKey)
+        }
+    }
 
     // MARK: - Bounded run
 

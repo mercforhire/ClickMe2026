@@ -89,6 +89,12 @@ final class UserManager {
     /// re-bind this device, and a second `logout()` is a no-op.
     private(set) var isLoggingOut = false
 
+    /// The in-flight deleteToken-only retry started by
+    /// `retryPushCleanupIfNeeded()`, so a launch retry and a login retry
+    /// that overlap share one run instead of racing Firebase. Cleared when
+    /// the run finishes.
+    private var pushCleanupRetry: Task<Void, Never>?
+
     /// Codec pair for the on-disk profile cache. Uses default (camelCase)
     /// key coding — we control both encode and decode, so no need for
     /// the API layer's snake-case conversion here.
@@ -156,7 +162,7 @@ final class UserManager {
         // return 403 at once).
         guard !wasSuspended else { return }
         wasSuspended = true
-        logout()
+        forceLogout()
     }
 
     /// Called by the login/splash view after it has shown the
@@ -173,6 +179,10 @@ final class UserManager {
     @discardableResult
     func login(email: String, password: String) async throws -> AuthUser {
         let response = try await api.login(email: email, password: password)
+        // Finish any deleteToken retry owed from an earlier logout BEFORE
+        // the new session registers its token, so the retry can never
+        // delete the token this account is about to bind (D-17).
+        await retryPushCleanupIfNeeded().value
         apply(loginData: response.data)
         return response.data.user
     }
@@ -209,6 +219,9 @@ final class UserManager {
             role: role.rawValue
         )
         let response = try await api.signup(request)
+        // Same ordering as `login`: the owed deleteToken retry runs before
+        // this account's token is registered (D-17).
+        await retryPushCleanupIfNeeded().value
         apply(signupData: response.data)
         return response.data
     }
@@ -246,13 +259,22 @@ final class UserManager {
     /// is ever asked. A launch that ends logged out never prompts.
     @discardableResult
     func tryAutoLogin() async -> Bool {
-        guard hasStoredToken else { return false }
+        guard hasStoredToken else {
+            // Signed-out launch: the only other moment (besides login and
+            // signup) the deleteToken-only retry runs (D-17). Not awaited;
+            // the splash routes to Login regardless.
+            retryPushCleanupIfNeeded()
+            return false
+        }
         do {
             try await refreshMe()
         } catch {
             // Branch: real auth failure vs. transient network failure.
             if Self.isAuthRejection(error) {
-                logout()
+                // The stored token is dead: no DELETE could succeed with
+                // it, so clear at once and kill the FCM token in the
+                // background.
+                forceLogout()
                 return false
             }
             // Transient — keep the token, synthesize a minimal signed-in
@@ -334,6 +356,40 @@ final class UserManager {
             )
             self.isLoggingOut = false
         }
+    }
+
+    /// Involuntary logout: account suspended, stored token rejected at
+    /// launch, refresh returned 401 or had no refresh token to try. The
+    /// bearer is already dead, so `DELETE /notifications/tokens/:device_id`
+    /// would be rejected and is not sent. The session is cleared before this
+    /// returns (the shell routes to Login at once) and Firebase `deleteToken`
+    /// runs in the background, bounded, leaving the deleteToken-only retry
+    /// marker if it fails (D-17, D-18). Safe to call while a user `logout()`
+    /// is in flight: `clearLocalSession()` is idempotent.
+    private func forceLogout() {
+        pushCleanup.forceSignOut(
+            deleteToken: { try await Messaging.messaging().deleteToken() },
+            clearSession: { self.clearLocalSession() }
+        )
+    }
+
+    /// Starts, or returns the in-flight, deleteToken-only retry for a
+    /// cleanup an earlier logout left unfinished. Called at a signed-out
+    /// launch (`tryAutoLogin`) and awaited by `login` / `signup` before the
+    /// new session registers a token (D-17). Carries no credential (D-18).
+    /// A no-op run (no marker) finishes immediately.
+    @discardableResult
+    private func retryPushCleanupIfNeeded() -> Task<Void, Never> {
+        if let pushCleanupRetry { return pushCleanupRetry }
+        let retry = Task { [weak self] in
+            guard let self else { return }
+            await pushCleanup.retryIfPending(
+                deleteToken: { try await Messaging.messaging().deleteToken() }
+            )
+            self.pushCleanupRetry = nil
+        }
+        pushCleanupRetry = retry
+        return retry
     }
 
     /// Drops every trace of the session on this device: in-memory user
@@ -496,8 +552,10 @@ final class UserManager {
     fileprivate func performRefreshCycle() async -> Bool {
         guard let stored = storedRefreshToken() else {
             // No refresh token on disk — nothing to try. Push the user
-            // back to login rather than letting them stew on a 401.
-            logout()
+            // back to login rather than letting them stew on a 401. The
+            // bearer just 401'd, so this is an involuntary logout: no
+            // DELETE, session cleared at once, deleteToken in the background.
+            forceLogout()
             return false
         }
         do {
@@ -506,7 +564,7 @@ final class UserManager {
             return true
         } catch {
             if case NetworkError.httpError(let status, _) = error, status == 401 {
-                logout()
+                forceLogout()
             }
             return false
         }
@@ -595,7 +653,18 @@ final class UserManager {
     /// POSTs to `/notifications/tokens` so the backend can push to this
     /// device via Firebase. Persists the token locally so `logout()`
     /// can DELETE the correct row on the server.
+    ///
+    /// Returns early, storing nothing, while a user logout is running: a
+    /// token that arrived mid-logout must not re-bind this device to the
+    /// account that is leaving, and must not survive `clearLocalSession()`
+    /// in UserDefaults (PUSH-04).
     func registerPushToken(_ token: String) async {
+        guard !isLoggingOut else {
+            #if DEBUG
+            print("push: registerPushToken skipped — logout in progress")
+            #endif
+            return
+        }
         UserDefaults.standard.set(token, forKey: pushDeviceTokenKey)
         guard hasStoredToken else {
             #if DEBUG
@@ -662,7 +731,18 @@ final class UserManager {
     /// log otherwise. That path is instead handled by the
     /// `MessagingDelegate` firing naturally once APNs registration
     /// completes.
+    ///
+    /// Also returns early while a user logout is running: a foreground
+    /// re-upload that lands during the ~3 s cleanup would re-bind the
+    /// device to the account that is leaving (PUSH-04). `registerPushToken`
+    /// repeats the guard for the token the callback delivers later.
     private func fetchAndUploadFCMToken() {
+        guard !isLoggingOut else {
+            #if DEBUG
+            print("push: fetchAndUploadFCMToken skipped — logout in progress")
+            #endif
+            return
+        }
         guard Messaging.messaging().apnsToken != nil else {
             #if DEBUG
             print("push: fetchAndUploadFCMToken — apnsToken not set yet, waiting for MessagingDelegate")

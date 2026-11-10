@@ -23,12 +23,18 @@ final class TopicEditorViewModel: ObservableObject {
     /// `"125.50"`, `12500` seeds `"125"`, `1200` JPY seeds `"1200"`; D-11),
     /// so a price with cents is shown to the cent instead of being truncated
     /// by integer division. While the trimmed text still equals that seed,
-    /// `validate()` sends the stored minor amount and stored currency back
-    /// unchanged (D-19). Once the expert edits it, the text is parsed as
-    /// whole major units, times 100, in `defaultCurrency`, exactly as before;
-    /// decimal input and a currency choice for typed prices are Phase 6
-    /// (EXP-02, EXP-03).
+    /// `validate()` sends the stored minor amount back unchanged (D-19).
+    /// Once the expert edits it, the text is parsed as whole major units,
+    /// times 100. Either way the amount is priced in `currency`, the topic's
+    /// own currency (backend Phase 34 D-18); decimal input for typed prices
+    /// is Phase 6 (EXP-02).
     @Published var rate: String
+    /// The currency this topic is priced in. Seeded from the topic's own
+    /// stored currency (never the account default) or, for a new topic, from
+    /// the backend default. Picked from `pickableCurrencies` unless
+    /// `isCurrencyLocked`. Sent with every save, on typed and untouched
+    /// prices alike.
+    @Published var currency: String
     /// Session length in whole minutes. Edited via a stepper in 30-min
     /// increments; defaults to 60 (one hour).
     @Published var durationMinutes: Int
@@ -67,15 +73,49 @@ final class TopicEditorViewModel: ObservableObject {
     /// nav title and any "Add" vs "Edit" copy.
     let isEditing: Bool
 
+    /// True when the picker must not change `currency`: an existing paid
+    /// topic that already carries a currency. Mirrors the server's paid-topic
+    /// lock (`422 TOPIC_CURRENCY_LOCKED`, backend Phase 34 D-04). A free
+    /// topic, new or existing, may pick any allowed currency.
+    let isCurrencyLocked: Bool
+
     /// Default currency for new topics. Backend controls this now via
     /// `PricingLimits.minSessionAmount.defaultCurrency` (per the Pricing
     /// Limits spec §1). The hard-coded `"CAD"` is used only as an
     /// absolute fallback when `/me` hasn't landed yet on cold launch —
     /// the server rejects sub-minimum saves independently with
-    /// `PRICE_BELOW_MINIMUM`, so we're not authoritative here.
+    /// `PRICE_BELOW_MINIMUM`, so we're not authoritative here. Only a seed
+    /// for a new topic; an existing topic keeps its own `currency`.
     var defaultCurrency: String {
-        userManager.me?.pricingLimits?.minSessionAmount.defaultCurrency ?? "CAD"
+        Self.accountDefaultCurrency(userManager.me)
     }
+
+    /// Currencies a topic may be priced in: `pricing_limits.allowed_currencies`,
+    /// or just the default currency when the backend omits the key (older
+    /// server, or `/me` not loaded yet). See `docs/ios/USD-TOPIC-PRICING.md` §1.
+    var allowedCurrencies: [String] {
+        Self.allowedCurrencies(in: userManager.me)
+    }
+
+    /// Currencies shown in the picker: `allowedCurrencies` plus the current
+    /// `currency` when it is missing from the list, so the selection always
+    /// renders and an edit never blocks (same idea as `pickableSlugs`).
+    var pickableCurrencies: [String] {
+        let allowed = allowedCurrencies
+        return allowed.contains(currency) ? allowed : allowed + [currency]
+    }
+
+    /// Short symbol for the price field label: `US$`, `CA$`, else the ISO code.
+    var currencySymbol: String {
+        switch currency {
+        case "USD": return "US$"
+        case "CAD": return "CA$"
+        default: return currency
+        }
+    }
+
+    /// True while the USD FX notice should show.
+    var showsUSDFXNotice: Bool { currency == "USD" }
 
     /// Curated slug set covering the most common expert topic
     /// categories, alphabetical for stable scan-ability.
@@ -113,11 +153,34 @@ final class TopicEditorViewModel: ObservableObject {
     /// no amount. Sent back as-is on an untouched save so a `12.50` topic
     /// is never rewritten to `12.00` by the whole-number parser.
     private let seededRateMinor: Int?
-    /// The topic's own currency, exactly as stored (`hourlyRate.currency`,
-    /// else `price.currency`), or nil when the topic carries none. Sent
-    /// back on an untouched save so a USD topic on a CAD-default account
-    /// is not re-priced in CAD.
-    private let seededRateCurrency: String?
+
+    // MARK: Currency resolution (backend Phase 34 D-18)
+
+    /// The currency the editor starts on, uppercased: the topic's own stored
+    /// currency (`hourlyRate.currency`, else `price.currency`), or
+    /// `defaultCurrency` when the topic has none (or is nil, a new topic).
+    /// Never the account default for a topic that carries a currency; that
+    /// was the bug that re-priced a USD topic in CAD on a retyped price.
+    static func resolveInitialCurrency(topic: ExpertTopicItem?, defaultCurrency: String) -> String {
+        let stored = topic?.hourlyRate?.currency ?? topic?.price.currency
+        return (stored ?? defaultCurrency).uppercased()
+    }
+
+    /// True for an existing topic that is paid and carries a stored currency.
+    static func isCurrencyLocked(topic: ExpertTopicItem?) -> Bool {
+        guard let topic else { return false }
+        let stored = topic.hourlyRate?.currency ?? topic.price.currency
+        return !topic.price.isFree && stored != nil
+    }
+
+    private static func accountDefaultCurrency(_ me: MeData?) -> String {
+        me?.pricingLimits?.minSessionAmount.defaultCurrency ?? "CAD"
+    }
+
+    private static func allowedCurrencies(in me: MeData?) -> [String] {
+        me?.pricingLimits?.allowedCurrencies?.map { $0.uppercased() }
+            ?? [accountDefaultCurrency(me)]
+    }
 
     // MARK: Init
 
@@ -136,18 +199,26 @@ final class TopicEditorViewModel: ObservableObject {
         // the stored amount without loss, using the digit count of the
         // topic's own currency (or the account default when the topic has
         // none, which is the currency the backend assumes for it). The seed
-        // and the stored amount and currency are kept so an untouched save
-        // can send them back unchanged (D-19).
+        // and the stored amount are kept so an untouched save can send the
+        // amount back unchanged (D-19). The currency starts on the topic's
+        // own stored currency, never the account default (backend Phase 34
+        // D-18); only a topic with none, or a new topic, takes the default.
         let minorAmount = topic?.hourlyRate?.amount ?? topic?.price.amount
         let storedCurrency = topic?.hourlyRate?.currency ?? topic?.price.currency
-        let seedCurrency = storedCurrency
-            ?? userManager.me?.pricingLimits?.minSessionAmount.defaultCurrency
-            ?? "CAD"
+        let accountDefault = Self.accountDefaultCurrency(userManager.me)
+        let seedCurrency = storedCurrency ?? accountDefault
         let seed = minorAmount.map { Self.editableAmount(minorUnits: $0, currency: seedCurrency) } ?? ""
+        // New-topic default per the contract: the backend default when it is
+        // pickable, otherwise the first allowed currency.
+        let allowed = Self.allowedCurrencies(in: userManager.me)
+        let newTopicDefault = allowed.contains(accountDefault.uppercased())
+            ? accountDefault
+            : (allowed.first ?? accountDefault)
         self.rate = seed
         self.seededRate = seed
         self.seededRateMinor = minorAmount
-        self.seededRateCurrency = storedCurrency
+        self.currency = Self.resolveInitialCurrency(topic: topic, defaultCurrency: newTopicDefault)
+        self.isCurrencyLocked = Self.isCurrencyLocked(topic: topic)
         self.durationMinutes = topic?.durationMins ?? 60
         self.iconSlug = topic?.iconSlug
         self.selectedTagIds = Set(topic?.expertiseTags?.map(\.id) ?? [])
@@ -269,8 +340,9 @@ final class TopicEditorViewModel: ObservableObject {
         /// left at its seed (D-19), otherwise the typed whole major units
         /// times 100.
         let hourlyRateAmount: Int
-        /// The topic's stored currency when the price field was left at its
-        /// seed (D-19), otherwise `defaultCurrency` for a typed price.
+        /// The editor's `currency`: the topic's own stored currency for an
+        /// existing paid topic (locked), the picked one for a new or free
+        /// topic. Same on typed and untouched prices (backend Phase 34 D-18).
         let currency: String
         let iconSlug: String?
         let expertiseTagIds: [String]
@@ -286,24 +358,21 @@ final class TopicEditorViewModel: ObservableObject {
             return nil
         }
 
+        // Both branches price the amount in `currency`, the topic's own
+        // currency (or the one the expert picked on a new or free topic),
+        // never the account default (backend Phase 34 D-18).
         let rateMinor: Int
-        let currency: String
         if let seededRateMinor, trimmedRate == seededRate {
-            // Untouched price (D-19): send the stored minor amount and the
-            // stored currency back unchanged. The seed may carry cents
-            // ("125.50") that the whole-number parser below would reject, and
-            // the topic's currency may differ from the account default; an
-            // open-and-save must change neither. A topic with no stored
-            // currency has nothing to keep, so it takes the default, which is
-            // the currency the backend assumes for it.
+            // Untouched price (D-19): send the stored minor amount back
+            // unchanged. The seed may carry cents ("125.50") that the
+            // whole-number parser below would reject; an open-and-save must
+            // not rewrite it.
             rateMinor = seededRateMinor
-            currency = seededRateCurrency ?? defaultCurrency
         } else {
             // Rate parsing: empty OR explicit "0" = free session (allowed).
             // Positive int = paid, subject to the min-price check below.
             // Anything else (non-numeric, negative, decimals) = invalid.
-            // Decimal input and a currency choice for typed prices are
-            // Phase 6 (EXP-02, EXP-03).
+            // Decimal input for typed prices is Phase 6 (EXP-02).
             let rateMajor: Int
             if trimmedRate.isEmpty {
                 rateMajor = 0
@@ -314,7 +383,6 @@ final class TopicEditorViewModel: ObservableObject {
                 return nil
             }
             rateMinor = rateMajor * 100
-            currency = defaultCurrency
         }
 
         // Server-authoritative floor (per PRICING-LIMITS spec §4) —
@@ -352,7 +420,7 @@ final class TopicEditorViewModel: ObservableObject {
     }
 
     /// True while the current typed rate is below the min for the
-    /// current currency, non-empty, and non-free. Drives the inline
+    /// selected `currency`, non-empty, and non-free. Drives the inline
     /// caption under the price field so the expert sees the constraint
     /// before hitting Save. Returns `false` when `pricingLimits` hasn't
     /// loaded (silent rather than misleading), and for the free case
@@ -361,7 +429,7 @@ final class TopicEditorViewModel: ObservableObject {
         guard let limit = userManager.me?.pricingLimits?.minSessionAmount else { return false }
         let trimmed = rate.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty, let rateMajor = Int(trimmed), rateMajor > 0 else { return false }
-        return rateMajor * 100 < limit.minMinorUnits(for: defaultCurrency)
+        return rateMajor * 100 < limit.minMinorUnits(for: currency)
     }
 
     /// Inline helper caption. Calls out that free is a valid choice so
@@ -370,7 +438,6 @@ final class TopicEditorViewModel: ObservableObject {
     /// render a placeholder that later shifts.
     var minPriceHint: String? {
         guard let limit = userManager.me?.pricingLimits?.minSessionAmount else { return nil }
-        let currency = defaultCurrency
         let floor = limit.minMinorUnits(for: currency)
         return "Leave blank or enter 0 for a free session — otherwise min \(Self.formatMinorUnits(floor, currency: currency))."
     }

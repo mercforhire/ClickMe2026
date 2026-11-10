@@ -106,6 +106,17 @@ enum ErrorCode: String, Decodable {
     // Server message is display-ready + currency-formatted, safe to
     // surface directly.
     case priceBelowMinimum         = "PRICE_BELOW_MINIMUM"
+    // 422 — topic PATCH (backend Phase 34). The topic is paid, stays paid,
+    // and the request names a different currency than the one stored.
+    // Nothing is written. The picker is locked on a paid topic so a
+    // correct editor never triggers it; if it does, show the server
+    // `message`, which is display-ready. See `docs/ios/USD-TOPIC-PRICING.md`.
+    case topicCurrencyLocked       = "TOPIC_CURRENCY_LOCKED"
+    // 409 — `POST /bookings/confirm` (backend Phase 34). The PaymentIntent's
+    // currency differs from the topic's, so the intent is stale (for example
+    // the topic changed). Discard it and restart from
+    // `POST /bookings/payment-intent`. Server message is display-ready.
+    case piCurrencyMismatch        = "PI_CURRENCY_MISMATCH"
     case paidTopicRequiresPayment  = "PAID_TOPIC_REQUIRES_PAYMENT"
     case invalidPromo              = "INVALID_PROMO"
     case invalidPaymentMethod      = "INVALID_PAYMENT_METHOD"     // 422 — pm_ belongs to a different customer

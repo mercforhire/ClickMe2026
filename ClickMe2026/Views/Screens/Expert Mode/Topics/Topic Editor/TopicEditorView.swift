@@ -95,9 +95,11 @@ struct TopicEditorView: View {
 
                         durationStepper
 
+                        currencyPicker
+
                         VStack(alignment: .leading, spacing: 6) {
                             editorField(
-                                label: "Price per Session ($)",
+                                label: "Price per Session (\(viewModel.currencySymbol))",
                                 placeholder: "e.g. 150",
                                 text: $viewModel.rate,
                                 keyboard: .numberPad
@@ -106,6 +108,15 @@ struct TopicEditorView: View {
                                 Text(hint)
                                     .font(.caption.weight(.regular))
                                     .foregroundColor(viewModel.isRateBelowMinimum ? Brand.error : Brand.overlayWhite60)
+                            }
+                            // Backend Phase 34 D-11(a): the expert bears
+                            // Stripe's conversion fee on a USD topic. Exact
+                            // contract copy; only while USD is selected.
+                            if viewModel.showsUSDFXNotice {
+                                Text(Self.usdFXNotice)
+                                    .font(.caption.weight(.regular))
+                                    .foregroundColor(Brand.overlayWhite60)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
 
@@ -393,6 +404,49 @@ struct TopicEditorView: View {
         .buttonStyle(.plain)
         .disabled(atCap)
         .opacity(atCap ? 0.45 : 1)
+    }
+
+    // MARK: - Currency copy
+
+    /// Exact copy from `docs/ios/USD-TOPIC-PRICING.md` §4 (backend repo), shown
+    /// while USD is selected. Both apps render it character for character.
+    private static let usdFXNotice = "Clients will pay in US dollars. If your payout bank account is in Canadian dollars, Stripe converts each payment and keeps a currency conversion fee of about 2%. You may be able to avoid this by adding a USD bank account in your Stripe Express dashboard."
+
+    /// Exact lock caption from the same contract (§4), shown beside the locked
+    /// picker on a paid topic.
+    private static let currencyLockCaption = "A paid topic's currency can't be changed. Create a new topic to charge in a different currency."
+
+    // MARK: - Currency picker
+
+    /// CAD / USD picker fed from `pricing_limits.allowed_currencies`. Locked
+    /// on an existing paid topic (the server rejects a change with
+    /// `TOPIC_CURRENCY_LOCKED`), free to change on a new or free topic.
+    /// Hidden when there is nothing to choose between (older backend without
+    /// `allowed_currencies`).
+    @ViewBuilder
+    private var currencyPicker: some View {
+        if viewModel.pickableCurrencies.count > 1 {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Currency")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(Brand.onSurfaceVariant)
+
+                Picker("Currency", selection: $viewModel.currency) {
+                    ForEach(viewModel.pickableCurrencies, id: \.self) { code in
+                        Text(code).tag(code)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .disabled(viewModel.isCurrencyLocked)
+
+                if viewModel.isCurrencyLocked {
+                    Text(Self.currencyLockCaption)
+                        .font(.caption.weight(.regular))
+                        .foregroundColor(Brand.overlayWhite60)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
     }
 
     // MARK: - Duration stepper

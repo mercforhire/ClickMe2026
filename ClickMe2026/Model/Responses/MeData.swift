@@ -26,10 +26,16 @@ struct MeData: Decodable {
     let pricingLimits: PricingLimits?
 }
 
-/// Platform-wide limits carried by `GET /me`. Currently only holds
-/// `min_session_amount`; more limits can join this container without
+/// Platform-wide limits carried by `GET /me`. Holds `min_session_amount`
+/// and `allowed_currencies`; more limits can join this container without
 /// changing call sites.
 struct PricingLimits: Decodable {
+    /// Uppercase ISO-4217 codes a topic may be priced in, in display order
+    /// (`["CAD", "USD"]` today). Feeds the topic editor's currency picker.
+    /// Optional because a backend that predates backend Phase 34 omits it;
+    /// callers fall back to `[minSessionAmount.defaultCurrency]`. See
+    /// `docs/ios/USD-TOPIC-PRICING.md` §1 in the backend repo.
+    let allowedCurrencies: [String]?
     let minSessionAmount: MinSessionAmount
 }
 
@@ -42,11 +48,12 @@ struct PricingLimits: Decodable {
 /// `TopicEditorViewModel.defaultCurrency = "CAD"` — read it here
 /// instead so operator changes propagate without an app release.
 struct MinSessionAmount: Decodable {
-    /// Uppercase ISO-4217 code → floor in minor units. Coverage matches
-    /// whatever the backend has seeded (8 currencies today: USD, EUR,
-    /// GBP, CAD, AUD, JPY, INR, CHF). Look up with the topic's own
-    /// currency; fall back to `defaultMinorUnits` for anything not in
-    /// the map.
+    /// Uppercase ISO-4217 code → floor in minor units. Floors are still
+    /// published for every seeded currency (8 today: USD, EUR, GBP, CAD,
+    /// AUD, JPY, INR, CHF), but only the codes in
+    /// `PricingLimits.allowedCurrencies` may price a topic. Look up with
+    /// the topic's own currency; fall back to `defaultMinorUnits` for
+    /// anything not in the map.
     let byCurrency: [String: Int]
     /// Fallback floor when the selected currency isn't a key in
     /// `byCurrency`. Use this rather than skipping validation.

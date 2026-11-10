@@ -150,18 +150,16 @@ class ClickMe2026AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificatio
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         let userInfo = notification.request.content.userInfo
-        if let event = PushEvent(userInfo: userInfo) {
-            Task { @MainActor in
-                PushRouter.shared.handleForegroundArrival(event)
-            }
+        let event = PushEvent(userInfo: userInfo)
+        Task { @MainActor in
+            PushRouter.shared.handleForegroundArrival(event)
         }
         completionHandler([.banner, .list, .sound, .badge])
     }
 
     /// User tapped a notification. Parse the payload and hand off to
-    /// the router — the active shell picks up `pendingDestination`
-    /// and navigates. Always call the completion handler last so iOS
-    /// releases the notification.
+    /// the router, which queues it for the active shell to open. Always
+    /// call the completion handler last so iOS releases the notification.
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
@@ -174,18 +172,13 @@ class ClickMe2026AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificatio
             print("push:   [\(key)] = \(value)")
         }
         #endif
-        if let event = PushEvent(userInfo: userInfo) {
-            #if DEBUG
-            print("push: parsed event — category=\(event.category), sub_category=\(event.subCategory ?? "nil"), booking_id=\(event.bookingId?.uuidString ?? "nil"), thread_id=\(event.threadId?.uuidString ?? "nil")")
-            #endif
-            Task { @MainActor in
-                PushRouter.shared.handleTap(event)
-                completionHandler()
-            }
-        } else {
-            #if DEBUG
-            print("push: PushEvent parse FAILED — no `category` field found. Backend payload shape mismatch.")
-            #endif
+        let event = PushEvent(userInfo: userInfo)
+        #if DEBUG
+        let targetRole = event.targetRole.map { String(describing: $0) } ?? "nil"
+        print("push: parsed event — category=\(event.category ?? "nil"), sub_category=\(event.subCategory ?? "nil"), target_role=\(targetRole)")
+        #endif
+        Task { @MainActor in
+            PushRouter.shared.handleTap(event)
             completionHandler()
         }
     }

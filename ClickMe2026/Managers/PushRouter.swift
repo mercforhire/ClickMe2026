@@ -90,13 +90,9 @@ final class PushRouter: ObservableObject {
     /// or background). Parses the payload, computes a destination, and
     /// stores it for the shell to consume.
     func handleTap(_ event: PushEvent) {
-        guard let destination = Self.destination(for: event) else {
-            // Unknown category → open the notifications list so the
-            // user can at least see what came in.
-            pendingDestination = .notificationsList
-            return
-        }
-        pendingDestination = destination
+        // An unknown or missing category opens the notifications list so
+        // the user can at least see what came in (PUSH-01).
+        pendingDestination = Self.destination(for: event) ?? .notificationsList
     }
 
     /// Called from `willPresent` (push arrived while app was in the

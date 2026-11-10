@@ -123,5 +123,7 @@ struct MakeABookingCalendarCard: View {
         }
         .buttonStyle(.plain)
         .disabled(!isCurrentMonth || item.date == nil || isPast)
+        // Grid-padding cells are not days: VoiceOver skips them (02-UI-SPEC A1).
+        .accessibilityHidden(item.isFiller)
     }
 }

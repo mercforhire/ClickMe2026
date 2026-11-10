@@ -689,6 +689,12 @@ final class MakeABookingViewModel: ObservableObject {
         let label: String
         let date: Date?
         let isCurrentMonth: Bool
+
+        /// True for a cell that only pads the grid with a day number from the
+        /// previous or next month. Such a cell is never tappable, and the
+        /// calendar card hides it from VoiceOver (02-UI-SPEC A1), like the
+        /// Reschedule calendar's empty cells and Android's empty `Box`.
+        var isFiller: Bool { date == nil }
     }
 
     func generateDays(for month: Date) -> [CalendarDay] {

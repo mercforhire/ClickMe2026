@@ -53,6 +53,67 @@ enum PushDestination: Equatable {
     case notificationsList
 }
 
+// MARK: - Pending push and plan
+
+/// A tapped push waiting to be routed: where it goes and which mode it was
+/// meant for (`target_role`, nil when the push did not say).
+struct PendingPush: Equatable {
+    let destination: PushDestination
+    let targetRole: AppMode?
+}
+
+/// What the shell should do with a `PendingPush`: open `destination` in the
+/// current mode, or first switch to `switchToMode` and let the other shell
+/// open it.
+struct PushPlan: Equatable {
+    let destination: PushDestination
+    let switchToMode: AppMode?
+}
+
+/// The account facts the planner needs, as injected closures so tests can
+/// script them without touching `UserManager` or the network. `live` reads
+/// `UserManager.shared`.
+struct PushAccountSource {
+    let roles: @MainActor () -> [UserRole]?
+    let expertSetupCompleted: @MainActor () -> Bool?
+    let loadRoles: @MainActor () async -> Void
+    let loadExpertProfile: @MainActor () async -> Void
+
+    /// Reads and reloads through `UserManager.shared`. The reloads are
+    /// best effort: a failed fetch leaves the value nil and the planner
+    /// treats nil as "cannot use expert mode" (research A8) or, for roles,
+    /// as "not decided yet".
+    static var live: PushAccountSource {
+        PushAccountSource(
+            roles: { UserManager.shared.me?.roles },
+            expertSetupCompleted: { UserManager.shared.expertProfile?.setupCompleted },
+            loadRoles: { try? await UserManager.shared.refreshMe() },
+            loadExpertProfile: { try? await UserManager.shared.refreshExpertProfile() }
+        )
+    }
+}
+
+/// Pure rules for turning a `PendingPush` into a `PushPlan` (D-02, D-03).
+enum PushRoutePlanner {
+
+    /// Expert mode is usable only with the expert role and a completed
+    /// expert setup. Unknown (nil) counts as no.
+    static func canUseExpertMode(roles: [UserRole]?, setupCompleted: Bool?) -> Bool {
+        false
+    }
+
+    /// Whether planning this tap needs the account's roles: only an
+    /// expert-targeted tap arriving in client mode is decided from them
+    /// (D-03).
+    static func needsRoles(_ pending: PendingPush, currentMode: AppMode) -> Bool {
+        false
+    }
+
+    static func plan(_ pending: PendingPush, currentMode: AppMode, canUseExpertMode: Bool) -> PushPlan {
+        PushPlan(destination: pending.destination, switchToMode: nil)
+    }
+}
+
 /// Global coordinator that translates a `PushEvent` (payload) into a
 /// `PushDestination` (client concept) and hands it off to whichever
 /// shell is currently on screen.
@@ -77,6 +138,10 @@ final class PushRouter: ObservableObject {
     /// only the most-recently-tapped notification.
     @Published var pendingDestination: PushDestination?
 
+    /// The tapped push queued until the shell for its mode consumes it.
+    /// Never latched: the newest tap wins.
+    @Published var pending: PendingPush?
+
     /// Bumps every time a push arrives in the foreground so
     /// `NotificationsListView` can `.onReceive` and silently reload.
     /// Value itself is meaningless; the change is the signal.
@@ -89,10 +154,16 @@ final class PushRouter: ObservableObject {
     /// Called from `didReceive` (user tapped a notification, foreground
     /// or background). Parses the payload, computes a destination, and
     /// stores it for the shell to consume.
-    func handleTap(_ event: PushEvent) {
+    func handleTap(_ event: PushEvent, isSignedIn: Bool = UserManager.shared.hasStoredToken) {
         // An unknown or missing category opens the notifications list so
         // the user can at least see what came in (PUSH-01).
         pendingDestination = Self.destination(for: event) ?? .notificationsList
+    }
+
+    /// Plans the queued tap for the shell of `currentMode`; nil when nothing
+    /// is queued.
+    func planPending(currentMode: AppMode, account: PushAccountSource = .live) async -> PushPlan? {
+        nil
     }
 
     /// Called from `willPresent` (push arrived while app was in the

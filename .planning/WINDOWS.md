@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 5
+open_count: 6
 waived_count: 0
 fixed_count: 7
-total_count: 12
-last_updated: 2026-11-09T05:33:41.136Z
+total_count: 13
+last_updated: 2026-11-10T04:09:27.895Z
 ---
 
 # Broken Windows Ledger
@@ -27,6 +27,7 @@ last_updated: 2026-11-09T05:33:41.136Z
 | 10 | 01 | fixme | src/controllers/clientBooking.controller.js |  | 01-19: client cancel within 24h with a retrievePI failure leaves the hold with no flag and no retry until the authorization lapses; see deferred-items.md | fixed |  | 2026-11-09T01:16:27.542Z | 2026-11-09T05:33:41.136Z |
 | 11 | 01 | unrun-verify | .planning/phases/01-backend-fixes/01-19-SUMMARY.md |  | 01-19 wave-3b production smoke not run (user skip 2026-11-08): BACK-19 stays Pending; expert-cancel hold release not confirmed on production; run the 01-19 checklist, at the latest during Phase 4 payment UAT | open |  | 2026-11-09T02:16:24.413Z |  |
 | 12 | 01 | unmet-truth | .planning/phases/01-backend-fixes/01-23-SUMMARY.md |  | 01-23 wave 3c dropped by user decision (2026-11-08): BACK-08 and BACK-13 not delivered; silent client-to-expert promotion and the tax-ID prompt remain in production; code parked on local backend branch wave-3c; needs a new decision | open |  | 2026-11-09T03:13:09.977Z |  |
+| 13 | 02 | unrun-verify | .planning/phases/02-shared-ios-plumbing/02-05-SUMMARY.md |  | 02-05 BOOK-10 device check not run (user approve and defer 2026-11-09): CAD topic 12.50 shows CA$12.50 and 12.00 shows CA$12.00 on Make a Booking, Explore, Expert Profile, Payment History; add to 02-12 device UAT checklist | open |  | 2026-11-10T04:09:27.895Z |  |
 
 ````json
 [
@@ -183,6 +184,19 @@ last_updated: 2026-11-09T05:33:41.136Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-09T03:13:09.977Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 13,
+    "kind": "unrun-verify",
+    "phase": "02",
+    "file": ".planning/phases/02-shared-ios-plumbing/02-05-SUMMARY.md",
+    "line": null,
+    "description": "02-05 BOOK-10 device check not run (user approve and defer 2026-11-09): CAD topic 12.50 shows CA$12.50 and 12.00 shows CA$12.00 on Make a Booking, Explore, Expert Profile, Payment History; add to 02-12 device UAT checklist",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-10T04:09:27.895Z",
     "resolved_at": null,
     "milestone": null
   }

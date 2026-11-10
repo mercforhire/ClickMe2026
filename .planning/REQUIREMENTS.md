@@ -50,7 +50,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **PAY-02** [P2] **[major]**: A confirm that times out and is retried sends the user to their pending booking, not "slot taken"
 - [ ] **PAY-03** [P3]: The payment lifecycle card describes what actually happened (hold vs charge), including older long-lead bookings
 - [ ] **PAY-04** [P5]: The stale `TODO(backend): stripe_account` comments are removed
-- [ ] **PAY-05** [P6]: Paid and free booking paths show the same slot-taken and meeting-link error copy
+- [x] **PAY-05** [P6]: Paid and free booking paths show the same slot-taken and meeting-link error copy
 
 ### Explore, Profile, Favorites, Reviews
 
@@ -207,7 +207,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | PAY-02 | Phase 4 | Pending |
 | PAY-03 | Phase 4 | Pending |
 | PAY-04 | Phase 4 | Pending |
-| PAY-05 | Phase 2 | Pending |
+| PAY-05 | Phase 2 | Complete |
 | EXPL-01 | Phase 4 | Pending |
 | EXPL-02 | Phase 4 | Pending |
 | EXPL-03 | Phase 4 | Pending |

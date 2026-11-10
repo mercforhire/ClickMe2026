@@ -159,13 +159,13 @@ Plans:
   4. Paid booking and reschedule pickers offer no slot more than 6 days ahead. The long-lead error codes show a clear error instead of an invalid confirm. Paid and free booking paths show the same slot-taken and meeting-link copy.
   5. Tapping any push switches to the right mode and opens the right screen: a booking-request push opens that request, `booking/payment_actions` opens that booking, and unknown types open the notifications list. No banner appears for the chat already on screen, and after logout the device stops receiving the old account's pushes.
 
-**Plans**: 2/15 plans executed in 3 waves (iOS only, no backend change)
+**Plans**: 3/15 plans executed in 3 waves (iOS only, no backend change)
 
 Plans:
 **Wave 1**
 - [x] 02-01-PLAN.md — CALL-01 first: 60-minute overtime cutoff, end + 55 notice, 1-second minimum on /end (CALL-04)
 - [x] 02-03-PLAN.md — BOOK-18 tolerant booking status (rescheduled and unknown), every exhaustive switch decided, newest-refetch helper on the expert Upcoming list
-- [ ] 02-07-PLAN.md — BOOK-14 and PAY-05 on Make a Booking: shared error mapper, long-lead fall-through removed, 6-day paid picker cap
+- [x] 02-07-PLAN.md — BOOK-14 and PAY-05 on Make a Booking: shared error mapper, long-lead fall-through removed, 6-day paid picker cap
 - [ ] 02-09-PLAN.md — CR-01 and D-04: HomeRoute registered on every tab, tab-owned destinations, one push destination table (PUSH-01, PUSH-03, BOOK-15)
 
 **Wave 2** *(each plan waits for the wave 1 plan it names)*
@@ -318,7 +318,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
-| 2. Shared iOS Plumbing | 2/15 | In Progress | - |
+| 2. Shared iOS Plumbing | 3/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 0/TBD | Not started | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |

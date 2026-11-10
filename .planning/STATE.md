@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-11-10T01:49:51.174Z"
+stopped_at: Completed 02-07-PLAN.md
+last_updated: "2026-11-10T01:59:55.783Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: c87cfeab1f24388d046aef964bb6807f475bbafd
+state_head: 5450ddaea3a27ca88bb46d9bd29dcdd0ffaefeda
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 28
+  completed_plans: 29
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 3 of 15
+Plan: 4 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -84,6 +84,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 01 P26 | ~30 min wall clock (user wait) | 3 of 3 (Task 2 by the user) tasks | 3 files |
 | Phase 02 P01 | 2h (incl. gate pause) | 2 tasks | 4 files |
 | Phase 02 P03 | 70 min | 2 tasks | 9 files |
+| Phase 02 P07 | 10 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -158,6 +159,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-01: call overtime cutoff held at end + 60 min (server /end and Agora token valid to end + 70); never-joined leg sends no POST /end
 - [Phase 02]: [02-03] BookingStatus.rescheduled and .unknown are non-joinable and never strip members; expert Upcoming Bookings lists them under Upcoming until the session ends (Join decided by the 02-04 join helper)
 - [Phase 02]: [02-03] Overlapping refetches use a ReloadGeneration token (newest started wins, superseded fetch writes nothing, no cancellation); callers take the token and pass it to runFetch(token:) so forceLoad can tell superseded from a genuine failure
+- [Phase 02]: [02-07] Both long-lead codes are terminal: the no-PaymentIntent confirm is deleted; paid picker cap is inclusive at now + 6 days and read from Date() on every evaluation
+- [Phase 02]: [02-07] BookingErrorMapper is the single ErrorCode to copy table (paid copy is the base); test suites that share MockURLProtocol must live in one .serialized suite, and suites that never call the API must not use APITestFactory
 
 ### Pending Todos
 
@@ -216,6 +219,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T01:49:47.342Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-11-10T01:59:55.707Z
+Stopped at: Completed 02-07-PLAN.md
 Resume file: None

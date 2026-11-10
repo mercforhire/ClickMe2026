@@ -194,7 +194,7 @@ Plans:
 
 **Goal**: Clients and experts can respond to, cancel, reschedule and join their booked sessions from every screen that offers those actions, with accurate status and refund information
 **Depends on**: Phase 2 (and Phase 1 for BACK-02, BACK-12, BACK-14)
-**Requirements**: BOOK-06, BOOK-07, BOOK-08, BOOK-09, BOOK-11, BOOK-12, BOOK-13, BOOK-16, BOOK-17, CALL-03, CALL-06, CALL-07, CALL-08, CALL-10, EXP-11, EXP-13
+**Requirements**: BOOK-06, BOOK-07, BOOK-08, BOOK-09, BOOK-11, BOOK-12, BOOK-13, BOOK-16, BOOK-17, BOOK-20, CALL-03, CALL-06, CALL-07, CALL-08, CALL-10, EXP-11, EXP-13
 **Success Criteria** (what must be TRUE):
   1. A client can accept or decline an expert-proposed reschedule from the upcoming-booking flow.
   2. Join works on every booking screen that offers it. Tapping Join on the client Upcoming Booking details screen starts the call, and the expert can join from Booking Summary within the same window. Both can open a Skype/Zoom meeting. The meeting screen shows elapsed or remaining time and no longer promises an automatic end.
@@ -258,7 +258,7 @@ Plans:
 
 **Goal**: Experts can price, describe and schedule their topics correctly and handle requests, bookings, clients and notes without wrong amounts or dead ends
 **Depends on**: Phase 2 (and Phase 1 for BACK-01, BACK-05, BACK-11)
-**Requirements**: EXP-01, EXP-02, EXP-03, EXP-04, EXP-05, EXP-06, EXP-07, EXP-08, EXP-09, EXP-10, EXP-12, EXP-14, EXP-15, EXP-16, EXP-17
+**Requirements**: EXP-01, EXP-02, EXP-03, EXP-04, EXP-05, EXP-06, EXP-07, EXP-08, EXP-09, EXP-10, EXP-12, EXP-14, EXP-15, EXP-16, EXP-17, EXP-18
 **Success Criteria** (what must be TRUE):
   1. An expert can enter a topic price with decimals (e.g. 12.50) in the topic's own currency, and editing a topic keeps that currency. When creating a topic, the expert can choose CAD or USD on both iOS and Android (EXP-17). The icon and description can be cleared. Deleting a topic asks for confirmation first.
   2. In availability, Cancel on the time-range picker reverts the change. No end time is produced that the picker can't show. An off-grid stored time such as 09:15 shows as selected.

@@ -43,6 +43,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
 - [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
 - [ ] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
+- [ ] **BOOK-20** [new, user request 2026-11-10]: The client Booking Summary screen shows the booking ID, on both iOS and Android, in the same short-ID format as Upcoming Booking details (`ID: …`). Android has no ID on this screen today either, so both apps change
 
 ### Payments
 
@@ -91,6 +92,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **EXP-15** [E17]: The expert hub online dot reflects real presence, or is removed
 - [ ] **EXP-16** [E18]: The private booking note is capped at 5000 characters with a counter, trims whitespace, and asks before discarding edits
 - [ ] **EXP-17** [new, user request 2026-11-09]: When creating a topic, the expert can choose its currency from CAD or USD (default CAD), on both iOS and Android; the minimum-price hint and validation follow the chosen currency, and editing keeps the topic's currency. Backend already accepts `hourly_rate.currency` (seeded `currencies` table, per-currency floors in `src/utils/pricing.js`), so no backend change is expected
+- [ ] **EXP-18** [new, user request 2026-11-10]: The expert Booking Summary screen shows the booking ID, on both iOS and Android. Android already shows `ID: #…` (`expert_summary_id`, `ExpertSummaryCard.kt`); iOS adds it in the same format, and Android is checked to match the client screen's short-ID rule (BOOK-20)
 
 ### Chat
 
@@ -205,6 +207,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-17 | Phase 3 | Pending |
 | BOOK-18 | Phase 2 | Complete |
 | BOOK-19 | Phase 4 | Pending |
+| BOOK-20 | Phase 3 | Pending |
 | PAY-01 | Phase 4 | Pending |
 | PAY-02 | Phase 4 | Pending |
 | PAY-03 | Phase 4 | Pending |
@@ -240,6 +243,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXP-15 | Phase 6 | Pending |
 | EXP-16 | Phase 6 | Pending |
 | EXP-17 | Phase 6 | Pending |
+| EXP-18 | Phase 6 | Pending |
 | CHAT-01 | Phase 7 | Pending |
 | CHAT-02 | Phase 7 | Pending |
 | CHAT-03 | Phase 7 | Pending |
@@ -283,8 +287,8 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | REL-02 | Phase 8 | Pending |
 
 **Coverage:**
-- v1 requirements: 105 total
-- Mapped to phases: 105
+- v1 requirements: 107 total
+- Mapped to phases: 107
 - Unmapped: 0 ✓
 
 ---

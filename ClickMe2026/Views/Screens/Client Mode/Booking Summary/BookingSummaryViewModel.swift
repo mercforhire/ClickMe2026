@@ -73,6 +73,12 @@ final class BookingSummaryViewModel: ObservableObject {
     // MARK: Load state
     @Published var loadState: LoadState
 
+    /// Newest-refetch gate for `forceLoad(bookingId:)`. A `booking.update`
+    /// during a pull-to-refresh, or a reschedule action's reload racing a
+    /// socket refetch, starts overlapping fetches; only the most recently
+    /// started one may write the screen (BOOK-18).
+    private var reloads = ReloadGeneration()
+
     // MARK: Dependencies
 
     private let api: ClickMeAPI
@@ -166,12 +172,20 @@ final class BookingSummaryViewModel: ObservableObject {
         await forceLoad(bookingId: bookingId)
     }
 
+    /// Fetches the booking detail, then the review context, and hydrates the
+    /// display fields. Overlapping calls keep only the newest response: the
+    /// token is checked after each await, so a call superseded by a later one
+    /// writes neither data nor load state and returns at its first failed
+    /// check, while the newest call always settles `loadState`.
     private func forceLoad(bookingId: UUID) async {
+        let token = reloads.begin()
         loadState = .loading
         do {
             let detailResponse = try await api.getClientBookingDetail(id: bookingId)
+            guard reloads.isCurrent(token) else { return }
             apply(detail: detailResponse.data)
         } catch {
+            guard reloads.isCurrent(token) else { return }
             loadState = .failed(error.userMessage)
             return
         }
@@ -180,11 +194,14 @@ final class BookingSummaryViewModel: ObservableObject {
         // render the expert card, we just hide the feedback section.
         do {
             let reviewResponse = try await api.getReviewContext(bookingId: bookingId)
+            guard reloads.isCurrent(token) else { return }
             apply(reviewContext: reviewResponse.data)
         } catch {
+            guard reloads.isCurrent(token) else { return }
             hasSubmittedReview = false
         }
 
+        guard reloads.isCurrent(token) else { return }
         loadState = .loaded
     }
 

@@ -42,6 +42,11 @@ final class UpcomingBookingViewModel: ObservableObject {
 
     @Published var state: LoadState
 
+    /// Newest-refetch gate for `forceLoad()`. A `booking.update` during a
+    /// pull-to-refresh (or two events in a row) starts overlapping fetches;
+    /// only the most recently started one may write the screen (BOOK-18).
+    private var reloads = ReloadGeneration()
+
     // MARK: Dependencies
 
     private let api: ClickMeAPI
@@ -141,13 +146,21 @@ final class UpcomingBookingViewModel: ObservableObject {
         await forceLoad()
     }
 
+    /// Fetches `GET /client/bookings/:id` and hydrates the display fields.
+    /// Overlapping calls keep only the newest response: a call superseded by
+    /// a later one writes neither data nor load state, and the newest call
+    /// always settles `state`, so the screen never shows a stale snapshot or
+    /// a stranded spinner.
     private func forceLoad() async {
+        let token = reloads.begin()
         state = .loading
         do {
             let response = try await api.getClientBookingDetail(id: bookingId)
+            guard reloads.isCurrent(token) else { return }
             apply(response.data)
             state = .loaded
         } catch {
+            guard reloads.isCurrent(token) else { return }
             state = .failed(Self.message(for: error))
         }
     }

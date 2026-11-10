@@ -25,6 +25,13 @@ final class MyBookingsViewModel: ObservableObject {
     // MARK: Dependencies
     private let api: ClickMeAPI
 
+    /// Newest-refetch gate shared by `forceLoad()` and `silentReload()`.
+    /// Each fetch takes a token before its first `await` and writes the two
+    /// lists (and, for a forced load, the load state) only while the token
+    /// is still current, so an older response that lands last never
+    /// overwrites a newer one. See `ReloadGeneration`.
+    private var reloads = ReloadGeneration()
+
     /// Retains our `booking.update` subscription. Dropped on `deinit` —
     /// see `RealtimeService.RealtimeSubscription`. Silent-refreshes the
     /// list whenever any booking's status changes server-side, so a
@@ -94,10 +101,22 @@ final class MyBookingsViewModel: ObservableObject {
     /// Re-fetches in the background without transitioning to `.loading`, so
     /// the current list stays on screen while we update. Failure is silent —
     /// a flaky network on re-appear shouldn't wipe the last known good view.
+    ///
+    /// Overlapping calls keep only the newest response: a call superseded by
+    /// a later one writes nothing. While a forced load is still in flight
+    /// (`state == .loading`) this runs a forced load instead, so the newest
+    /// call is the one that settles the load state and a superseded forced
+    /// load can never leave the spinner up.
     func silentReload() async {
+        if case .loading = state {
+            await forceLoad()
+            return
+        }
+        let token = reloads.begin()
         do {
             let upResponse = try await api.getClientBookings(type: .upcoming)
             let pastResponse = try await api.getClientBookings(type: .past)
+            guard reloads.isCurrent(token) else { return }
 
             // Rejoinable completeds live in the past payload (server
             // flipped status on early hang-up), but their scheduled
@@ -123,11 +142,18 @@ final class MyBookingsViewModel: ObservableObject {
     /// parallel) to avoid Sendable-conformance issues with concurrent
     /// decoding across actor boundaries — acceptable since this only fires
     /// on tab appear or pull-to-refresh.
+    ///
+    /// Overlapping calls keep only the newest response: a call superseded by
+    /// a later one writes neither data nor load state, and the newest call
+    /// always settles `state`, so the list never shows a stale snapshot or
+    /// a stranded spinner.
     private func forceLoad() async {
+        let token = reloads.begin()
         state = .loading
         do {
             let upResponse = try await api.getClientBookings(type: .upcoming)
             let pastResponse = try await api.getClientBookings(type: .past)
+            guard reloads.isCurrent(token) else { return }
 
             let rejoinable = pastResponse.data.bookings.filter(Self.isRejoinableCompleted)
             let upcomingRaw = upResponse.data.bookings + rejoinable
@@ -142,6 +168,7 @@ final class MyBookingsViewModel: ObservableObject {
 
             self.state = .loaded
         } catch {
+            guard reloads.isCurrent(token) else { return }
             self.state = .failed(Self.message(for: error))
         }
     }

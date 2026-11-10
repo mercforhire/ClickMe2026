@@ -41,6 +41,12 @@ enum JoinWindow {
         joinableStatuses.contains(status)
     }
 
+    /// Whether a card renders a Join button at all; `isOpen` then decides
+    /// whether it is enabled.
+    static func showsJoinButton(status: BookingStatus) -> Bool {
+        isJoinableStatus(status)
+    }
+
     /// True when Join should be offered for this booking at `now`.
     ///
     /// - Parameters:

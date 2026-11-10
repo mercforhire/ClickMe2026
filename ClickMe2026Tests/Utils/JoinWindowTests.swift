@@ -137,4 +137,38 @@ struct JoinWindowTests {
         #expect(Set(Self.joinable + Self.notJoinable).count == Self.joinable.count + Self.notJoinable.count)
         #expect(Self.joinable.count + Self.notJoinable.count == 11)
     }
+
+    // MARK: - Presentation: shown versus enabled (Android parity)
+
+    /// Every status except `pendingApproval` renders a Join button, and
+    /// `isOpen` decides whether it is enabled. A non-joinable status such as
+    /// `pendingReschedule` therefore shows Join disabled instead of hiding it
+    /// (user decision 2026-11-10, matching Android; supersedes the hide in D-12).
+    private nonisolated static let rendersJoin: [BookingStatus] = [
+        .confirmed, .inProgress, .completed, .pendingReschedule, .cancelled,
+        .declined, .missed, .expired, .rescheduled, .unknown
+    ]
+
+    @Test("Join is rendered for every status but pending_approval", arguments: rendersJoin)
+    func joinRendered(status: BookingStatus) {
+        #expect(JoinWindow.showsJoinButton(status: status))
+    }
+
+    @Test("A booking awaiting the expert's approval renders no Join button")
+    func pendingApprovalRendersNoJoin() {
+        #expect(!JoinWindow.showsJoinButton(status: .pendingApproval))
+    }
+
+    @Test("A pending_reschedule booking shows Join disabled, not hidden")
+    func pendingRescheduleShownButDisabled() {
+        #expect(JoinWindow.showsJoinButton(status: .pendingReschedule))
+        #expect(!Self.isOpen(.pendingReschedule, sessionMinutes: 30, offset: 0, serverCanJoin: true))
+    }
+
+    @Test("Shown-versus-enabled covers every BookingStatus case")
+    func presentationCoversEveryCase() {
+        #expect(!Self.rendersJoin.contains(.pendingApproval))
+        #expect(Set(Self.rendersJoin).count == Self.rendersJoin.count)
+        #expect(Self.rendersJoin.count + 1 == 11)
+    }
 }

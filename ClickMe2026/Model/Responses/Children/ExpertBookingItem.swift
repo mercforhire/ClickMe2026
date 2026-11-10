@@ -46,7 +46,12 @@ struct ExpertBookingItem: Decodable {
     }
 
     struct Actions: Decodable {
-        /// True when now is within 5 minutes before start_time up to end_time.
+        /// True when `POST /bookings/:id/join` would accept the caller
+        /// right now (BACK-09): a first join from start − 60 minutes to
+        /// the later of end_time and start + 60 minutes, and a reconnect
+        /// until end_time + 60 minutes once this party has joined. The
+        /// dashboard passes it to `JoinWindow.isOpen` as `serverCanJoin`
+        /// for the reconnect tier.
         let canJoin: Bool
         let canReschedule: Bool
         let canMessage: Bool

@@ -470,47 +470,59 @@ struct ExpertDashboardView: View {
                 navPath?.push(HomeRoute.expertBookingSummary(bookingId: session.bookingId))
             }
 
-            // Join Session button — visible when the session is within
-            // one hour of start (±60 min). Deliberately matches the
-            // client-side `UpcomingBooking.isWithinJoinWindow` window
-            // instead of the server's tighter `actions.canJoin` (~5 min)
-            // so the button appears at the same time for both roles.
-            // If the server refuses at tap time, `MeetingCallView`'s
-            // `onJoinFailure` surfaces the reason on this screen.
-            let inWindow = Self.isWithinJoinWindow(startTime: session.session.startTime)
-            Button {
-                CallCenter.shared.startCall(
-                    bookingId: session.bookingId,
-                    peerId: session.client.id,
-                    peerName: session.client.name ?? "Client",
-                    peerImageURL: session.client.avatarUrl ?? "",
-                    topic: session.session.topic ?? "",
-                    scheduledStart: session.session.startTime,
-                    scheduledEnd: session.session.endTime,
-                    meetingType: session.session.meetingType,
-                    isRejoin: session.status.code == .completed
-                )
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "video.fill")
-                        .font(.callout.weight(.semibold))
-                    Text("Join Session")
-                        .font(.brand(.callout, weight: .bold))
-                }
-                .foregroundColor(onPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(brandGreen.opacity(inWindow ? 1.0 : 0.55))
-                        .shadow(
-                            color: brandGreen.opacity(inWindow ? 0.45 : 0),
-                            radius: 14, x: 0, y: 4
+            // Join Session button — offered on the shared `JoinWindow`
+            // rule (CALL-02): from 60 min before start through the later
+            // of the scheduled end and start + 60 min, then a reconnect
+            // until end + 60 min when the server's `actions.canJoin`
+            // allows it (BACK-09). A booking whose status is not joinable
+            // (pending_reschedule, D-12) shows no button at all. The
+            // TimelineView re-evaluates every minute so the button flips
+            // without a refresh. The server still decides `POST /join`;
+            // a refusal surfaces through `MeetingCallView.onJoinFailure`.
+            if JoinWindow.isJoinableStatus(session.status.code) {
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    let inWindow = JoinWindow.isOpen(
+                        status: session.status.code,
+                        start: session.session.startTime,
+                        end: session.session.endTime,
+                        now: context.date,
+                        serverCanJoin: session.actions.canJoin
+                    )
+                    Button {
+                        CallCenter.shared.startCall(
+                            bookingId: session.bookingId,
+                            peerId: session.client.id,
+                            peerName: session.client.name ?? "Client",
+                            peerImageURL: session.client.avatarUrl ?? "",
+                            topic: session.session.topic ?? "",
+                            scheduledStart: session.session.startTime,
+                            scheduledEnd: session.session.endTime,
+                            meetingType: session.session.meetingType,
+                            isRejoin: session.status.code == .completed
                         )
-                )
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "video.fill")
+                                .font(.callout.weight(.semibold))
+                            Text("Join Session")
+                                .font(.brand(.callout, weight: .bold))
+                        }
+                        .foregroundColor(onPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(brandGreen.opacity(inWindow ? 1.0 : 0.55))
+                                .shadow(
+                                    color: brandGreen.opacity(inWindow ? 0.45 : 0),
+                                    radius: 14, x: 0, y: 4
+                                )
+                        )
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
+                    .disabled(!inWindow)
+                }
             }
-            .buttonStyle(PressScaleButtonStyle())
-            .disabled(!inWindow)
         }
         .padding(16)
         .background(
@@ -519,18 +531,6 @@ struct ExpertDashboardView: View {
                 .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(cardBorder, lineWidth: 1))
         )
-    }
-
-    /// Client-side join window used on both the dashboard's Join
-    /// Session button and the Upcoming Sessions card. Matches the
-    /// client-side `UpcomingBooking.isWithinJoinWindow` (±1 hour of
-    /// start) — kept in sync so both roles get the same affordance
-    /// timing. The server may reject at tap time if its own window is
-    /// tighter, in which case `MeetingCallView.onJoinFailure` surfaces
-    /// the reason.
-    private static func isWithinJoinWindow(startTime: Date) -> Bool {
-        let delta = startTime.timeIntervalSinceNow
-        return delta <= 3600 && delta >= -3600
     }
 
     // MARK: - Financial Summary

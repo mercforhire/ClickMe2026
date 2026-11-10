@@ -17,6 +17,15 @@ struct RescheduleTimeSlotsCard: View {
     /// time. Renders it disabled with a "Current" label so the user
     /// can't reschedule to the same slot they're rescheduling from.
     var isCurrent: (BookingTimeSlot) -> Bool = { _ in false }
+    /// Whether a slot can be picked. The client picker passes the paid
+    /// 6-day limit (BOOK-14): a slot past it renders dimmed and cannot be
+    /// tapped, never hidden. The expert picker does not pass it and keeps
+    /// every slot selectable (D-13, EXP-13 in Phase 3).
+    var isBookable: (BookingTimeSlot) -> Bool = { _ in true }
+    /// Shows the fixed paid-window note under the title, whatever day is
+    /// selected (Android parity). The client picker passes it for a paid
+    /// booking; the expert picker does not.
+    var showsPaidWindowNote: Bool = false
     let onSelect: (BookingTimeSlot) -> Void
 
     var body: some View {
@@ -24,6 +33,14 @@ struct RescheduleTimeSlotsCard: View {
             Text("Time Slots")
                 .font(.brand(.subheadline, weight: .semibold))
                 .foregroundColor(RescheduleBrand.onSurface)
+
+            if showsPaidWindowNote {
+                Text("Paid sessions can be rescheduled up to 6 days ahead.")
+                    .font(.brand(.caption, weight: .regular))
+                    .foregroundColor(RescheduleBrand.onSurfaceVar)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             if slots.isEmpty {
                 Text("No available slots for the selected day.")
@@ -48,8 +65,9 @@ struct RescheduleTimeSlotsCard: View {
         // Current slots are always disabled — user can't reschedule to
         // the same time. Rendered with an orange border + "Current"
         // caption so they're distinguishable from generic unavailable
-        // (grey) slots.
-        let isDisabled = !slot.isAvailable || isCurrentSlot
+        // (grey) slots. A slot past the paid limit is grey like an
+        // unavailable one (BOOK-14).
+        let isDisabled = !slot.isAvailable || !isBookable(slot) || isCurrentSlot
         return Button {
             guard !isDisabled else { return }
             onSelect(slot)

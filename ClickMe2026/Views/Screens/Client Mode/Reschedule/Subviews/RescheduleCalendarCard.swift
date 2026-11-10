@@ -16,10 +16,6 @@ struct RescheduleCalendarCard: View {
     let calendar: Calendar
     let isSelected: (Date) -> Bool
     let isBookable: (Date) -> Bool
-    /// A hidden day renders blank and cannot be tapped. The client picker
-    /// hides days past the 6-day paid reschedule limit (BOOK-14); the expert
-    /// picker does not pass it and keeps every day (D-13, EXP-13 in Phase 3).
-    var isHidden: (Date) -> Bool = { _ in false }
     let onPrevMonth: () -> Void
     let onNextMonth: () -> Void
     let onSelectDay: (Date) -> Void
@@ -46,6 +42,7 @@ struct RescheduleCalendarCard: View {
                     .foregroundColor(RescheduleBrand.onSurfaceVar)
                     .frame(width: 32, height: 32)
             }
+            .accessibilityLabel("Previous month")
 
             Spacer()
 
@@ -61,6 +58,7 @@ struct RescheduleCalendarCard: View {
                     .foregroundColor(RescheduleBrand.onSurfaceVar)
                     .frame(width: 32, height: 32)
             }
+            .accessibilityLabel("Next month")
         }
     }
 
@@ -90,9 +88,8 @@ struct RescheduleCalendarCard: View {
     }
 
     private func dayCell(_ day: Date) -> some View {
-        let hidden = isHidden(day)
-        let selected = isSelected(day) && !hidden
-        let bookable = isBookable(day) && !hidden
+        let selected = isSelected(day)
+        let bookable = isBookable(day)
         let dayNumber = calendar.component(.day, from: day)
 
         return Button {
@@ -106,15 +103,13 @@ struct RescheduleCalendarCard: View {
                         .shadow(color: RescheduleBrand.brandGreen.opacity(0.50), radius: 4)
                         .frame(width: 32, height: 32)
                 }
-                if !hidden {
-                    Text("\(dayNumber)")
-                        .font(.system(.subheadline, design: .rounded).weight(selected ? .bold : .regular))
-                        .foregroundColor(
-                            !bookable
-                                ? RescheduleBrand.onSurfaceVar.opacity(0.30)
-                                : (selected ? RescheduleBrand.brandGreen : RescheduleBrand.onSurface)
-                        )
-                }
+                Text("\(dayNumber)")
+                    .font(.system(.subheadline, design: .rounded).weight(selected ? .bold : .regular))
+                    .foregroundColor(
+                        !bookable
+                            ? RescheduleBrand.onSurfaceVar.opacity(0.30)
+                            : (selected ? RescheduleBrand.brandGreen : RescheduleBrand.onSurface)
+                    )
             }
             .frame(maxWidth: .infinity)
             .frame(height: 36)
@@ -122,6 +117,5 @@ struct RescheduleCalendarCard: View {
         }
         .buttonStyle(.plain)
         .disabled(!bookable)
-        .accessibilityHidden(hidden)
     }
 }

@@ -7,6 +7,10 @@
 //  counts as paid from payment_status or from a non-free topic (a long-lead
 //  paid booking has no PaymentIntent yet and reads payment_status none).
 //
+//  Android parity (user decision 2026-11-10): every day stays visible and
+//  tappable, slots past the limit stay listed but cannot be selected, and a
+//  paid booking shows a fixed window note.
+//
 //  These rows never reach the API and must not touch MockURLProtocol.
 //
 
@@ -48,54 +52,78 @@ struct RescheduleWindowTests {
         #expect(!viewModel.isBookableStart(now.addingTimeInterval(6 * Self.day + 1)))
     }
 
-    @Test("the day after the limit is beyond the window and has no slots")
+    @Test("a paid booking shows the paid window note")
+    func paidBookingShowsNote() {
+        #expect(RescheduleViewModel(isPaidBooking: true).latestBookableStart != nil)
+    }
+
+    @Test("the day after the limit stays tappable, lists its slots, and none can be selected")
     func dayAfterLimit() throws {
         let viewModel = RescheduleViewModel(isPaidBooking: true)
         let calendar = viewModel.calendar
         let limitDay = Date().addingTimeInterval(6 * Self.day)
         let nextDay = try #require(calendar.date(byAdding: .day, value: 1, to: limitDay))
-        let startOfNextDay = calendar.startOfDay(for: nextDay)
 
-        #expect(viewModel.isBeyondBookingWindow(startOfNextDay))
-
-        // Even with an available slot that day, the day reads as empty.
         let slot = BookingTimeSlot(startTime: nextDay, endTime: nil, isAvailable: true)
         viewModel.availabilityByDate = [dateKey(nextDay, calendar: calendar): [slot]]
-        #expect(!viewModel.hasSlots(on: startOfNextDay))
 
+        // The day is not blanked or disabled: it has an available slot.
+        #expect(viewModel.hasSlots(on: calendar.startOfDay(for: nextDay)))
+
+        // Its slot is listed, dimmed, and refused when pushed directly.
         viewModel.selectedDate = nextDay
-        #expect(viewModel.slotsForSelectedDate.isEmpty)
+        #expect(viewModel.slotsForSelectedDate == [slot])
+        #expect(!viewModel.isSelectableSlot(slot))
+        #expect(viewModel.slotsForSelectedDate.filter { viewModel.isSelectableSlot($0) }.isEmpty)
+        viewModel.select(time: slot)
+        #expect(viewModel.selectedTime == nil)
     }
 
-    @Test("a day inside the limit keeps its slots for a paid booking")
+    @Test("a day inside the limit keeps its slots selectable for a paid booking")
     func dayInsideLimit() {
         let viewModel = RescheduleViewModel(isPaidBooking: true)
         let near = BookingTimeSlot(startTime: Date().addingTimeInterval(2 * Self.day), endTime: nil, isAvailable: true)
         viewModel.availabilityByDate = [dateKey(near.startTime, calendar: viewModel.calendar): [near]]
-        #expect(!viewModel.isBeyondBookingWindow(near.startTime))
         #expect(viewModel.hasSlots(on: near.startTime))
         viewModel.selectedDate = near.startTime
         #expect(viewModel.slotsForSelectedDate == [near])
+        #expect(viewModel.isSelectableSlot(near))
+        viewModel.select(time: near)
+        #expect(viewModel.selectedTime == near)
+    }
+
+    @Test("an unavailable or already started slot is never selectable")
+    func unavailableOrPastSlot() {
+        let viewModel = RescheduleViewModel(isPaidBooking: true)
+        let taken = BookingTimeSlot(startTime: Date().addingTimeInterval(Self.day), endTime: nil, isAvailable: false)
+        let past = BookingTimeSlot(startTime: Date().addingTimeInterval(-3600), endTime: nil, isAvailable: true)
+        #expect(!viewModel.isSelectableSlot(taken))
+        #expect(!viewModel.isSelectableSlot(past))
     }
 
     // MARK: - Free booking
 
-    @Test("a free booking is not capped")
+    @Test("a free booking is not capped and shows no paid window note")
     func freeBookingNotCapped() {
         let viewModel = RescheduleViewModel(isPaidBooking: false)
         let far = Date().addingTimeInterval(30 * Self.day)
         #expect(viewModel.isBookableStart(far))
-        #expect(!viewModel.isBeyondBookingWindow(far))
+        #expect(viewModel.latestBookableStart == nil)
 
         let slot = BookingTimeSlot(startTime: far, endTime: nil, isAvailable: true)
         viewModel.availabilityByDate = [dateKey(far, calendar: viewModel.calendar): [slot]]
         #expect(viewModel.hasSlots(on: far))
+        #expect(viewModel.isSelectableSlot(slot))
+        viewModel.selectedDate = far
+        viewModel.select(time: slot)
+        #expect(viewModel.selectedTime == slot)
     }
 
     @Test("the runtime view model is not capped before the detail loads")
     func runtimeDefaultsToUncapped() {
         let viewModel = RescheduleViewModel(bookingId: UUID())
         #expect(!viewModel.isPaidBooking)
+        #expect(viewModel.latestBookableStart == nil)
         #expect(viewModel.isBookableStart(Date().addingTimeInterval(30 * Self.day)))
     }
 }

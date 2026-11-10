@@ -58,7 +58,7 @@ final class RescheduleViewModel: ObservableObject {
 
     /// Whether the 6-day paid reschedule limit applies (BOOK-14). Set from
     /// the booking detail through `PaidBookingWindow.isPaidReschedule`;
-    /// false until the detail loads, so nothing is hidden before we know.
+    /// false until the detail loads, so nothing is dimmed before we know.
     @Published private(set) var isPaidBooking: Bool
 
     // MARK: Availability cache — keyed by "yyyy-MM-dd" in client's timezone
@@ -183,6 +183,10 @@ final class RescheduleViewModel: ObservableObject {
                 paymentStatus: response.data.paymentStatus,
                 topicIsFree: response.data.topic.isFree
             )
+            // A slot held across a reload may now lie past the paid limit.
+            if let held = selectedTime, !isBookableStart(held.startTime) {
+                selectedTime = nil
+            }
             if let monthStart = calendar.date(
                 from: calendar.dateComponents([.year, .month], from: startTime)
             ) {
@@ -240,8 +244,10 @@ final class RescheduleViewModel: ObservableObject {
     func select(time: BookingTimeSlot) {
         // Guard against picking the same slot as the current session —
         // the UI already disables the "Current" chip, but this closes
-        // the loop if a caller pushes selection programmatically.
-        guard !isCurrentSlot(time) else { return }
+        // the loop if a caller pushes selection programmatically. The
+        // same goes for a slot past the paid 6-day limit (BOOK-14): the
+        // chip is dimmed, and this refuses it when pushed directly.
+        guard !isCurrentSlot(time), isBookableStart(time.startTime) else { return }
         selectedTime = time
     }
 
@@ -293,7 +299,7 @@ final class RescheduleViewModel: ObservableObject {
             return
         }
 
-        // The picker hides these; this catches a slot that drifted past the
+        // The picker dims these; this catches a slot that drifted past the
         // 6-day paid limit while the screen was open. No request is made.
         guard isBookableStart(slot.startTime) else {
             submitError = BookingErrorMapper.message(for: .rescheduleTooFarAhead, fallback: "")
@@ -398,30 +404,30 @@ final class RescheduleViewModel: ObservableObject {
         // Server should also reject these, but filtering here keeps the
         // grid honest without waiting for a submit round-trip. Slots a
         // paid booking cannot move to (more than 6 days ahead, BOOK-14)
-        // are dropped the same way.
+        // are NOT dropped: they stay listed and render dimmed, as on
+        // Android. See `isSelectableSlot(_:)`.
         let now = Date()
-        let latest = latestBookableStart
         return (availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? [])
-            .filter { $0.startTime > now && PaidBookingWindow.allows($0.startTime, latestStart: latest) }
+            .filter { $0.startTime > now }
     }
 
-    /// Whether a calendar day has at least one selectable slot. Used to
+    /// Whether a calendar day has at least one available slot. Used to
     /// gray out unbookable days in the grid. Also returns `false` for
-    /// past days and for days past the paid reschedule limit.
+    /// past days. A day past the paid reschedule limit stays tappable;
+    /// its slots render dimmed instead (BOOK-14).
     func hasSlots(on day: Date) -> Bool {
         if calendar.startOfDay(for: day) < calendar.startOfDay(for: Date()) { return false }
-        let latest = latestBookableStart
-        if PaidBookingWindow.isDayBeyond(day, latestStart: latest, calendar: calendar) { return false }
         let slots = availabilityByDate[Self.dateKey(day, calendar: calendar)] ?? []
-        return slots.contains { $0.isAvailable && PaidBookingWindow.allows($0.startTime, latestStart: latest) }
+        return slots.contains { $0.isAvailable }
     }
 
     // MARK: - Paid reschedule window (BOOK-14)
 
     /// The latest start a paid booking can move to, or nil for no limit.
     /// Read from the clock on every call so a screen left open never keeps a
-    /// stale limit.
-    private var latestBookableStart: Date? {
+    /// stale limit. Non-nil also means the slots card shows the paid window
+    /// note (Android `latestSelectableStart`).
+    var latestBookableStart: Date? {
         PaidBookingWindow.latestStart(isPaid: isPaidBooking, now: Date())
     }
 
@@ -430,9 +436,13 @@ final class RescheduleViewModel: ObservableObject {
         PaidBookingWindow.allows(start, latestStart: latestBookableStart)
     }
 
-    /// Whether the whole of `day` is past the limit, so the calendar blanks it.
-    func isBeyondBookingWindow(_ day: Date) -> Bool {
-        PaidBookingWindow.isDayBeyond(day, latestStart: latestBookableStart, calendar: calendar)
+    /// Whether a chip can be tapped: the slot is available, has not started,
+    /// and is inside the paid limit. The "Current" chip is handled by the
+    /// card through `isCurrentSlot(_:)`. Mirrors Android
+    /// `BookingTimeSlot.isSelectable(now, latestStart)`. A slot that fails
+    /// this is shown dimmed, never hidden.
+    func isSelectableSlot(_ slot: BookingTimeSlot) -> Bool {
+        slot.isAvailable && slot.startTime > Date() && isBookableStart(slot.startTime)
     }
 
     // MARK: - Payment-conversion disclosure (Phase 27.1)

@@ -150,7 +150,6 @@ struct RescheduleView: View {
                     calendar: viewModel.calendar,
                     isSelected: { viewModel.isSelected($0) },
                     isBookable: { viewModel.hasSlots(on: $0) },
-                    isHidden: { viewModel.isBeyondBookingWindow($0) },
                     onPrevMonth: { viewModel.shiftMonth(-1) },
                     onNextMonth: { viewModel.shiftMonth(1) },
                     onSelectDay: { viewModel.select(date: $0) }
@@ -171,6 +170,8 @@ struct RescheduleView: View {
                     slots: viewModel.slotsForSelectedDate,
                     selectedTime: viewModel.selectedTime,
                     isCurrent: { viewModel.isCurrentSlot($0) },
+                    isBookable: { viewModel.isSelectableSlot($0) },
+                    showsPaidWindowNote: viewModel.latestBookableStart != nil,
                     onSelect: { viewModel.select(time: $0) }
                 )
 

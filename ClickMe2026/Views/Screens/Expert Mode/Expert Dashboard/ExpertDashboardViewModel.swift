@@ -335,17 +335,13 @@ final class ExpertDashboardViewModel: ObservableObject {
 
     // MARK: - Currency formatting
 
-    /// Formats `amount` in minor units to a localized currency string —
-    /// e.g. `12000` + `"USD"` → `"$120.00"` (or `"$120"` when the amount
-    /// has no cents). Falls back to `"USD 120"`-style on unknown codes.
+    /// Formats a server amount in minor units for the "This Week" earnings
+    /// and available-payout labels: `12000` + `"USD"` is `"$120.00"`, `1250`
+    /// + `"CAD"` is `"CA$12.50"`. Goes through `Money` (BOOK-10) so the cents
+    /// and the symbol match what the server will pay out, and never depend on
+    /// the device region.
     static func currencyLabel(minorUnits: Int, currency: String) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        let value = Double(minorUnits) / 100.0
-        formatter.maximumFractionDigits = Double(minorUnits).truncatingRemainder(dividingBy: 100) == 0 ? 0 : 2
-        return formatter.string(from: NSNumber(value: value))
-            ?? "\(currency) \(String(format: "%.0f", value))"
+        Money.format(minorUnits: minorUnits, currency: currency)
     }
 
     /// Human-friendly form of `next_payout_date` (server sends

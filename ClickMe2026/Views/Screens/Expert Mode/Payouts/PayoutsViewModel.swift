@@ -252,14 +252,12 @@ final class PayoutsViewModel: ObservableObject {
 
     // MARK: - Formatting helpers
 
+    /// Formats the available and pending balances, which the server sends in
+    /// minor units: `1200` + `"CAD"` is `"CA$12.00"`, `5000` + `"JPY"` is
+    /// `"¥5000"`. Goes through `Money` (BOOK-10) so the balance an expert
+    /// reads keeps its cents and uses a fixed symbol, not the device region.
     static func currencyLabel(minorUnits: Int, currency: String) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        let value = Double(minorUnits) / 100.0
-        formatter.maximumFractionDigits = Double(minorUnits).truncatingRemainder(dividingBy: 100) == 0 ? 0 : 2
-        return formatter.string(from: NSNumber(value: value))
-            ?? "\(currency) \(String(format: "%.0f", value))"
+        Money.format(minorUnits: minorUnits, currency: currency)
     }
 
     static func payoutDateLabel(_ isoDate: String) -> String {

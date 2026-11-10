@@ -110,14 +110,21 @@ enum ErrorCode: String, Decodable {
     case invalidPromo              = "INVALID_PROMO"
     case invalidPaymentMethod      = "INVALID_PAYMENT_METHOD"     // 422 — pm_ belongs to a different customer
     case bookingAttemptConflict    = "BOOKING_ATTEMPT_CONFLICT"   // 409 — same booking_attempt_id, different details
-    // 422 — `POST /bookings/payment-intent` only (Phase 27.1). Session
-    // start is > 6 days out; the manual-capture PI flow cannot cover
-    // that lead time. Do NOT retry `/payment-intent`. Switch to the
-    // save-card path: call `POST /bookings/confirm` **without** a
-    // `payment_intent_id` — the server routes it to the long-lead /
-    // charge-at-T-24h branch. Requires the client to have a saved
-    // card already (our booking gate ensures this).
+    // 422 — `POST /bookings/payment-intent` (Phase 27.1). Session start
+    // is > 6 days out. The save-card branch this code used to point at
+    // was retired on 2026-10-28: the server now answers a paid long-lead
+    // start with `LONG_LEAD_NOT_AVAILABLE`, and keeps this code only for
+    // older clients. It is terminal. The app must never call
+    // `POST /bookings/confirm` without a `payment_intent_id`; show the
+    // error and let the user pick an earlier time.
     case longLeadRequiresSavedCard = "LONG_LEAD_REQUIRES_SAVED_CARD"
+    // 422 — `POST /bookings/confirm` and `POST /bookings/request` for a
+    // paid start that is strictly more than 6 days ahead (2026-10-28).
+    // Terminal, same handling as `longLeadRequiresSavedCard`.
+    case longLeadNotAvailable      = "LONG_LEAD_NOT_AVAILABLE"
+    // 422 — client and expert reschedule routes: a paid booking cannot be
+    // moved to a start more than 6 days ahead (2026-10-28).
+    case rescheduleTooFarAhead     = "RESCHEDULE_TOO_FAR_AHEAD"
     case commissionNotConfigured   = "COMMISSION_NOT_CONFIGURED"  // 500 — server config issue
     case directChargeDisabled      = "DIRECT_CHARGE_DISABLED"     // 503 — server kill switch
     case refundAmountMissing       = "REFUND_AMOUNT_MISSING"

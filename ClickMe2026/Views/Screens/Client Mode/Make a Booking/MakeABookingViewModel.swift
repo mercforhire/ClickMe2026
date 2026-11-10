@@ -111,11 +111,9 @@ final class MakeABookingViewModel: ObservableObject {
     @Published var paymentMethodsAvailability: PaymentMethodsAvailability = .unknown
 
     /// The client's saved cards, in the order the server returned. Kept
-    /// in sync with `paymentMethodsAvailability`. Populated so the
-    /// long-lead branch (session start > 6 days out, see Phase 27.1)
-    /// can pick a card and skip PI creation entirely — the short-lead
-    /// PaymentSheet flow never reads this and continues to rely on
-    /// PaymentSheet's own saved-card list.
+    /// in sync with `paymentMethodsAvailability`. The PaymentSheet flow
+    /// does not read this and relies on PaymentSheet's own saved-card
+    /// list.
     @Published var savedPaymentMethods: [PaymentMethodItem] = []
 
     /// True when the selected topic is paid and the client has no
@@ -124,16 +122,6 @@ final class MakeABookingViewModel: ObservableObject {
     var requiresPaymentMethodSetup: Bool {
         guard let topic = selectedTopic, !topic.isFree else { return false }
         return paymentMethodsAvailability == .none
-    }
-
-    /// Payment method id used by the long-lead branch. Prefers the
-    /// user's default; falls back to the first saved card so a user
-    /// with a single card (and no default flag set) still books.
-    private var preferredPaymentMethodId: String? {
-        if let defaultPM = savedPaymentMethods.first(where: { $0.isDefault }) {
-            return defaultPM.id
-        }
-        return savedPaymentMethods.first?.id
     }
 
     /// Surfaced to the view for an alert on booking failure.
@@ -450,50 +438,7 @@ final class MakeABookingViewModel: ObservableObject {
             )
             paidStep = .collectingPaymentMethod
         } catch {
-            // Long-lead branch — server refused PI creation because the
-            // slot is > 6 days out. Skip the payment-intent step
-            // entirely and confirm against a saved card; the server
-            // schedules the actual charge ~24h before the session.
-            // See Phase 27.1 / `RESCHEDULE-PAYMENT-CONVERSION.md`.
-            if Self.errorCode(for: error) == .longLeadRequiresSavedCard {
-                await performLongLeadBooking(topic: topic, slot: slot)
-                return
-            }
             handlePaidFlowError(error, phase: .createIntent, topic: topic, slot: slot)
-        }
-    }
-
-    /// Long-lead paid booking (session > 6 days out). Skips
-    /// `/bookings/payment-intent` and calls `/bookings/confirm`
-    /// **without** a `payment_intent_id`, routing the server to the
-    /// save-card-first / charge-at-T-24h branch (Phase 27.1). Requires
-    /// a saved card; the CTA gate already ensures this, so the missing
-    /// -pm guard here is a belt-and-suspenders backstop rather than a
-    /// user-visible state.
-    private func performLongLeadBooking(topic: BookingTopic, slot: BookingTimeSlot) async {
-        guard let pmId = preferredPaymentMethodId else {
-            paidStep = .idle
-            bookingError = "Please add a payment method before booking."
-            return
-        }
-
-        paidStep = .confirming
-        do {
-            let startTimeISO = Self.iso8601String(from: slot.startTime)
-            let response = try await api.confirmBooking(
-                paymentIntentId: nil,
-                expertId: expertId,
-                topicId: topic.id,
-                startTime: startTimeISO,
-                meetingType: meetingType,
-                stripePaymentMethodId: pmId,
-                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
-                promoCode: nil
-            )
-            completedBookingId = response.data.bookingId
-            resetPaidFlow()
-        } catch {
-            handlePaidFlowError(error, phase: .confirm, topic: topic, slot: slot)
         }
     }
 
@@ -566,8 +511,8 @@ final class MakeABookingViewModel: ObservableObject {
     /// backend Stripe integration doc. Codes without a specific action
     /// fall back to the server's `message`.
     private func handlePaidFlowError(_ error: Error, phase: PaidPhase, topic: BookingTopic, slot: BookingTimeSlot) {
-        let code = Self.errorCode(for: error)
-        let message = Self.message(for: error)
+        let code = BookingErrorMapper.code(for: error)
+        let message = error.userMessage
 
         switch code {
         case .paymentRequiresAction:
@@ -604,6 +549,14 @@ final class MakeABookingViewModel: ObservableObject {
 
         case .expertNotBookable:
             bookingError = "This expert isn't accepting bookings right now."
+            resetPaidFlow()
+
+        case .longLeadRequiresSavedCard, .longLeadNotAvailable:
+            // Terminal. The server refuses a paid start more than 6 days
+            // ahead; the app never confirms without a PaymentIntent.
+            selectedTimeSlot = nil
+            newBookingAttempt()
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .slotUnavailable:
@@ -830,13 +783,6 @@ final class MakeABookingViewModel: ObservableObject {
             return response.message
         }
         return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-    }
-
-    private static func errorCode(for error: Error) -> ErrorCode? {
-        guard case let NetworkError.httpError(_, data) = error,
-              let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        else { return nil }
-        return response.code
     }
 
     /// Parses `detail` from the raw JSON error body via `JSONSerialization`

@@ -43,4 +43,12 @@ final class ChatPresence {
             visibleThreadId = nil
         }
     }
+
+    /// Forgets the visible thread. Called when the session is cleared on
+    /// logout, as Android's `ChatSessionState.clearSessionData` does, so a
+    /// chat that was on screen for the old account cannot suppress the
+    /// banner for a message push to whoever signs in next.
+    func clearSessionData() {
+        visibleThreadId = nil
+    }
 }

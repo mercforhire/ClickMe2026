@@ -65,10 +65,10 @@ final class UserManager {
     private let tokenExpiresAtKey = "tokenExpiresAt"
     private let onboardingShownKey = "hasSeenOnboarding"
     private let currentModeKey = "currentMode"
-    /// UserDefaults key for the most recently registered APNs device
-    /// token (hex). Persisted so `logout()` can DELETE the same token
-    /// the server has on record, even if iOS hasn't re-issued one this
-    /// launch.
+    /// UserDefaults key for the most recently registered FCM token.
+    /// Diagnostic record of what the server has on file for this device;
+    /// removed by `clearLocalSession()` so nothing of the old account's
+    /// binding survives logout.
     private let pushDeviceTokenKey = "pushDeviceTokenHex"
     /// UserDefaults key for the cached `UserProfileData` snapshot.
     /// Persisted so profile-hub screens render header content (name,
@@ -77,6 +77,17 @@ final class UserManager {
     private let profileCacheKey = "cachedUserProfile"
 
     private var api: ClickMeAPI { ClickMeAPI.shared }
+
+    /// Ordered, time-bounded push cleanup for logout (PUSH-04): server
+    /// DELETE while the bearer is live, then the session, then Firebase
+    /// `deleteToken`, with a credential-free retry marker (D-17, D-18).
+    private let pushCleanup = PushTokenCleanup()
+
+    /// `true` from the moment a user logout starts until its push cleanup
+    /// has finished (about 3 seconds at most). While set, no push token is
+    /// registered or re-uploaded, so the account that is logging out cannot
+    /// re-bind this device, and a second `logout()` is a no-op.
+    private(set) var isLoggingOut = false
 
     /// Codec pair for the on-disk profile cache. Uses default (camelCase)
     /// key coding — we control both encode and decode, so no need for
@@ -294,16 +305,44 @@ final class UserManager {
 
     // MARK: - Logout
 
-    /// Clears all in-memory state and the persisted token. Purely client-side.
+    /// User-initiated logout (Profile → Log out, the delete-account
+    /// farewell). Sends `DELETE /notifications/tokens/:device_id` while the
+    /// bearer is still valid, then clears the session, then invalidates this
+    /// install's FCM token (PUSH-04, D-06 as amended by D-18). Returns at
+    /// once; the shell routes to Login as soon as the session is cleared,
+    /// and the whole cleanup finishes within about 3 seconds because each
+    /// network step is capped by `PushTokenCleanup`.
+    ///
     /// Also clears the onboarding-shown flag so the next login re-shows the
-    /// welcome flow.
+    /// welcome flow. A second call while a logout is running is a no-op.
     func logout() {
-        // Unregister the device from push BEFORE we drop the bearer —
-        // otherwise the DELETE call 401s and this account keeps
-        // receiving pushes on this device forever. Best-effort; if the
-        // server refuses, still tear down the local session.
-        Task { [weak self] in await self?.unregisterPushTokenIfAny() }
+        guard !isLoggingOut else { return }
+        isLoggingOut = true
+        let deviceId = Self.deviceIdentifier()
+        Task { [weak self] in
+            guard let self else { return }
+            await pushCleanup.signOut(
+                unregister: { [weak self] in
+                    // Only while the bearer is still set: the DELETE is
+                    // authenticated, and with no session there is no row
+                    // of ours to remove.
+                    guard let self, self.hasStoredToken else { return }
+                    _ = try await self.api.unregisterDeviceToken(deviceId: deviceId)
+                },
+                deleteToken: { try await Messaging.messaging().deleteToken() },
+                clearSession: { self.clearLocalSession() }
+            )
+            self.isLoggingOut = false
+        }
+    }
 
+    /// Drops every trace of the session on this device: in-memory user
+    /// state, the bearer and refresh credentials in the keychain, the
+    /// socket, the onboarding, mode and profile cache flags, the cached
+    /// push token, any queued push tap and the visible-chat marker. Safe to
+    /// call twice: every step is a removal or an assignment of the empty
+    /// state, so a logout that overlaps an involuntary one is harmless.
+    private func clearLocalSession() {
         authUser = nil
         me = nil
         profile = nil
@@ -315,7 +354,13 @@ final class UserManager {
         UserDefaults.standard.removeObject(forKey: onboardingShownKey)
         UserDefaults.standard.removeObject(forKey: currentModeKey)
         UserDefaults.standard.removeObject(forKey: profileCacheKey)
+        UserDefaults.standard.removeObject(forKey: pushDeviceTokenKey)
         currentMode = .client
+        // A tap queued for the old account must never route after sign-out,
+        // and a chat that was on screen must not suppress the next
+        // account's message banners (Android `clearSessionData` parity).
+        PushRouter.shared.pending = nil
+        ChatPresence.shared.clearSessionData()
     }
 
     // MARK: - Onboarding flag
@@ -645,15 +690,6 @@ final class UserManager {
             #endif
             Task { await self.registerPushToken(token) }
         }
-    }
-
-    /// Called during `logout()` (fire-and-forget). No-op when there's
-    /// no cached token or no bearer to authorize the DELETE.
-    private func unregisterPushTokenIfAny() async {
-        guard hasStoredToken else { return }
-        let deviceId = Self.deviceIdentifier()
-        _ = try? await api.unregisterDeviceToken(deviceId: deviceId)
-        UserDefaults.standard.removeObject(forKey: pushDeviceTokenKey)
     }
 
     /// Stable per-vendor device id. Same across launches, changes only

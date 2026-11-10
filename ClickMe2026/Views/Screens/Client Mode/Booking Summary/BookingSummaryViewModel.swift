@@ -344,21 +344,15 @@ final class BookingSummaryViewModel: ObservableObject {
 
     /// Returns `nil` for free topics or when the server didn't send both an
     /// amount and a currency — the UI hides the row in that case. Amounts
-    /// are in minor units (cents); we divide by 100 to a Double so cents
-    /// aren't dropped for prices like $45.50.
+    /// are in minor units; `Money` formats them with integer math so cents
+    /// are never dropped for prices like $45.50.
     private static func formatPrice(topic: ClientBookingDetail.Topic) -> String? {
         if topic.isFree { return nil }
         guard let amount = topic.price?.amount,
               let currency = topic.price?.currency
         else { return nil }
 
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        let value = Double(amount) / 100.0
-        return formatter.string(from: NSNumber(value: value))
-            // Fallback if `currencyCode` is unrecognized by ICU.
-            ?? "\(currency) \(String(format: "%.2f", value))"
+        return Money.format(minorUnits: amount, currency: currency)
     }
 
     private func apply(reviewContext: ReviewContextData) {

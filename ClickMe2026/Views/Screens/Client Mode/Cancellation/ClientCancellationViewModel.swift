@@ -126,12 +126,7 @@ final class ClientCancellationViewModel: ObservableObject {
               let currency = detail.topic.price?.currency
         else { return nil }
 
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        let value = Double(amount) / 100.0
-        return formatter.string(from: NSNumber(value: value))
-            ?? "\(currency) \(String(format: "%.2f", value))"
+        return Money.format(minorUnits: amount, currency: currency)
     }
 
     // MARK: - Actions

@@ -182,7 +182,7 @@ final class UpcomingBookingViewModel: ObservableObject {
     private static func priceLabel(topic: ClientBookingDetail.Topic) -> String {
         if topic.isFree { return "Free" }
         if let amount = topic.price?.amount, let currency = topic.price?.currency {
-            return "\(currency) \(amount / 100)"
+            return Money.format(minorUnits: amount, currency: currency)
         }
         return "—"
     }

@@ -37,7 +37,7 @@ Detection evidence (run 2026-11-09): `ls components.json tailwind.config.*` repo
 
 ## Component Inventory
 
-Enumerated by `find ClickMe2026/Views/Components -name '*.swift' | wc -l` — 6 components — in-repo SwiftUI (no package; ClickMe2026 @ 0d4ff67) — 2026-11-09.
+Enumerated by `find ClickMe2026/Views/Components -name '*.swift' | wc -l` — 6 components — in-repo — ClickMe2026@0d4ff67 — 2026-11-09.
 
 This table is a **non-exhaustive** list of known-good shared components. It is never a closed allowlist: the executor may use any SwiftUI or UIKit-bridged view, and checking for a component outside the table is the expected path. There is no second source to cross-check (no CLI tracks these files), so the filesystem count is the only count.
 
@@ -109,7 +109,9 @@ All text uses `Font.brand(_ style:weight:)` (rounded, Dynamic Type) except where
 
 Declared for new or changed text in this phase: **4 sizes** (12, 15, 16, 20) and **2 weights** (Regular 400, Semibold 600).
 
-Inherited exceptions, unchanged: Bold (700) on Join button labels (`JOIN CALL`, `Join Call`, `Join Session`), on the selected calendar day and selected slot chip, and on the `title3` section header; Medium (500) on day-of-week headers. No Phase 02 plan adds a weight.
+Inherited exceptions, unchanged: Bold (700) on Join button labels (`JOIN CALL`, `Join Call`, `Join Session`), on the selected calendar day and selected slot chip, and on the `title3` section header; Medium (500) on day-of-week headers. **Bold and Medium are inherited from shipped code and are not added by this phase.** No Phase 02 plan adds a weight, and new or changed text in Phase 02 uses only Regular or Semibold.
+
+Inherited exception, size closeness: Body (15 pt) and Heading (16 pt) differ by 1 pt, so the month title is distinguished from calendar numerals by weight (Semibold vs Regular) and position, not by size. This is the existing calendar styling; Phase 02 does not change either size.
 
 Dynamic Type: banner text carries `.fixedSize(horizontal: false, vertical: true)` so it wraps at large sizes instead of truncating. Any new text must use a text style, never a point size.
 
@@ -117,7 +119,7 @@ Dynamic Type: banner text carries `.fixedSize(horizontal: false, vertical: true)
 
 ## Color
 
-Values come from `Brand.swift`. Phase 02 adds no color.
+Values come from `Brand.swift`, with one exception: the in-call warning uses SwiftUI `Color.orange` directly, not a `Brand` token (`MeetingCallView.swift:207-220` for the ending banner; `Call/Calling/Subviews/MeetingCallInfo.swift:51-63` for the near-or-past-end timer tint and the remaining-time capsule). The exception is inherited; Phase 02 adds no color and no `Brand` token for it.
 
 | Role | Value | Usage on Phase 02 surfaces |
 |------|-------|----------------------------|
@@ -125,7 +127,7 @@ Values come from `Brand.swift`. Phase 02 adds no color.
 | Secondary (30%) | `Brand.surfaceContainer` #201f1f and `Brand.surfaceContainerHigh` #2a2a2a; outline `Brand.outlineVariant` #3c4a3f | Calendar card, slot chips (outline), skeleton chips. The Explore strip card uses its own `ExploreBrand.cardBg` (inherited, not unified) |
 | Accent (10%) | `Brand.primary` #44f697; text on accent `Brand.onPrimary` #00391d | See reserved list below |
 | Destructive | `Brand.destructive` (1.00, 0.30, 0.30, about #FF4D4D); call End button `MeetingCallBrand.endRed` #ED4242 | Phase 02 adds no destructive action; both values are unchanged |
-| Warning (not in template) | SwiftUI `Color.orange`: fill at 14% opacity, 1 pt stroke at 50%, icon at 100% | The in-call ending banner only |
+| Warning (not in template) | SwiftUI `Color.orange` (not a `Brand` token; inherited exception): banner fill at 14% opacity, 1 pt stroke at 50%, icon at 100%; `MeetingCallInfo` capsule fill 12%, stroke 45%, timer and capsule text at 100% | The in-call ending banner and the in-call timer / remaining-time capsule only |
 | Text | `Brand.onSurface` #e5e2e1 (primary), `Brand.onSurfaceVariant` #bacbbc (secondary), 30 to 35% opacity of `onSurfaceVariant` for disabled or past days | All Phase 02 surfaces |
 
 Accent reserved for (Phase 02 surfaces only):
@@ -155,8 +157,11 @@ All strings below are exact. Executors must not paraphrase them. "Shipped" means
 | In-call past-end notice (end to end + 55 min) | `Scheduled time complete — you can wrap up when ready.` | existing |
 | In-call final-stretch notice (last 5 min before end) | `Session ending soon — please start wrapping up.` | existing |
 | Call ended label | `Call Ended` (`CallStatus.ended.label`) | existing; reached by 02-02 on Agora failure |
-| Empty state heading | none added by this phase | not applicable |
-| Empty state body | none added by this phase (see UI Considerations row E1 for the one open gap) | not applicable |
+| Empty state, Make a Booking slot card (selected day has no slot: includes a selected day past the paid limit, or a 6-day window with no availability) | `No available slots on this day.` (no heading; one caption line) | existing string, `MakeABookingTimeSlotsCard.swift:54`. Reachable for blank days because `selectedDate` is never nil and `slotsForSelectedDate` is empty for it, so the loaded row always renders this line. Reused, not reworded |
+| Empty state, Make a Booking calendar card (paid topic, every day of the displayed month is blank) | `Paid sessions can be booked up to 6 days ahead. Please choose an earlier time.` (one caption line under the grid, in `onSurfaceVar`) | existing string, `BookingErrorMapper.longLeadMessage`. Reused exactly; "earlier time" is apt here because the user can step back a month. **Not yet in code: implementation gap, see "Plan ownership" below** |
+| Empty state, Reschedule slot card (selected day has no slot) | `No available slots for the selected day.` | existing string, `RescheduleTimeSlotsCard.swift:29`. Reschedule keeps its own wording on purpose (do not unify with Make a Booking) |
+| Empty state, Reschedule calendar card (client, paid booking, every day of the displayed month is hidden) | `Paid sessions can be rescheduled up to 6 days ahead. Please choose a time within the next 6 days.` (one caption line under the grid) | existing string, `BookingErrorMapper.rescheduleTooFarAheadMessage`. Reused exactly. **Owned by 02-08** |
+| Accessibility labels, month chevrons (`chevron.left`, `chevron.right`), both calendars | `Previous month` / `Next month` (`accessibilityLabel` on each button) | new, required (see UI Considerations C1) |
 | Unknown or missing money amount | `—` (em dash); free topic: `Free` | existing convention, extended by 02-05, 02-06, 02-15 |
 | Error state, slot taken (free and paid) | `That time slot was just taken. Please pick another.` | shipped (02-07, `af0abe2`) |
 | Error state, meeting link missing | `The expert hasn't set up their Skype/Zoom link yet. Please choose in-app voice instead.` | shipped (02-07) |
@@ -265,6 +270,30 @@ The two calendars keep their own selected-day treatment (do not unify): Make a B
 
 A reschedule submit with a slot beyond the limit sets `submitError` to the `RESCHEDULE_TOO_FAR_AHEAD` copy and makes no request.
 
+**Empty states and accessibility for the paid-cap pickers (revision, resolves checker Dimension 1 and the Visuals flags).**
+
+| Case | Make a Booking | Client Reschedule |
+|------|----------------|-------------------|
+| Selected day has no slot (including a selected day past the limit, or a paid 6-day window with no availability) | Slot card shows `No available slots on this day.` (already in code, 02-07 shipped) | Slot card shows `No available slots for the selected day.` (already in code) |
+| Whole displayed month is blank (paid; month starts after now + 6 days) | Calendar card shows the `longLeadMessage` caption under the grid. Condition: topic is paid and no day cell in the displayed month is bookable-visible | Calendar card shows the `rescheduleTooFarAheadMessage` caption under the grid. Condition: booking is paid by the reschedule rule above and every day cell in the displayed month is hidden |
+| Free topic | Never shown (uncapped) | Never shown (uncapped) |
+
+Caption styling: `.caption` Regular, `onSurfaceVar`, leading-aligned, 8 pt top padding inside the calendar card, wraps (no truncation). No icon, no accent, no new color.
+
+Accessibility (required, not recommended):
+
+1. A blank or hidden calendar cell is hidden from VoiceOver (`accessibilityHidden(true)`) and stays untappable. It must not be announced as an empty disabled button. This makes checker row A1 required on both calendars.
+2. The icon-only month chevrons carry `accessibilityLabel("Previous month")` (`chevron.left`) and `accessibilityLabel("Next month")` (`chevron.right`) on both calendars. The 32 x 32 frame stays as the inherited exception.
+3. The empty-state captions are plain `Text`, so VoiceOver reads them in order after the grid.
+
+**Plan ownership of these deltas (so the planner and executor see them).**
+
+| Delta | Owner |
+|-------|-------|
+| Reschedule: month-blank caption, blank-cell `accessibilityHidden`, chevron labels (`RescheduleCalendarCard.swift`, wired in `RescheduleView.swift`) | **02-08** (not yet executed). 02-08's `isHidden` work already touches the same cell and card; the executor adds these in the same files |
+| Make a Booking: month-blank caption, blank-cell `accessibilityHidden`, chevron labels (`MakeABookingCalendarCard.swift`) | **Gap: no plan currently carries it.** 02-07 is executed and its PLAN.md must not be edited. The orchestrator must route this to a follow-up (a 02-07 gap-closure plan, or a small addition to 02-08's wave) before the Phase 02 UAT. Until then the shipped behavior is blank cells with no month-level caption |
+| Make a Booking and Reschedule per-day slot empty strings | Nothing to do; already in code |
+
 ### 5. Push and notification navigation (02-09 shipped, 02-10)
 
 No new visual. The contract is where a tap lands and that it never shows SwiftUI's unregistered-destination warning page (CR-01).
@@ -297,11 +326,26 @@ See W1-4 to W1-7. In one line: never joinable, never a strip member, Booking Sum
 
 ---
 
+## Focal Points
+
+One primary focal point per screen Phase 02 changes. Nothing else on the screen may use the accent fill at the same weight.
+
+| Screen | Primary focal point | Secondary |
+|--------|---------------------|-----------|
+| Make a Booking (calendar and slots) | Selected-day accent circle on the calendar card | Selected slot chip (accent fill and outline) |
+| Reschedule (client) | Selected-day accent ring on the calendar card | Selected slot chip |
+| Client My Bookings | The `JOIN CALL` accent button on the joinable card (hidden when the window is closed, so a closed card has no accent focal point) | Card time range |
+| Explore today strip | The `Join Call` accent button when the window is open; when closed the 55% dimmed button yields focus to the session time and title | Today pill |
+| Expert dashboard strip | The `Join Session` accent button when open; when closed the dimmed button yields focus to the session time | NOW pill |
+| Call screen (in-app voice) | The amber ending banner while it is visible; otherwise the call timer | End button |
+
+---
+
 ## UI Considerations
 
 > Shape-rooted state coverage for the Phase 02 deltas. Copy for error and empty states lives in the Copywriting Contract above and is referenced, not restated. Hand-built by the researcher from the plans and shipped code, not from a probe run.
 
-Applicable state considerations resolved: 9 covered, 3 backstop, 4 unresolved.
+Applicable state considerations resolved: 12 covered, 3 backstop, 2 unresolved.
 
 | ID | Category | Element(s) | Status | Resolution / Reason |
 |----|----------|------------|--------|---------------------|
@@ -317,8 +361,9 @@ Applicable state considerations resolved: 9 covered, 3 backstop, 4 unresolved.
 | L1 | long-text / large type | Overtime banner at accessibility Dynamic Type sizes | 🧪 backstop | Banner uses vertical `fixedSize` so it wraps; needs a device or preview check at the largest accessibility size |
 | L2 | long-text | Join button label and money strings at accessibility sizes (`CA$12.50`, `KRW` + nbsp + digits) | 🧪 backstop | Held-out visual check; no layout change in this phase |
 | D1 | device-only | Calendar blank cell rendering and tap rejection on a real device; expert-mode push landing | 🧪 backstop | SwiftUI rendering is not asserted by unit tests; UAT items BOOK-14 and PUSH-01 (expert) cover it |
-| E1 | empty | A paid topic where the whole displayed month is past the 6-day limit, or the 6-day window has no available slot | ⚠ unresolved | The shipped cells go blank but no copy explains it. The planner treats the existing slot-list empty behavior as the assumption; any new copy is out of Phase 02 scope |
-| A1 | accessibility | A blank beyond-limit calendar cell is an empty disabled button | ⚠ unresolved | VoiceOver may read an empty disabled control. Recommended, not required: hide blank cells from accessibility. Not changed in shipped 02-07 code |
+| E1 | empty | A paid topic where the whole displayed month is past the 6-day limit, or the 6-day window has no available slot | ✅ covered | Copywriting Contract names the copy: the existing slot-card string covers a window with no slot (already in code); the existing `longLeadMessage` / `rescheduleTooFarAheadMessage` caption in the calendar card covers a fully blank month. Reschedule is owned by 02-08; the Make a Booking caption is an open gap with no owning plan (see section 4 "Plan ownership") |
+| A1 | accessibility | A blank beyond-limit calendar cell is an empty disabled button | ✅ covered | Required: blank and hidden cells are `accessibilityHidden(true)` on both calendars. 02-08 for Reschedule; gap for Make a Booking (same note as E1) |
+| C1 | accessibility | Icon-only month chevrons (`chevron.left`, `chevron.right`) on both calendars | ✅ covered | `accessibilityLabel` `Previous month` / `Next month`. 02-08 for Reschedule; gap for Make a Booking |
 | K1 | known limitation | Push-opened booking detail and summary with inert action buttons | ⚠ unresolved | Phase 3 (CALL-03, BOOK-06, BOOK-16, BOOK-17) owns the wiring; the UAT must say so |
 | K2 | partial | Skype/Zoom call layout shows no overtime banner | ⚠ unresolved | By 02-01 design the banner is in-app voice only; the Skype status text states the scheduled end only. Accepted; revisit only if the user asks |
 

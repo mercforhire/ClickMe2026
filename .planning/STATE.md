@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-07-PLAN.md
-last_updated: "2026-11-10T01:59:55.783Z"
+stopped_at: Completed 02-09-PLAN.md
+last_updated: "2026-11-10T02:53:39.801Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: 5450ddaea3a27ca88bb46d9bd29dcdd0ffaefeda
+state_head: 53d57160155ab377ebaeb81edfc9f10c7c67b509
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 29
+  completed_plans: 30
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 4 of 15
+Plan: 5 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -85,6 +85,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P01 | 2h (incl. gate pause) | 2 tasks | 4 files |
 | Phase 02 P03 | 70 min | 2 tasks | 9 files |
 | Phase 02 P07 | 10 min | 3 tasks | 8 files |
+| Phase 02 P09 | 55min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -161,6 +162,7 @@ Recent decisions affecting current work:
 - [Phase 02]: [02-03] Overlapping refetches use a ReloadGeneration token (newest started wins, superseded fetch writes nothing, no cancellation); callers take the token and pass it to runFetch(token:) so forceLoad can tell superseded from a genuine failure
 - [Phase 02]: [02-07] Both long-lead codes are terminal: the no-PaymentIntent confirm is deleted; paid picker cap is inclusive at now + 6 days and read from Date() on every evaluation
 - [Phase 02]: [02-07] BookingErrorMapper is the single ErrorCode to copy table (paid copy is the base); test suites that share MockURLProtocol must live in one .serialized suite, and suites that never call the API must not use APITestFactory
+- [Phase 02]: 02-09: single-mutation replace(with:) stands (tracer device check showed no flash or dropped push); one homeStack helper per shell registers HomeRoute on every tab; PushRouter.destination(category:...) is the one table for push taps and notification rows
 
 ### Pending Todos
 
@@ -219,6 +221,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T01:59:55.707Z
-Stopped at: Completed 02-07-PLAN.md
+Last session: 2026-11-10T02:53:39.746Z
+Stopped at: Completed 02-09-PLAN.md
 Resume file: None

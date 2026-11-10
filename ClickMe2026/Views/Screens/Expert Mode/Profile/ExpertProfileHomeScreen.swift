@@ -147,10 +147,15 @@ struct ExpertProfileHomeScreen: View {
                     }
 
                     section(title: "Actions") {
+                        // Busy for the whole logout wait (DELETE, then
+                        // deleteToken, up to about 6 s) so the tap is
+                        // acknowledged and cannot be repeated; the shell
+                        // routes to Login when the session clears.
                         ClientProfileHomeListItem(
                             icon: "arrow.right.square.fill",
                             title: "Log Out",
                             isDestructive: true,
+                            isBusy: viewModel.isLoggingOut,
                             action: { showLogoutConfirmation = true }
                         )
                     }

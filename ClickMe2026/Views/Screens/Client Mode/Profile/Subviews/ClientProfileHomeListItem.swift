@@ -9,11 +9,15 @@ import SwiftUI
 
 /// A single tappable row inside a section — icon badge, title, trailing
 /// chevron. `isDestructive` swaps the palette to error red for actions like
-/// Log Out.
+/// Log Out. `isBusy` shows a spinner in place of the trailing icon and
+/// disables the row while its action is still running (the Log out wait,
+/// up to about 6 seconds while the push cleanup finishes), so the tap is
+/// visibly acknowledged and cannot be repeated.
 struct ClientProfileHomeListItem: View {
     let icon: String
     let title: String
     var isDestructive: Bool = false
+    var isBusy: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -29,11 +33,19 @@ struct ClientProfileHomeListItem: View {
 
                 Spacer()
 
-                Image(systemName: isDestructive ? "rectangle.portrait.and.arrow.right" : "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(isDestructive
-                                     ? ClientProfileHomeBrand.error.opacity(0.40)
-                                     : ClientProfileHomeBrand.onSurfaceVar)
+                if isBusy {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(
+                            tint: isDestructive ? ClientProfileHomeBrand.error : ClientProfileHomeBrand.primary
+                        ))
+                        .accessibilityLabel("In progress")
+                } else {
+                    Image(systemName: isDestructive ? "rectangle.portrait.and.arrow.right" : "chevron.right")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(isDestructive
+                                         ? ClientProfileHomeBrand.error.opacity(0.40)
+                                         : ClientProfileHomeBrand.onSurfaceVar)
+                }
             }
             .padding(16)
             .background(
@@ -51,6 +63,7 @@ struct ClientProfileHomeListItem: View {
             )
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(isBusy)
     }
 
     private var iconBadge: some View {

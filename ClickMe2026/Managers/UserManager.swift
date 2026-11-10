@@ -79,14 +79,20 @@ final class UserManager {
     private var api: ClickMeAPI { ClickMeAPI.shared }
 
     /// Ordered, time-bounded push cleanup for logout (PUSH-04): server
-    /// DELETE while the bearer is live, then the session, then Firebase
-    /// `deleteToken`, with a credential-free retry marker (D-17, D-18).
+    /// DELETE while the bearer is live, then Firebase `deleteToken`, then
+    /// the session (Android order), with a credential-free retry marker
+    /// (D-17, D-18) and one serialized `deleteToken` lane (WR-02).
     private let pushCleanup = PushTokenCleanup()
 
-    /// `true` from the moment a user logout starts until its push cleanup
-    /// has finished (about 3 seconds at most). While set, no push token is
-    /// registered or re-uploaded, so the account that is logging out cannot
-    /// re-bind this device, and a second `logout()` is a no-op.
+    /// `true` from the moment a user logout starts until the session is
+    /// cleared, which is the end of the cleanup (about 6 seconds at most:
+    /// the DELETE and `deleteToken` are each capped at 3 seconds). While
+    /// set, no push token is registered or re-uploaded, so the account that
+    /// is logging out cannot re-bind this device while its bearer is still
+    /// live, and a second `logout()` is a no-op. The Log out controls read
+    /// it to show their in-progress state. It is reset inside
+    /// `clearLocalSession()`, so it never outlives the session it protects
+    /// and the next sign-in is never blocked by it (WR-02).
     private(set) var isLoggingOut = false
 
     /// The in-flight deleteToken-only retry started by
@@ -329,11 +335,15 @@ final class UserManager {
 
     /// User-initiated logout (Profile → Log out, the delete-account
     /// farewell). Sends `DELETE /notifications/tokens/:device_id` while the
-    /// bearer is still valid, then clears the session, then invalidates this
-    /// install's FCM token (PUSH-04, D-06 as amended by D-18). Returns at
-    /// once; the shell routes to Login as soon as the session is cleared,
-    /// and the whole cleanup finishes within about 3 seconds because each
-    /// network step is capped by `PushTokenCleanup`.
+    /// bearer is still valid, then invalidates this install's FCM token,
+    /// then clears the session (PUSH-04, D-06 as amended by D-18; the order
+    /// is Android's `UserManager.logout()`, user decision 2026-11-10). The
+    /// shell routes to Login only once the session is cleared, so the
+    /// cleanup is finished by the time Login is visible and a fast re-login
+    /// can never overlap it (WR-02). Returns at once; `isLoggingOut` carries
+    /// the in-progress state for the Log out controls, and the whole wait is
+    /// about 6 seconds at worst because each network step is capped by
+    /// `PushTokenCleanup`.
     ///
     /// Also clears the onboarding-shown flag so the next login re-shows the
     /// welcome flow. A second call while a logout is running is a no-op.
@@ -354,7 +364,6 @@ final class UserManager {
                 deleteToken: { try await Messaging.messaging().deleteToken() },
                 clearSession: { self.clearLocalSession() }
             )
-            self.isLoggingOut = false
         }
     }
 
@@ -376,8 +385,12 @@ final class UserManager {
     /// Starts, or returns the in-flight, deleteToken-only retry for a
     /// cleanup an earlier logout left unfinished. Called at a signed-out
     /// launch (`tryAutoLogin`) and awaited by `login` / `signup` before the
-    /// new session registers a token (D-17). Carries no credential (D-18).
-    /// A no-op run (no marker) finishes immediately.
+    /// new session registers a token (D-17). The retry also waits for the
+    /// `deleteToken` of an involuntary logout still running in the
+    /// background (bounded by the cleanup timeout), so a sign-in inside
+    /// that window registers against a fresh token and never races it
+    /// (WR-02). Carries no credential (D-18). A no-op run (no marker, no
+    /// run in flight) finishes immediately.
     @discardableResult
     private func retryPushCleanupIfNeeded() -> Task<Void, Never> {
         if let pushCleanupRetry { return pushCleanupRetry }
@@ -399,6 +412,12 @@ final class UserManager {
     /// call twice: every step is a removal or an assignment of the empty
     /// state, so a logout that overlaps an involuntary one is harmless.
     private func clearLocalSession() {
+        // The leaving account has no bearer from here on, so `hasStoredToken`
+        // keeps it out of `registerPushToken`; the guard flag is reset in
+        // the same step so it never outlives the session it protects. A flag
+        // that outlived the clear blocked the next sign-in's registration
+        // (WR-02).
+        isLoggingOut = false
         authUser = nil
         me = nil
         profile = nil
@@ -654,10 +673,13 @@ final class UserManager {
     /// device via Firebase. Persists the token locally so `logout()`
     /// can DELETE the correct row on the server.
     ///
-    /// Returns early, storing nothing, while a user logout is running: a
-    /// token that arrived mid-logout must not re-bind this device to the
-    /// account that is leaving, and must not survive `clearLocalSession()`
-    /// in UserDefaults (PUSH-04).
+    /// Returns early, storing nothing, while a user logout is running (the
+    /// bearer is live for the whole DELETE and `deleteToken` wait): a token
+    /// that arrived mid-logout, including the one Firebase regenerates after
+    /// `deleteToken`, must not re-bind this device to the account that is
+    /// leaving, and must not survive `clearLocalSession()` in UserDefaults
+    /// (PUSH-04). The flag is reset by `clearLocalSession()`, so the next
+    /// account's token is never skipped (WR-02).
     func registerPushToken(_ token: String) async {
         guard !isLoggingOut else {
             #if DEBUG
@@ -733,9 +755,12 @@ final class UserManager {
     /// completes.
     ///
     /// Also returns early while a user logout is running: a foreground
-    /// re-upload that lands during the ~3 s cleanup would re-bind the
-    /// device to the account that is leaving (PUSH-04). `registerPushToken`
-    /// repeats the guard for the token the callback delivers later.
+    /// re-upload that lands during the cleanup (the bearer stays live until
+    /// the DELETE and `deleteToken` have finished or timed out) would
+    /// re-bind the device to the account that is leaving (PUSH-04).
+    /// `registerPushToken` repeats the guard for the token the callback
+    /// delivers later. Both guards clear with the session, so the next
+    /// sign-in's `apply(...)` always registers (WR-02).
     private func fetchAndUploadFCMToken() {
         guard !isLoggingOut else {
             #if DEBUG

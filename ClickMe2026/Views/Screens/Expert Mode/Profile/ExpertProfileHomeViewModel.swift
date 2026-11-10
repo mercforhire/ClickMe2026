@@ -85,6 +85,12 @@ final class ExpertProfileHomeViewModel: ObservableObject {
 
     // MARK: - Actions
 
+    /// `true` while the user logout's push cleanup is still running (up to
+    /// about 6 s). Read from the `@Observable` manager during the view's
+    /// body, so SwiftUI tracks it without a `@Published` mirror; the Log
+    /// Out row shows its spinner and is disabled while it holds.
+    var isLoggingOut: Bool { userManager.isLoggingOut }
+
     func logOut() {
         userManager.logout()
     }

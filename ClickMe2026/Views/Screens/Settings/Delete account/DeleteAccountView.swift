@@ -52,8 +52,14 @@ struct DeleteAccountView: View {
             case .feedback:
                 feedbackView.transition(.opacity)
             case .deleted:
-                DeleteAccountFarewell(onBackToLogin: onBackToLogin)
-                    .transition(.opacity)
+                // "Back to Login" runs `UserManager.logout()`; the farewell
+                // reads the manager's in-progress flag so the button shows
+                // a spinner for the cleanup wait and cannot be tapped twice.
+                DeleteAccountFarewell(
+                    onBackToLogin: onBackToLogin,
+                    isLoggingOut: UserManager.shared.isLoggingOut
+                )
+                .transition(.opacity)
             }
         }
         .navigationTitle(viewModel.step == .deleted ? "" : "Delete Account")

@@ -12,6 +12,11 @@ import SwiftUI
 
 struct DeleteAccountFarewell: View {
     let onBackToLogin: () -> Void
+    /// `true` while the logout started by "Back to Login" is still
+    /// finishing its push cleanup (up to about 6 s): the button shows a
+    /// spinner and is disabled so the tap is acknowledged and cannot be
+    /// repeated. The shell routes to Login when the session clears.
+    var isLoggingOut: Bool = false
 
     @State private var iconScale: CGFloat = 0.70
     @State private var iconOpacity: Double = 0
@@ -68,16 +73,22 @@ struct DeleteAccountFarewell: View {
             }
 
             Button(action: onBackToLogin) {
-                Text("Back to Login")
-                    .font(.brand(.callout, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(DeleteAccountBrand.errorRed)
-                    )
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(DeleteAccountBrand.errorRed)
+                        .frame(height: 56)
+                    if isLoggingOut {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    } else {
+                        Text("Back to Login")
+                            .font(.brand(.callout, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
+            .disabled(isLoggingOut)
             .buttonStyle(PressScaleButtonStyle())
             .padding(.horizontal, 20)
             .padding(.bottom, 40)

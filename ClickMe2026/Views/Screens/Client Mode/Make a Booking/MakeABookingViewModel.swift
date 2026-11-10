@@ -275,7 +275,7 @@ final class MakeABookingViewModel: ObservableObject {
             self.selectedTopic = mapped.first
             self.topicsState = .loaded
         } catch {
-            self.topicsState = .failed(Self.message(for: error))
+            self.topicsState = .failed(error.userMessage)
         }
     }
 
@@ -300,7 +300,7 @@ final class MakeABookingViewModel: ObservableObject {
         do {
             center = try await api.getExpertAvailability(id: expertId, month: Self.monthKey(month))
         } catch {
-            availabilityState = .failed(Self.message(for: error))
+            availabilityState = .failed(error.userMessage)
             return
         }
 
@@ -381,7 +381,13 @@ final class MakeABookingViewModel: ObservableObject {
             )
             completedBookingId = response.data.bookingId
         } catch {
-            bookingError = Self.message(for: error)
+            let code = BookingErrorMapper.code(for: error)
+            if code == .slotUnavailable {
+                // Same side effect as the paid path: send the user back to
+                // the slot picker, the slot they chose is gone.
+                selectedTimeSlot = nil
+            }
+            bookingError = BookingErrorMapper.message(for: code, fallback: error.userMessage)
         }
     }
 
@@ -537,7 +543,7 @@ final class MakeABookingViewModel: ObservableObject {
             // Same `booking_attempt_id`, different details — regenerate
             // and start over from the intent-create step.
             newBookingAttempt()
-            bookingError = "Please try booking again."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .intentExpired, .piContextMismatch, .piAmountMismatch:
@@ -548,7 +554,7 @@ final class MakeABookingViewModel: ObservableObject {
             resetPaidFlow()
 
         case .expertNotBookable:
-            bookingError = "This expert isn't accepting bookings right now."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .longLeadRequiresSavedCard, .longLeadNotAvailable:
@@ -564,39 +570,39 @@ final class MakeABookingViewModel: ObservableObject {
             // just got taken.
             selectedTimeSlot = nil
             newBookingAttempt()
-            bookingError = "That time slot was just taken. Please pick another."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .invalidPaymentMethod:
-            bookingError = "This payment method can't be used for this booking. Please choose another card."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .meetingLinkUnavailable:
-            bookingError = "The expert hasn't set up their Skype/Zoom link yet. Please choose in-app voice instead."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .directChargeDisabled:
-            bookingError = "Payments are temporarily unavailable. Please try again in a few minutes."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .paymentFailed:
-            bookingError = "Your card was declined. Please try another card."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .duplicateBooking:
-            bookingError = "A booking for this session already exists."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .amountBelowMinimum:
-            bookingError = "The session total is below the minimum charge amount."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .invalidPromo:
-            bookingError = "That promo code isn't valid."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         case .cannotBookSelf:
-            bookingError = "You can't book yourself."
+            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
         default:
@@ -774,15 +780,6 @@ final class MakeABookingViewModel: ObservableObject {
         f.timeZone = TimeZone(identifier: "UTC")
         f.dateFormat = "HH:mm"
         return f.string(from: date)
-    }
-
-    private static func message(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 
     /// Parses `detail` from the raw JSON error body via `JSONSerialization`

@@ -41,7 +41,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (whether recovery is also built depends on decision Q3)
 - [ ] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
 - [ ] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
-- [ ] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
+- [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
 - [ ] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
 
 ### Payments
@@ -202,7 +202,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-15 | Phase 2 | Pending |
 | BOOK-16 | Phase 3 | Pending |
 | BOOK-17 | Phase 3 | Pending |
-| BOOK-18 | Phase 2 | Pending |
+| BOOK-18 | Phase 2 | Complete |
 | BOOK-19 | Phase 4 | Pending |
 | PAY-01 | Phase 4 | Pending |
 | PAY-02 | Phase 4 | Pending |

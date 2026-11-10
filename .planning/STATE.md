@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-11-PLAN.md
-last_updated: "2026-11-10T06:19:14.316Z"
+stopped_at: Completed 02-13-PLAN.md
+last_updated: "2026-11-10T06:34:53.707Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: a9e554c743fa65db9a09ddf09449b48873fc5a51
+state_head: ff4f3992404c6828ddbf606feaadb7704cf3cfbc
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 37
+  completed_plans: 38
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 9 of 15
+Plan: 10 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -93,6 +93,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P10 | ~15 min (continuation; Task 1 in prior session) | 2 tasks | 10 files |
 | Phase 02 P06 | ~30 min (continuation; Task 1 in prior session) | 3 tasks | 11 files |
 | Phase 02 P11 | ~5 min (continuation; Task 1 in prior session) | 2 tasks | 5 files |
+| Phase 02 P13 | ~4 min (continuation; Task 1 in prior session) | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -183,6 +184,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-06: every NumberFormatter currency site in the app target is gone (app-wide count 0); major-unit server fields use Money.format(major:). BOOK-10 expert device check deferred by the user (approve and defer), PENDING for 02-12
 - [Phase 02]: 02-11: a foreground push presents nothing only when route_category is message, thread_id is present and equals ChatPresence.visibleThreadId; every other push, including a booking push with the same thread_id, keeps banner, list, sound and badge; ChatPresence.chatDisappeared clears only its own thread (Android ChatSessionState parity)
 - [Phase 02]: 02-11: CHAT-09 device check deferred by the user at the Task 1 tracer gate (approve and defer), PENDING for 02-12 incl. the tab-switch case (assumption A3); Task 2 presence rows passed first run because Task 1 built the rule, so Task 2 is a test-only commit
+- [Phase 02]: 02-13: the three client booking screens use the 02-03 ReloadGeneration counter (newest started wins, superseded fetch writes nothing, no task cancellation); Android reaches the same latest-wins outcome by cancelling the previous job, so no Android change is needed
+- [Phase 02]: 02-13: MyBookingsViewModel.silentReload() runs forceLoad() while state is .loading, so a booking.update during a pull-to-refresh supersedes that load and the newest call always settles the spinner; BOOK-18 client device check deferred by the user at the Task 1 tracer gate (approve and defer), PENDING for 02-12 (WINDOWS #18)
 
 ### Pending Todos
 
@@ -241,6 +244,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T06:19:14.257Z
-Stopped at: Completed 02-11-PLAN.md
+Last session: 2026-11-10T06:34:53.649Z
+Stopped at: Completed 02-13-PLAN.md
 Resume file: None

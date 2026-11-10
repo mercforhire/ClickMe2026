@@ -140,6 +140,11 @@ final class MeetingCallViewModel: ObservableObject {
     /// attempt because the row is no longer `confirmed`.
     private var hasConfirmedConnection: Bool = false
 
+    /// Set when the call ends for a reason other than the user's hang-up, so
+    /// `handleEndCall` reports it instead of deriving `.completed` or
+    /// `.manualExit` from `hasConfirmedConnection`.
+    private var pendingEndReason: EndReason?
+
     // MARK: - Runtime init
 
     /// Runtime init — POSTs `/bookings/:id/join`, initializes the Agora
@@ -262,8 +267,11 @@ final class MeetingCallViewModel: ObservableObject {
 
             switch (mine, remote) {
             case (.disconnected, _):
-                // Local side dropped — genuinely terminal; run teardown.
-                self.callStatus = .ended
+                // Agora reported the local connection failed (terminal: the
+                // SDK stopped trying to rejoin). Run the normal end path so
+                // the channel is left, POST /end is sent once with `.dropped`
+                // and the screen dismisses, instead of sitting on a dead call.
+                self.endAfterConnectionFailure()
 
             case (_, .disconnected):
                 // Peer left the channel. Do NOT tear down — let the
@@ -654,6 +662,23 @@ final class MeetingCallViewModel: ObservableObject {
         }
     }
 
+    /// Ends the call after Agora reports a terminal connection failure.
+    ///
+    /// Ignored when a hang-up is already in progress or the call already
+    /// ended, so a failure event that arrives late or twice produces exactly
+    /// one `POST /end`. Goes through `CallCenter.endCall()` like a hang-up so
+    /// the overlay state is cleared too; a view model that `CallCenter` does
+    /// not own (previews, tests) just moves to `.ended`.
+    private func endAfterConnectionFailure() {
+        guard !isEndingCall, callStatus != .ended else { return }
+        pendingEndReason = .dropped
+        if CallCenter.shared.viewModel === self {
+            CallCenter.shared.endCall()
+        } else {
+            callStatus = .ended
+        }
+    }
+
     /// Fires the end-call animation, tears down the Agora session, POSTs
     /// `/bookings/:id/end`, then dismisses.
     ///
@@ -670,6 +695,8 @@ final class MeetingCallViewModel: ObservableObject {
     ///   `.manualExit`. Server keeps status unchanged; the sweep cron
     ///   will mark it `missed` after the scheduled end, which is the
     ///   correct outcome for a bail-out.
+    /// - `pendingEndReason` set (Agora reported a terminal connection
+    ///   failure) → send that reason, `.dropped`, in place of the two above.
     func handleEndCall(onDismiss: @escaping () -> Void) {
         withAnimation(.easeInOut(duration: 0.25)) {
             isEndingCall = true
@@ -677,7 +704,7 @@ final class MeetingCallViewModel: ObservableObject {
         }
         stopTimer()
 
-        let endReason: EndReason = hasConfirmedConnection ? .completed : .manualExit
+        let endReason: EndReason = pendingEndReason ?? (hasConfirmedConnection ? .completed : .manualExit)
 
         Task { [weak self] in
             guard let self else { return }

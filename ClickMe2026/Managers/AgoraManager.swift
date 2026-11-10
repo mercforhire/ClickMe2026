@@ -18,6 +18,38 @@ enum ConnectionState {
     case disconnected
 }
 
+/// The local connection states Agora reports through
+/// `rtcEngine(_:connectionChangedTo:reason:)`.
+///
+/// Raw values mirror Agora 4.6.2 `AgoraConnectionState` so the mapping below
+/// can be unit tested without linking the SDK.
+nonisolated enum AgoraLinkState: Int {
+    case disconnected = 1
+    case connecting   = 2
+    case connected    = 3
+    case reconnecting = 4
+    case failed       = 5
+}
+
+extension ConnectionState {
+    /// The local `ConnectionState` an Agora link state should produce, or
+    /// `nil` when the link state must not change what the call screen shows.
+    ///
+    /// Only `.failed` ends the call: the SDK has stopped trying to rejoin.
+    /// `.disconnected` maps to `nil` on purpose. It is the state before the
+    /// first join and the state after `leaveChannel`, so mapping it would end
+    /// a call that is still starting, or report the user's own hang-up as a
+    /// dropped call. `.connecting` and `.reconnecting` are transient and the
+    /// SDK recovers from them on its own.
+    nonisolated static func localState(for link: AgoraLinkState?) -> ConnectionState? {
+        switch link {
+        case .failed:    return .disconnected
+        case .connected: return .ready
+        default:         return nil
+        }
+    }
+}
+
 enum SpeakerState {
     case muted
     case ear
@@ -273,14 +305,28 @@ extension AgoraManager: AgoraRtcEngineDelegate {
         }
     }
 
+    /// The SDK reports remote users only here (`uid` is never the local user),
+    /// so this callback only ever changes the remote party's state. The local
+    /// side is driven by `connectionChangedTo`.
     nonisolated func rtcEngine(_ engine: AgoraRtcEngineKit, didOfflineOfUid uid: UInt, reason: AgoraUserOfflineReason) {
         Task { @MainActor [weak self] in
-            guard let self else { return }
-            if uid == 0 {
-                self.myConnectionState = .disconnected
-            } else {
-                self.remoteConnectionState = .disconnected
-            }
+            self?.remoteConnectionState = .disconnected
+        }
+    }
+
+    /// Local connection state. A terminal `.failed` (the SDK gave up
+    /// rejoining) moves the local state to `.disconnected`, which the call
+    /// view model turns into the normal end path. See
+    /// `ConnectionState.localState(for:)` for what is deliberately ignored.
+    nonisolated func rtcEngine(
+        _ engine: AgoraRtcEngineKit,
+        connectionChangedTo state: AgoraConnectionState,
+        reason: AgoraConnectionChangedReason
+    ) {
+        let link = AgoraLinkState(rawValue: state.rawValue)
+        guard let next = ConnectionState.localState(for: link) else { return }
+        Task { @MainActor [weak self] in
+            self?.myConnectionState = next
         }
     }
 

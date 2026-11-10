@@ -1,46 +1,41 @@
 ---
-status: testing
+status: partial
 phase: 02-shared-ios-plumbing
 source: [02-VERIFICATION.md]
 started: 2026-11-10T18:24:14Z
-updated: 2026-11-10T18:24:14Z
+updated: 2026-11-10T22:59:24.482Z
 ---
 
 ## Current Test
 
-number: 1
-name: CALL-01 overtime auto-end (UAT item 1): in-app voice call kept past its scheduled end on a build at or after be00d74
-expected: |
-  Still connected at end + 10 (old 5-minute cutoff gone); 'This call will end in 5 minutes' at end + 55; ends by itself at end + 60 and shows Ended; Android peer tears down on call.ended
-awaiting: user response
-
-Step-by-step device instructions for each item are in `02-DEVICE-UAT-CHECKLIST.md` (UAT item numbers are given in each test name).
+[testing complete]
 
 ## Tests
 
 ### 1. CALL-01 overtime auto-end (UAT item 1): in-app voice call kept past its scheduled end on a build at or after be00d74
 expected: Still connected at end + 10 (old 5-minute cutoff gone); 'This call will end in 5 minutes' at end + 55; ends by itself at end + 60 and shows Ended; Android peer tears down on call.ended
-result: [pending]
+result: pass
+note: "User observed the call still connected at end + 11 (old 5-minute cutoff gone). Did not wait for end + 55 / end + 60 ('too long, assume the test passes'). The warn/end timing is covered by ClickMe2026Tests/Utils/CallOvertimePolicyTests.swift; the on-device notice, the auto-end and the Android peer teardown on call.ended were not observed."
 
 ### 2. CALL-02 join window edges on all four surfaces (UAT item 3) and the pending_reschedule disabled Join (UAT item 4)
 expected: Join appears within about a minute of start - 60 with no refresh; still shown at start + 90 on a long session; leaves the client list at max(end, start + 60); pending_reschedule shows Join dimmed and disabled, enabling on its own once confirmed again
-result: [pending]
+result: pass
 
 ### 3. BOOK-10 money on every screen, topic reopen-and-save (D-19), Client Profile history (UAT item 6)
 expected: CA$12.50 / CA$12.00 on Make a Booking, Explore, Expert Profile, Payment History, booking detail, summary, cancel preview, dashboard, payouts, request, upcoming card, breakdown, topic cards; a 12.50 topic saved with only the title changed still shows CA$12.50 (and a legacy USD topic keeps $); Client Profile gated rows show real net earnings, others show a dash
-result: [pending]
+result: pass
 
 ### 4. BOOK-14 paid 6-day cap on Make a Booking and the client Reschedule picker (UAT item 7)
-expected: All days visible and tappable; fixed note 'Paid sessions can be booked up to 6 days ahead.' / 'Paid sessions can be rescheduled up to 6 days ahead.'; slots after now + 6 days dimmed and untappable; free topic uncapped with no note; expert reschedule picker unchanged
-result: [pending]
+expected: All days visible and tappable; fixed note 'Paid sessions can be booked up to 6 days ahead.' / 'Paid sessions can be rescheduled up to 6 days ahead.'; slots after now + 6 days dimmed and untappable; free topic uncapped with no note; expert reschedule picker unchanged; VoiceOver (02-UI-SPEC A1/C1, quick 261110-nzy) reads only the displayed month's days (filler cells skipped), past days read as dimmed, days past the paid limit read normally, chevrons read 'Previous month' / 'Next month', same on the client Reschedule calendar
+result: pass
 
 ### 5. BOOK-18 live booking.update and overlapping refresh on Upcoming Booking details, My Bookings and expert Upcoming Bookings (UAT item 9); neutral label for an unknown status after da16ef4
 expected: Screens update without pull-to-refresh; an update during a pull-to-refresh ends on the newest state with no stuck spinner; an unknown status renders a neutral label, not confirmed-state actions
-result: [pending]
+result: pass
 
 ### 6. PUSH-01 / CR-01 every push type opens its screen, warm and cold, both modes; unknown category opens the notifications list; notifications-list rows match; booking_id-only cron push opens the booking (UAT item 10)
 expected: Right screen, no SwiftUI warning page, Back returns to the tab root, cold tap opens once
-result: [pending]
+result: skipped
 
 ### 7. PUSH-02 / D-03 role-targeted pushes switch mode silently, client-only fallback, roles unknown at cold launch (UAT item 11)
 expected: Set-up expert in client mode switches to expert and opens the request; client-only account stays in client mode and opens the notifications list; with roles unknown offline the tap stays queued and routes once the network returns
@@ -89,10 +84,10 @@ result: [pending]
 ## Summary
 
 total: 17
-passed: 0
+passed: 5
 issues: 0
-pending: 17
-skipped: 0
+pending: 11
+skipped: 1
 blocked: 0
 
 ## Gaps

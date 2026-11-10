@@ -26,8 +26,9 @@ struct PushEvent {
 
     /// Coarse bucket (`booking`, `session`, `message`, `review`, `payout`,
     /// `account`), trimmed and lowercased. `nil` when the payload has no
-    /// `route_category` and no `event_type` the fallback table knows; the
-    /// caller then opens the notifications list (PUSH-01).
+    /// `route_category`, no `event_type` the fallback table knows and no
+    /// valid `booking_id`; the caller then opens the notifications list
+    /// (PUSH-01).
     let category: String?
     /// Event within the category (for example `requests`, `new_message`),
     /// trimmed and lowercased. `nil` when absent or empty.
@@ -87,6 +88,8 @@ struct PushEvent {
             return flattened
         }()
 
+        bookingId = Self.uuid(data["booking_id"])
+
         if let routeCategory = Self.normalized(data["route_category"]) {
             category = routeCategory
             subCategory = Self.normalized(data["route_sub_category"])
@@ -95,6 +98,14 @@ struct PushEvent {
         {
             category = fallback.category
             subCategory = fallback.subCategory
+        } else if bookingId != nil {
+            // The cron reminder, no-show and nudge pushes carry only a
+            // booking_id. Android treats them as `booking` pushes (its
+            // PushEvent.kt, RESEARCH F-1), so the tap opens that booking
+            // instead of the notifications list. The sub-category stays
+            // whatever `route_sub_category` says, usually nothing.
+            category = "booking"
+            subCategory = Self.normalized(data["route_sub_category"])
         } else {
             category = nil
             subCategory = nil
@@ -106,7 +117,6 @@ struct PushEvent {
         default: targetRole = nil
         }
 
-        bookingId = Self.uuid(data["booking_id"])
         threadId = Self.uuid(data["thread_id"])
         reviewId = Self.uuid(data["review_id"])
         payoutId = Self.uuid(data["payout_id"])

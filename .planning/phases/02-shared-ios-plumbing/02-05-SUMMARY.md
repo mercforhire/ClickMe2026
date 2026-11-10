@@ -165,7 +165,7 @@ None - no external service configuration required.
 
 - Plan 02-06 can call `Money.format(minorUnits:currency:)` for the expert sites; `format(major:currency:)` is available for fields the server already divided.
 - Plan 02-12 must include the deferred BOOK-10 device checks above.
-- BOOK-10 is marked complete (client half) on the strength of the unit tests, grep gate and clean build; the device verification remains outstanding and is tracked above.
+- BOOK-10 (client half) is done on the strength of the unit tests, grep gate and clean build. REQUIREMENTS.md still shows BOOK-10 as pending because plan 02-06 also declares it (shared-ID gate); it flips when 02-06 finishes. The device verification remains outstanding and is tracked above.
 
 ## Self-Check: PASSED
 

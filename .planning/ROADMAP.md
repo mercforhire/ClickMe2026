@@ -159,7 +159,7 @@ Plans:
   4. Paid booking and reschedule pickers offer no slot more than 6 days ahead. The long-lead error codes show a clear error instead of an invalid confirm. Paid and free booking paths show the same slot-taken and meeting-link copy.
   5. Tapping any push switches to the right mode and opens the right screen: a booking-request push opens that request, `booking/payment_actions` opens that booking, and unknown types open the notifications list. No banner appears for the chat already on screen, and after logout the device stops receiving the old account's pushes.
 
-**Plans**: 9/15 plans executed in 3 waves (iOS only, no backend change)
+**Plans**: 10/15 plans executed in 3 waves (iOS only, no backend change)
 
 Plans:
 **Wave 1**
@@ -176,7 +176,7 @@ Plans:
 - [x] 02-10-PLAN.md — PUSH-01/02/03, BOOK-15: route_category parse, target_role mode switch, cold-launch queue (after 02-09)
 
 **Wave 3**
-- [ ] 02-06-PLAN.md — BOOK-10 expert money sites, lossless topic-editor price seed, app-wide formatter gate (after 02-04, 02-05)
+- [x] 02-06-PLAN.md — BOOK-10 expert money sites, lossless topic-editor price seed, app-wide formatter gate (after 02-04, 02-05)
 - [ ] 02-11-PLAN.md — CHAT-09 no banner for the chat on screen (after 02-10)
 - [ ] 02-12-PLAN.md — PUSH-04 logout push cleanup; Phase 2 device checklist; Q3 recorded as route only (after 02-10)
 - [ ] 02-13-PLAN.md — BOOK-18 newest refetch on the client detail, summary and My Bookings screens (after 02-03, 02-05)
@@ -318,7 +318,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
-| 2. Shared iOS Plumbing | 9/15 | In Progress | - |
+| 2. Shared iOS Plumbing | 10/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 0/TBD | Not started | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |

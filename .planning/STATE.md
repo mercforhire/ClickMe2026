@@ -3,11 +3,11 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-12-PLAN.md (last plan of Phase 2; device UAT pending)
-last_updated: "2026-11-10T21:55:08.843Z"
-last_activity: 2026-11-09
+stopped_at: Phase 02 UI-SPEC approved
+last_updated: "2026-11-10T22:29:42.120Z"
+last_activity: 2026-11-10
 last_activity_desc: Phase 02 execution started
-state_head: 81f8797a7f880505978043e512ad24a5276e208f
+state_head: 88c6a23a8ebeae95913e2386e33799c080d228f2
 progress:
   total_phases: 8
   completed_phases: 1
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
 Plan: 13 of 15
 Status: Ready to execute
-Last activity: 2026-11-10 - Completed quick task 261110-mmr: Fix WR-02 (fast re-login after logout skips push registration)
+Last activity: 2026-11-10 - Completed quick task 261110-nzy: Make a Booking calendar filler cells hidden from VoiceOver (02-UI-SPEC E1/A1/C1 gap)
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -245,6 +245,7 @@ Captured todos:
 | 2 | Backend hotfix for CR-01: stop sending category to iOS tokens (215adcb) | 2026-11-08 | c55d284 | — |
 | 261109-323 | Fix Explore home feed decode failure on free topics with no currency | 2026-11-09 | 77178f5 | [261109-323-explore-home-feed-free-topic-decode](./quick/261109-323-explore-home-feed-free-topic-decode/) |
 | 261110-mmr | Fix WR-02: logout waits for push cleanup (Android order) so a fast re-login keeps push registration; Log out shows progress (IN-02) | 2026-11-10 | 81f8797 | [261110-mmr-fix-wr-02-fast-re-login-after-logout-ski](./quick/261110-mmr-fix-wr-02-fast-re-login-after-logout-ski/) |
+| 261110-nzy | Make a Booking calendar: filler cells hidden from VoiceOver; E1/A1/C1 gap resolved in 02-UI-SPEC | 2026-11-10 | 88c6a23 | [261110-nzy-make-a-booking-calendar-month-blank-capt](./quick/261110-nzy-make-a-booking-calendar-month-blank-capt/) |
 
 ## Deferred Items
 
@@ -256,6 +257,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T17:46:41.915Z
-Stopped at: Completed 02-12-PLAN.md (last plan of Phase 2; device UAT pending)
-Resume file: None
+Last session: 2026-11-10T22:06:09.632Z
+Stopped at: Phase 02 UI-SPEC approved
+Resume file: .planning/phases/02-shared-ios-plumbing/02-UI-SPEC.md

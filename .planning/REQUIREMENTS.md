@@ -38,7 +38,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BOOK-12** [B12]: Keep Booking returns to the previous screen, not the My Bookings root
 - [ ] **BOOK-13** [B13]: Cancel is hidden on a booking whose session has already ended
 - [x] **BOOK-14** [B14] **[major]**: Paid booking and reschedule pickers allow slots at most 6 days ahead, and the long-lead error codes show a clear error instead of an invalid confirm
-- [ ] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (Q3 settled 2026-11-09 as route only, Phase 2 D-01: no recovery flow is built; an unanswered booking is cancelled by scaRecoveryWindowSweep)
+- [x] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (Q3 settled 2026-11-09 as route only, Phase 2 D-01: no recovery flow is built; an unanswered booking is cancelled by scaRecoveryWindowSweep)
 - [ ] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
 - [ ] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
 - [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
@@ -109,7 +109,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **PUSH-01** [N1] **[major]**: Tapping any push type opens the right screen, and unknown types open the notifications list (backend `category` for iOS or a wider iOS parser, per decision Q6)
 - [x] **PUSH-02** [N2] **[major]**: A push tap switches to the right mode (client/expert) before routing
 - [x] **PUSH-03** [N3]: A booking-request push opens that request, not the list
-- [ ] **PUSH-04** [N4] **[major]**: After logout, the device stops receiving the old account's pushes (the token is unregistered before auth is cleared)
+- [x] **PUSH-04** [N4] **[major]**: After logout, the device stops receiving the old account's pushes (the token is unregistered before auth is cleared)
 
 ### Settings, Profile, Account
 
@@ -200,7 +200,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-12 | Phase 3 | Pending |
 | BOOK-13 | Phase 3 | Pending |
 | BOOK-14 | Phase 2 | Complete |
-| BOOK-15 | Phase 2 | Pending |
+| BOOK-15 | Phase 2 | Complete |
 | BOOK-16 | Phase 3 | Pending |
 | BOOK-17 | Phase 3 | Pending |
 | BOOK-18 | Phase 2 | Complete |
@@ -252,7 +252,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | PUSH-01 | Phase 2 | Complete |
 | PUSH-02 | Phase 2 | Complete |
 | PUSH-03 | Phase 2 | Complete |
-| PUSH-04 | Phase 2 | Pending |
+| PUSH-04 | Phase 2 | Complete |
 | SET-01 | Phase 5 | Pending |
 | SET-02 | Phase 5 | Pending |
 | SET-03 | Phase 5 | Pending |

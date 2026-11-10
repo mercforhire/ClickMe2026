@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 02
 current_phase_name: Shared iOS Plumbing
 status: executing
-stopped_at: Completed 02-15-PLAN.md
-last_updated: "2026-11-10T17:19:35.223Z"
+stopped_at: Completed 02-12-PLAN.md (last plan of Phase 2; device UAT pending)
+last_updated: "2026-11-10T17:46:41.972Z"
 last_activity: 2026-11-09
 last_activity_desc: Phase 02 execution started
-state_head: 63b743d24c10aea324be90b2e01756b9cd3a2401
+state_head: 28af9548359cf1bcd5749be37bce28e82f9e1ca7
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 41
-  completed_plans: 40
+  completed_plans: 41
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 02 (Shared iOS Plumbing) — EXECUTING
-Plan: 12 of 15
+Plan: 13 of 15
 Status: Ready to execute
 Last activity: 2026-11-09 — Phase 02 execution started
 
@@ -96,6 +96,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P13 | ~4 min (continuation; Task 1 in prior session) | 2 tasks | 3 files |
 | Phase 02 P14 | ~50 min (continuation; Task 1 in prior session) | 2 tasks | 8 files |
 | Phase 02 P15 | 23 min | 2 tasks | 7 files |
+| Phase 02 P12 | 23min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -193,6 +194,9 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-14: CALL-02 device check DEFERRED by the user because the behavior changed after the checkpoint; PENDING for 02-12 (WINDOWS #19); the 02-04 wording 'no Join on pending_reschedule' is superseded by 'Join visible but disabled'
 - [Phase 02]: 02-15: Client Profile history rows show real net earnings now (Android parity, user decision at the tracer gate), gated to pending_approval/confirmed/pending_reschedule/in_progress/completed, dash otherwise; formatted through Money.format(major:) with fixed symbols, not the device locale; EXP-14 stays open for other Client Profile earnings surfaces
 - [Phase 02]: 02-15: BOOK-10 / EXP-14 Client Profile device check deferred by the user; PENDING for 02-12 with the Android-parity wording in WINDOWS.md
+- [Phase 02]: PUSH-04 retry is Firebase deleteToken only, at launch and login only; the server DELETE is never retried and the residual window after an offline logout is accepted (D-17, D-18)
+- [Phase 02]: Involuntary logouts (suspension, rejected token, refresh 401, no refresh token) skip the DELETE: session cleared synchronously, deleteToken in the background; login/signup await the owed retry before registering
+- [Phase 02]: Phase 2 device checklist uses the latest SUMMARY/WINDOWS wording (BOOK-14 dimmed slots, CALL-02 Join disabled, BOOK-10 CAD and real net earnings); WINDOWS.md entries annotated as carried over, none waived
 
 ### Pending Todos
 
@@ -251,6 +255,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-10T17:19:35.160Z
-Stopped at: Completed 02-15-PLAN.md
+Last session: 2026-11-10T17:46:41.915Z
+Stopped at: Completed 02-12-PLAN.md (last plan of Phase 2; device UAT pending)
 Resume file: None

@@ -161,4 +161,27 @@ struct BookingErrorCopyParityTests {
         let paid = makeViewModel(topic: ParityFixture.paidTopic, status: 400, body: body, log: PathLog())
         #expect(await bookAndWait(paid) == ParityFixture.serverText)
     }
+
+    @Test("book() with a paid slot past the 6-day limit shows the long-lead copy and makes no request")
+    func farSlotMakesNoRequest() {
+        MockURLProtocol.reset()
+        let log = PathLog()
+        let paid = makeViewModel(
+            topic: ParityFixture.paidTopic,
+            status: 500,
+            body: ParityFixture.errorBody(code: "INTERNAL_ERROR"),
+            log: log
+        )
+        paid.selectedTimeSlot = BookingTimeSlot(
+            startTime: Date().addingTimeInterval(7 * 24 * 3600),
+            endTime: nil,
+            isAvailable: true
+        )
+
+        paid.book()
+
+        #expect(paid.bookingError == BookingErrorMapper.longLeadMessage)
+        #expect(paid.selectedTimeSlot == nil)
+        #expect(log.all.isEmpty)
+    }
 }

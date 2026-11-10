@@ -92,21 +92,23 @@ struct MakeABookingCalendarCard: View {
         let isToday = item.date.map { viewModel.calendar.isDateInToday($0) } ?? false
         let isCurrentMonth = item.isCurrentMonth
         let isPast = item.date.map { viewModel.isPastDate($0) } ?? false
+        // Past the paid 6-day limit: blank and untappable, not greyed out.
+        let isBeyond = item.date.map { viewModel.isBeyondBookingWindow($0) } ?? false
 
         return Button {
-            if let d = item.date, isCurrentMonth, !isPast {
+            if let d = item.date, isCurrentMonth, !isPast, !isBeyond {
                 viewModel.selectedDate = d
                 viewModel.selectedTimeSlot = nil
             }
         } label: {
             ZStack {
-                if isSelected {
+                if isSelected, !isBeyond {
                     Circle()
                         .fill(MakeABookingBrand.brandGreen)
                         .shadow(color: MakeABookingBrand.brandGreen.opacity(0.50), radius: 6, x: 0, y: 0)
                 }
 
-                Text(item.label)
+                Text(isBeyond ? "" : item.label)
                     .font(.system(.subheadline, design: .rounded).weight(isSelected ? .bold : .regular))
                     .foregroundColor(
                         isSelected ? MakeABookingBrand.onPrimary :
@@ -118,6 +120,6 @@ struct MakeABookingCalendarCard: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
-        .disabled(!isCurrentMonth || item.date == nil || isPast)
+        .disabled(!isCurrentMonth || item.date == nil || isPast || isBeyond)
     }
 }

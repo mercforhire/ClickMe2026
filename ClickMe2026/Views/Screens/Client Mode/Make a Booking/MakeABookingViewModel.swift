@@ -74,7 +74,13 @@ final class MakeABookingViewModel: ObservableObject {
     /// reuse the id.
     @Published var selectedTopic: BookingTopic? {
         didSet {
-            if oldValue?.id != selectedTopic?.id { newBookingAttempt() }
+            guard oldValue?.id != selectedTopic?.id else { return }
+            newBookingAttempt()
+            // Free to paid: a slot picked under no limit may now be past
+            // the 6-day limit.
+            if let slot = selectedTimeSlot, !isBookableStart(slot.startTime) {
+                selectedTimeSlot = nil
+            }
         }
     }
     @Published var selectedDate: Date = .init()
@@ -343,9 +349,32 @@ final class MakeABookingViewModel: ObservableObject {
 
     // MARK: - Slots for the selected day
 
-    /// Slots for `selectedDate`, in the order returned by the server.
+    /// Slots for `selectedDate`, in the order returned by the server, minus
+    /// any a paid topic cannot book (more than 6 days ahead, BOOK-14).
     var slotsForSelectedDate: [BookingTimeSlot] {
-        availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? []
+        let slots = availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? []
+        let latest = latestBookableStart
+        return slots.filter { PaidBookingWindow.allows($0.startTime, latestStart: latest) }
+    }
+
+    // MARK: - Paid booking window (BOOK-14)
+
+    /// The latest start the selected topic can book, or nil for no limit.
+    /// Read from the clock on every call so a screen left open never keeps a
+    /// stale limit.
+    private var latestBookableStart: Date? {
+        PaidBookingWindow.latestStart(isPaid: !(selectedTopic?.isFree ?? true), now: Date())
+    }
+
+    /// Whether the server would accept a session starting at `start` for the
+    /// selected topic.
+    func isBookableStart(_ start: Date) -> Bool {
+        PaidBookingWindow.allows(start, latestStart: latestBookableStart)
+    }
+
+    /// Whether the whole of `day` is past the limit, so the calendar blanks it.
+    func isBeyondBookingWindow(_ day: Date) -> Bool {
+        PaidBookingWindow.isDayBeyond(day, latestStart: latestBookableStart, calendar: calendar)
     }
 
     // MARK: - Book action
@@ -357,6 +386,14 @@ final class MakeABookingViewModel: ObservableObject {
     func book() {
         guard !isSubmitting else { return }
         guard let topic = selectedTopic, let slot = selectedTimeSlot else { return }
+
+        // The picker hides these; this catches a slot that drifted past the
+        // limit while the screen was open. No request is made.
+        guard isBookableStart(slot.startTime) else {
+            selectedTimeSlot = nil
+            bookingError = BookingErrorMapper.longLeadMessage
+            return
+        }
 
         if topic.isFree {
             Task { await performFreeBooking(topic: topic, slot: slot) }

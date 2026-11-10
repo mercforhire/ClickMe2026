@@ -196,11 +196,11 @@ Result:
 
 ### 14. PUSH-04 — after logout the old account's pushes stop (02-12, D-06 as amended by D-17, D-18)
 
-**Status:** PENDING (user "approve and defer" at the 02-12 Task 1 tracer gate, 2026-11-10; Task 2 paths added below).
+**Status:** PENDING (user "approve and defer" at the 02-12 Task 1 tracer gate, 2026-11-10; Task 2 paths added below); (e) fast re-login added by quick 261110-mmr (WR-02 fix), and step 2 now describes the Android-order wait with the Log Out row's progress state (IN-02).
 
 **(a) User logout (Task 1 tracer check):**
 1. Sign in as A on the device. Confirm a push arrives (for example a chat message from B).
-2. **Log out from Profile.** The app returns to Login within about 3 seconds.
+2. **Log out from Profile and confirm.** The Log Out row shows a spinner and cannot be tapped again while the cleanup runs (the server DELETE, then Firebase deleteToken, each capped at 3 seconds); the app lands on Login once it has finished, after up to about 6 seconds, usually much less.
 3. From the other device, **send A a chat message** (or trigger any push to A).
 
 Expected: **nothing arrives** on the logged-out device — no banner, nothing in Notification Center.
@@ -218,7 +218,14 @@ Expected: **B receives B's pushes and A's pushes do not arrive.** Accepted resid
 
 **(d) Involuntary logout (Task 2), only if a safe trigger is available on production:** with the device signed in as A, invalidate A's session from elsewhere (for example a backend-side token revocation on a test account, or a suspension of a test account). On the next authenticated request the app returns to Login **at once**, without waiting on the network; afterwards a push to A does not arrive on this device. If no safe trigger exists, record SKIPPED (no safe production trigger); the ordering is pinned by `PushTokenCleanupTests`.
 
-**Not a failure:** a push to A arriving before the retry after an offline logout (D-17); the app never keeping A's bearer or refresh token for the retry (D-18) — only a Bool marker is saved.
+**(e) Fast re-login (WR-02):**
+7. Sign in as A. **Log out from Profile and confirm.** Watch the Log Out row: it shows a spinner and is not tappable while the cleanup runs, for up to about 6 seconds, then the app lands on Login.
+8. **As soon as the Login screen appears, sign in as B** (no need to wait; the cleanup has already finished by the time Login is visible).
+9. Once Home appears, **trigger a push to B from the other device without backgrounding the app first**, then trigger a push to A.
+
+Expected: **B receives it; the push to A does not arrive.** Sign-in itself takes its usual time.
+
+**Not a failure:** a push to A arriving before the retry after an offline logout (D-17); the app never keeping A's bearer or refresh token for the retry (D-18) — only a Bool marker is saved; the Log Out spinner staying up for as long as about 6 seconds on a slow or offline network (two 3-second caps); and, if Firebase was unreachable for longer than that during the logout, B's pushes starting only after the next token callback or foreground (same class as the D-17 window; record it in Result if seen).
 
 Result:
 

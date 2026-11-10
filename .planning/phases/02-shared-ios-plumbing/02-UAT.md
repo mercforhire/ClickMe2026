@@ -55,7 +55,7 @@ expected: Booking detail opens, no warning page, no recovery sheet
 result: [pending]
 
 ### 10. PUSH-04 after logout the old account's pushes stop, including the second-account, airplane-mode and involuntary paths (UAT item 14 a-d), and the WR-02 fast re-login case: sign back in as B within about 3 seconds of logging out A
-expected: No push for A arrives after logout; B receives B's pushes even when the re-login is immediate (if B receives nothing until the next foreground activation, WR-02 is reproduced and should be fixed)
+expected: Log out shows a spinner on the Log Out row for up to about 6 s (DELETE, then deleteToken, each capped at 3 s) and then lands on Login; no push for A arrives after logout; B receives B's pushes even when the re-login is immediate and without backgrounding the app first, with the sign-in taking its usual time; WR-02 was fixed by quick 261110-mmr, so B receiving nothing until the next foreground activation is now a regression
 result: [pending]
 
 ### 11. CHAT-09 no banner for the chat already on screen, with the control, tab-switch, stacked-chat and non-chat cases (UAT item 15)

@@ -9,7 +9,7 @@ findings:
     title: "Client screens coerce an unknown booking status to `.confirmed`, so BOOK-18 is only half-applied"
   - id: WR-02
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "`isLoggingOut` stays true after the login screen is up, so a fast re-login can silently skip push registration"
   - id: WR-03
     severity: warning
@@ -25,13 +25,13 @@ findings:
     title: "Dead production helper and stale \"hide\" wording after the dim-not-hide decision"
   - id: IN-02
     severity: info
-    disposition: open
+    disposition: fixed
     title: "`logout()` gives no feedback for up to 3 s while the user is still signed in"
   - id: IN-03
     severity: info
     disposition: open
     title: "Currency symbol is \"US$\" on the price label and \"$\" in the hint, on the same screen (outside phase plans: e43ef50/73e729e)"
-open: 6
+open: 4
 total: 7
 recorded: 2026-11-10T17:57:39.457Z
 ---
@@ -41,11 +41,11 @@ recorded: 2026-11-10T17:57:39.457Z
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
 | WR-01 | warning | fixed | da16ef4 — both client fallbacks now `?? .unknown`; `ClientBookingStatusFallbackTests` green (verified 2026-11-10, 02-VERIFICATION.md) |
-| WR-02 | warning | open | - |
+| WR-02 | warning | fixed | 1824a11 — user logout now runs DELETE, then Firebase deleteToken, then clears the session (Android order, user decision 2026-11-10), so Login cannot appear while the cleanup runs; isLoggingOut resets in clearLocalSession; PushTokenCleanup runs every deleteToken on one serialized lane and retryIfPending awaits it before the isPending check; PushTokenCleanupTests rows signOutOrder, aHungDeleteTokenStillFinishesLogoutWithinTheCap, aCompletedLogoutLeavesNothingForTheNextSignInToWaitOn, retryWaitsForAnInvoluntaryLogoutsBackgroundDeleteToken, retryAfterAFailedInFlightDeleteTokenRunsOnceItHasFinished, aHangingDeleteTokenNeverHoldsTheNextSignInPastTheTimeout, userAndInvoluntaryDeleteTokensNeverOverlap green (quick 261110-mmr, 2026-11-10) |
 | WR-03 | warning | open | - |
 | WR-04 | warning | open | - |
 | IN-01 | info | open | - |
-| IN-02 | info | open | - |
+| IN-02 | info | fixed | 1824a11 — the Profile Log Out row (client and expert, ClientProfileHomeListItem isBusy) and the delete-account farewell's Back to Login button show a spinner and are disabled while UserManager.isLoggingOut holds, which now covers the whole wait (DELETE then deleteToken, up to about 6 s); device check in UAT item 14 (e) (quick 261110-mmr, 2026-11-10) |
 | IN-03 | info | open | - |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.

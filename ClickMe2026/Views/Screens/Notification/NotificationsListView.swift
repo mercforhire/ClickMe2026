@@ -146,16 +146,17 @@ struct NotificationsListView: View {
 
     // MARK: - Tap routing
 
-    /// Route through `PushRouter.pendingDestination` — the same channel
-    /// real push taps use — so the shell handles tab-switch + push in
-    /// one place. Rows without a routable payload are silently ignored.
+    /// Route through `PushRouter.pending` — the same queue real push taps
+    /// use — so the shell handles tab-switch + push in one place. A row
+    /// keeps the current mode (no target role), because the list is already
+    /// the mode's own. Rows without a routable payload are silently ignored.
     private func handleTap(_ item: NotificationItem) {
         let destination = NotificationsListViewModel.destination(for: item)
         #if DEBUG
         print("notif-tap: category=\(item.category) sub=\(item.subCategory ?? "nil") meta=\(String(describing: item.metaData)) → \(String(describing: destination))")
         #endif
         guard let destination else { return }
-        PushRouter.shared.pendingDestination = destination
+        PushRouter.shared.pending = PendingPush(destination: destination, targetRole: nil)
     }
 
     // MARK: - Section

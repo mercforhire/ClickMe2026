@@ -26,6 +26,9 @@ struct HomeClientView: View {
     private let userManager = UserManager.shared
     /// Observed so a tapped push notification lands on the right tab.
     @ObservedObject private var pushRouter = PushRouter.shared
+    /// A tap held for unknown roles is planned again when the app returns
+    /// to the foreground (for example after airplane mode is turned off).
+    @Environment(\.scenePhase) private var scenePhase
 
     // MARK: Per-tab nav paths
     //
@@ -125,11 +128,40 @@ struct HomeClientView: View {
                 }
             )
         }
-        .onChange(of: pushRouter.pendingDestination) { _, destination in
-            handlePushDestination(destination)
+        // Consume the queued push tap. Fires when a tap arrives while this
+        // shell is up, when the shell mounts with a tap already queued (cold
+        // launch, or a mode switch made for that tap), when the account's
+        // roles load, and when the app returns to the foreground, so a tap
+        // held for unknown roles is planned as soon as they are known.
+        .onChange(of: pushRouter.pending) { _, _ in
+            consumePendingPush()
         }
         .onAppear {
-            handlePushDestination(pushRouter.pendingDestination)
+            consumePendingPush()
+        }
+        .onChange(of: userManager.me?.roles) { _, _ in
+            consumePendingPush()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { consumePendingPush() }
+        }
+    }
+
+    /// Plan the queued tap for client mode (D-02, D-03). A nil plan means
+    /// nothing is queued, a newer tap superseded it, or it is waiting for
+    /// the account's roles. A mode switch hands the tap to the expert shell,
+    /// which mounts and consumes it (so it is not cleared here); otherwise
+    /// the destination opens and the queue is cleared. Running the same plan
+    /// twice is harmless, so overlapping triggers need no guard.
+    private func consumePendingPush() {
+        Task {
+            guard let plan = await pushRouter.planPending(currentMode: .client) else { return }
+            if let mode = plan.switchToMode {
+                userManager.setMode(mode)
+                return
+            }
+            handlePushDestination(plan.destination)
+            pushRouter.pending = nil
         }
     }
 
@@ -140,8 +172,7 @@ struct HomeClientView: View {
     /// on Profile, and the notifications list on Explore. Expert-only
     /// destinations also land on Explore's notifications list, because the
     /// client shell has no screen for them.
-    private func handlePushDestination(_ destination: PushDestination?) {
-        guard let destination else { return }
+    private func handlePushDestination(_ destination: PushDestination) {
         switch destination {
         case let .bookingDetail(bookingId):
             selectedTab = .bookings
@@ -182,7 +213,6 @@ struct HomeClientView: View {
             selectedTab = .explore
             explorePath.replace(with: HomeRoute.notifications)
         }
-        pushRouter.pendingDestination = nil
     }
 
     // MARK: - Tabs

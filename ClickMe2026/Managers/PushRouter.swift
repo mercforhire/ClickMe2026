@@ -99,18 +99,37 @@ enum PushRoutePlanner {
     /// Expert mode is usable only with the expert role and a completed
     /// expert setup. Unknown (nil) counts as no.
     static func canUseExpertMode(roles: [UserRole]?, setupCompleted: Bool?) -> Bool {
-        false
+        guard let roles, roles.contains(.expert) else { return false }
+        return setupCompleted == true
     }
 
     /// Whether planning this tap needs the account's roles: only an
     /// expert-targeted tap arriving in client mode is decided from them
     /// (D-03).
     static func needsRoles(_ pending: PendingPush, currentMode: AppMode) -> Bool {
-        false
+        pending.targetRole == .expert && currentMode == .client
     }
 
+    /// An absent target role, or one equal to the current mode, opens the
+    /// destination where the user is (D-02). A client-targeted tap in expert
+    /// mode switches to client. An expert-targeted tap in client mode
+    /// switches to expert only when the account can use it; otherwise it
+    /// stays in client mode and opens the notifications list (D-03). A
+    /// session already in expert mode is never forced out of it by a push,
+    /// so `canUseExpertMode` is read only for the client-to-expert switch.
     static func plan(_ pending: PendingPush, currentMode: AppMode, canUseExpertMode: Bool) -> PushPlan {
-        PushPlan(destination: pending.destination, switchToMode: nil)
+        guard let target = pending.targetRole, target != currentMode else {
+            return PushPlan(destination: pending.destination, switchToMode: nil)
+        }
+        switch target {
+        case .client:
+            return PushPlan(destination: pending.destination, switchToMode: .client)
+        case .expert:
+            if canUseExpertMode {
+                return PushPlan(destination: pending.destination, switchToMode: .expert)
+            }
+            return PushPlan(destination: .notificationsList, switchToMode: nil)
+        }
     }
 }
 
@@ -120,9 +139,10 @@ enum PushRoutePlanner {
 ///
 /// Why a router instead of routing directly from AppDelegate: the
 /// shells own tab state (`selectedTab`) and their per-tab
-/// `HomeNavigationPath`s. AppDelegate has neither. The router exposes a
-/// published `pendingDestination`; the shells observe it, act, and
-/// clear it. Keeps the coupling one-way + easy to unit-test.
+/// `HomeNavigationPath`s. AppDelegate has neither. The router queues the
+/// tap as `pending`; each shell asks `planPending(currentMode:)` what to do
+/// with it, switches mode or opens the destination, and clears it. Keeps
+/// the coupling one-way + easy to unit-test.
 ///
 /// Foreground-list refresh is a separate signal — `newNotificationTick`
 /// — that `NotificationsListView` observes to trigger a silent reload
@@ -132,14 +152,11 @@ final class PushRouter: ObservableObject {
 
     static let shared = PushRouter()
 
-    /// Non-nil when a tapped push is waiting to be routed. The active
-    /// shell clears this after handling. Never latched — a second push
-    /// during the same session overwrites, matching how iOS delivers
-    /// only the most-recently-tapped notification.
-    @Published var pendingDestination: PushDestination?
-
-    /// The tapped push queued until the shell for its mode consumes it.
-    /// Never latched: the newest tap wins.
+    /// The tapped push queued until the shell for its mode consumes it. It
+    /// survives a cold launch (set before any shell mounts) and a mode
+    /// switch (the first shell switches, the second one opens it). Never
+    /// latched: a second tap overwrites, matching how iOS delivers only the
+    /// most-recently-tapped notification. Cleared by the consuming shell.
     @Published var pending: PendingPush?
 
     /// Bumps every time a push arrives in the foreground so
@@ -155,15 +172,56 @@ final class PushRouter: ObservableObject {
     /// or background). Parses the payload, computes a destination, and
     /// stores it for the shell to consume.
     func handleTap(_ event: PushEvent, isSignedIn: Bool = UserManager.shared.hasStoredToken) {
+        // A tap with no signed-in session is dropped, so a previous
+        // account's notification never opens a screen for whoever signs in
+        // next (T-02-20).
+        guard isSignedIn else { return }
         // An unknown or missing category opens the notifications list so
         // the user can at least see what came in (PUSH-01).
-        pendingDestination = Self.destination(for: event) ?? .notificationsList
+        pending = PendingPush(
+            destination: Self.destination(for: event) ?? .notificationsList,
+            targetRole: event.targetRole
+        )
     }
 
-    /// Plans the queued tap for the shell of `currentMode`; nil when nothing
-    /// is queued.
+    /// Plans the queued tap for the shell of `currentMode`. Returns nil when
+    /// nothing is queued, when a newer tap replaced it while this call was
+    /// loading account facts (the newer tap gets its own plan), or when an
+    /// expert-targeted tap in client mode cannot be decided yet because the
+    /// account's roles are unknown.
+    ///
+    /// An expert-targeted tap is never decided from a nil `me` (T-02-28):
+    /// after a transient auto-login failure `me` is nil while the session is
+    /// still signed in, so the planner reloads it once here. If the roles are
+    /// still unknown the tap stays queued untouched, with no mode switch and
+    /// no notifications-list fallback, and is planned again at the next
+    /// trigger: a new tap, `me` loading, the app becoming active, or a shell
+    /// appearing. When the roles hold expert but the expert profile is not
+    /// loaded, it is fetched once; a failed fetch counts as "cannot use
+    /// expert mode" (research A8).
     func planPending(currentMode: AppMode, account: PushAccountSource = .live) async -> PushPlan? {
-        nil
+        guard let queued = pending else { return nil }
+
+        if PushRoutePlanner.needsRoles(queued, currentMode: currentMode) {
+            if account.roles() == nil {
+                await account.loadRoles()
+                guard pending == queued else { return nil }
+                guard account.roles() != nil else { return nil }
+            }
+            if account.roles()?.contains(.expert) == true, account.expertSetupCompleted() == nil {
+                await account.loadExpertProfile()
+                guard pending == queued else { return nil }
+            }
+        }
+
+        return PushRoutePlanner.plan(
+            queued,
+            currentMode: currentMode,
+            canUseExpertMode: PushRoutePlanner.canUseExpertMode(
+                roles: account.roles(),
+                setupCompleted: account.expertSetupCompleted()
+            )
+        )
     }
 
     /// Called from `willPresent` (push arrived while app was in the

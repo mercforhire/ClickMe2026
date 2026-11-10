@@ -22,6 +22,9 @@ struct HomeExpertView: View {
     private let userManager = UserManager.shared
     /// Observed so a tapped push notification lands on the right tab.
     @ObservedObject private var pushRouter = PushRouter.shared
+    /// A tap held for unknown roles is planned again when the app returns
+    /// to the foreground (for example after airplane mode is turned off).
+    @Environment(\.scenePhase) private var scenePhase
 
     // MARK: Per-tab nav paths — persistent across tab switches.
     @StateObject private var dashboardPath = HomeNavigationPath()
@@ -75,17 +78,41 @@ struct HomeExpertView: View {
                 peerAvatarURL: peerAvatarURL
             ))
         })
-        // Consume any pending deep-link the router parked when a push
-        // was tapped. Fires whether the shell was already on-screen
-        // or just came up.
-        .onChange(of: pushRouter.pendingDestination) { _, destination in
-            handlePushDestination(destination)
+        // Consume the queued push tap. Fires when a tap arrives while this
+        // shell is up, when the shell mounts with a tap already queued (cold
+        // launch, or a mode switch made for that tap), when the account's
+        // roles load, and when the app returns to the foreground, so a tap
+        // held for unknown roles is planned as soon as they are known.
+        .onChange(of: pushRouter.pending) { _, _ in
+            consumePendingPush()
         }
         .onAppear {
-            // In case the destination was set before this view mounted
-            // (e.g. app cold-started via a notification tap), consume
-            // it now.
-            handlePushDestination(pushRouter.pendingDestination)
+            consumePendingPush()
+        }
+        .onChange(of: userManager.me?.roles) { _, _ in
+            consumePendingPush()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { consumePendingPush() }
+        }
+    }
+
+    /// Plan the queued tap for expert mode (D-02). A nil plan means nothing
+    /// is queued or a newer tap superseded it. A client-targeted tap switches
+    /// to client mode and hands the tap to the client shell, which mounts
+    /// and consumes it (so it is not cleared here); otherwise the destination
+    /// opens and the queue is cleared, so a subsequent identical push still
+    /// fires (SwiftUI's `onChange` skips duplicate values). Running the same
+    /// plan twice is harmless, so overlapping triggers need no guard.
+    private func consumePendingPush() {
+        Task {
+            guard let plan = await pushRouter.planPending(currentMode: .expert) else { return }
+            if let mode = plan.switchToMode {
+                userManager.setMode(mode)
+                return
+            }
+            handlePushDestination(plan.destination)
+            pushRouter.pending = nil
         }
     }
 
@@ -94,11 +121,8 @@ struct HomeExpertView: View {
     /// one mutation, so Back returns to the tab's root. Ownership: booking
     /// detail and leave-review on Bookings, the request hub, payouts and the
     /// notifications list on Dashboard, chat on Chats, account security on
-    /// Profile. Clears `pendingDestination` after handling so a subsequent
-    /// identical push still fires (SwiftUI's `onChange` skips duplicate
-    /// values).
-    private func handlePushDestination(_ destination: PushDestination?) {
-        guard let destination else { return }
+    /// Profile.
+    private func handlePushDestination(_ destination: PushDestination) {
         switch destination {
         case let .bookingDetail(bookingId):
             selectedTab = .bookings
@@ -143,7 +167,6 @@ struct HomeExpertView: View {
             selectedTab = .dashboard
             dashboardPath.replace(with: HomeRoute.notifications)
         }
-        pushRouter.pendingDestination = nil
     }
 
     // MARK: - Tabs

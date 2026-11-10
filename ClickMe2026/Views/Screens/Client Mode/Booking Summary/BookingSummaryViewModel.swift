@@ -326,9 +326,10 @@ final class BookingSummaryViewModel: ObservableObject {
     /// Collapse the raw wire status to the 3-case badge enum. Same rule
     /// used by `MyBookingsViewModel.mapPastIfApplicable`. Returns nil
     /// for statuses that don't belong on the summary badge (e.g.
-    /// `pending_approval / confirmed / in_progress` — the summary
-    /// screen is only ever pushed for terminal bookings, but we
-    /// silently hide rather than lie if the caller opens it early).
+    /// `pending_approval / confirmed / in_progress / rescheduled /
+    /// unknown` — the summary screen is only ever pushed for terminal
+    /// bookings, but we silently hide rather than lie if the caller opens
+    /// it early or the status is one this build doesn't know).
     private static func mapStatus(_ raw: String) -> PastBookingStatus? {
         guard let status = BookingStatus(rawValue: raw) else { return nil }
         switch status {
@@ -336,7 +337,8 @@ final class BookingSummaryViewModel: ObservableObject {
         case .cancelled, .declined:           return .cancelled
         case .missed, .expired:               return .missed
         case .pendingApproval, .confirmed,
-             .pendingReschedule, .inProgress: return nil
+             .pendingReschedule, .inProgress,
+             .rescheduled, .unknown:          return nil
         }
     }
 

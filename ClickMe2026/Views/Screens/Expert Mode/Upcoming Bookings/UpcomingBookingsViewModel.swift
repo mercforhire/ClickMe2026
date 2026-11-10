@@ -185,10 +185,12 @@ final class UpcomingBookingsViewModel {
     }
 
     /// "Upcoming" = session hasn't ended AND status isn't terminal.
+    /// `rescheduled` and `unknown` count as upcoming so the row stays
+    /// visible; the join helper (plan 02-04) keeps Join closed for them.
     private static func isUpcoming(_ item: ExpertBookingItem, now: Date) -> Bool {
         guard item.session.endTime > now else { return false }
         switch item.status.code {
-        case .confirmed, .pendingReschedule, .inProgress:
+        case .confirmed, .pendingReschedule, .inProgress, .rescheduled, .unknown:
             return true
         case .pendingApproval, .completed, .cancelled, .declined, .missed, .expired:
             return false
@@ -213,7 +215,8 @@ final class UpcomingBookingsViewModel {
             uiStatus = .cancelled
         case .missed, .expired:
             uiStatus = .missed
-        case .pendingApproval, .confirmed, .pendingReschedule, .inProgress:
+        case .pendingApproval, .confirmed, .pendingReschedule, .inProgress,
+             .rescheduled, .unknown:
             // Not terminal — but still count as past if the session
             // clock has already elapsed. Treat as .missed since
             // there's no completed marker yet.

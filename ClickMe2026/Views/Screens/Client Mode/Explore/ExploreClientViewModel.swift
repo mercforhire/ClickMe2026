@@ -161,7 +161,10 @@ final class ExploreClientViewModel: ObservableObject {
         switch status {
         case .confirmed, .inProgress, .pendingReschedule:
             return true
-        case .pendingApproval, .completed, .cancelled, .declined, .missed, .expired:
+        case .pendingApproval, .completed, .cancelled, .declined, .missed, .expired,
+             .rescheduled, .unknown:
+            // `rescheduled` and `unknown` are not strip members; whether
+            // Join is offered is decided by the join helper (plan 02-04).
             return false
         }
     }

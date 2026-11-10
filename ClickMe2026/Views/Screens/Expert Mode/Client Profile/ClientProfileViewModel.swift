@@ -111,7 +111,8 @@ final class ClientProfileViewModel: ObservableObject {
 
     private static func mapStatus(from code: BookingStatus) -> BookingHistoryStatus {
         switch code {
-        case .pendingApproval, .confirmed, .pendingReschedule, .inProgress:
+        case .pendingApproval, .confirmed, .pendingReschedule, .inProgress,
+             .rescheduled, .unknown:
             return .upcoming
         case .completed:
             return .completed

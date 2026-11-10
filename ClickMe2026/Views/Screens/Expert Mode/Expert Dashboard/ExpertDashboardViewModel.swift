@@ -372,12 +372,14 @@ final class ExpertDashboardViewModel: ObservableObject {
     /// "Today's Sessions" strip. `pendingApproval` is intentionally excluded
     /// — those show up separately in the "Pending Requests" banner, and
     /// they shouldn't render a Join button since the expert hasn't accepted
-    /// the request yet.
+    /// the request yet. `rescheduled` (socket-only) and `unknown` (a status
+    /// this build doesn't know) are not strip members either.
     private static func isJoinable(_ status: BookingStatus) -> Bool {
         switch status {
         case .confirmed, .inProgress, .pendingReschedule:
             return true
-        case .pendingApproval, .completed, .cancelled, .declined, .missed, .expired:
+        case .pendingApproval, .completed, .cancelled, .declined, .missed, .expired,
+             .rescheduled, .unknown:
             return false
         }
     }

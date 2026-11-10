@@ -63,6 +63,7 @@ struct MeetingCallView: View {
         }
         .animation(.easeInOut(duration: 0.25), value: viewModel.isInFinalStretch)
         .animation(.easeInOut(duration: 0.25), value: viewModel.isPastScheduledEnd)
+        .animation(.easeInOut(duration: 0.25), value: viewModel.isOvertimeWarning)
         .animation(.easeInOut(duration: 0.25), value: viewModel.connectionType)
         // Server pushed `call.ended` for this booking — the peer hung
         // up. Drop back to the "waiting for peer" visual so the local
@@ -191,12 +192,14 @@ struct MeetingCallView: View {
 
     // MARK: - Session-ending banner
 
-    /// Amber banner shown across the top of the call in two states:
+    /// Amber banner shown across the top of the call in three states:
     ///
     /// - Within the last 5 minutes → "Session ending soon" with the
     ///   remaining count in a small chip.
     /// - Past the scheduled end   → "Scheduled time complete — you
     ///   can wrap up when ready." (Soft ending — call keeps going.)
+    /// - 5 minutes before the overtime cutoff (scheduled end + 55 min)
+    ///   → "This call will end in 5 minutes".
     private var endingSoonBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: "hourglass")
@@ -219,6 +222,9 @@ struct MeetingCallView: View {
     }
 
     private var bannerText: String {
+        if viewModel.isOvertimeWarning {
+            return "This call will end in 5 minutes"
+        }
         if viewModel.isPastScheduledEnd {
             return "Scheduled time complete — you can wrap up when ready."
         }

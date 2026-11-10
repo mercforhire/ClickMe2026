@@ -57,6 +57,10 @@ final class MeetingCallViewModel: ObservableObject {
     /// - the post-scheduled-end "time is up" banner (call keeps going).
     @Published var scheduledStart: Date?
     @Published var scheduledEnd: Date?
+    /// True from 5 minutes before the overtime cutoff until the call
+    /// ends (scheduled end + 55 min). Drives the "This call will end
+    /// in 5 minutes" notice.
+    @Published var isOvertimeWarning: Bool = false
 
     // MARK: Call state
     @Published var callStatus: CallStatus
@@ -530,8 +534,10 @@ final class MeetingCallViewModel: ObservableObject {
         switch CallOvertimePolicy.action(scheduledEnd: scheduledEnd, now: now) {
         case .end:
             CallCenter.shared.endCall()
-        case .warn, .none:
-            break
+        case .warn:
+            if !isOvertimeWarning { isOvertimeWarning = true }
+        case .none:
+            if isOvertimeWarning { isOvertimeWarning = false }
         }
     }
 
@@ -685,13 +691,24 @@ final class MeetingCallViewModel: ObservableObject {
             // `actual_duration_secs` / `end_reason` for this leg. The
             // `isRejoin` skip that used to sit here was defensive
             // against a 409 that no longer fires.
-            if let bookingId = self.bookingId {
-                let duration = self.joinStartTime.map { Int(Date().timeIntervalSince($0)) } ?? 0
-                _ = try? await self.api.endCall(
-                    id: bookingId,
-                    actualDuration: max(0, duration),
-                    endReason: endReason
-                )
+            //
+            // A leg that never joined has no duration to report, so no
+            // `/end` is sent. The call is best effort: a failure shows
+            // nothing to the user and the teardown below still runs.
+            if let bookingId = self.bookingId,
+               let duration = CallOvertimePolicy.endDuration(joinStart: self.joinStartTime, now: Date())
+            {
+                do {
+                    _ = try await self.api.endCall(
+                        id: bookingId,
+                        actualDuration: duration,
+                        endReason: endReason
+                    )
+                } catch {
+                    #if DEBUG
+                    print("call: POST /end failed for booking \(bookingId): \(error.userMessage)")
+                    #endif
+                }
             }
 
             self.agora.destroyAgoraEngine()

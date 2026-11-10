@@ -49,4 +49,20 @@ nonisolated enum CallOvertimePolicy {
         if overtime >= cutoff - warningLead { return .warn }
         return .none
     }
+
+    /// The `actual_duration` to send to `POST /bookings/:id/end` for one leg.
+    ///
+    /// The server schema rejects 0 (`actual_duration` must be positive), so a
+    /// hang-up inside the first second still reports 1.
+    ///
+    /// - Parameters:
+    ///   - joinStart: When this leg joined, or `nil` if it never did, in which
+    ///     case no `/end` should be sent and no duration is invented.
+    ///   - now: The current time.
+    /// - Returns: Whole seconds of the leg, at least 1, or `nil` when the leg
+    ///   never joined.
+    static func endDuration(joinStart: Date?, now: Date) -> Int? {
+        guard let joinStart else { return nil }
+        return max(1, Int(now.timeIntervalSince(joinStart)))
+    }
 }

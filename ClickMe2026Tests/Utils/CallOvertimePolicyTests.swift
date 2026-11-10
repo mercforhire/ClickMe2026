@@ -51,4 +51,31 @@ struct CallOvertimePolicyTests {
     func cutoffReached(offset: TimeInterval) {
         #expect(CallOvertimePolicy.action(scheduledEnd: Self.end, now: Self.at(offset)) == .end)
     }
+
+    // MARK: - endDuration
+
+    private static let legStart = Date(timeIntervalSince1970: 1_800_000_000)
+
+    @Test("a leg that never joined reports no duration")
+    func neverJoinedIsNil() {
+        #expect(CallOvertimePolicy.endDuration(joinStart: nil, now: Self.legStart) == nil)
+    }
+
+    @Test("a sub-second or zero-second leg reports 1", arguments: [0.0, 0.4, 0.999] as [TimeInterval])
+    func shortLegIsClampedToOne(seconds: TimeInterval) {
+        let now = Self.legStart.addingTimeInterval(seconds)
+        #expect(CallOvertimePolicy.endDuration(joinStart: Self.legStart, now: now) == 1)
+    }
+
+    @Test("a clock that ran backwards still reports 1")
+    func negativeLegIsClampedToOne() {
+        let now = Self.legStart.addingTimeInterval(-5)
+        #expect(CallOvertimePolicy.endDuration(joinStart: Self.legStart, now: now) == 1)
+    }
+
+    @Test("a longer leg is truncated to whole seconds")
+    func longLegTruncates() {
+        let now = Self.legStart.addingTimeInterval(125.9)
+        #expect(CallOvertimePolicy.endDuration(joinStart: Self.legStart, now: now) == 125)
+    }
 }

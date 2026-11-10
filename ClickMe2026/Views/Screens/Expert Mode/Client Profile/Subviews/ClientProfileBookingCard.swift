@@ -13,6 +13,12 @@ import SwiftUI
 struct ClientProfileBookingCard: View {
     let booking: ClientBookingHistory
 
+    /// RED seam: mirrors the hard-coded dollar-sign label the card shows today
+    /// so the behavior rows compile and fail on their assertions.
+    static func amountLabel(amountMajor: Double?, currency: String?) -> String {
+        "$\(Int(exactly: (amountMajor ?? 0).rounded()) ?? 0)"
+    }
+
     var body: some View {
         HStack(spacing: 14) {
             statusIcon

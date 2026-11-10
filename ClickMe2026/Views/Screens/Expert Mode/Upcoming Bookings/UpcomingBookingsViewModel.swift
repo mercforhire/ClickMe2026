@@ -320,16 +320,14 @@ final class UpcomingBookingsViewModel {
         }
     }
 
-    /// Locale-aware currency formatter. `NumberFormatter.currency`
-    /// handles zero-decimal currencies (JPY, KRW, VND, CLP, ISK, XOF,
-    /// XAF) off the ISO code — no hardcoded fraction count. Returns
-    /// nil when either input is malformed so the caller can hide the
-    /// amount instead of printing a bogus string.
+    /// Formats the net amount, which the server already divided into
+    /// major units, through the major entry point of `Money` (BOOK-10):
+    /// full minor digits and a fixed symbol, with the backend's
+    /// zero-decimal set (JPY, KRW, VND, CLP, ISK, XOF, XAF) deciding the
+    /// digit count. Returns nil for a non-finite or out-of-range value so
+    /// the caller hides the amount instead of printing a bogus string.
     static func formatCurrency(_ amount: Double, code: String) -> String? {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = code
-        return formatter.string(from: NSNumber(value: amount))
+        Money.format(major: amount, currency: code)
     }
 
     /// `"Today • 10:30 AM"` / `"Tomorrow • 2:00 PM"` / `"Thu, Jul 11 • 9:00 AM"`.

@@ -211,25 +211,22 @@ struct RequestDecisionEarningsSection: View {
 
     // MARK: - Money formatting
 
-    /// Formats `amount` in the breakdown's currency (or the caller's
-    /// fallback for the `unavailable` path). Drives fraction-digit
-    /// behavior off `NumberFormatter.currency` so zero-decimal
-    /// currencies (JPY, KRW, VND, CLP, ISK, XOF, XAF — already scaled
-    /// server-side per the spec) render without a decimal, and the
-    /// currency symbol matches the ISO code rather than being
-    /// hard-coded to `$`.
+    /// Formats `amount`, which the breakdown already carries in major
+    /// units, in the breakdown's currency (or the caller's fallback for
+    /// the `unavailable` path) through the major entry point of `Money`
+    /// (BOOK-10). Every line shows full minor digits (`$75.00`, never
+    /// `$75`) with a fixed symbol; the backend's zero-decimal set (JPY,
+    /// KRW, VND, CLP, ISK, XOF, XAF — already scaled server-side per the
+    /// spec) renders without a decimal.
     ///
     /// Compares against `nil` explicitly rather than coalescing so a
     /// legitimate zero (0% commission → `platformFee: 0`) still renders
-    /// as `$0.00` instead of being treated as missing.
+    /// as `$0.00` instead of being treated as missing. A value `Money`
+    /// can't represent shows the dash.
     private func formatted(_ amount: Double?, currencyOverride: String? = nil) -> String {
         guard let amount else { return "—" }
         let code = currencyOverride ?? breakdown?.currency ?? fallbackCurrency
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = code
-        return formatter.string(from: NSNumber(value: amount))
-            ?? String(format: "%@ %.2f", code, amount)
+        return Money.format(major: amount, currency: code) ?? "—"
     }
 
     // MARK: - Types

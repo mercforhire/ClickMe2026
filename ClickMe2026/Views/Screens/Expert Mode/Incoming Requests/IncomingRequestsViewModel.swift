@@ -128,16 +128,14 @@ final class IncomingRequestsViewModel: ObservableObject {
 
     /// Server sends earnings in **major currency units** already
     /// (`amount_paid_minor_units / 100`), unlike prices in `topic.price`
-    /// which are minor units. NumberFormatter handles the cent
-    /// suffix — `75.0` → `"$75"`, `75.5` → `"$75.50"`.
+    /// which are minor units, so this goes through the major entry point
+    /// of `Money` (BOOK-10): `75.0` → `"$75.00"`, `75.5` → `"$75.50"`.
+    /// Full minor digits and a fixed symbol, never the device locale. A
+    /// missing amount or currency, or a value `Money` can't represent,
+    /// shows the dash.
     static func formatEarnings(amountMajor: Double?, currency: String?) -> String {
         guard let amount = amountMajor, let currency = currency else { return "—" }
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencyCode = currency
-        formatter.maximumFractionDigits = amount.truncatingRemainder(dividingBy: 1) == 0 ? 0 : 2
-        return formatter.string(from: NSNumber(value: amount))
-            ?? "\(currency) \(String(format: "%.0f", amount))"
+        return Money.format(major: amount, currency: currency) ?? "—"
     }
 
     // MARK: - Error mapping

@@ -89,24 +89,28 @@ struct HomeExpertView: View {
         }
     }
 
-    /// Route a tapped push notification to the appropriate tab + view.
-    /// Clears `pendingDestination` after handling so a subsequent
-    /// identical push still fires (SwiftUI's `onChange` skips
-    /// duplicate values).
+    /// Open a push or notifications-list destination on the tab that owns
+    /// it (D-04): select the tab, replace its stack with the destination in
+    /// one mutation, so Back returns to the tab's root. Ownership: booking
+    /// detail and leave-review on Bookings, the request hub, payouts and the
+    /// notifications list on Dashboard, chat on Chats, account security on
+    /// Profile. Clears `pendingDestination` after handling so a subsequent
+    /// identical push still fires (SwiftUI's `onChange` skips duplicate
+    /// values).
     private func handlePushDestination(_ destination: PushDestination?) {
         guard let destination else { return }
         switch destination {
         case let .bookingDetail(bookingId):
             selectedTab = .bookings
-            bookingsPath.push(HomeRoute.expertBookingSummary(bookingId: bookingId))
+            bookingsPath.replace(with: HomeRoute.expertBookingSummary(bookingId: bookingId))
         case .incomingRequests:
             // Booking-request notifications land here — the pending
             // requests hub, reachable from the dashboard tab.
             selectedTab = .dashboard
-            dashboardPath.push(HomeRoute.incomingRequests)
+            dashboardPath.replace(with: HomeRoute.incomingRequests)
         case let .chatThread(threadId):
             selectedTab = .chats
-            chatsPath.push(HomeRoute.chat(
+            chatsPath.replace(with: HomeRoute.chat(
                 threadId: threadId,
                 peerName: "",
                 peerAvatarURL: ""
@@ -115,27 +119,45 @@ struct HomeExpertView: View {
             // Experts don't leave reviews — land on the summary and
             // let them read the completed session.
             selectedTab = .bookings
-            bookingsPath.push(HomeRoute.expertBookingSummary(bookingId: bookingId))
+            bookingsPath.replace(with: HomeRoute.expertBookingSummary(bookingId: bookingId))
         case .payouts, .kycOnboarding:
             // Both go to `PayoutsView` — the KYC onboarding banner
             // lives on that screen when Stripe Connect isn't fully
             // set up, so a `payout/kyc_action` push lands one tap
             // away from the onboarding CTA.
             selectedTab = .dashboard
-            dashboardPath.push(HomeRoute.expertPayouts)
+            dashboardPath.replace(with: HomeRoute.expertPayouts)
         case .accountSecurity:
             selectedTab = .profile
-            profilePath.push(HomeRoute.accountSecurity)
+            profilePath.replace(with: HomeRoute.accountSecurity)
         case .notificationsList:
-            dashboardPath.push(HomeRoute.notifications)
+            selectedTab = .dashboard
+            dashboardPath.replace(with: HomeRoute.notifications)
         }
         pushRouter.pendingDestination = nil
     }
 
     // MARK: - Tabs
 
+    /// `homeStack(_:path:root:)` builds one `NavigationStack` per tab, with
+    /// `HomeRoute` registered exactly once. Every tab goes through it so no
+    /// routed destination can land on a stack that does not know it (CR-01).
+    private func homeStack<Root: View>(
+        _ nav: HomeNavigationPath,
+        path: Binding<NavigationPath>,
+        @ViewBuilder root: () -> Root
+    ) -> some View {
+        NavigationStack(path: path) {
+            root()
+                .navigationDestination(for: HomeRoute.self) { route in
+                    homeRouteDestination(route)
+                }
+        }
+        .environment(\.homeNavigationPath, nav)
+    }
+
     private var dashboardTab: some View {
-        NavigationStack(path: $dashboardPath.path) {
+        homeStack(dashboardPath, path: $dashboardPath.path) {
             ExpertDashboardView()
                 .safeAreaInset(edge: .top, spacing: 0) {
                     HomeExpertTopBar(
@@ -144,48 +166,31 @@ struct HomeExpertView: View {
                         onProfile: { dashboardPath.push(HomeRoute.modeSwitch) }
                     )
                 }
-                .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
-                }
         }
-        .environment(\.homeNavigationPath, dashboardPath)
     }
 
     private var bookingsTab: some View {
-        NavigationStack(path: $bookingsPath.path) {
+        homeStack(bookingsPath, path: $bookingsPath.path) {
             UpcomingBookingsView()
-                .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
-                }
         }
-        .environment(\.homeNavigationPath, bookingsPath)
     }
 
     private var topicsTab: some View {
-        NavigationStack(path: $topicsPath.path) {
+        homeStack(topicsPath, path: $topicsPath.path) {
             TopicsSetupView()
         }
-        .environment(\.homeNavigationPath, topicsPath)
     }
 
     private var chatsTab: some View {
-        NavigationStack(path: $chatsPath.path) {
+        homeStack(chatsPath, path: $chatsPath.path) {
             ChatConversationsView()
-                .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
-                }
         }
-        .environment(\.homeNavigationPath, chatsPath)
     }
 
     private var profileTab: some View {
-        NavigationStack(path: $profilePath.path) {
+        homeStack(profilePath, path: $profilePath.path) {
             ExpertProfileHomeScreen()
-                .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
-                }
         }
-        .environment(\.homeNavigationPath, profilePath)
     }
 
     // MARK: - Shared HomeRoute destination
@@ -221,6 +226,8 @@ struct HomeExpertView: View {
             ClientProfileView(clientId: userId)
         case .incomingRequests:
             IncomingRequestsView()
+        case let .requestDecision(requestId):
+            RequestDecisionView(requestId: requestId)
         case .expertPayouts:
             PayoutsView()
         case .accountSecurity:

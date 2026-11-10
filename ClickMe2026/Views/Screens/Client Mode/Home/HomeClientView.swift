@@ -278,6 +278,9 @@ struct HomeClientView: View {
             // Expert-only. If a client somehow lands here (deep-link
             // with wrong mode), do nothing.
             EmptyView()
+        case .requestDecision:
+            // Expert-only. Unreachable from the client shell.
+            EmptyView()
         case .expertPayouts:
             // Expert-only surface. Unreachable from the client shell.
             EmptyView()

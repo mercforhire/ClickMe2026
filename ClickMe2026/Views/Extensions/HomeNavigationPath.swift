@@ -113,6 +113,11 @@ enum HomeRoute: Hashable {
     /// Unreachable on the client shell; that path falls back to the
     /// notifications list.
     case incomingRequests
+    /// Expert-only. Pushed for a `booking/requests` push that carries a
+    /// booking id: opens that single request in `RequestDecisionView`. The
+    /// request id is the bookings row id, so the push's `booking_id` is
+    /// the request id. Unreachable on the client shell.
+    case requestDecision(requestId: UUID)
     /// Expert-only. Pushed by `PushRouter` for `payout/paid`,
     /// `payout/failed`, and `payout/kyc_action` notifications. Lands
     /// on `PayoutsView` — the earnings + Stripe Connect onboarding

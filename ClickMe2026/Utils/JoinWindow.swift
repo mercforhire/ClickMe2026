@@ -43,8 +43,16 @@ enum JoinWindow {
 
     /// Whether a card renders a Join button at all; `isOpen` then decides
     /// whether it is enabled.
+    ///
+    /// Android parity (user decision 2026-11-10, which supersedes the hide in
+    /// D-12): every card shows Join, dimmed and disabled while `isOpen` is
+    /// false, so a `pending_reschedule` booking shows a disabled Join rather
+    /// than none. The one exception is a booking still awaiting the expert's
+    /// approval, where the client card shows its "Waiting for expert to
+    /// accept" banner in place of the button, as Android's My Bookings card
+    /// does. Presentation only: the joining rule above is unchanged.
     static func showsJoinButton(status: BookingStatus) -> Bool {
-        isJoinableStatus(status)
+        status != .pendingApproval
     }
 
     /// True when Join should be offered for this booking at `now`.

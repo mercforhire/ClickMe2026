@@ -470,16 +470,20 @@ struct ExpertDashboardView: View {
                 navPath?.push(HomeRoute.expertBookingSummary(bookingId: session.bookingId))
             }
 
-            // Join Session button — offered on the shared `JoinWindow`
+            // Join Session button — enabled on the shared `JoinWindow`
             // rule (CALL-02): from 60 min before start through the later
             // of the scheduled end and start + 60 min, then a reconnect
             // until end + 60 min when the server's `actions.canJoin`
-            // allows it (BACK-09). A booking whose status is not joinable
-            // (pending_reschedule, D-12) shows no button at all. The
-            // TimelineView re-evaluates every minute so the button flips
-            // without a refresh. The server still decides `POST /join`;
-            // a refusal surfaces through `MeetingCallView.onJoinFailure`.
-            if JoinWindow.isJoinableStatus(session.status.code) {
+            // allows it (BACK-09). The button is rendered for every card
+            // and disabled (dimmed; VoiceOver announces "dimmed") while
+            // the window is closed or the status is not joinable, so a
+            // pending_reschedule card shows a disabled Join rather than
+            // none, as Android does (user decision 2026-11-10, supersedes
+            // the D-12 hide). The TimelineView re-evaluates every minute
+            // so the button flips without a refresh. The server still
+            // decides `POST /join`; a refusal surfaces through
+            // `MeetingCallView.onJoinFailure`.
+            if JoinWindow.showsJoinButton(status: session.status.code) {
                 TimelineView(.periodic(from: .now, by: 60)) { context in
                     let inWindow = JoinWindow.isOpen(
                         status: session.status.code,
@@ -521,6 +525,9 @@ struct ExpertDashboardView: View {
                     }
                     .buttonStyle(PressScaleButtonStyle())
                     .disabled(!inWindow)
+                    // Same disabled-state wording as Android's shared Join
+                    // button (`explore_join_call_state`).
+                    .accessibilityHint(inWindow ? "" : "Available closer to the session start")
                 }
             }
         }

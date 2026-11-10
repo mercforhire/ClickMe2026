@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Client screens coerce an unknown booking status to `.confirmed`, so BOOK-18 is only half-applied"
   - id: WR-02
     severity: warning
@@ -31,7 +31,7 @@ findings:
     severity: info
     disposition: open
     title: "Currency symbol is \"US$\" on the price label and \"$\" in the hint, on the same screen (outside phase plans: e43ef50/73e729e)"
-open: 7
+open: 6
 total: 7
 recorded: 2026-11-10T17:57:39.457Z
 ---
@@ -40,7 +40,7 @@ recorded: 2026-11-10T17:57:39.457Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | open | - |
+| WR-01 | warning | fixed | da16ef4 — both client fallbacks now `?? .unknown`; `ClientBookingStatusFallbackTests` green (verified 2026-11-10, 02-VERIFICATION.md) |
 | WR-02 | warning | open | - |
 | WR-03 | warning | open | - |
 | WR-04 | warning | open | - |

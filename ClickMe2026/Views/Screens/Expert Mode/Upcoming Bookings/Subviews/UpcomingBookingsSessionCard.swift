@@ -35,21 +35,25 @@ struct UpcomingBookingsSessionCard: View {
                 rescheduleBadge(reschedule)
             }
 
-            // Join Session — only for isNow
-            if session.isWithinJoinWindow {
-                Button(action: onJoin) {
-                    Text("Join Session")
-                        .font(.brand(.callout, weight: .bold))
-                        .foregroundColor(Brand.onPrimary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Brand.primary)
-                                .shadow(color: Brand.primary.opacity(0.50), radius: 14, x: 0, y: 4)
-                        )
+            // Join Session — only while the shared JoinWindow is open. The
+            // timeline re-evaluates every minute so the button appears and
+            // disappears as time passes, without a refresh.
+            TimelineView(.periodic(from: .now, by: 60)) { _ in
+                if session.isWithinJoinWindow {
+                    Button(action: onJoin) {
+                        Text("Join Session")
+                            .font(.brand(.callout, weight: .bold))
+                            .foregroundColor(Brand.onPrimary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Brand.primary)
+                                    .shadow(color: Brand.primary.opacity(0.50), radius: 14, x: 0, y: 4)
+                            )
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
                 }
-                .buttonStyle(PressScaleButtonStyle())
             }
 
             // Message + Reschedule
@@ -122,23 +126,25 @@ struct UpcomingBookingsSessionCard: View {
             }
 
             // Date row + NOW badge
-            HStack(spacing: 10) {
-                if session.isWithinJoinWindow {
-                    Text("NOW")
-                        .font(.brand(.caption2, weight: .bold))
-                        .foregroundColor(Brand.onPrimary)
-                        .tracking(0.8)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Brand.primary)
-                            .shadow(color: Brand.primary.opacity(0.55), radius: 5))
+            TimelineView(.periodic(from: .now, by: 60)) { _ in
+                HStack(spacing: 10) {
+                    if session.isWithinJoinWindow {
+                        Text("NOW")
+                            .font(.brand(.caption2, weight: .bold))
+                            .foregroundColor(Brand.onPrimary)
+                            .tracking(0.8)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Brand.primary)
+                                .shadow(color: Brand.primary.opacity(0.55), radius: 5))
+                    }
+                    Image(systemName: "calendar")
+                        .font(.caption.weight(.regular))
+                        .foregroundColor(Brand.onSurfaceVariant)
+                    Text(session.dateLabel)
+                        .font(.brand(.caption, weight: .regular))
+                        .foregroundColor(Brand.onSurface)
                 }
-                Image(systemName: "calendar")
-                    .font(.caption.weight(.regular))
-                    .foregroundColor(Brand.onSurfaceVariant)
-                Text(session.dateLabel)
-                    .font(.brand(.caption, weight: .regular))
-                    .foregroundColor(Brand.onSurface)
             }
         }
     }

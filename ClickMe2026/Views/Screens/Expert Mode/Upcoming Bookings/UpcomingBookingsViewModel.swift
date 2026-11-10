@@ -294,7 +294,8 @@ final class UpcomingBookingsViewModel {
             meetingType: item.session.meetingType,
             status: item.status.code,
             privateNotePreview: item.privateNotePreview,
-            reschedule: item.reschedule
+            reschedule: item.reschedule,
+            serverCanJoin: item.actions.canJoin
         )
     }
 

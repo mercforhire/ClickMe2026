@@ -22,10 +22,10 @@ struct UpcomingSession: Identifiable, Hashable {
     let topic: String
     let dateLabel: String
     let earnings: String
-    /// Raw UTC start moment — the card uses this to decide whether the
-    /// Join Session button is currently in range (within one hour of
-    /// start). Mirrors `UpcomingBooking.startTime` on the client side
-    /// so the two roles surface the button on the same schedule.
+    /// Raw UTC start moment — the card feeds this to `JoinWindow` to decide
+    /// whether the Join Session button is currently in range. Mirrors
+    /// `UpcomingBooking.startTime` on the client side so the two roles
+    /// surface the button on the same schedule.
     let startTime: Date
     /// Raw UTC end moment — plumbed through into `MeetingCallView` so
     /// the call screen can drive its "5 min remaining" warning and
@@ -48,22 +48,26 @@ struct UpcomingSession: Identifiable, Hashable {
     /// Drives the amber "Reschedule requested / proposed" badge on the
     /// upcoming card.
     let reschedule: ReschedulePreview?
+    /// The booking's server `actions.can_join`. Opens the reconnect tier
+    /// (scheduled end + 60 min) of `JoinWindow` after the first-join edge.
+    var serverCanJoin: Bool? = nil
 
-    /// True when `now` is within one hour of `startTime`. Symmetric so
-    /// the button remains available for an hour after start too
-    /// (sessions can run late). Deliberately kept in lockstep with
-    /// `UpcomingBooking.isWithinJoinWindow` on the client side — the
-    /// server's `actions.canJoin` is tighter (~5 min), which was
-    /// causing the expert-side button to hide even when the client
-    /// side was showing it.
-    ///
-    /// Note: this struct doesn't carry the booking status, so a
-    /// completed-but-not-past session shows the button too — the
-    /// server rejects `POST /join` on genuinely-terminal sessions,
-    /// which surfaces via CallCenter's join-error alert.
+    /// True when Join (and the NOW badge) should be offered right now.
+    /// Forwards to the shared `JoinWindow` rule (CALL-02), which is the
+    /// same one the client My Bookings card uses: open from 60 minutes
+    /// before start, through the later of the scheduled end and start + 60
+    /// minutes, then through end + 60 minutes only when the server's
+    /// `can_join` is true. Never offered for `pending_reschedule` or any
+    /// other non-joinable status. A display gate only; the server keeps
+    /// the final say on `POST /join`.
     var isWithinJoinWindow: Bool {
-        let delta = startTime.timeIntervalSinceNow
-        return delta <= 3600 && delta >= -3600
+        JoinWindow.isOpen(
+            status: status,
+            start: startTime,
+            end: endTime,
+            now: Date(),
+            serverCanJoin: serverCanJoin
+        )
     }
 }
 

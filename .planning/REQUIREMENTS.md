@@ -37,7 +37,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BOOK-11** [B11]: The Past tab shows an empty state when there are no past bookings
 - [ ] **BOOK-12** [B12]: Keep Booking returns to the previous screen, not the My Bookings root
 - [ ] **BOOK-13** [B13]: Cancel is hidden on a booking whose session has already ended
-- [ ] **BOOK-14** [B14] **[major]**: Paid booking and reschedule pickers allow slots at most 6 days ahead, and the long-lead error codes show a clear error instead of an invalid confirm
+- [x] **BOOK-14** [B14] **[major]**: Paid booking and reschedule pickers allow slots at most 6 days ahead, and the long-lead error codes show a clear error instead of an invalid confirm
 - [ ] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (whether recovery is also built depends on decision Q3)
 - [ ] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
 - [ ] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
@@ -198,7 +198,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-11 | Phase 3 | Pending |
 | BOOK-12 | Phase 3 | Pending |
 | BOOK-13 | Phase 3 | Pending |
-| BOOK-14 | Phase 2 | Pending |
+| BOOK-14 | Phase 2 | Complete |
 | BOOK-15 | Phase 2 | Pending |
 | BOOK-16 | Phase 3 | Pending |
 | BOOK-17 | Phase 3 | Pending |

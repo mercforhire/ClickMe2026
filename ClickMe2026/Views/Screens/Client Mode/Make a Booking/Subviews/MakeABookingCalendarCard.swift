@@ -38,6 +38,7 @@ struct MakeABookingCalendarCard: View {
                     .foregroundColor(MakeABookingBrand.brandGreen)
                     .frame(width: 32, height: 32)
             }
+            .accessibilityLabel("Previous month")
 
             Spacer()
 
@@ -55,6 +56,7 @@ struct MakeABookingCalendarCard: View {
                     .foregroundColor(MakeABookingBrand.brandGreen)
                     .frame(width: 32, height: 32)
             }
+            .accessibilityLabel("Next month")
         }
         .padding(.horizontal, 8)
         .padding(.top, 14)
@@ -92,23 +94,23 @@ struct MakeABookingCalendarCard: View {
         let isToday = item.date.map { viewModel.calendar.isDateInToday($0) } ?? false
         let isCurrentMonth = item.isCurrentMonth
         let isPast = item.date.map { viewModel.isPastDate($0) } ?? false
-        // Past the paid 6-day limit: blank and untappable, not greyed out.
-        let isBeyond = item.date.map { viewModel.isBeyondBookingWindow($0) } ?? false
+        // Days past the paid 6-day limit stay visible and tappable (BOOK-14,
+        // Android parity); their slots render dimmed in the slots card.
 
         return Button {
-            if let d = item.date, isCurrentMonth, !isPast, !isBeyond {
+            if let d = item.date, isCurrentMonth, !isPast {
                 viewModel.selectedDate = d
                 viewModel.selectedTimeSlot = nil
             }
         } label: {
             ZStack {
-                if isSelected, !isBeyond {
+                if isSelected {
                     Circle()
                         .fill(MakeABookingBrand.brandGreen)
                         .shadow(color: MakeABookingBrand.brandGreen.opacity(0.50), radius: 6, x: 0, y: 0)
                 }
 
-                Text(isBeyond ? "" : item.label)
+                Text(item.label)
                     .font(.system(.subheadline, design: .rounded).weight(isSelected ? .bold : .regular))
                     .foregroundColor(
                         isSelected ? MakeABookingBrand.onPrimary :
@@ -120,6 +122,6 @@ struct MakeABookingCalendarCard: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
-        .disabled(!isCurrentMonth || item.date == nil || isPast || isBeyond)
+        .disabled(!isCurrentMonth || item.date == nil || isPast)
     }
 }

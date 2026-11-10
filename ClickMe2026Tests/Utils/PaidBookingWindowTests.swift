@@ -3,8 +3,10 @@
 //  ClickMe2026Tests
 //
 //  BOOK-14: a paid booking can start at most 6 days ahead (the server refuses
-//  a start strictly more than 6 days out). The Make a Booking picker hides
-//  slots and days past that; free topics are not capped.
+//  a start strictly more than 6 days out). The Make a Booking picker keeps
+//  every day and slot visible; slots past the limit are dimmed and cannot be
+//  selected, and a fixed note explains the window (Android parity). Free
+//  topics are not capped.
 //
 
 import Foundation
@@ -114,35 +116,53 @@ struct ViewModelRows {
         #expect(!viewModel.isBookableStart(Date().addingTimeInterval(7 * Self.day)))
     }
 
-    @Test("a free topic is not capped")
+    @Test("a free topic is not capped and shows no paid window note")
     func freeTopicNotCapped() {
         let viewModel = makeViewModel(selecting: freeTopic)
-        #expect(viewModel.isBookableStart(Date().addingTimeInterval(30 * Self.day)))
-        #expect(!viewModel.isBeyondBookingWindow(Date().addingTimeInterval(30 * Self.day)))
+        let far = slot(daysAhead: 30)
+        #expect(viewModel.isBookableStart(far.startTime))
+        #expect(viewModel.isSelectableSlot(far))
+        #expect(viewModel.latestBookableStart == nil)
     }
 
-    @Test("the calendar blanks days past the limit for a paid topic only")
-    func beyondDays() {
+    @Test("a paid topic shows the paid window note")
+    func paidTopicShowsNote() {
         let viewModel = makeViewModel(selecting: paidTopic)
-        #expect(!viewModel.isBeyondBookingWindow(Date().addingTimeInterval(2 * Self.day)))
-        #expect(viewModel.isBeyondBookingWindow(Date().addingTimeInterval(8 * Self.day)))
+        #expect(viewModel.latestBookableStart != nil)
     }
 
-    @Test("slotsForSelectedDate drops slots past the limit for a paid topic")
-    func slotsAreFiltered() {
-        let near = slot(daysAhead: 1)
+    @Test("slots past the limit stay listed but cannot be selected for a paid topic")
+    func farSlotsStayListedButDimmed() {
         let viewModel = makeViewModel(selecting: freeTopic)
         let far = slot(daysAhead: 7)
         viewModel.selectedDate = far.startTime
         viewModel.availabilityByDate = [dateKey(far.startTime, calendar: viewModel.calendar): [far]]
         #expect(viewModel.slotsForSelectedDate == [far])
+        #expect(viewModel.isSelectableSlot(far))
 
         viewModel.selectedTopic = paidTopic
-        #expect(viewModel.slotsForSelectedDate.isEmpty)
+        #expect(viewModel.slotsForSelectedDate == [far])
+        #expect(!viewModel.isSelectableSlot(far))
+    }
 
-        viewModel.selectedDate = near.startTime
-        viewModel.availabilityByDate = [dateKey(near.startTime, calendar: viewModel.calendar): [near]]
-        #expect(viewModel.slotsForSelectedDate == [near])
+    @Test("a day past the limit has zero selectable slots for a paid topic")
+    func dayPastLimitHasNoSelectableSlot() {
+        let viewModel = makeViewModel(selecting: paidTopic)
+        let first = slot(daysAhead: 8)
+        let second = BookingTimeSlot(startTime: first.startTime.addingTimeInterval(3600), endTime: nil, isAvailable: true)
+        viewModel.selectedDate = first.startTime
+        viewModel.availabilityByDate = [dateKey(first.startTime, calendar: viewModel.calendar): [first, second]]
+        #expect(viewModel.slotsForSelectedDate.count == 2)
+        #expect(viewModel.slotsForSelectedDate.filter { viewModel.isSelectableSlot($0) }.isEmpty)
+    }
+
+    @Test("a slot inside the limit is selectable; past or unavailable ones are not")
+    func selectableSlotRules() {
+        let viewModel = makeViewModel(selecting: paidTopic)
+        #expect(viewModel.isSelectableSlot(slot(daysAhead: 2)))
+        #expect(!viewModel.isSelectableSlot(slot(daysAhead: -1)))
+        let taken = BookingTimeSlot(startTime: Date().addingTimeInterval(Self.day), endTime: nil, isAvailable: false)
+        #expect(!viewModel.isSelectableSlot(taken))
     }
 
     @Test("switching from a free topic to a paid topic clears a slot past the limit")

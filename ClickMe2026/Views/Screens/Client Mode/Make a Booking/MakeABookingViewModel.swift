@@ -349,20 +349,21 @@ final class MakeABookingViewModel: ObservableObject {
 
     // MARK: - Slots for the selected day
 
-    /// Slots for `selectedDate`, in the order returned by the server, minus
-    /// any a paid topic cannot book (more than 6 days ahead, BOOK-14).
+    /// Slots for `selectedDate`, in the order returned by the server. Nothing
+    /// is dropped: a slot a paid topic cannot book (more than 6 days ahead,
+    /// BOOK-14) stays in the list and renders dimmed, as on Android. See
+    /// `isSelectableSlot(_:)`.
     var slotsForSelectedDate: [BookingTimeSlot] {
-        let slots = availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? []
-        let latest = latestBookableStart
-        return slots.filter { PaidBookingWindow.allows($0.startTime, latestStart: latest) }
+        availabilityByDate[Self.dateKey(selectedDate, calendar: calendar)] ?? []
     }
 
     // MARK: - Paid booking window (BOOK-14)
 
     /// The latest start the selected topic can book, or nil for no limit.
     /// Read from the clock on every call so a screen left open never keeps a
-    /// stale limit.
-    private var latestBookableStart: Date? {
+    /// stale limit. Non-nil also means the slots card shows the paid window
+    /// note (Android `latestSelectableStart`).
+    var latestBookableStart: Date? {
         PaidBookingWindow.latestStart(isPaid: !(selectedTopic?.isFree ?? true), now: Date())
     }
 
@@ -372,9 +373,12 @@ final class MakeABookingViewModel: ObservableObject {
         PaidBookingWindow.allows(start, latestStart: latestBookableStart)
     }
 
-    /// Whether the whole of `day` is past the limit, so the calendar blanks it.
-    func isBeyondBookingWindow(_ day: Date) -> Bool {
-        PaidBookingWindow.isDayBeyond(day, latestStart: latestBookableStart, calendar: calendar)
+    /// Whether a chip can be tapped: the slot is available, has not started,
+    /// and is inside the paid limit. Mirrors Android
+    /// `BookingTimeSlot.isSelectable(now, latestStart)`. A slot that fails
+    /// this is shown dimmed, never hidden.
+    func isSelectableSlot(_ slot: BookingTimeSlot) -> Bool {
+        slot.isAvailable && slot.startTime > Date() && isBookableStart(slot.startTime)
     }
 
     // MARK: - Book action
@@ -387,7 +391,7 @@ final class MakeABookingViewModel: ObservableObject {
         guard !isSubmitting else { return }
         guard let topic = selectedTopic, let slot = selectedTimeSlot else { return }
 
-        // The picker hides these; this catches a slot that drifted past the
+        // The picker dims these; this catches a slot that drifted past the
         // limit while the screen was open. No request is made.
         guard isBookableStart(slot.startTime) else {
             selectedTimeSlot = nil

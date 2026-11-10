@@ -24,6 +24,15 @@ struct MakeABookingTimeSlotsCard: View {
                 }
             }
 
+            // Paid topic only (BOOK-14): a fixed note, whatever day is
+            // selected, as on Android. Slots past the limit are dimmed below.
+            if viewModel.latestBookableStart != nil {
+                Text("Paid sessions can be booked up to 6 days ahead.")
+                    .font(.brand(.caption))
+                    .foregroundColor(MakeABookingBrand.onSurfaceVar)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             content
         }
         .padding(16)
@@ -79,15 +88,13 @@ struct MakeABookingTimeSlotsCard: View {
     }
 
     /// Jump the horizontal slot list to the first slot that's still
-    /// bookable — i.e. flagged available AND not already past. Silent
-    /// no-op if no slot qualifies (leaves the list wherever it was).
+    /// selectable — available, not already past, inside the paid limit.
+    /// Silent no-op if no slot qualifies (leaves the list wherever it was).
     /// A short delay lets the layout finish before we scroll, otherwise
     /// on cold appear the proxy target hasn't been measured yet and the
     /// call is dropped.
     private func scrollToFirstAvailable(with proxy: ScrollViewProxy) {
-        let slots = viewModel.slotsForSelectedDate
-        let now = Date()
-        guard let target = slots.first(where: { $0.isAvailable && $0.startTime >= now }) else {
+        guard let target = viewModel.slotsForSelectedDate.first(where: { viewModel.isSelectableSlot($0) }) else {
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
@@ -129,8 +136,9 @@ struct MakeABookingTimeSlotsCard: View {
 
     private func chip(for slot: BookingTimeSlot) -> some View {
         let isSelected = viewModel.selectedTimeSlot == slot
-        let isPast = viewModel.isPastDate(slot.startTime) || slot.startTime < Date()
-        let isDisabled = !slot.isAvailable || isPast
+        // Unavailable, already started, or past the paid 6-day limit: dimmed
+        // and not tappable, never hidden (BOOK-14, Android parity).
+        let isDisabled = !viewModel.isSelectableSlot(slot)
 
         return Button {
             if !isDisabled { viewModel.selectedTimeSlot = slot }

@@ -29,7 +29,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **BOOK-03** [B3]: The slots card shows a readable time-zone name, not a raw IANA id
 - [ ] **BOOK-04** [B4]: Slot and Today's Sessions times follow the device's locale (12/24-hour)
 - [ ] **BOOK-05** [B5]: The Request Sent screen's loading copy reads "Loading booking…"
-- [ ] **BOOK-06** [B6] **[crit]**: Client can accept or decline an expert-proposed reschedule from the upcoming-booking flow
+- [x] **BOOK-06** [B6] **[crit]**: Client can accept or decline an expert-proposed reschedule from the upcoming-booking flow
 - [ ] **BOOK-07** [B7]: The client's cancellation comment is sent with the cancel request (depends on BACK-14 to be stored)
 - [ ] **BOOK-08** [B8] **[major]**: The client cancel screen previews the refund the backend will actually give (24-hour rule; a held booking shows as a release) — policy per decision Q2
 - [ ] **BOOK-09** [B9]: The Upcoming Booking status pill shows the booking's real status
@@ -193,7 +193,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-03 | Phase 4 | Pending |
 | BOOK-04 | Phase 4 | Pending |
 | BOOK-05 | Phase 4 | Pending |
-| BOOK-06 | Phase 3 | Pending |
+| BOOK-06 | Phase 3 | Complete |
 | BOOK-07 | Phase 3 | Pending |
 | BOOK-08 | Phase 3 | Pending |
 | BOOK-09 | Phase 3 | Pending |

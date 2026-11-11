@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-11-11T03:34:14.965Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-11-11T03:56:00.640Z"
 last_activity: 2026-11-10
-last_activity_desc: Phase 02 execution started
-state_head: de162ffd28ed215b12d6876e913f43189b8fef74
+last_activity_desc: Phase 03 execution started
+state_head: 31fd502100fb414db3a236b6b529e8e74e0017dd
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 41
+  completed_plans: 42
   percent: 13
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-09)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 02 — Shared iOS Plumbing
+**Current focus:** Phase 03 — Booked Sessions and Joining
 
 ## Current Position
 
-Phase: 03 (Booked Sessions and Joining) — READY TO EXECUTE
-Plan: 13 of 15
+Phase: 03 (Booked Sessions and Joining) — EXECUTING
+Plan: 2 of 15
 Status: Ready to execute
-Last activity: 2026-11-10 - Completed quick task 261110-nzy: Make a Booking calendar filler cells hidden from VoiceOver (02-UI-SPEC E1/A1/C1 gap)
+Last activity: 2026-11-10 — Phase 03 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -97,6 +97,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P14 | ~50 min (continuation; Task 1 in prior session) | 2 tasks | 8 files |
 | Phase 02 P15 | 23 min | 2 tasks | 7 files |
 | Phase 02 P12 | 23min | 3 tasks | 8 files |
+| Phase 03 P01 | 15min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -197,6 +198,7 @@ Recent decisions affecting current work:
 - [Phase 02]: PUSH-04 retry is Firebase deleteToken only, at launch and login only; the server DELETE is never retried and the residual window after an offline logout is accepted (D-17, D-18)
 - [Phase 02]: Involuntary logouts (suspension, rejected token, refresh 401, no refresh token) skip the DELETE: session cleared synchronously, deleteToken in the background; login/signup await the owed retry before registering
 - [Phase 02]: Phase 2 device checklist uses the latest SUMMARY/WINDOWS wording (BOOK-14 dimmed slots, CALL-02 Join disabled, BOOK-10 CAD and real net earnings); WINDOWS.md entries annotated as carried over, none waived
+- [Phase 03]: RescheduleResponder is @MainActor @Observable (shared by two ObservableObject view models); decline reason capped on submit at 500 UTF-16 units via UTF16Prefix
 
 ### Pending Todos
 
@@ -257,6 +259,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T00:38:15.818Z
-Stopped at: Phase 3 UI-SPEC approved
-Resume file: .planning/phases/03-booked-sessions-and-joining/03-UI-SPEC.md
+Last session: 2026-11-11T03:56:00.456Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

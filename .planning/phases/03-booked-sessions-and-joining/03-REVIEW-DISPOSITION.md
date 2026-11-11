@@ -13,23 +13,23 @@ findings:
     title: "Post-cancel toast can promise a refund the server did not issue"
   - id: WR-03
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Refund and hold lines show the list price, not the amount paid"
   - id: WR-04
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Reschedule is offered on every booking status; only Cancel was gated"
   - id: WR-05
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Reschedule accept/decline succeeds silently in the expert shell"
   - id: WR-06
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "`ToastCenterTests` use real sleeps with thin margins"
   - id: WR-07
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "`submitRefusesFarSlot` would call the live backend if its guard regressed"
   - id: WR-08
     severity: warning
@@ -63,9 +63,9 @@ findings:
     severity: info
     disposition: open
     title: "`.chargedNotRefundable` at server 0 still states \"No refund applies\", the same ambiguity WR-02 removed for the refundable case"
-open: 13
+open: 8
 total: 15
-recorded: 2026-11-11T20:55:36.547Z
+recorded: 2026-11-11T21:37:31.140Z
 ---
 
 # Phase 03: Code Review Disposition
@@ -74,11 +74,11 @@ recorded: 2026-11-11T20:55:36.547Z
 |---------|----------|-------------|--------|
 | WR-01 | warning | fixed | 03-16 (gap G-03-3-WR01) |
 | WR-02 | warning | fixed | 03-17 (gap G-03-3-WR02) |
-| WR-03 | warning | open | - |
-| WR-04 | warning | open | - |
-| WR-05 | warning | open | - |
-| WR-06 | warning | open | - |
-| WR-07 | warning | open | - |
+| WR-03 | warning | fixed | 03-REVIEW-FIX.md |
+| WR-04 | warning | fixed | 03-REVIEW-FIX.md |
+| WR-05 | warning | fixed | 03-REVIEW-FIX.md |
+| WR-06 | warning | fixed | 03-REVIEW-FIX.md |
+| WR-07 | warning | fixed | 03-REVIEW-FIX.md |
 | WR-08 | warning | open | - |
 | WR-09 | warning | open | - |
 | IN-01 | info | open | - |

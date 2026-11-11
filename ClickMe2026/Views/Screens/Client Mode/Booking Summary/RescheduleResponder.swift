@@ -52,12 +52,19 @@ final class RescheduleResponder {
     // MARK: Dependencies
 
     @ObservationIgnored private let api: ClickMeAPI
+    @ObservationIgnored private let toasts: ToastCenter
 
     // MARK: Init
 
-    init(bookingId: UUID?, api: ClickMeAPI = .shared) {
+    /// - Parameters:
+    ///   - bookingId: Server booking UUID, or `nil` in the preview-seed path.
+    ///   - api: The API client; tests inject a stubbed one.
+    ///   - toasts: Where the confirmation is posted; tests inject a fresh instance
+    ///     so they never touch the shell's.
+    init(bookingId: UUID?, api: ClickMeAPI = .shared, toasts: ToastCenter = .shared) {
         self.bookingId = bookingId
         self.api = api
+        self.toasts = toasts
     }
 
     // MARK: - Accept
@@ -78,6 +85,8 @@ final class RescheduleResponder {
 
         do {
             _ = try await api.acceptClientReschedule(id: bookingId)
+            // Only after a 2xx: a failed accept never confirms (T-03-11).
+            toasts.show("Reschedule accepted")
             await refetch?()
             return
         } catch {
@@ -103,6 +112,7 @@ final class RescheduleResponder {
 
         do {
             _ = try await api.acceptClientReschedule(id: bookingId, stripePaymentMethodId: paymentMethodId)
+            toasts.show("Reschedule accepted")
             await refetch?()
         } catch {
             // The second failure is terminal, including a repeat

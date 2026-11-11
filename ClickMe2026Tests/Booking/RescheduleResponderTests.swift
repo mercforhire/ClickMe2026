@@ -84,6 +84,23 @@ struct RescheduleResponderTests {
         #expect(responder.isSubmitting == false)
     }
 
+    @Test("a successful accept posts the confirmation toast before the refetch runs")
+    func acceptPostsToast() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: Fixtures.successMessage)
+        }
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let responder = RescheduleResponder(bookingId: bookingUUID, api: api, toasts: toasts)
+        var messageAtRefetch: String?
+        responder.refetch = { messageAtRefetch = toasts.current?.message }
+
+        await responder.accept()
+
+        #expect(messageAtRefetch == "Reschedule accepted")
+        #expect(toasts.current?.message == "Reschedule accepted")
+        toasts.dismiss()
+    }
+
     @Test("PAYMENT_METHOD_REQUIRED retries once with the default saved card")
     func retriesWithDefaultCard() async throws {
         let api = APITestFactory.make { request in

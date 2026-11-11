@@ -47,7 +47,7 @@ nonisolated enum CancelToastMessage {
         case .free, .amountUnknown:
             return base
         case .liveHold(let amount):
-            return "\(base) The \(amount) hold on your card is being released."
+            return "\(base) Up to \(amount) held on your card is being released."
         case .chargedRefundable:
             return "\(base) Any refund due will follow our cancellation policy."
         case .chargedNotRefundable:

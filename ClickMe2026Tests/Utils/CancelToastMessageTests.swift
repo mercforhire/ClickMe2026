@@ -40,7 +40,7 @@ struct CancelToastMessageTests {
     func zeroLiveHold() {
         #expect(
             text(0, .liveHold(amount: "CA$45.00"))
-                == "Booking cancelled. The CA$45.00 hold on your card is being released."
+                == "Booking cancelled. Up to CA$45.00 held on your card is being released."
         )
     }
 

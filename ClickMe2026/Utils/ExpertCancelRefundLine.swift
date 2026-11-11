@@ -24,6 +24,10 @@ import Foundation
 ///   by an accepted reschedule (`convertToLongLead` nulls `payment_intent_id`
 ///   and voids the hold). Missing key is unknown, so the rule fails closed.
 ///
+/// The amount is the list consultation fee, not the amount the client paid
+/// (a promo code lowers it, and the expert payload does not expose it), so the
+/// sentences say "up to" that figure.
+///
 /// The only route to a money line is both keys present and false. Every other
 /// combination returns `.none`: no sentence and no footnote.
 enum ExpertCancelRefundLine: Equatable {
@@ -69,10 +73,10 @@ enum ExpertCancelRefundLine: Equatable {
             return nil
         case let .holdReleased(amount):
             guard let amount else { return "The client's hold will be released." }
-            return "The client's \(amount) hold will be released."
+            return "The client's hold of up to \(amount) will be released."
         case let .fullRefund(amount):
             guard let amount else { return "The client will get a full refund." }
-            return "The client will get a full refund of \(amount)"
+            return "The client will get a full refund of up to \(amount)"
         }
     }
 

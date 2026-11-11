@@ -57,7 +57,7 @@ struct CancelRefundPreviewTests {
             now: now
         )
         #expect(result == .liveHold(amount: "CA$45.00"))
-        #expect(CancelRefundPreview.text(for: result) == "The CA$45.00 hold on your card will be released, so you won't be charged.")
+        #expect(CancelRefundPreview.text(for: result) == "Up to CA$45.00 held on your card will be released, so you won't be charged.")
         #expect(CancelRefundPreview.iconName(for: result) == "lock.fill")
     }
 
@@ -74,7 +74,7 @@ struct CancelRefundPreviewTests {
     func chargedRefundable() {
         let result = CancelRefundPreview.refundCase(facts(startsIn: 24 * hour + 1), now: now)
         #expect(result == .chargedRefundable(amount: "CA$45.00"))
-        #expect(CancelRefundPreview.text(for: result) == "Refund: CA$45.00, cancelled more than 24 hours before the start")
+        #expect(CancelRefundPreview.text(for: result) == "Refund: up to CA$45.00, cancelled more than 24 hours before the start")
         #expect(CancelRefundPreview.iconName(for: result) == "creditcard")
     }
 

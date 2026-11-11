@@ -26,7 +26,11 @@ import Foundation
 ///   (`payment_status` none), has not been charged.
 ///
 /// The amount is the list price (`topic.price.amount`, minor units), not the
-/// amount paid; the post-cancel toast uses the server's real `refund_amount`.
+/// amount paid. The backend refunds or releases `amount_paid_minor_units`, which
+/// is lower when a promo code was applied, and the booking-detail payload does
+/// not expose it. So the hold and refund sentences say "up to" the list price
+/// instead of stating a firm figure. The post-cancel toast uses the server's
+/// real `refund_amount`.
 /// The helper never reads the clock; callers pass `now`.
 enum CancelRefundPreview {
 
@@ -130,9 +134,9 @@ enum CancelRefundPreview {
         case .free:
             return nil
         case .liveHold(let amount):
-            return "The \(amount) hold on your card will be released, so you won't be charged."
+            return "Up to \(amount) held on your card will be released, so you won't be charged."
         case .chargedRefundable(let amount):
-            return "Refund: \(amount), cancelled more than 24 hours before the start"
+            return "Refund: up to \(amount), cancelled more than 24 hours before the start"
         case .chargedNotRefundable(let zero):
             return "Refund: \(zero), \(withinWindowDetail)"
         case .notChargedYet:

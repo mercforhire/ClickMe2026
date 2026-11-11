@@ -83,7 +83,7 @@ struct ExpertCancelRefundLineTests {
     func liveHold() {
         let line = Self.line(hold: Self.hold)
         #expect(line == .holdReleased(amount: "CA$45.00"))
-        #expect(line.text == "The client's CA$45.00 hold will be released.")
+        #expect(line.text == "The client's hold of up to CA$45.00 will be released.")
         #expect(line.emphasis == "CA$45.00")
         #expect(line.iconName == "lock.fill")
         #expect(line.showsFootnote == false)
@@ -93,7 +93,7 @@ struct ExpertCancelRefundLineTests {
     func fullRefund() {
         let line = Self.line()
         #expect(line == .fullRefund(amount: "CA$45.00"))
-        #expect(line.text == "The client will get a full refund of CA$45.00")
+        #expect(line.text == "The client will get a full refund of up to CA$45.00")
         #expect(line.emphasis == "CA$45.00")
         #expect(line.iconName == "creditcard")
         #expect(line.showsFootnote == true)
@@ -101,7 +101,7 @@ struct ExpertCancelRefundLineTests {
 
     @Test("fractional amounts keep both minor digits")
     func fractionalAmount() {
-        #expect(Self.line(amount: 12.5).text == "The client will get a full refund of CA$12.50")
+        #expect(Self.line(amount: 12.5).text == "The client will get a full refund of up to CA$12.50")
     }
 
     @Test("an amount Money cannot format falls back to the plain sentences")

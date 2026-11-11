@@ -84,6 +84,8 @@ Target tokens for any new or changed layout in this phase (points, multiples of 
 | lg | 24 | Horizontal padding of a state view; side padding of the Book button area (unchanged 20 pt screen padding stays) |
 | xl | 32 | Horizontal inner padding of the Back and Retry capsules |
 | 2xl | 48 | Height of the Back and Retry capsules; bottom padding under the pinned Request Sent exits (existing value, kept) |
+
+The `md` (16) token also sets the gap between the two exit capsules in the new pinned Request Sent loading and error placements (the loaded layout keeps its inherited 14).
 | 3xl | 64 | Not used on Phase 04 surfaces |
 
 Exceptions declared for new Phase 04 layout: none. Every new or changed spacing value in Phase 04 is a multiple of 4. The only off-grid values on the touched screens are the inherited, untouched ones listed under "Out of contract: pre-existing layout" below (14, 18, 22 by 10 and the other shipped values); they are acknowledged there as inherited exceptions, are not Phase 04 exceptions, and are not to be copied into new code. Every new interactive control is at least 44 pt tall (the Back and Retry capsules are 48 pt, the paging footer Retry has a 44 pt minimum hit area).
@@ -92,7 +94,7 @@ Exceptions declared for new Phase 04 layout: none. Every new or changed spacing 
 
 Phase 04 does not touch these shipped values, so none is declared above. A plan must not "fix" them:
 
-- The 14 pt inter-button spacing, 56 pt height and 18 pt shadow glow of the Request Sent exit capsules (`BookingRequestSentActions`), and the 20 pt screen padding and 28 pt section spacing of the Request Sent scroll content. The exit capsules are reused as is in the new loading and error placements.
+- The 14 pt inter-button spacing, 56 pt height and 18 pt shadow glow of the Request Sent exit capsules (`BookingRequestSentActions`), and the 20 pt screen padding and 28 pt section spacing of the Request Sent scroll content. These values stay as is in the **loaded** layout only. The new pinned loading and error placements reuse the same capsule component but are new layout: they use a 16 pt (md) gap between the two capsules, supplied through a spacing parameter on `BookingRequestSentActions` whose default stays 14 so the loaded layout is unchanged. The 56 pt height and 18 pt glow of the capsules are inherited unchanged in all three states.
 - The 22 pt by 10 pt padding of the existing Retry capsules on Favorites, Reviews and Request Sent error views. They stay; only the **new** state views use the on-grid values above.
 - The 14 pt card radius on the Make a Booking slots card, the 16 pt radius of the Book button and of the Request Sent details card, and the 18 pt padding inside the payment card (`PaymentLifecycleCard`).
 - The 56 pt capsule buttons and 14 pt gap on the Favorites empty state.
@@ -113,7 +115,7 @@ All text uses `Font.brand(_ style:weight:)` (rounded, Dynamic Type). Sizes are t
 | Heading | `.callout` / 16 pt | Semibold (600) | system | State-view heading (`This profile isn't available`, `Couldn't load profile`); Back and Retry capsule labels |
 | Display | not used | — | — | Phase 04 adds no display text |
 
-Declared for new or changed text in this phase: **3 sizes** (12, 15, 16) and **2 weights** (Regular 400, Semibold 600). Line-height rule: system default, so body copy renders at about 1.3 to 1.4 and headings about 1.2; the contract does not override it.
+Declared for new or changed text in this phase: **3 text sizes** (12, 15, 16) and **2 weights** (Regular 400, Semibold 600). State-view SF Symbol icons (`person.crop.circle.badge.xmark`, `exclamationmark.triangle`) are images, not text: they are sized at the `.title` glyph size (28 pt) outside the text scale and use the Regular weight (400), so they add no third weight. Line-height rule: system default, so body copy renders at about 1.3 to 1.4 and headings about 1.2; the contract does not override it.
 
 ### Out of contract: pre-existing text styling
 
@@ -285,7 +287,7 @@ Variant A is the shipped copy, unchanged, and is what every booking created by t
 |----------|----------|
 | Navigation | The screen is still pushed from `MakeABookingView` with `navigationDestination(item: $viewModel.completedBookingId)`. No stack surgery |
 | Back | The back button is hidden (`navigationBarBackButtonHidden`) and the interactive swipe-back is disabled. Verify on a device that the edge swipe no longer pops (hiding the button alone is not assumed to disable it) |
-| Exits | Both exits are reachable in **every** state, because with Back hidden a state with no exit would trap the user. Loaded: the two capsules after the payment card, as today. Loading: the spinner and `Loading booking…` centered, with the two capsules pinned to the bottom (20 pt side padding, 48 pt bottom, no entry animation). Error: the existing icon, title, message and `Retry` capsule, with the same two capsules pinned to the bottom |
+| Exits | Both exits are reachable in **every** state, because with Back hidden a state with no exit would trap the user. Loaded: the two capsules after the payment card, as today. Loading: the spinner and `Loading booking…` centered, with the two capsules pinned to the bottom (20 pt side padding, 16 pt gap between the capsules, 48 pt bottom, no entry animation). Error: the existing icon, title, message and `Retry` capsule, with the same two capsules pinned to the bottom with the same 16 pt gap |
 | Why the error and loading exits matter | The booking already exists once this screen opens, so `View My Bookings` is the right recovery when the detail cannot load |
 | Entry animation | Unchanged; runs only after the copy has loaded |
 | Payment card | The three variants in the copy table. Hidden for free bookings (unchanged) |
@@ -321,7 +323,7 @@ Load states are `loading` (initial), `loaded`, `notFound` and `failed(String)`, 
 | Property | Contract |
 |----------|----------|
 | `loading` | Unchanged: the seeded profile shows while the call runs, with no spinner. A seeded profile can therefore flash before a 404 replaces it (see K5) |
-| `notFound` | The state view replaces the whole scroll content: `person.crop.circle.badge.xmark` icon (`.title`, light, `onSurfaceVariant`), heading, message, one accent `Back` capsule (48 pt tall, 32 pt horizontal padding, `PressScaleButtonStyle`). The system back chevron stays. The heart and the overflow menu are **removed** from the toolbar. `Back` pops one level. No Retry, because a 404 will not change |
+| `notFound` | The state view replaces the whole scroll content: `person.crop.circle.badge.xmark` icon (`.title` glyph size, Regular weight, `onSurfaceVariant`), heading, message, one accent `Back` capsule (48 pt tall, 32 pt horizontal padding, `PressScaleButtonStyle`). The system back chevron stays. The heart and the overflow menu are **removed** from the toolbar. `Back` pops one level. No Retry, because a 404 will not change |
 | `failed` | Same layout with `exclamationmark.triangle` and an accent `Retry` capsule. Tapping Retry replaces the capsule with a small accent `ProgressView` while the call runs and keeps the state view on screen; on success the profile shows, on failure the state view returns with the new message. Heart and menu removed as above |
 | Favorited expert that is now missing | Not removed from Favorites automatically and no Remove button is offered (D-10). The entry stays until the server stops returning it. `list_favorite_experts` already filters `moderation_status = 'active'` (migration `20261016000100`, line 601), so a 404 from a Favorites row is mostly a deleted account or a race; the `deleted_at` filter on that function was not checked here and stays a planner research item |
 | Heart source | The heart reads `is_favorite` from the details response (D-09). The scan of `getClientFavorites(page: 1, limit: 100)` is removed. A missing key reads false. A profile opened from Favorites seeds the heart as filled, so it does not flicker empty then filled; any other entry seeds it empty. The server value replaces the seed when the response arrives |

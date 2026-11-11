@@ -118,11 +118,14 @@ final class BookingSummaryViewModel: ObservableObject {
 
         // Terminal state changes (e.g. completed) still land here — if
         // the booking is under this screen when it flips, refresh so
-        // review eligibility / final price stay accurate.
+        // review eligibility / final price stay accurate. The refetch is
+        // silent (`refresh()`): a realtime event never flips a loaded screen
+        // back to a spinner, and a failed refetch keeps the content (D-03).
+        // `reload()` stays for pull-to-refresh and the error state's retry.
         let targetId = bookingId
         self.bookingUpdateSubscription = RealtimeService.shared.onBookingUpdate { [weak self] event in
             guard event.bookingId == targetId else { return }
-            Task { @MainActor in await self?.reload() }
+            Task { @MainActor in await self?.refresh() }
         }
         responder.refetch = { [weak self] in await self?.refresh() }
     }

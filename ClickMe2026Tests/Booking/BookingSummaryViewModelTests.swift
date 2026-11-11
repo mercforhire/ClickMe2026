@@ -131,4 +131,91 @@ struct BookingSummaryViewModelTests {
         #expect(vm.acceptDialogMessage == expected)
         #expect(vm.acceptDialogMessage.contains("Your card hold will be released."))
     }
+
+    // MARK: Silent refresh
+
+    /// Serves `first` for the first detail GET and `later` (or a 500 when `nil`) for every later one.
+    /// The review context answers once with `has_submitted: true`, then fails with a 500 when `reviewFailsAfterFirst`.
+    private func refreshAPI(first: Data, later: Data?, reviewFailsAfterFirst: Bool = false) -> ClickMeAPI {
+        let path = detailPath
+        let review = Self.reviewContextJSON(hasSubmitted: true)
+        return APITestFactory.make { request in
+            let requestPath = request.url?.path ?? ""
+            if requestPath.hasSuffix("/reviews/context") {
+                let reviewRequests = MockURLProtocol.recordedRequests.filter {
+                    $0.url?.path.hasSuffix("/reviews/context") == true
+                }
+                if reviewFailsAfterFirst, reviewRequests.count > 1 {
+                    return Fixtures.response(for: request, status: 500, body: Fixtures.errorBody(code: "INTERNAL"))
+                }
+                return Fixtures.response(for: request, body: review)
+            }
+            if requestPath.hasSuffix(path) {
+                let detailRequests = MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix(path) == true }
+                if detailRequests.count == 1 {
+                    return Fixtures.response(for: request, body: first)
+                }
+                if let later {
+                    return Fixtures.response(for: request, body: later)
+                }
+                return Fixtures.response(for: request, status: 500, body: Fixtures.errorBody(code: "INTERNAL"))
+            }
+            return Fixtures.response(for: request, status: 404, body: Fixtures.errorBody(code: "NOT_FOUND"))
+        }
+    }
+
+    @Test("a refresh whose detail GET fails after a successful load keeps the content and .loaded")
+    func failedRefreshKeepsContent() async {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: refreshAPI(first: Fixtures.detailJSON(), later: nil)
+        )
+        await vm.load()
+        #expect(vm.loadState == .loaded)
+        let topic = vm.topic
+        let expertName = vm.expertName
+        #expect(topic == "Free chat")
+        #expect(expertName == "Ada Lovelace")
+
+        await vm.refresh()
+
+        #expect(vm.loadState == .loaded)
+        #expect(vm.topic == topic)
+        #expect(vm.expertName == expertName)
+    }
+
+    @Test("a refresh whose detail succeeds but review context fails keeps .loaded, the new detail and the old review state")
+    func failedReviewContextKeepsLoadedAndAppliesDetail() async {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: refreshAPI(
+                first: Fixtures.detailJSON(),
+                later: pendingDetail(initiatedBy: "expert"),
+                reviewFailsAfterFirst: true
+            )
+        )
+        await vm.load()
+        #expect(vm.reschedule == nil)
+        #expect(vm.hasSubmittedReview == true)
+
+        await vm.refresh()
+
+        #expect(vm.loadState == .loaded)
+        #expect(vm.reschedule?.initiatedBy == .expert)
+        #expect(vm.hasSubmittedReview == true)
+    }
+
+    // MARK: Preview seam
+
+    @Test("the preview init's responder records no request")
+    func previewResponderSendsNothing() async {
+        MockURLProtocol.reset()
+        let vm = BookingSummaryViewModel()
+
+        await vm.responder.accept()
+        await vm.responder.decline(reason: "no")
+
+        #expect(MockURLProtocol.recordedRequests.isEmpty)
+        #expect(vm.responder.apiError == nil)
+    }
 }

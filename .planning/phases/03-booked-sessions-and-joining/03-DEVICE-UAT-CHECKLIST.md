@@ -49,6 +49,7 @@ Expected:
 - The payment-conversion case shows the disclosure text in the dialog, the same on Upcoming details and Booking Summary.
 - Booking Summary accept or decline shows the **same "Reschedule accepted" / "Reschedule declined" toast** (the 03-06 toast reached through the 03-13 responder move).
 - A failed accept or decline shows "Couldn't update booking", dismissed by "Back to Booking", and no toast.
+- **WR-01 (03-16):** the card is cleared as soon as the server accepts or declines, before the refetch, so it also disappears when that refetch fails; the date, time and status pill then update on the next successful fetch. A phone cannot fail only the follow-up request on demand, so this edge is proven by unit tests (`RescheduleResponderTests`, `UpcomingBookingViewModelTests`, `BookingSummaryViewModelTests`) and has no device step. The Expected lines above are unchanged on the normal path.
 
 Result:
 

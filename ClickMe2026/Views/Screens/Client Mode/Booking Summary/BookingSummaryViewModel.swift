@@ -89,7 +89,8 @@ final class BookingSummaryViewModel: ObservableObject {
     /// Upcoming Booking details screen uses, so the accept disclosure and the
     /// PAYMENT_METHOD_REQUIRED recovery exist once. Its `refetch` is this
     /// model's silent `refresh()`, so a successful accept or decline updates
-    /// the screen in place with no loading spinner (D-03).
+    /// the screen in place with no loading spinner (D-03). `onResolved` clears
+    /// `reschedule` first, so the card goes even when that refresh fails (WR-01).
     let responder: RescheduleResponder
 
     // MARK: Load state
@@ -146,6 +147,7 @@ final class BookingSummaryViewModel: ObservableObject {
             Task { @MainActor in await self?.refresh() }
         }
         responder.refetch = { [weak self] in await self?.refresh() }
+        responder.onResolved = { [weak self] in self?.reschedule = nil }
     }
 
     /// Preview seam — pre-populates all display fields as if the fetch had

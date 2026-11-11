@@ -143,7 +143,10 @@ struct MeetingCallView: View {
                 peerName: viewModel.expertName,
                 peerAvatarURL: viewModel.expertImageURL,
                 topic: viewModel.topic,
-                scheduledRangeLabel: viewModel.scheduledRangeLabel
+                scheduledRangeLabel: viewModel.scheduledRangeLabel,
+                timerString: viewModel.timerString,
+                remainingLabel: viewModel.remainingLabel,
+                isNearOrPastEnd: viewModel.isInFinalStretch || viewModel.isPastScheduledEnd
             )
             .padding(.bottom, 40)
 

@@ -10,12 +10,16 @@ import SwiftUI
 /// Compact peer / topic hero for the Skype/Zoom external-meeting
 /// variant of the call screen. Single avatar (no dual-avatar treatment
 /// since there's no live audio to visually anchor), peer name, topic,
-/// and scheduled time range.
+/// scheduled time range, and the session timer.
 struct SkypeSessionHero: View {
     let peerName: String
     let peerAvatarURL: String
     let topic: String
     let scheduledRangeLabel: String?
+    /// Same values the in-app voice layout feeds `MeetingCallInfo` (CALL-07, D-08).
+    let timerString: String
+    let remainingLabel: String?
+    let isNearOrPastEnd: Bool
 
     var body: some View {
         VStack(spacing: 14) {
@@ -39,6 +43,24 @@ struct SkypeSessionHero: View {
                 Text(scheduledRangeLabel)
                     .font(.brand(.caption, weight: .medium))
                     .foregroundColor(MeetingCallBrand.onSurfaceVar.opacity(0.75))
+            }
+
+            Text(timerString)
+                .font(.system(.title2, design: .monospaced))
+                .foregroundColor(isNearOrPastEnd ? .orange : MeetingCallBrand.onSurfaceVar)
+                .padding(.top, 4)
+
+            if let remainingLabel {
+                Text(remainingLabel)
+                    .font(.brand(.caption, weight: .semibold))
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule()
+                            .fill(Color.orange.opacity(0.12))
+                            .overlay(Capsule().stroke(Color.orange.opacity(0.45), lineWidth: 1))
+                    )
             }
         }
     }
@@ -76,4 +98,20 @@ struct SkypeSessionHero: View {
             .clipShape(Circle())
         }
     }
+}
+
+#Preview("Near the end") {
+    ZStack {
+        MeetingCallBackground()
+        SkypeSessionHero(
+            peerName: "Sophia Carter",
+            peerAvatarURL: "",
+            topic: "Advanced Product Strategy Review",
+            scheduledRangeLabel: "10:30 AM – 11:00 AM",
+            timerString: "25:12",
+            remainingLabel: "4:48 left",
+            isNearOrPastEnd: true
+        )
+    }
+    .preferredColorScheme(.dark)
 }

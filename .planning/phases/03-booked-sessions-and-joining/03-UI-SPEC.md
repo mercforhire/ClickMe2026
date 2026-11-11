@@ -83,7 +83,7 @@ Target tokens for any new or changed layout in this phase (points, multiples of 
 | 2xl | 48 | Not used on Phase 03 surfaces |
 | 3xl | 64 | Not used on Phase 03 surfaces |
 
-Corner radii and heights for **new** controls and blocks are on the same grid: radius 12 or 16, height 44, 48 or 52. Specifically: the new Open in {provider} button is 52 pt tall with a 16 pt radius; the new expert Join Session on Booking Summary is 52 pt tall with a 12 pt radius (the radius its neighbor `Message Client` already has); the new zero-refund warning block has a 16 pt radius. The old 14 pt radius is not used by any new control or block.
+Corner radii and heights for **new** controls and blocks are on the same grid: radius 12 or 16, height 44, 48 or 52. Specifically: the new Open in {provider} button is 52 pt tall with a 16 pt radius; the new expert Join Session on Booking Summary is 52 pt tall with a 12 pt radius (the radius its neighbor `Message Client` already has); the new zero-refund warning block has a 16 pt radius. No new control or block introduces a 14 pt radius. The 14 pt values that remain are declared reuse of existing components (listed under "Out of contract" below), not new values.
 
 Exception declared for this phase: the shared reschedule response card's Accept New Time and Decline New Time buttons go from 42 pt to **44 pt** tall, the platform minimum touch target, because this card now hosts a critical decision on a second screen. No other control is added or kept below 44 pt.
 
@@ -91,8 +91,8 @@ Exception declared for this phase: the shared reschedule response card's Accept 
 
 Phase 03 does not touch these shipped values, so none is declared above. A plan must not "fix" them:
 
-- The 14 pt card corner radius, 14 pt inter-card `VStack` spacing and 20 pt screen padding on Upcoming Booking details, and the 14 pt internal padding, 14 pt radius and 12 pt button gap of the reschedule card as it exists in Booking Summary (the extracted shared card keeps them as reuse of an existing component; only the button height changes, above). The same applies to the 14 pt radius of the existing `BookingSummaryGlassCardBackground` that the decline note card instantiates: it is reuse, not a new value.
-- The 52 pt height and 14 pt radius of the in-app JOIN CALL button (untouched; the new Open in {provider} button does not copy its radius), and the 50 pt height and 12 pt radius of the expert `Message Client` button.
+- The 14 pt card corner radius, 14 pt inter-card `VStack` spacing and 20 pt screen padding on Upcoming Booking details, and the 14 pt internal padding, 14 pt radius and 12 pt button gap of the reschedule card as it exists in Booking Summary (the extracted shared card keeps them as reuse of an existing component; only the button height changes, above). The response card sits in that `VStack` at its inherited 14 pt gap to the cards above and below it. The same applies to the 14 pt radius of the existing `BookingSummaryGlassCardBackground` that the new decline note card instantiates: declared component reuse, not a new value.
+- The 52 pt height and 14 pt radius of the in-app JOIN CALL button (untouched; the new Open in {provider} button does not copy its radius), and the unchanged 50 pt height and 12 pt radius of the expert `Message Client` button (Join Session is 52 pt, so the primary is the larger button).
 - The 20 pt radius and 24 pt padding of the cancel confirm card, and the 54 pt / 56 pt capsule buttons of the cancel flow.
 - The 152 pt avatar ring and 40 pt hero gaps on the Skype screen.
 
@@ -113,7 +113,7 @@ All text uses `Font.brand(_ style:weight:)` (rounded, Dynamic Type). Sizes are t
 
 Declared for new or changed text in this phase: **4 sizes** (12, 15, 16, 22) and **2 weights** (Regular 400, Semibold 600). This is the truthful set: it includes the Skype timer (22 pt) and the labels of every new button. The timer style is not changed to reach the count (D-08 requires it to match the voice layout); the other two items were brought into the set instead:
 
-- The Past empty state does not instantiate `UpcomingEmptyState` (which uses `.title` bold at 28 pt). It is a sibling subview that shares the calendar illustration and the layout (40 pt side padding, 28 pt section spacing, centered stack) and sets its title at 22 pt Semibold and its body at 16 pt Regular. "Matching the Upcoming empty-state style" (CONTEXT, Claude's discretion) is read as the same illustration and layout; the type scale is the only difference.
+- The Past empty state does not instantiate `UpcomingEmptyState` (which uses `.title` bold at 28 pt). It is a sibling subview that shares the calendar illustration and the layout (40 pt side padding, 28 pt section spacing, centered stack) and sets its title at 22 pt Semibold and its body at 16 pt Regular. "Matching the Upcoming empty-state style" (CONTEXT, Claude's discretion) is read as the same illustration and layout; the type scale is the only difference. The Past title is 22 pt Semibold while the adjacent Upcoming tab's stays 28 pt bold (unchanged) because declaring the 28 pt bold title would add a fifth size and a third weight to this phase's set; the two tabs therefore differ in title size by design, a trade the spec accepts to keep the declared set at 4 sizes and 2 weights.
 - The new `Open in {provider}` and expert `Join Session` labels are Semibold, not the bold of `JOIN CALL`. The two never share a screen: `JOIN CALL` is the in-app variant and `Open in {provider}` the Skype/Zoom variant of the same slot.
 
 ### Out of contract: pre-existing text styling
@@ -177,7 +177,7 @@ All strings below are exact. Executors must not paraphrase them. "Existing" mean
 | Decline reason limit | input stops at 500 characters (the endpoint limit, D-02); no counter, because an alert field cannot host one | new rule |
 | Accept confirmation (toast) | `Reschedule accepted` (Android `reschedule_accepted`) | new |
 | Decline confirmation (toast) | `Reschedule declined` (Android `reschedule_declined`) | new |
-| Error alert title | `Couldn't update booking` | existing |
+| Error alert title and button | title `Couldn't update booking`; dismiss button `Back to Booking` (cancel role; it only closes the alert, it does not retry) | title existing; button changed (was `OK`) |
 | Error, no saved card | `Please add a payment method in Profile > Payment before accepting this reschedule.` | changed (was "Settings > Payment") |
 | Error, saved card unusable | `The card on file can't be used for this reschedule. Please add a new payment method in Profile > Payment and try again.` | changed (was "Settings > Payment") |
 | Error, vault read failed | `Couldn't check your saved payment methods. Please try again.` | existing |
@@ -240,7 +240,7 @@ Client confirm-step money line. The state is decided from the booking detail: `t
 | Comment counter | `{n}/450` | new (matches Android `cancel_booking_comment_counter`) |
 | Sent reason | `{label}: {comment}` (comment trimmed); the label alone when the comment is empty; never above 500 characters (longest label 20 + 2 + 450 = 472) | new (BOOK-07) |
 | Preview changed at confirm | `The session now starts within 24 hours, so your refund has changed. Review the updated amount and confirm again.` | new (D-06; see section 5) |
-| Cancel error alert | title `Couldn't cancel booking`; message `Error.userMessage`. `SESSION_ALREADY_ENDED` (409) shows the server's own message, which the backend documents as written for the user | existing |
+| Cancel error alert | title `Couldn't cancel booking`; dismiss button `Review Cancellation` (was `OK`; it closes the alert and leaves the user on the confirm step); message `Error.userMessage`. `SESSION_ALREADY_ENDED` (409) shows the server's own message, which the backend documents as written for the user | existing |
 
 Post-cancel confirmation (toast), chosen from the **server's** `refund_amount` (major units, with `currency`) and the case the user confirmed under. The server returns 0 for a released hold, for a within-24h charge, for a free booking, **and** while a failed void or refund is being retried, so 0 is never worded "no refund" unless case D says so:
 
@@ -329,7 +329,7 @@ Why the `RESCHEDULE_OUTSIDE_AUTH_WINDOW` line changed. Verified in the backend (
 | Look | unchanged amber card: `clock.badge.exclamationmark`, orange 8% fill, 35% stroke, 14 pt radius. Buttons 44 pt tall (exception above). Decline New Time is the red-tinted button, Accept New Time the accent button |
 | Accept in flight | both buttons disabled, a small `ProgressView` in Accept New Time, as Booking Summary does today |
 | After Accept or Decline succeeds | the user **stays** on the screen. The card disappears, the date, time range and the status pill update in place, and a toast (section 10) says `Reschedule accepted` or `Reschedule declined`. The screen refetches through the Phase 02 `ReloadGeneration` helper so only the newest response writes |
-| After a failure | the existing `Couldn't update booking` alert with `OK`; the card and buttons stay as they were. The `PAYMENT_METHOD_REQUIRED` recovery (re-propose with the default saved card) is the existing path and only its copy changes |
+| After a failure | the existing `Couldn't update booking` alert with the dismiss button `Back to Booking`; the card and buttons stay as they were. The `PAYMENT_METHOD_REQUIRED` recovery (re-propose with the default saved card) is the existing path and only its copy changes |
 | Join while pending | visible but disabled (section 3) |
 | VoiceOver | the card is one accessibility container; its title is the header trait; Accept New Time and Decline New Time announce as buttons with the proposed time in their label, e.g. `Accept New Time, Wed, Jul 10 · 10:00 AM` |
 

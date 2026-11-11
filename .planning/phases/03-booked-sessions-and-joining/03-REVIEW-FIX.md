@@ -76,7 +76,7 @@ Two fixes are flagged "requires human verification" (WR-03 and WR-08, see below)
 **Commit:** 0e83b92
 **Applied fix:** The test now injects `APITestFactory.make { ... }` through the `api:` parameter. The stub counts requests (small lock-based `RequestCounter`, so it does not depend on the shared `MockURLProtocol.recordedRequests`) and throws a transport error. The test asserts `requests.count == 0` as well as the mapped error copy. The file header was updated to say that one row now uses a stub.
 
-### WR-08: After a successful accept or decline with a failed refetch, the screen still shows the old time and a "Pending reschedule" status
+### WR-08: After a successful accept or decline with a failed refetch, the screen still shows the old time and a "Pending reschedule" status, and nothing retries
 
 **Files modified:** `ClickMe2026/Views/Screens/Client Mode/Booking Summary/RescheduleResponder.swift`, `ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/UpcomingBookingViewModel.swift`, `ClickMe2026/Views/Screens/Client Mode/Booking Summary/BookingSummaryViewModel.swift`, `ClickMe2026Tests/Booking/RescheduleResponderTests.swift`, `ClickMe2026Tests/Booking/UpcomingBookingViewModelTests.swift`, `ClickMe2026Tests/Booking/BookingSummaryViewModelTests.swift`
 **Commit:** 80f30d0
@@ -90,7 +90,7 @@ Each owner's refetch now retries once after `refetchRetryDelay` (default 2 s, sh
 
 **Why it needs a human look:** for a decline, the backend restores `reschedule_prev_status`, which the client payload does not carry. `confirmed` is assumed until the refetch or retry corrects it. If the previous status was `pending_approval` and both fetches fail, the screen shows Confirmed until the next socket event or reopen. The device checklist should include a decline on a booking that was pending approval, offline after the POST.
 
-### WR-09: Post-cancel toast reads the refund case after the await
+### WR-09: Post-cancel toast reads the refund case after the await, so the 60 s tick can change the case the user confirmed under
 
 **Files modified:** `ClickMe2026/Views/Screens/Client Mode/Cancellation/ClientCancellationViewModel.swift`, `ClickMe2026Tests/Booking/ClientCancellationViewModelTests.swift`
 **Commit:** 0a2f636

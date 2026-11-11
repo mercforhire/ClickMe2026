@@ -76,4 +76,9 @@ struct ClientBookingDetail: Decodable {
     /// cached payloads still decode. Phase 3 reads it on Upcoming Booking
     /// details (CALL-03, D-07).
     let canJoin: Bool?
+    /// Backend `paymentActionFields` (`src/utils/scaRecovery.js`): true when a
+    /// scheduled booking's off-session T-24h charge needs card authentication,
+    /// so nothing has been charged yet. Optional so older payloads decode
+    /// (D-14). The cancel confirm step reads it as "not charged".
+    let paymentActionRequired: Bool?
 }

@@ -33,13 +33,16 @@ final class ClientCancellationViewModel: ObservableObject {
     // MARK: Dependencies
 
     private let api: ClickMeAPI
+    /// The clock the refund preview reads. Injected so tests can move time.
+    private let now: @MainActor () -> Date
 
     /// Runtime init — fetches display fields from `GET /client/bookings/:id`
     /// then lets the user pick a reason before calling
     /// `POST /client/bookings/:id/cancel`.
     init(
         bookingId: UUID,
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        now: @escaping @MainActor () -> Date = { Date() }
     ) {
         self.bookingId = bookingId
         self.step = .reason
@@ -50,6 +53,7 @@ final class ClientCancellationViewModel: ObservableObject {
         self.loadState = .idle
         self.reasons = ClientCancellationViewModel.defaultReasons
         self.api = api
+        self.now = now
     }
 
     /// Preview seam — pre-populates the display booking as if the fetch had
@@ -71,6 +75,8 @@ final class ClientCancellationViewModel: ObservableObject {
         self.loadState = .loaded
         self.reasons = reasons
         self.api = .shared
+        self.now = { Date() }
+        recomputeRefundCase()
     }
 
     // MARK: - Load
@@ -93,6 +99,7 @@ final class ClientCancellationViewModel: ObservableObject {
         do {
             let response = try await api.getClientBookingDetail(id: bookingId)
             booking = Self.map(detail: response.data)
+            recomputeRefundCase()
             loadState = .loaded
         } catch {
             loadState = .failed(error.userMessage)
@@ -105,28 +112,19 @@ final class ClientCancellationViewModel: ObservableObject {
             expertTitle: detail.expert.title ?? detail.topic.title,
             dateString: formatDateTime(start: detail.startTime, end: detail.endTime),
             imageURL: detail.expert.avatarUrl ?? "",
-            refundAmount: refundAmount(from: detail)
+            refundFacts: CancelRefundPreview.Facts(detail: detail),
+            refundCase: nil
         )
     }
 
-    /// Client-side preview of the refund amount until a server-side refund
-    /// endpoint lands. Shows the paid amount when the money is still with
-    /// us (`held` / `captured`) — hides for free sessions, refunded
-    /// bookings, or when no payment was made. Actual refund amount is
-    /// resolved on the server when the cancel call fires.
-    private static func refundAmount(from detail: ClientBookingDetail) -> String? {
-        if detail.topic.isFree { return nil }
-        switch detail.paymentStatus {
-        case "held", "captured":
-            break
-        default:
-            return nil
-        }
-        guard let amount = detail.topic.price?.amount,
-              let currency = detail.topic.price?.currency
-        else { return nil }
+    // MARK: - Refund preview
 
-        return Money.format(minorUnits: amount, currency: currency)
+    /// Re-evaluates the money case from the booking facts and the clock.
+    /// Called after a load and every 60 seconds while the confirm step is on
+    /// screen, so the line follows the 24-hour edge (D-06).
+    func recomputeRefundCase() {
+        guard let facts = booking.refundFacts else { return }
+        booking.refundCase = CancelRefundPreview.refundCase(facts, now: now())
     }
 
     // MARK: - Actions
@@ -197,7 +195,8 @@ final class ClientCancellationViewModel: ObservableObject {
         expertTitle: "",
         dateString: "",
         imageURL: "",
-        refundAmount: nil
+        refundFacts: nil,
+        refundCase: nil
     )
 
     static let sampleBooking = CancellationBooking(
@@ -205,6 +204,16 @@ final class ClientCancellationViewModel: ObservableObject {
         expertTitle: "Career Coaching",
         dateString: "Wed, Jul 10 • 10:00 AM",
         imageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuDOLbdN4ist5Yp2MU-iazD2ggqG2F42GhJKUDhi5omBTMQfsZ3aOtpJMI9x9l_BIc9uFxsR8Lm6fNjwJHuR85wD7jybmImSDCQBOeUITRzo8CARgZN-NnDwUZ5qrRhyWZQyQsu0uapd_3Xun_JTJNPp5yEWCYxukV7kO2-I-WVPLdAIRR18ZAhKbJ-EY4V6bi-sSR4ZWdwvqphktPI2BYaOKzT_05jLA25ati_Shxxg7npPn2mY05T4M16WVkyPp8szqHyPI3yoLBo",
-        refundAmount: "$45.00"
+        // A paid, already-charged booking three days out, so previews show case C.
+        refundFacts: CancelRefundPreview.Facts(
+            isFree: false,
+            priceAmountMinor: 4500,
+            currency: "CAD",
+            paymentStatus: "captured",
+            authorizationExpiresAt: nil,
+            paymentActionRequired: false,
+            start: Date().addingTimeInterval(3 * 24 * 3600)
+        ),
+        refundCase: nil
     )
 }

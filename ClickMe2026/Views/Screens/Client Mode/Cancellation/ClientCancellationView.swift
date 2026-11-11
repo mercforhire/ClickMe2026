@@ -15,12 +15,13 @@ struct CancellationBooking {
     let expertTitle: String
     let dateString: String
     let imageURL: String
-    /// Formatted refund amount previewed to the user (e.g. `"$45.00"`).
-    /// `nil` hides the refund copy entirely — used for free sessions, when
-    /// no payment was made, or when the booking has already been refunded.
-    /// Derived client-side from `topic.price` + `paymentStatus` until a
-    /// server-side refund-preview endpoint ships.
-    let refundAmount: String?
+    /// The booking-detail fields `CancelRefundPreview` reads. `nil` while the
+    /// detail is loading, so no money line shows.
+    let refundFacts: CancelRefundPreview.Facts?
+    /// The money case last shown to the user. Recomputed from `refundFacts` and
+    /// the clock on load, every 60 seconds and at confirm (D-06), by
+    /// `ClientCancellationViewModel.recomputeRefundCase()`.
+    var refundCase: CancelRefundPreview.Case?
 }
 
 enum CancelStep { case reason, confirmation }

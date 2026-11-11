@@ -154,32 +154,42 @@ struct BookingSummaryViewModelTests {
         }
     }
 
-    @Test("accept whose follow-up detail GET returns 500 still clears the card")
+    @Test("accept whose follow-up detail GETs return 500 clears the card and moves to the new time")
     func acceptWithFailedRefetchClearsCard() async {
         let vm = BookingSummaryViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
+        vm.refetchRetryDelay = .milliseconds(1)
         await vm.load()
         #expect(vm.reschedule != nil)
+        let proposedStart = Fixtures.defaultStart.addingTimeInterval(86_400)
+        let oldDateTime = vm.dateTime
 
         await vm.responder.accept()
 
         #expect(acceptPosts().count == 1)
-        #expect(detailGetCount() == 2)
+        // The refetch and its single retry both ran and both failed (WR-08).
+        #expect(detailGetCount() == 3)
         #expect(vm.reschedule == nil)
+        // WR-08: the old time must not outlive the accept.
+        #expect(vm.dateTime != oldDateTime)
+        #expect(abs((vm.currentStartTime ?? .distantPast).timeIntervalSince(proposedStart)) < 1)
         #expect(vm.loadState == .loaded)
         #expect(vm.responder.apiError == nil)
     }
 
-    @Test("decline whose follow-up detail GET returns 500 still clears the card")
+    @Test("decline whose follow-up detail GETs return 500 still clears the card and keeps the time")
     func declineWithFailedRefetchClearsCard() async {
         let vm = BookingSummaryViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
+        vm.refetchRetryDelay = .milliseconds(1)
         await vm.load()
         #expect(vm.reschedule != nil)
+        let oldDateTime = vm.dateTime
 
         await vm.responder.decline(reason: "No")
 
         #expect(declinePosts().count == 1)
-        #expect(detailGetCount() == 2)
+        #expect(detailGetCount() == 3)
         #expect(vm.reschedule == nil)
+        #expect(vm.dateTime == oldDateTime)
         #expect(vm.loadState == .loaded)
         #expect(vm.responder.apiError == nil)
     }

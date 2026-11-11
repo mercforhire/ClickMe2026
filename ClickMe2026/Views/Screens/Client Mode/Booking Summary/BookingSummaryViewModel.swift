@@ -89,8 +89,9 @@ final class BookingSummaryViewModel: ObservableObject {
     /// Upcoming Booking details screen uses, so the accept disclosure and the
     /// PAYMENT_METHOD_REQUIRED recovery exist once. Its `refetch` is this
     /// model's silent `refresh()`, so a successful accept or decline updates
-    /// the screen in place with no loading spinner (D-03). `onResolved` clears
-    /// `reschedule` first, so the card goes even when that refresh fails (WR-01).
+    /// the screen in place with no loading spinner (D-03). `onResolved` moves the
+    /// screen to the state the server now holds first, so the card and the time
+    /// are right even when that refresh fails (WR-01, WR-08).
     let responder: RescheduleResponder
 
     // MARK: Load state
@@ -101,6 +102,10 @@ final class BookingSummaryViewModel: ObservableObject {
     /// socket refetch, starts overlapping fetches; only the most recently
     /// started one may write the screen (BOOK-18).
     private var reloads = ReloadGeneration()
+
+    /// Wait before the one retry of the refresh that follows an accepted or
+    /// declined reschedule when its first attempt failed (WR-08). Tests shorten it.
+    var refetchRetryDelay: Duration = .seconds(2)
 
     // MARK: Dependencies
 
@@ -146,8 +151,8 @@ final class BookingSummaryViewModel: ObservableObject {
             guard event.bookingId == targetId else { return }
             Task { @MainActor in await self?.refresh() }
         }
-        responder.refetch = { [weak self] in await self?.refresh() }
-        responder.onResolved = { [weak self] in self?.reschedule = nil }
+        responder.refetch = { [weak self] in await self?.refreshAfterResolution() }
+        responder.onResolved = { [weak self] resolution in self?.applyResolution(resolution) }
     }
 
     /// Preview seam — pre-populates all display fields as if the fetch had
@@ -212,10 +217,17 @@ final class BookingSummaryViewModel: ObservableObject {
     /// and only while this call is still the newest. When not yet loaded this
     /// runs the full load instead, so the newest call settles `loadState`.
     func refresh() async {
-        guard let bookingId else { return }
+        _ = await refreshOnce()
+    }
+
+    /// One silent refresh. Returns `false` only when the detail GET failed (the
+    /// last good screen is kept), so a caller can try again. A superseded call
+    /// returns `true`: the newer call settles the screen.
+    private func refreshOnce() async -> Bool {
+        guard let bookingId else { return true }
         guard case .loaded = loadState else {
             await forceLoad(bookingId: bookingId)
-            return
+            return true
         }
         let token = reloads.begin()
         let detail: ClientBookingDetail
@@ -223,18 +235,41 @@ final class BookingSummaryViewModel: ObservableObject {
             detail = try await api.getClientBookingDetail(id: bookingId).data
         } catch {
             // Intentionally swallowed: keep the last known good screen.
-            return
+            return false
         }
-        guard reloads.isCurrent(token) else { return }
+        guard reloads.isCurrent(token) else { return true }
 
         // Review context is a soft dependency, as in the full load.
         let reviewContext = try? await api.getReviewContext(bookingId: bookingId).data
-        guard reloads.isCurrent(token) else { return }
+        guard reloads.isCurrent(token) else { return true }
 
         apply(detail: detail)
         if let reviewContext {
             apply(reviewContext: reviewContext)
         }
+        return true
+    }
+
+    /// The refresh after a 2xx accept or decline: one retry after a short delay,
+    /// because `onResolved` has only moved the screen to the expected state and
+    /// nothing else repairs it until a socket event or a reopen (WR-08).
+    private func refreshAfterResolution() async {
+        if await refreshOnce() { return }
+        try? await Task.sleep(for: refetchRetryDelay)
+        guard !Task.isCancelled else { return }
+        _ = await refreshOnce()
+    }
+
+    /// Moves the screen to what the server now holds after a 2xx accept or
+    /// decline, without waiting for the refetch (WR-01, WR-08). An accepted
+    /// proposal's time becomes the booking's time; a decline leaves the time
+    /// alone. The card goes in both cases.
+    private func applyResolution(_ resolution: RescheduleResponder.Resolution) {
+        if resolution == .accepted, let proposal = reschedule {
+            dateTime = Self.formatDateTime(start: proposal.proposedStart, end: proposal.proposedEnd)
+            currentStartTime = proposal.proposedStart
+        }
+        reschedule = nil
     }
 
     /// Fetches the booking detail, then the review context, and hydrates the

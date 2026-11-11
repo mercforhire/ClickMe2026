@@ -236,9 +236,10 @@ struct UpcomingBookingViewModelTests {
 
     // MARK: Failed refetch after a 2xx (WR-01)
 
-    /// First detail GET returns the expert's proposal, every later one a 500. Both
-    /// answer POSTs succeed. Anything else is a 404.
-    private func failingRefetchAPI() -> ClickMeAPI {
+    /// First detail GET returns the expert's proposal, every later one a 500, except
+    /// the third when `thirdGetBody` is given. Both answer POSTs succeed. Anything
+    /// else is a 404.
+    private func failingRefetchAPI(thirdGetBody: Data? = nil) -> ClickMeAPI {
         let path = detailPath
         let pending = pendingDetail(initiatedBy: "expert")
         return APITestFactory.make { request in
@@ -253,6 +254,9 @@ struct UpcomingBookingViewModelTests {
                 }
                 if detailGets.count == 1 {
                     return Fixtures.response(for: request, body: pending)
+                }
+                if detailGets.count == 3, let thirdGetBody {
+                    return Fixtures.response(for: request, body: thirdGetBody)
                 }
                 return Fixtures.response(for: request, status: 500, body: Fixtures.errorBody(code: "INTERNAL"))
             }
@@ -273,38 +277,68 @@ struct UpcomingBookingViewModelTests {
         }.count
     }
 
-    @Test("accept whose follow-up detail GET returns 500 still clears the proposal")
+    @Test("accept whose follow-up detail GETs return 500 clears the proposal and moves to the new time")
     func acceptWithFailedRefetchClearsProposal() async {
         let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
+        vm.refetchRetryDelay = .milliseconds(1)
         await vm.load()
         #expect(vm.pendingProposal != nil)
+        let proposedStart = Fixtures.defaultStart.addingTimeInterval(86_400)
 
         await vm.responder.accept()
 
         #expect(postCount(suffix: "/accept-reschedule") == 1)
-        #expect(detailGetCount() == 2)
+        // The refetch and its single retry both ran and both failed (WR-08).
+        #expect(detailGetCount() == 3)
         #expect(vm.pendingProposal == nil)
         #expect(vm.reschedule == nil)
+        // WR-08: the old time and the pending status must not outlive the accept.
+        #expect(vm.bookingStatus == .confirmed)
+        #expect(vm.statusRaw == "confirmed")
+        #expect(abs((vm.startTime ?? .distantPast).timeIntervalSince(proposedStart)) < 1)
+        #expect(abs((vm.endTime ?? .distantPast).timeIntervalSince(proposedStart.addingTimeInterval(3600))) < 1)
+        #expect(vm.canJoin == nil)
         #expect(vm.state == .loaded)
         #expect(vm.responder.apiError == nil)
         #expect(vm.responder.isSubmitting == false)
     }
 
-    @Test("decline whose follow-up detail GET returns 500 still clears the proposal")
+    @Test("decline whose follow-up detail GETs return 500 clears the proposal and the pending status")
     func declineWithFailedRefetchClearsProposal() async {
         let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
+        vm.refetchRetryDelay = .milliseconds(1)
         await vm.load()
         #expect(vm.pendingProposal != nil)
+        let originalStart = vm.startTime
 
         await vm.responder.decline(reason: "No")
 
         #expect(postCount(suffix: "/decline-reschedule") == 1)
-        #expect(detailGetCount() == 2)
+        #expect(detailGetCount() == 3)
         #expect(vm.pendingProposal == nil)
         #expect(vm.reschedule == nil)
+        // WR-08: no "Pending reschedule" pill for a proposal the server dropped; the time is unchanged.
+        #expect(vm.bookingStatus != .pendingReschedule)
+        #expect(vm.startTime == originalStart)
         #expect(vm.state == .loaded)
         #expect(vm.responder.apiError == nil)
         #expect(vm.responder.isSubmitting == false)
+    }
+
+    @Test("a failed refetch is retried once, and the retry's answer replaces the local guess")
+    func failedRefetchIsRetriedOnce() async {
+        // The decline restored a status other than the `confirmed` the screen assumed.
+        let restored = Fixtures.detailJSON(status: "pending_approval")
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: failingRefetchAPI(thirdGetBody: restored))
+        vm.refetchRetryDelay = .milliseconds(1)
+        await vm.load()
+
+        await vm.responder.decline(reason: "No")
+
+        #expect(detailGetCount() == 3)
+        #expect(vm.bookingStatus == .pendingApproval)
+        #expect(vm.statusRaw == "pending_approval")
+        #expect(vm.pendingProposal == nil)
     }
 
     // MARK: Silent refresh

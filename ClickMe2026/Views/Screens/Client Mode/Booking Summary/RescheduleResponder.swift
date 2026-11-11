@@ -25,6 +25,17 @@ import Observation
 @Observable
 final class RescheduleResponder {
 
+    // MARK: Resolution
+
+    /// How the server settled the proposal, passed to `onResolved` so the owner
+    /// can move its own fields to the state the server is now in (WR-08).
+    enum Resolution: Equatable {
+        /// The proposed time is now the booking's time and the status is `confirmed`.
+        case accepted
+        /// The proposal is gone and the booking is back at its previous status.
+        case declined
+    }
+
     // MARK: Limits
 
     /// Server cap on the decline reason, counted in UTF-16 code units.
@@ -51,12 +62,13 @@ final class RescheduleResponder {
     @ObservationIgnored var refetch: (@MainActor () async -> Void)?
 
     /// Called after every 2xx accept or decline, before `refetch`. The server has
-    /// accepted or declined the proposal, so the owner clears its proposal locally.
-    /// The card therefore disappears even when `refetch` fails and the owner's
-    /// silent refresh keeps the old screen (WR-01). Synchronous on purpose, so
-    /// nothing can interleave between the clear and the refetch. Never called
+    /// accepted or declined the proposal, so the owner clears its proposal locally
+    /// and moves its time and status to what the server now holds. The card and
+    /// the old time therefore go even when `refetch` fails and the owner's silent
+    /// refresh keeps the old screen (WR-01, WR-08). Synchronous on purpose, so
+    /// nothing can interleave between the update and the refetch. Never called
     /// after a failed accept or decline.
-    @ObservationIgnored var onResolved: (@MainActor () -> Void)?
+    @ObservationIgnored var onResolved: (@MainActor (Resolution) -> Void)?
 
     // MARK: Dependencies
 
@@ -96,7 +108,7 @@ final class RescheduleResponder {
             _ = try await api.acceptClientReschedule(id: bookingId)
             // Only after a 2xx: a failed accept never confirms (T-03-11).
             toasts.show("Reschedule accepted")
-            onResolved?()
+            onResolved?(.accepted)
             await refetch?()
             return
         } catch {
@@ -123,7 +135,7 @@ final class RescheduleResponder {
         do {
             _ = try await api.acceptClientReschedule(id: bookingId, stripePaymentMethodId: paymentMethodId)
             toasts.show("Reschedule accepted")
-            onResolved?()
+            onResolved?(.accepted)
             await refetch?()
         } catch {
             // The second failure is terminal, including a repeat
@@ -156,7 +168,7 @@ final class RescheduleResponder {
             _ = try await api.declineClientReschedule(id: bookingId, reason: capped.isEmpty ? nil : capped)
             // Only after a 2xx: a failed decline never confirms (T-03-11).
             toasts.show("Reschedule declined")
-            onResolved?()
+            onResolved?(.declined)
             await refetch?()
         } catch {
             apiError = error.userMessage

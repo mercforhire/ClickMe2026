@@ -386,7 +386,7 @@ struct RescheduleResponderTests {
     /// A responder whose two hooks append to a shared log.
     private func makeLoggingResponder(api: ClickMeAPI, log: CallLog) -> RescheduleResponder {
         let responder = RescheduleResponder(bookingId: bookingUUID, api: api)
-        responder.onResolved = { log.entries.append("resolved") }
+        responder.onResolved = { resolution in log.entries.append("resolved \(resolution)") }
         responder.refetch = { log.entries.append("refetch") }
         return responder
     }
@@ -405,7 +405,7 @@ struct RescheduleResponderTests {
 
         await responder.accept()
 
-        #expect(log.entries == ["resolved", "refetch"])
+        #expect(log.entries == ["resolved accepted", "refetch"])
     }
 
     @Test("a saved-card retry that succeeds calls onResolved once, then refetch")
@@ -427,7 +427,7 @@ struct RescheduleResponderTests {
         await responder.accept()
 
         #expect(Self.acceptPosts().count == 2)
-        #expect(log.entries == ["resolved", "refetch"])
+        #expect(log.entries == ["resolved accepted", "refetch"])
     }
 
     @Test("a 2xx decline calls onResolved, then refetch")
@@ -440,7 +440,7 @@ struct RescheduleResponderTests {
 
         await responder.decline(reason: "No")
 
-        #expect(log.entries == ["resolved", "refetch"])
+        #expect(log.entries == ["resolved declined", "refetch"])
     }
 
     @Test("a failed accept (409) calls neither hook")

@@ -61,8 +61,9 @@ final class UpcomingBookingViewModel: ObservableObject {
 
     /// Answers an expert-proposed time (BOOK-06). Its `refetch` is this model's
     /// silent `refresh()`, so a successful accept or decline updates the screen
-    /// in place with no loading spinner (D-03). `onResolved` clears `reschedule`
-    /// first, so the card goes even when that refresh fails (WR-01).
+    /// in place with no loading spinner (D-03). `onResolved` moves the screen to
+    /// the state the server now holds first, so the card, the time and the status
+    /// are right even when that refresh fails (WR-01, WR-08).
     let responder: RescheduleResponder
 
     // MARK: Load state
@@ -73,6 +74,10 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// pull-to-refresh (or two events in a row) starts overlapping fetches;
     /// only the most recently started one may write the screen (BOOK-18).
     private var reloads = ReloadGeneration()
+
+    /// Wait before the one retry of the refresh that follows an accepted or
+    /// declined reschedule when its first attempt failed (WR-08). Tests shorten it.
+    var refetchRetryDelay: Duration = .seconds(2)
 
     // MARK: Dependencies
 
@@ -122,8 +127,8 @@ final class UpcomingBookingViewModel: ObservableObject {
             guard event.bookingId == targetId else { return }
             Task { @MainActor in await self?.refresh() }
         }
-        responder.refetch = { [weak self] in await self?.refresh() }
-        responder.onResolved = { [weak self] in self?.reschedule = nil }
+        responder.refetch = { [weak self] in await self?.refreshAfterResolution() }
+        responder.onResolved = { [weak self] resolution in self?.applyResolution(resolution) }
     }
 
     /// Preview seam — pre-installs display strings so the canvas can render
@@ -262,18 +267,57 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// Overlapping calls keep only the newest response. When not yet loaded
     /// this runs a forced load instead, so the newest call settles `state`.
     func refresh() async {
+        _ = await refreshOnce()
+    }
+
+    /// One silent refresh. Returns `false` only when the detail GET failed (the
+    /// last good screen is kept), so a caller can try again. A superseded call
+    /// returns `true`: the newer call settles the screen.
+    private func refreshOnce() async -> Bool {
         guard case .loaded = state else {
             await forceLoad()
-            return
+            return true
         }
         let token = reloads.begin()
         do {
             let response = try await api.getClientBookingDetail(id: bookingId)
-            guard reloads.isCurrent(token) else { return }
+            guard reloads.isCurrent(token) else { return true }
             apply(response.data)
+            return true
         } catch {
             // Intentionally swallowed: keep the last known good screen.
+            return false
         }
+    }
+
+    /// The refresh after a 2xx accept or decline: one retry after a short delay,
+    /// because `onResolved` has only guessed the new state and nothing else
+    /// repairs it until a socket event or a reopen (WR-08).
+    private func refreshAfterResolution() async {
+        if await refreshOnce() { return }
+        try? await Task.sleep(for: refetchRetryDelay)
+        guard !Task.isCancelled else { return }
+        _ = await refreshOnce()
+    }
+
+    /// Moves the screen to what the server now holds after a 2xx accept or
+    /// decline, without waiting for the refetch (WR-01, WR-08).
+    ///
+    /// Accept: the proposed time becomes the booking's time and the status is
+    /// `confirmed` (`acceptReschedule` in the backend). Decline: the backend
+    /// restores `reschedule_prev_status`, which the client payload does not carry,
+    /// so `confirmed` (the usual case) stands in until the refetch corrects it.
+    private func applyResolution(_ resolution: RescheduleResponder.Resolution) {
+        if resolution == .accepted, let proposal = reschedule {
+            startTime = proposal.proposedStart
+            endTime = proposal.proposedEnd
+            date = Self.dateString(proposal.proposedStart)
+            timeRange = Self.timeRangeString(from: proposal.proposedStart, to: proposal.proposedEnd)
+        }
+        bookingStatus = .confirmed
+        statusRaw = BookingStatus.confirmed.rawValue
+        canJoin = nil
+        reschedule = nil
     }
 
     /// Idempotent — skips when already loaded so it doesn't clobber the

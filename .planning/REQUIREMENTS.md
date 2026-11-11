@@ -13,12 +13,12 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 - [x] **CALL-01** [C1] **[crit]**: A call keeps running until 60 minutes after its scheduled end, not 5 minutes (revert the TEMP `overtimeCutoffSeconds`)
 - [x] **CALL-02** [C2] **[major]**: User can join a session from 60 minutes before start until its scheduled end, including the second half of sessions longer than an hour
-- [ ] **CALL-03** [C3] **[major]**: Tapping Join on the client Upcoming Booking details screen starts the call
+- [x] **CALL-03** [C3] **[major]**: Tapping Join on the client Upcoming Booking details screen starts the call
 - [x] **CALL-04** [C4]: Ending a call with a 0-second leg is accepted by the server (send at least 1 second)
 - [x] **CALL-05** [C5] (likely): The call screen reaches the Ended state when the Agora connection fails or is aborted
 - [x] **CALL-06** [C6]: Skype/Zoom status copy no longer promises the meeting ends automatically at the scheduled time
 - [x] **CALL-07** [C7]: The Skype/Zoom session screen shows the elapsed or remaining time
-- [ ] **CALL-08** [C8] **[major]**: User can open a Skype/Zoom meeting from the Upcoming Booking details screen
+- [x] **CALL-08** [C8] **[major]**: User can open a Skype/Zoom meeting from the Upcoming Booking details screen
 - [x] **CALL-09** [C9]: Skype/Zoom detection matches the real host domain only, so a lookalike URL is not treated as a trusted provider
 - [x] **CALL-10** [C10] **[major]**: Expert can join a session from the expert Booking Summary, within the same join window as CALL-02
 
@@ -36,7 +36,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BOOK-10** [B10] **[major]**: Every money amount is shown with correct decimals for its currency (no dropped cents), using one shared formatter
 - [ ] **BOOK-11** [B11]: The Past tab shows an empty state when there are no past bookings
 - [ ] **BOOK-12** [B12]: Keep Booking returns to the previous screen, not the My Bookings root
-- [ ] **BOOK-13** [B13]: Cancel is hidden on a booking whose session has already ended
+- [x] **BOOK-13** [B13]: Cancel is hidden on a booking whose session has already ended
 - [x] **BOOK-14** [B14] **[major]**: Paid booking and reschedule pickers allow slots at most 6 days ahead, and the long-lead error codes show a clear error instead of an invalid confirm
 - [x] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (Q3 settled 2026-11-09 as route only, Phase 2 D-01: no recovery flow is built; an unanswered booking is cancelled by scaRecoveryWindowSweep)
 - [ ] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
@@ -180,12 +180,12 @@ Which phases cover which requirements. Filled in during roadmap creation.
 |-------------|-------|--------|
 | CALL-01 | Phase 2 | Complete |
 | CALL-02 | Phase 2 | Complete |
-| CALL-03 | Phase 3 | Pending |
+| CALL-03 | Phase 3 | Complete |
 | CALL-04 | Phase 2 | Complete |
 | CALL-05 | Phase 2 | Complete |
 | CALL-06 | Phase 3 | Complete |
 | CALL-07 | Phase 3 | Complete |
-| CALL-08 | Phase 3 | Pending |
+| CALL-08 | Phase 3 | Complete |
 | CALL-09 | Phase 2 | Complete |
 | CALL-10 | Phase 3 | Complete |
 | BOOK-01 | Phase 4 | Pending |
@@ -200,7 +200,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-10 | Phase 2 | Complete |
 | BOOK-11 | Phase 3 | Pending |
 | BOOK-12 | Phase 3 | Pending |
-| BOOK-13 | Phase 3 | Pending |
+| BOOK-13 | Phase 3 | Complete |
 | BOOK-14 | Phase 2 | Complete |
 | BOOK-15 | Phase 2 | Complete |
 | BOOK-16 | Phase 3 | Pending |

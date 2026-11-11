@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-07-PLAN.md
-last_updated: "2026-11-11T05:22:05.245Z"
+stopped_at: Completed 03-09-PLAN.md
+last_updated: "2026-11-11T05:30:23.481Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: f6450457eee825511ddd98855ff9e5b31ddb2a07
+state_head: be60f6fbf812e0f8cb493cd47386dd3ef9ec4fef
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 52
+  completed_plans: 53
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 12 of 15
+Plan: 13 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -108,6 +108,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P14 | 15 min | 2 tasks | 8 files |
 | Phase 03 P08 | 6 min | 2 tasks | 8 files |
 | Phase 03 P07 | 7 min | 2 tasks | 8 files |
+| Phase 03 P09 | 25min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -222,6 +223,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-14: Upcoming details pill is decided by the decoded BookingStatus case through one exhaustive switch (statusRaw only humanizes .unknown, always neutral); BookingShortID is the one iOS short-ID formatter for 03-07 to reuse; BOOK-20 left open for 03-07
 - [Phase 03]: 03-08: expert cancel money line is a line only when payment_action_required and payment_not_charged are both present and false (ExpertCancelRefundLine); a missing key, either key true or a zero amount shows no money line and no footnote; refundLine has no default anywhere; EXP-11 complete, device checks pending in UAT, BACK-19 production smoke still unrun
 - [Phase 03]: 03-07: DeclineNote re-checks the raw status ('declined') and matches codes exactly; unknown codes show no reason line and never the raw code
+- [Phase 03]: 03-09: Upcoming details onJoinCall is an optional override (nil starts the call through CallCenter.startCall); Skype/Zoom Open in {provider} uses the same call path and never opens the URL; Cancel shows only for confirmed, pending_approval, pending_reschedule while end > now (UpcomingActionPolicy, D-13)
 
 ### Pending Todos
 
@@ -240,6 +242,8 @@ Android follow-ups from Phase 1 (logged, not built):
 Android follow-ups from Phase 3 (logged, not built):
 
 - Expert cancel line could apply the same D-14/D-16 rule: client-money line only where payment_action_required and payment_not_charged both read false (03-05; keys are live at backend 65bb2ed). iOS wording shipped in 03-08: "The client will get a full refund of {amount}" (plus the 3-5 business days footnote), "The client's {amount} hold will be released.", nothing for free or never-charged
+
+- Android Upcoming details Cancel rule should match D-13: show Cancel only for confirmed, pending_approval and pending_reschedule while the end time is in the future (03-09)
 
 Captured todos:
 
@@ -286,6 +290,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T05:22:04.872Z
-Stopped at: Completed 03-07-PLAN.md
+Last session: 2026-11-11T05:30:23.068Z
+Stopped at: Completed 03-09-PLAN.md
 Resume file: None

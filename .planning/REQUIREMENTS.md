@@ -84,7 +84,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **EXP-08** [E8]: The stale 409 comment on topic delete is corrected
 - [ ] **EXP-09** [E11]: Accepting a request shows the booking-confirmed screen
 - [ ] **EXP-10** [E12]: The calendar event created from a confirmed booking is titled with the client's name
-- [ ] **EXP-11** [E13] **[major]**: The expert cancel screen states the client's refund correctly — policy per decision Q2
+- [x] **EXP-11** [E13] **[major]**: The expert cancel screen states the client's refund correctly — policy per decision Q2
 - [ ] **EXP-12** [E14] (likely): Expired request cards stay readable (no 55% dim on text)
 - [x] **EXP-13** [E15] **[major]**: Reschedule on an expert Upcoming card opens the expert reschedule flow
 - [ ] **EXP-14** [E16]: The expert-side Client Profile shows real earnings in the booking currency
@@ -236,7 +236,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXP-08 | Phase 6 | Pending |
 | EXP-09 | Phase 6 | Pending |
 | EXP-10 | Phase 6 | Pending |
-| EXP-11 | Phase 3 | Pending |
+| EXP-11 | Phase 3 | Complete |
 | EXP-12 | Phase 6 | Pending |
 | EXP-13 | Phase 3 | Complete |
 | EXP-14 | Phase 6 | Pending |

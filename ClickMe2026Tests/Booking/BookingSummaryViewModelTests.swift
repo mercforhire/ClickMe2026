@@ -205,6 +205,66 @@ struct BookingSummaryViewModelTests {
         #expect(vm.hasSubmittedReview == true)
     }
 
+    // MARK: Leave a Review gate and booking ID (BOOK-17, BOOK-20)
+
+    /// Serves a detail with `status` and a review context with the given `has_submitted`.
+    private func loadedModel(status: String, hasSubmitted: Bool) async -> BookingSummaryViewModel {
+        let path = detailPath
+        let detail = Fixtures.detailJSON(status: status)
+        let review = Self.reviewContextJSON(hasSubmitted: hasSubmitted)
+        let api = APITestFactory.make { request in
+            let requestPath = request.url?.path ?? ""
+            if requestPath.hasSuffix("/reviews/context") {
+                return Fixtures.response(for: request, body: review)
+            }
+            if requestPath.hasSuffix(path) {
+                return Fixtures.response(for: request, body: detail)
+            }
+            return Fixtures.response(for: request, status: 404, body: Fixtures.errorBody(code: "NOT_FOUND"))
+        }
+        let vm = BookingSummaryViewModel(bookingId: bookingUUID, api: api)
+        await vm.load()
+        return vm
+    }
+
+    @Test("a completed booking with no review offers Leave a Review")
+    func completedWithoutReviewOffersReview() async {
+        let vm = await loadedModel(status: "completed", hasSubmitted: false)
+        #expect(vm.loadState == .loaded)
+        #expect(vm.showsLeaveReview)
+    }
+
+    @Test("a completed booking with a submitted review does not offer Leave a Review")
+    func completedWithReviewHidesReview() async {
+        let vm = await loadedModel(status: "completed", hasSubmitted: true)
+        #expect(vm.hasSubmittedReview)
+        #expect(!vm.showsLeaveReview)
+    }
+
+    @Test(
+        "a session that did not happen never offers Leave a Review",
+        arguments: ["cancelled", "declined", "missed", "expired"]
+    )
+    func sessionThatDidNotHappenHidesReview(status: String) async {
+        let vm = await loadedModel(status: status, hasSubmitted: false)
+        #expect(vm.loadState == .loaded)
+        #expect(!vm.showsLeaveReview)
+    }
+
+    @Test("Leave a Review is hidden before the detail loads, when the status is unknown")
+    func reviewHiddenBeforeLoad() {
+        let vm = BookingSummaryViewModel(bookingId: bookingUUID, api: summaryAPI(detail: Fixtures.detailJSON()))
+        #expect(vm.status == nil)
+        #expect(!vm.showsLeaveReview)
+    }
+
+    @Test("the booking ID label is the shared BookingShortID format once loaded")
+    func bookingIDLabelUsesSharedFormat() async {
+        let vm = await loadedModel(status: "completed", hasSubmitted: false)
+        #expect(vm.bookingIDLabel == BookingShortID.label(bookingUUID))
+        #expect(vm.bookingIDLabel == "ID: #11111111")
+    }
+
     // MARK: Preview seam
 
     @Test("the preview init's responder records no request")

@@ -26,6 +26,9 @@ struct BookingSummaryExpertCard: View {
     /// "Completed" label, which lied when the booking was actually
     /// missed / cancelled.
     var status: PastBookingStatus? = nil
+    /// Short booking ID line (`"ID: #A1B2C3D4"`, BOOK-20), shown last in the
+    /// topic section so a client can quote it to support. Hidden when nil.
+    var bookingIDLabel: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -121,6 +124,15 @@ struct BookingSummaryExpertCard: View {
                         .foregroundColor(BookingSummaryBrand.onSurface)
                 }
                 .padding(.top, 4)
+            }
+
+            if let bookingIDLabel {
+                Text(bookingIDLabel)
+                    .font(.brand(.caption, weight: .regular))
+                    .foregroundColor(BookingSummaryBrand.onSurfaceVar)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 4)
             }
         }
     }

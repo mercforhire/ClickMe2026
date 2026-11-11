@@ -168,7 +168,8 @@ struct BookingSummaryView: View {
                     topic: viewModel.topic,
                     dateTime: viewModel.dateTime,
                     pricePaid: viewModel.pricePaid,
-                    status: viewModel.status
+                    status: viewModel.status,
+                    bookingIDLabel: viewModel.bookingIDLabel
                 )
 
                 if viewModel.hasSubmittedReview {
@@ -186,7 +187,7 @@ struct BookingSummaryView: View {
                 )
                 .padding(.top, 16)
 
-                if !viewModel.hasSubmittedReview {
+                if viewModel.showsLeaveReview {
                     leaveReviewButton
                 }
             }

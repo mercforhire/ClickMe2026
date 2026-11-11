@@ -49,6 +49,18 @@ final class BookingSummaryViewModel: ObservableObject {
     /// summary or a "Leave a review" CTA.
     @Published var hasSubmittedReview: Bool
 
+    /// Whether the Leave a Review button shows (BOOK-17): only for a
+    /// completed session that has no review yet. A cancelled, declined,
+    /// missed or expired booking never invites a review, because the server
+    /// refuses one for a session that did not happen. `status` is nil until
+    /// the detail loads, so nothing shows while the status is unknown.
+    var showsLeaveReview: Bool { status == .completed && !hasSubmittedReview }
+
+    /// The short booking ID line, for example `"ID: #A1B2C3D4"` (BOOK-20).
+    /// Built by `BookingShortID`, the same helper Upcoming Booking details
+    /// uses, so support sees one format across screens and platforms.
+    @Published var bookingIDLabel: String?
+
     /// Full text of the client's private note on this booking, surfaced
     /// from `ClientBookingDetail.privateNote`. `nil` while loading or
     /// when no note has been written — the "My Note" card renders an
@@ -112,6 +124,7 @@ final class BookingSummaryViewModel: ObservableObject {
         self.hasSubmittedReview = false
         self.privateNote = nil
         self.reschedule = nil
+        self.bookingIDLabel = BookingShortID.label(bookingId)
         self.loadState = .idle
         self.api = api
         self.responder = RescheduleResponder(bookingId: bookingId, api: api)
@@ -161,6 +174,7 @@ final class BookingSummaryViewModel: ObservableObject {
         self.hasSubmittedReview = hasSubmittedReview
         self.privateNote = privateNote
         self.reschedule = nil
+        self.bookingIDLabel = "ID: #A1B2C3D4"
         self.currentStartTime = nil
         self.loadState = loadState
         self.api = .shared

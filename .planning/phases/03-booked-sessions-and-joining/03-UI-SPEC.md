@@ -249,10 +249,12 @@ Post-cancel confirmation (toast), chosen from the **server's** `refund_amount` (
 | greater than 0 | any | `Booking cancelled. {amount} will be refunded to your card.` |
 | 0 | A | `Booking cancelled.` |
 | 0 | B | `Booking cancelled. The {amount} hold on your card is being released.` |
-| 0 | C | `Booking cancelled. Your {amount} refund is being processed.` |
+| 0 | C | `Booking cancelled. Any refund due will follow our cancellation policy.` |
 | 0 | D | `Booking cancelled. No refund applies because the session was within 24 hours.` |
 | 0 | E | `Booking cancelled. You weren't charged.` |
 | 0 | F | `Booking cancelled.` |
+
+Row C at 0 names no amount and no timing (WR-02, plan 03-17): the confirmed case comes from the phone's clock while the server decides the 24-hour edge with its own, and a refund being retried and the idempotent already-cancelled 200 also return 0. An amount is named only when the server's refund_amount is above 0.
 
 Expert cancel (EXP-11, D-07). The expert detail has `session.consultationFee` (major units, currency; the client-facing price), `authorizationExpiresAt` and no payment status. A free booking has `consultationFee.amount == 0`.
 

@@ -4,7 +4,8 @@
 //
 //  BOOK-08 (D-06): the post-cancel toast follows the server's refund_amount and
 //  the case the client confirmed under. A server 0 is never worded "no refund"
-//  except for a charge cancelled inside 24 hours.
+//  except for a charge cancelled inside 24 hours. A server 0 under a refundable
+//  charge reads the neutral policy line and never names an amount (WR-02).
 //
 
 import Foundation
@@ -43,11 +44,29 @@ struct CancelToastMessageTests {
         )
     }
 
-    @Test("a zero refund on a refundable charge says the refund is being processed, not that none applies")
+    @Test("a zero refund on a refundable charge reads the neutral policy line, with no amount and no timing")
     func zeroChargedRefundable() {
         let message = text(0, .chargedRefundable(amount: "CA$45.00"))
-        #expect(message == "Booking cancelled. Your CA$45.00 refund is being processed.")
+        #expect(message == "Booking cancelled. Any refund due will follow our cancellation policy.")
+        #expect(!message.contains("CA$"))
+        #expect(!message.contains("processed"))
         #expect(!message.contains("No refund"))
+        // BOOK-08: no refund timing is promised.
+        #expect(message.rangeOfCharacter(from: .decimalDigits) == nil)
+        for word in ["within", "days", "business"] {
+            #expect(!message.contains(word))
+        }
+    }
+
+    @Test("at zero, no case names a refund amount")
+    func zeroNeverNamesARefundAmount() {
+        let all: [CancelRefundPreview.Case] = [
+            .free, .liveHold(amount: "CA$45.00"), .chargedRefundable(amount: "CA$45.00"),
+            .chargedNotRefundable(zero: "CA$0.00"), .notChargedYet, .amountUnknown,
+        ]
+        for confirmedCase in all {
+            #expect(!text(0, confirmedCase).contains("will be refunded"))
+        }
     }
 
     @Test("only a charge inside 24 hours reads as no refund applies")

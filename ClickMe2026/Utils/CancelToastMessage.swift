@@ -16,6 +16,13 @@ import Foundation
 /// charge, and while a failed void or refund is being retried, so a 0 is never
 /// worded "no refund" except for the case the client confirmed under as
 /// charged inside 24 hours (`.chargedNotRefundable`).
+///
+/// Under `.chargedRefundable` a server 0 is worded neutrally, with no amount
+/// and no timing. The case was chosen with the phone's clock, while the server
+/// applies its strict more-than-24-hours rule with its own clock. A refund
+/// being retried and the idempotent already-cancelled 200 also return 0, and
+/// the response cannot tell these apart. An amount is named only when the
+/// server's amount is above 0 (WR-02).
 nonisolated enum CancelToastMessage {
 
     /// - Parameters:
@@ -41,8 +48,8 @@ nonisolated enum CancelToastMessage {
             return base
         case .liveHold(let amount):
             return "\(base) The \(amount) hold on your card is being released."
-        case .chargedRefundable(let amount):
-            return "\(base) Your \(amount) refund is being processed."
+        case .chargedRefundable:
+            return "\(base) Any refund due will follow our cancellation policy."
         case .chargedNotRefundable:
             return "\(base) No refund applies because the session was within 24 hours."
         case .notChargedYet:

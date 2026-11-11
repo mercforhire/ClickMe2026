@@ -198,7 +198,7 @@ struct ClientCancellationViewModelTests {
         #expect(confirmed.count == 1)
     }
 
-    @Test("a zero refund after confirming under a refundable charge says the refund is being processed")
+    @Test("a zero refund after confirming under a refundable charge (phone clock behind the server's 24-hour edge) shows the neutral policy line")
     func zeroRefundUsesConfirmedCase() async {
         let clock = TestClock(Self.base)
         let toasts = ToastCenter(displayDuration: .seconds(60))
@@ -210,7 +210,26 @@ struct ClientCancellationViewModelTests {
 
         await viewModel.confirmCancellation { _, _ in }
 
-        #expect(toasts.current?.message == "Booking cancelled. Your CA$45.00 refund is being processed.")
+        #expect(toasts.current?.message == "Booking cancelled. Any refund due will follow our cancellation policy.")
+    }
+
+    @Test("the idempotent already-cancelled 200 shows the neutral policy line and confirms once")
+    func alreadyCancelledShowsNeutralLine() async {
+        let clock = TestClock(Self.base)
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let viewModel = await makeLoadedViewModel(
+            detail: capturedDetail(secondsAhead: 3 * 24 * 3600),
+            clock: clock,
+            cancelBody: Data(#"{"status":"success","message":"Booking is already cancelled.","data":{"refund_amount":0,"currency":"CAD"}}"#.utf8),
+            toasts: toasts
+        )
+        let confirmed = ConfirmCounter()
+
+        await viewModel.confirmCancellation { _, _ in confirmed.count += 1 }
+
+        #expect(toasts.current?.message == "Booking cancelled. Any refund due will follow our cancellation policy.")
+        #expect(viewModel.cancelError == nil)
+        #expect(confirmed.count == 1)
     }
 
     @Test("a 409 shows the error, posts no toast and does not confirm")

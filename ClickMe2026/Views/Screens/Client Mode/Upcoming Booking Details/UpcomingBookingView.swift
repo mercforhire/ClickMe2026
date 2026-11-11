@@ -208,10 +208,19 @@ struct UpcomingBookingView: View {
                     )
                 }
 
-                UpcomingBookingSecondaryActions(
-                    onReschedule: onReschedule,
-                    onCancel: onCancel
-                )
+                // Cancel hides once the server would refuse it (D-13), so this
+                // ticks once a minute like the Join card.
+                TimelineView(.periodic(from: .now, by: 60)) { context in
+                    UpcomingBookingSecondaryActions(
+                        showsCancel: UpcomingActionPolicy.canShowCancel(
+                            status: viewModel.bookingStatus,
+                            end: viewModel.endTime,
+                            now: context.date
+                        ),
+                        onReschedule: onReschedule,
+                        onCancel: onCancel
+                    )
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 14)

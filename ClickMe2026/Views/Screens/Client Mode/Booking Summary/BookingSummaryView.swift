@@ -19,13 +19,19 @@ struct BookingSummaryView: View {
     /// `expert.id`) — callers typically no-op in that case.
     var onBookAgain: (BookAgainSeed?) -> Void
     var onMessageExpert: () -> Void
-    var onLeaveReview: () -> Void
+    /// Override for Leave a Review. `nil` means the screen pushes
+    /// `HomeRoute.writeReview` on the tab's path, and hides the button in a
+    /// shell that does not host the client flows. My Bookings passes its own.
+    var onLeaveReview: (() -> Void)?
     /// Fires when the user taps the My Note card. The parent
     /// NavigationStack owns the private-note route (`.privateNote` /
     /// `.privateNoteUpcoming` on `MyBookingsView`), so this is a
     /// simple hand-off — no seed needed since the caller already has
     /// the booking in scope.
     var onOpenPrivateNote: () -> Void
+
+    @Environment(\.homeNavigationPath) private var homeNavigationPath
+    @Environment(\.hostsClientBookingFlows) private var hostsClientBookingFlows
 
     @State private var showAcceptRescheduleConfirmation: Bool = false
     @State private var showDeclineReschedulePrompt: Bool = false
@@ -39,7 +45,7 @@ struct BookingSummaryView: View {
         bookingId: UUID,
         onBookAgain: @escaping (BookAgainSeed?) -> Void = { _ in },
         onMessageExpert: @escaping () -> Void = {},
-        onLeaveReview: @escaping () -> Void = {},
+        onLeaveReview: (() -> Void)? = nil,
         onOpenPrivateNote: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: BookingSummaryViewModel(bookingId: bookingId))
@@ -54,7 +60,7 @@ struct BookingSummaryView: View {
         viewModel: BookingSummaryViewModel,
         onBookAgain: @escaping (BookAgainSeed?) -> Void = { _ in },
         onMessageExpert: @escaping () -> Void = {},
-        onLeaveReview: @escaping () -> Void = {},
+        onLeaveReview: (() -> Void)? = nil,
         onOpenPrivateNote: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -191,7 +197,7 @@ struct BookingSummaryView: View {
                 )
                 .padding(.top, 16)
 
-                if viewModel.showsLeaveReview {
+                if viewModel.showsLeaveReview && (onLeaveReview != nil || hostsClientBookingFlows) {
                     leaveReviewButton
                 }
             }
@@ -289,11 +295,21 @@ struct BookingSummaryView: View {
         .buttonStyle(.plain)
     }
 
-    /// CTA surfaced when the user hasn't left a review yet. Delegates to the
-    /// caller via `onLeaveReview` so the parent NavigationStack can push the
+    /// Runs the caller's `onLeaveReview`, or pushes `HomeRoute.writeReview` on
+    /// the tab's path. Does nothing without a booking id (the preview seed).
+    private func leaveReviewTapped() {
+        if let onLeaveReview {
+            onLeaveReview()
+        } else if let bookingId = viewModel.bookingId {
+            homeNavigationPath?.push(HomeRoute.writeReview(bookingId: bookingId, expertName: viewModel.expertName))
+        }
+    }
+
+    /// CTA surfaced when the user hasn't left a review yet. Delegates to
+    /// `leaveReviewTapped()` so the parent NavigationStack pushes the
     /// existing `WriteReviewView` flow.
     private var leaveReviewButton: some View {
-        Button(action: onLeaveReview) {
+        Button(action: leaveReviewTapped) {
             HStack(spacing: 8) {
                 Image(systemName: "star")
                     .font(.subheadline.weight(.semibold))

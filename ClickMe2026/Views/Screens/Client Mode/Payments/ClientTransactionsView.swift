@@ -68,9 +68,10 @@ struct ClientTransactionsView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 ForEach(Array(viewModel.items.enumerated()), id: \.element.id) { index, item in
-                    NavigationLink {
-                        UpcomingBookingView(bookingId: item.bookingId)
-                    } label: {
+                    // A value link, not a view destination: the details screen then
+                    // sits on the Profile tab's path, so its Cancel and Reschedule
+                    // push and pop there.
+                    NavigationLink(value: HomeRoute.upcomingBooking(bookingId: item.bookingId)) {
                         ClientTransactionRow(item: item)
                             .contentShape(Rectangle())
                     }

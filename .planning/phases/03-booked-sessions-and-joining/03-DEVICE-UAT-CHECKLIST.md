@@ -84,6 +84,7 @@ Steps and expected (compare each confirm-step line and each toast with the refun
 7. A failed cancel shows "Couldn't cancel booking" with the server's message and "Review Cancellation"; the confirm step stays.
 8. Cross the 24 h line with two bookings and compare toast and refund (VALIDATION manual item).
 9. The toast survives the pop to My Bookings and sits above the tab bar.
+10. **WR-02 (03-17):** if a cancel the confirm step showed as refundable ('Refund: {amount}, cancelled more than 24 hours before the start') ends with the toast 'Booking cancelled. Any refund due will follow our cancellation policy.', the server returned refund_amount 0: the phone clock was behind the server's at the 24 h line, a refund is being retried, or the booking was already cancelled. That toast is expected for those cases and names no amount. Record which case it was and compare with the Payments list. The edge is proven by unit tests (`CancelToastMessageTests`, `ClientCancellationViewModelTests`). Do not change the phone clock to force it, because on a real captured booking that forfeits the refund.
 
 Result:
 

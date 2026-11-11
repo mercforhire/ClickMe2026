@@ -9,7 +9,7 @@ findings:
     title: "After a successful accept, a failed refetch leaves the Accept/Decline card on screen"
   - id: WR-02
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Post-cancel toast can promise a refund the server did not issue"
   - id: WR-03
     severity: warning
@@ -51,7 +51,7 @@ findings:
     severity: info
     disposition: open
     title: "`startCall()` returns silently when join inputs are missing"
-open: 11
+open: 10
 total: 12
 recorded: 2026-11-11T06:18:15.400Z
 ---
@@ -61,7 +61,7 @@ recorded: 2026-11-11T06:18:15.400Z
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
 | WR-01 | warning | fixed | 03-16 (gap G-03-3-WR01) |
-| WR-02 | warning | open | - |
+| WR-02 | warning | fixed | 03-17 (gap G-03-3-WR02) |
 | WR-03 | warning | open | - |
 | WR-04 | warning | open | - |
 | WR-05 | warning | open | - |

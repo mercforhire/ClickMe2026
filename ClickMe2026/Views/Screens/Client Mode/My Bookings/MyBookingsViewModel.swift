@@ -80,6 +80,16 @@ final class MyBookingsViewModel: ObservableObject {
         return vm
     }
 
+    // MARK: - Empty states
+
+    /// Whether the Past tab shows its empty state (UI-SPEC EM1, BOOK-11): the
+    /// load succeeded, the Past tab is selected and there are no past
+    /// bookings. Never while loading, before the first load or after a failed
+    /// load, because an unknown list is not an empty one.
+    var showsPastEmptyState: Bool {
+        state == .loaded && selectedTab == 1 && pastBookings.isEmpty
+    }
+
     // MARK: - Load
 
     /// Fetches page 1 of the bookings list. On re-appearance (already

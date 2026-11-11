@@ -137,13 +137,14 @@ struct MyBookingsView: View {
                         expertImageURL: seed.expertImageURL
                     )
                 case let .cancelBooking(booking):
-                    // On confirm — or "keep booking" — pop back to the
-                    // My Bookings root. The list refreshes automatically
-                    // on next appear, revealing the newly-cancelled
-                    // booking under the past tab.
+                    // "Keep Booking" pops exactly one level, back to
+                    // Upcoming details (BOOK-12, UI-SPEC N1). Only a
+                    // confirmed cancel returns to the My Bookings root,
+                    // where the list refreshes on next appear and shows the
+                    // newly-cancelled booking under the past tab.
                     ClientCancellationView(
                         bookingId: booking.id,
-                        onKeepBooking: { popToRoot() },
+                        onKeepBooking: { pop() },
                         onConfirmCancellation: { _, _ in popToRoot() }
                     )
                 case let .rescheduleBooking(booking):
@@ -299,6 +300,8 @@ struct MyBookingsView: View {
                 glowPulse: viewModel.glowPulse,
                 onExploreExperts: onExploreExperts
             )
+        } else if viewModel.showsPastEmptyState {
+            PastEmptyState(glowPulse: viewModel.glowPulse)
         } else {
             ScrollView(showsIndicators: false) {
                 if viewModel.selectedTab == 0 {
@@ -433,6 +436,13 @@ struct MyBookingsView: View {
 #Preview("Past") {
     NavigationStack {
         MyBookingsView(viewModel: .previewSeed(selectedTab: 1))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Past Empty") {
+    NavigationStack {
+        MyBookingsView(viewModel: .previewSeed(selectedTab: 1, pastBookings: []))
     }
     .preferredColorScheme(.dark)
 }

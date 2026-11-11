@@ -44,6 +44,10 @@ BOOK-06 (critical) is planned first. Phase 2's UAT is paused (`02-UAT.md`, statu
 ### After a client reschedule request (BOOK-16)
 - **D-11:** After the client sends a reschedule request, the app **pops exactly one level, back to wherever Reschedule was tapped** (Upcoming Booking details or the My Bookings card), and shows a **"Reschedule request sent" toast** (Android parity). The status there now reads Pending reschedule (BOOK-09).
 
+### Added during plan-phase (user decisions 2026-11-10)
+- **D-13:** Client **Cancel is shown only for `confirmed`, `pending_approval` and `pending_reschedule` bookings, and only while `end > now`** (BOOK-13). This matches the server's cancel guard, so an in-progress or terminal booking never shows a Cancel that returns 409. It supersedes the UI-SPEC's end-time-only rule. Put the rule behind one pure function.
+- **D-14:** A booking whose `payment_status` is `payment_action_required` (card authentication pending, never charged) uses the **"not charged yet" refund copy**: no refund line (BOOK-08). This applies to the client cancel preview and, by the same rule, the expert cancel refund line (EXP-11).
+
 ### Todos
 - **D-12:** No pending todos are folded into this phase (all three matched on keywords only).
 

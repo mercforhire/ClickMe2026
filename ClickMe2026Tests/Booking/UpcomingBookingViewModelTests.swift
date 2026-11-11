@@ -122,6 +122,82 @@ struct UpcomingBookingViewModelTests {
         #expect(vm.statusPill == BookingStatusPill(text: "Confirmed", tone: .accent))
     }
 
+    // MARK: Join window (CALL-03)
+
+    /// A fixed clock, so no row depends on when the suite runs.
+    private let now = Date(timeIntervalSince1970: 4_070_000_000)
+
+    private func loadedModel(
+        status: String = "confirmed",
+        start: Date,
+        end: Date,
+        canJoin: String = "null"
+    ) async -> UpcomingBookingViewModel {
+        let body = Fixtures.detailJSON(status: status, start: start, end: end, canJoin: canJoin)
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: detailAPI(body: body))
+        await vm.load()
+        return vm
+    }
+
+    @Test("the join window decodes the expert id, the end time and can_join")
+    func joinInputsAreDecoded() async {
+        let end = now.addingTimeInterval(5400)
+        let vm = await loadedModel(start: now.addingTimeInterval(1800), end: end, canJoin: "true")
+        #expect(vm.expertId == UUID(uuidString: Fixtures.expertId))
+        #expect(vm.endTime != nil)
+        #expect(vm.canJoin == true)
+    }
+
+    @Test("a confirmed booking starting in 30 minutes is joinable")
+    func confirmedInsideWindow() async {
+        let vm = await loadedModel(start: now.addingTimeInterval(1800), end: now.addingTimeInterval(5400))
+        #expect(vm.joinWindowOpen(at: now))
+    }
+
+    @Test("a confirmed booking starting in 2 hours is not joinable yet")
+    func confirmedBeforeWindow() async {
+        let vm = await loadedModel(start: now.addingTimeInterval(7200), end: now.addingTimeInterval(10_800))
+        #expect(!vm.joinWindowOpen(at: now))
+    }
+
+    @Test("a pending_reschedule booking inside the window shows Join but not enabled")
+    func pendingRescheduleIsDisabled() async {
+        let vm = await loadedModel(
+            status: "pending_reschedule",
+            start: now.addingTimeInterval(1800),
+            end: now.addingTimeInterval(5400)
+        )
+        #expect(vm.showsJoinCard)
+        #expect(!vm.joinWindowOpen(at: now))
+    }
+
+    @Test("a completed booking past the first-join edge rejoins only when the server says can_join")
+    func completedReconnectTier() async {
+        let start = now.addingTimeInterval(-7200)
+        let end = now.addingTimeInterval(-1800)
+        let allowed = await loadedModel(status: "completed", start: start, end: end, canJoin: "true")
+        #expect(allowed.joinWindowOpen(at: now))
+        let unknown = await loadedModel(status: "completed", start: start, end: end, canJoin: "null")
+        #expect(!unknown.joinWindowOpen(at: now))
+    }
+
+    @Test("a pending_approval booking shows the waiting banner, not the Join card")
+    func pendingApprovalHidesJoinCard() async {
+        let vm = await loadedModel(
+            status: "pending_approval",
+            start: now.addingTimeInterval(1800),
+            end: now.addingTimeInterval(5400)
+        )
+        #expect(!vm.showsJoinCard)
+        #expect(!vm.joinWindowOpen(at: now))
+    }
+
+    @Test("before a detail has loaded the window is closed")
+    func joinClosedBeforeLoad() {
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: detailAPI(body: Fixtures.detailJSON()))
+        #expect(!vm.joinWindowOpen(at: now))
+    }
+
     // MARK: Accept in place
 
     @Test("accept sends one POST, then the screen shows the confirmed booking without leaving .loaded")

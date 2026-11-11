@@ -46,8 +46,16 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// End of the Stripe authorization window. Only decides whether accepting a
     /// proposal needs the payment-conversion disclosure.
     @Published var authorizationExpiresAt: Date?
-    /// The booking's current start, the FROM side of the response card.
+    /// The booking's current start, the FROM side of the response card and the
+    /// join window's opening edge.
     @Published var startTime: Date?
+    /// The booking's scheduled end. Feeds the join window and the Cancel rule.
+    @Published var endTime: Date?
+    /// The expert's profile id, the peer of the call.
+    @Published var expertId: UUID?
+    /// The server's `can_join` for this booking. Only the reconnect tier of the
+    /// join window reads it.
+    @Published var canJoin: Bool?
 
     // MARK: Reschedule response
 
@@ -98,6 +106,9 @@ final class UpcomingBookingViewModel: ObservableObject {
         self.reschedule = nil
         self.authorizationExpiresAt = nil
         self.startTime = nil
+        self.endTime = nil
+        self.expertId = nil
+        self.canJoin = nil
         self.state = .idle
         self.api = api
         self.responder = RescheduleResponder(bookingId: bookingId, api: api)
@@ -133,7 +144,10 @@ final class UpcomingBookingViewModel: ObservableObject {
         bookingStatus: BookingStatus = .confirmed,
         reschedule: RescheduleProposal? = nil,
         authorizationExpiresAt: Date? = nil,
-        startTime: Date? = nil
+        startTime: Date? = Date().addingTimeInterval(3600),
+        endTime: Date? = nil,
+        expertId: UUID? = UUID(),
+        canJoin: Bool? = nil
     ) -> UpcomingBookingViewModel {
         let vm = UpcomingBookingViewModel(bookingId: bookingId)
         vm.bookingIDLabel = bookingIDLabel
@@ -154,6 +168,9 @@ final class UpcomingBookingViewModel: ObservableObject {
         vm.reschedule = reschedule
         vm.authorizationExpiresAt = authorizationExpiresAt
         vm.startTime = startTime
+        vm.endTime = endTime ?? startTime?.addingTimeInterval(3600)
+        vm.expertId = expertId
+        vm.canJoin = canJoin
         vm.state = .loaded
         return vm
     }
@@ -169,6 +186,46 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// and the next refetch it keeps its previous value (D-03).
     var statusPill: BookingStatusPill {
         BookingStatusPill.make(status: bookingStatus, rawStatus: statusRaw)
+    }
+
+    // MARK: Join
+
+    /// Whether the details screen renders the Join card at all. Every status
+    /// but `pending_approval` does; `joinWindowOpen(at:)` decides whether the
+    /// button is enabled (Phase 2 D-07, 02-14).
+    var showsJoinCard: Bool {
+        JoinWindow.showsJoinButton(status: bookingStatus)
+    }
+
+    /// True when JOIN CALL and Open in {provider} are enabled at `now`. A display
+    /// gate only: the server keeps the final say on `POST /bookings/:id/join`.
+    func joinWindowOpen(at now: Date) -> Bool {
+        guard let startTime, let endTime else { return false }
+        return JoinWindow.isOpen(
+            status: bookingStatus,
+            start: startTime,
+            end: endTime,
+            now: now,
+            serverCanJoin: canJoin
+        )
+    }
+
+    /// Starts the call for this booking through `CallCenter`, the one path that
+    /// reports `POST /join` and `/end`, whichever screen opened the details
+    /// (CALL-03). Also the path a Skype/Zoom booking takes (D-10, CALL-08).
+    func startCall() {
+        guard let expertId, let startTime, let endTime else { return }
+        CallCenter.shared.startCall(
+            bookingId: bookingId,
+            peerId: expertId,
+            peerName: expertName,
+            peerImageURL: expertImageURL,
+            topic: topic,
+            scheduledStart: startTime,
+            scheduledEnd: endTime,
+            meetingType: meetingType,
+            isRejoin: bookingStatus == .completed
+        )
     }
 
     /// The proposal to answer, only while the booking is `pending_reschedule`.
@@ -273,6 +330,9 @@ final class UpcomingBookingViewModel: ObservableObject {
         reschedule = data.reschedule
         authorizationExpiresAt = data.authorizationExpiresAt
         startTime = data.startTime
+        endTime = data.endTime
+        expertId = data.expert.id
+        canJoin = data.canJoin
     }
 
     // MARK: - Formatting helpers

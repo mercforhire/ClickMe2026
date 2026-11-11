@@ -13,8 +13,13 @@ import SwiftUI
 struct UpcomingBookingView: View {
 
     @StateObject private var viewModel: UpcomingBookingViewModel
+    @ObservedObject private var callCenter = CallCenter.shared
 
-    var onJoinCall: () -> Void
+    /// Override for the JOIN CALL / Open in {provider} action. `nil` (the
+    /// default for every caller) means the screen starts the call itself through
+    /// `CallCenter.startCall`, so the button works however the screen was opened
+    /// (My Bookings, a push tap, a chat row, Explore, Payments) with no caller wiring.
+    var onJoinCall: (() -> Void)?
     var onReschedule: () -> Void
     var onCancel: () -> Void
     var onCopyLink: () -> Void
@@ -28,7 +33,7 @@ struct UpcomingBookingView: View {
     /// Runtime init — hydrates from `GET /client/bookings/:id` on appear.
     init(
         bookingId: UUID,
-        onJoinCall: @escaping () -> Void = {},
+        onJoinCall: (() -> Void)? = nil,
         onReschedule: @escaping () -> Void = {},
         onCancel: @escaping () -> Void = {},
         onCopyLink: @escaping () -> Void = {}
@@ -43,7 +48,7 @@ struct UpcomingBookingView: View {
     /// Preview / test seam — inject a pre-configured view model.
     init(
         viewModel: UpcomingBookingViewModel,
-        onJoinCall: @escaping () -> Void = {},
+        onJoinCall: (() -> Void)? = nil,
         onReschedule: @escaping () -> Void = {},
         onCancel: @escaping () -> Void = {},
         onCopyLink: @escaping () -> Void = {}
@@ -105,6 +110,25 @@ struct UpcomingBookingView: View {
         } message: { message in
             Text(message)
         }
+        // The call surface is hosted by the shell; this screen only surfaces a
+        // join failure from CallCenter's shared `joinError` (the My Bookings
+        // root may present it too).
+        .alert(
+            "Couldn't join call",
+            isPresented: Binding(
+                get: { callCenter.joinError != nil },
+                set: { if !$0 { callCenter.joinError = nil } }
+            ),
+            presenting: callCenter.joinError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+        .micPermissionDeniedAlert(isPresented: Binding(
+            get: { callCenter.micPermissionDenied },
+            set: { if !$0 { callCenter.micPermissionDenied = false } }
+        ))
     }
 
     // MARK: Content router
@@ -162,15 +186,20 @@ struct UpcomingBookingView: View {
                     pill
                 }
 
-                if viewModel.isPendingExpertApproval {
-                    pendingApprovalBanner
+                if viewModel.showsJoinCard {
+                    // Ticks once a minute so the button enables as the start
+                    // time crosses the window edge, with no pull-to-refresh.
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        UpcomingBookingJoinCard(
+                            meetingType: viewModel.meetingType,
+                            joinLink: viewModel.joinLink,
+                            isJoinEnabled: viewModel.joinWindowOpen(at: context.date),
+                            onJoinCall: onJoinCall ?? { viewModel.startCall() },
+                            onCopyLink: onCopyLink
+                        )
+                    }
                 } else {
-                    UpcomingBookingJoinCard(
-                        meetingType: viewModel.meetingType,
-                        joinLink: viewModel.joinLink,
-                        onJoinCall: onJoinCall,
-                        onCopyLink: onCopyLink
-                    )
+                    pendingApprovalBanner
                 }
 
                 if !viewModel.preparationNote.isEmpty {

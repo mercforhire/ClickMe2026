@@ -20,6 +20,9 @@ import UIKit
 struct UpcomingBookingJoinCard: View {
     let meetingType: MeetingType
     let joinLink: String
+    /// True while the shared join window is open (`JoinWindow.isOpen`). When
+    /// false the Join button stays visible but dimmed and disabled.
+    let isJoinEnabled: Bool
     let onJoinCall: () -> Void
     let onCopyLink: () -> Void
 
@@ -54,11 +57,18 @@ struct UpcomingBookingJoinCard: View {
             .frame(height: 52)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(UpcomingBookingBrand.brandGreen)
-                    .shadow(color: UpcomingBookingBrand.brandGreen.opacity(0.45), radius: 14, x: 0, y: 4)
+                    .fill(UpcomingBookingBrand.brandGreen.opacity(isJoinEnabled ? 1.0 : 0.55))
+                    .shadow(
+                        color: UpcomingBookingBrand.brandGreen.opacity(isJoinEnabled ? 0.45 : 0),
+                        radius: 14, x: 0, y: 4
+                    )
             )
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(!isJoinEnabled)
+        // Same disabled-state wording as the My Bookings card and Android's
+        // shared Join button (`explore_join_call_state`).
+        .accessibilityHint(isJoinEnabled ? "" : "Available closer to the session start")
     }
 
     // MARK: Skype/Zoom variant

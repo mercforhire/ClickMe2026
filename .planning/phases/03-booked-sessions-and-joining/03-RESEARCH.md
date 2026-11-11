@@ -59,7 +59,7 @@ Follow the inventory fix (`.planning/IOS-BUG-INVENTORY.md`) and Android's choice
 - Reviewed todos, not folded: `2026-11-08-check-the-android-push-prompt-after-a-reinstall.md` (Android push), `2026-11-08-show-the-suspension-message-on-a-cold-launch.md` (auth, Phase 5), `2026-11-09-handle-paymentsheet-card-removal-on-the-backend.md` (payments backend, Phase 4).
 
 ### Approved UI contract (03-UI-SPEC.md, status approved 2026-11-10) — binding on copy, layout and the dismissed limitations
-- Copy strings in its Copywriting Contract are exact. K1 (declined shows the `Cancelled` badge), U2 (refund preview uses the list price, not the amount paid) and U3 (expert cannot tell charged from never-charged) are **dismissed by the user**: do not change the badge, do not add `amount_paid_minor_units` or `payment_status` to any API. K2 (no overtime banner on the Skype layout) is **unresolved**, revisit only if the user asks.
+- Copy strings in its Copywriting Contract are exact. K1 (declined shows the `Cancelled` badge), U2 (refund preview uses the list price, not the amount paid) and U3 (expert cannot tell charged from never-charged) are **dismissed by the user**: do not change the badge, do not add `amount_paid_minor_units` or `payment_status` to any API. K2 (no overtime banner on the Skype layout) was **unresolved** at research time; **resolved 2026-11-10 by CONTEXT D-15**: the end + 55 notice also shows on the Skype/Zoom layout (plan 03-03 Task 3).
 - The shipped `Cancel` / `Reschedule` labels on `UpcomingBookingSecondaryActions` are kept; no new color or `Brand` token; no new package; per-screen brand enums are not added, renamed or merged.
 </user_constraints>
 
@@ -398,24 +398,32 @@ Android client Booking Summary: `BookingSummaryDetails.bookingId` already exists
 | A6 | Android Gradle can run unit tests with local JDK 18 / SDK | Android | BOOK-20 Android verification falls back to review-only |
 | A7 | BACK-19 behaves in production as the code does (expert cancel always full refund/release) | Backend facts, EXP-11 | EXP-11 copy would be wrong on both platforms |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+Every item below is closed. Each carries the decision or plan that settled it.
 
 1. **Cancel/Reschedule on bookings the server will reject (user decision needed)**
    - Known: server accepts client cancel only for `confirmed`, `pending_approval`, `pending_reschedule`; Upcoming details is reachable for any booking via the Payments list (`ClientTransactionsView` link) and shows Cancel/Reschedule regardless of status. UI-SPEC: "Cancel is not hidden for any other reason in this phase."
    - Unclear: whether to also hide Cancel for `in_progress`/`completed`/terminal statuses.
    - Recommendation: implement the contract literally (`end < now`), via a pure `canShowCancel`, and ask the user whether to add the status condition (one-line change, matches the server). The planner should not decide this silently.
+   - **Resolved:** user decision CONTEXT D-13 (2026-11-10): Cancel shows only for `confirmed`, `pending_approval` and `pending_reschedule` and only while `end > now`, behind one pure function (`UpcomingActionPolicy.canShowCancel`), superseding the UI-SPEC's end-time-only rule. Implemented by plan 03-09 Task 3.
 
 2. **Scope of push-opened actions (Pitfall 2)**
    - Known: Phase 2 deferred Join/Cancel/Reschedule/Leave Review on push-opened screens to Phase 3; CONTEXT names only `onJoinCall` wiring.
    - Recommendation: include Join, Cancel, Reschedule (Upcoming) and Leave Review (Summary) on the `HomeRoute` path in this phase (new `HomeRoute` cases, small); leave Book Again/Message/Private Note unless trivial.
+   - **Resolved:** adopted as recommended. Join on push-opened Upcoming details is plan 03-09 (the screen starts the call itself); Cancel, Reschedule, Keep Booking and Leave a Review on push-, chat- and Payments-opened screens are plan 03-12 (new `HomeRoute` cases). Book Again, Message and Private Note stay out of scope (outside the 17 requirements).
 
 3. **SCA-pending charge edge (Pitfall 4)** — decode `payment_action_required` and treat as case E? Recommendation: yes, one extra field and one test.
+   - **Resolved:** user decision CONTEXT D-14 (added and amended 2026-11-10): the signal is the derived boolean `payment_action_required` plus `payment_status == "none"`; it applies to the client preview (plan 03-02, case E) and the expert cancel line (plan 03-08), and the expert side fails closed when the key is absent. The backend half is plan 03-05 (additive key on the expert details, deploy checkpoint).
 
 4. **Cancel comment visibility to the expert (Pitfall 5)** — keep the label as is (UI-SPEC copy locked) or add a hint? Recommendation: leave copy, log it in the Phase 3 UAT notes for the user.
+   - **Resolved:** logged, no change. The UI-SPEC copy is locked, so the field label is unchanged; plan 03-10 records the visibility note (assumptions, threat T-03-19) and plan 03-12 puts it in the Phase 3 device UAT notes for the user to judge.
 
 5. **First-tap vs second-tap at the 24 h line (UI-SPEC section 5)** is already decided (second tap). No question; the helper must expose both the displayed case and the recomputed case so the view can compare them.
+   - **Resolved:** decided by UI-SPEC section 5 and CONTEXT D-06 (recompute at confirm). Plan 03-02 Task 2 recomputes at the tap, blocks a changed case once with the "Preview changed at confirm" text, and submits on the second tap. (BACK-19's production smoke, a separate open risk, is not a research question: it is still pending in production, the EXP-11 copy is verified in code only, and plans 03-08 and 03-12 carry it as an assumption and a UAT note.)
 
 6. **Skype double-tap UX** — D-10 routes Open Meeting through `startCall`, which opens the Skype screen where the user taps "Open in {provider}" again. This is the locked decision; record in UAT so the user can judge it on device.
+   - **Resolved:** locked by CONTEXT D-10, no change. Plan 03-09 records the two-tap flow in its assumptions and plan 03-12 lists it in the device UAT notes.
 
 ## Environment Availability
 

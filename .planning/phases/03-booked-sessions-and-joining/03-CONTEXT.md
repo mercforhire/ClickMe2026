@@ -46,7 +46,8 @@ BOOK-06 (critical) is planned first. Phase 2's UAT is paused (`02-UAT.md`, statu
 
 ### Added during plan-phase (user decisions 2026-11-10)
 - **D-13:** Client **Cancel is shown only for `confirmed`, `pending_approval` and `pending_reschedule` bookings, and only while `end > now`** (BOOK-13). This matches the server's cancel guard, so an in-progress or terminal booking never shows a Cancel that returns 409. It supersedes the UI-SPEC's end-time-only rule. Put the rule behind one pure function.
-- **D-14:** A booking whose `payment_status` is `payment_action_required` (card authentication pending, never charged) uses the **"not charged yet" refund copy**: no refund line (BOOK-08). This applies to the client cancel preview and, by the same rule, the expert cancel refund line (EXP-11).
+- **D-14:** A booking the card was never charged for uses the **"not charged yet" refund copy**: no refund line (BOOK-08). The signal is the backend's derived boolean `payment_action_required` (from `paymentActionFields` in `src/utils/scaRecovery.js`; card authentication pending), plus `payment_status == "none"`. This applies to the client cancel preview and, by the same rule, the expert cancel refund line (EXP-11). **Fail closed on the expert side:** if the expert details payload does not carry `payment_action_required` (backend not yet deployed), the expert sheet makes no client-refund claim at all rather than falling back to the D-07 full-refund line.
+- **D-15:** The **end + 55 "This call will end in 5 minutes" notice also shows on the Skype/Zoom session layout** (resolves UI-SPEC K2; restates Phase 2 D-08, which applies the notice to both in-app voice and Skype/Zoom). Skype/Zoom sessions still end at end + 60.
 
 ### Todos
 - **D-12:** No pending todos are folded into this phase (all three matched on keywords only).

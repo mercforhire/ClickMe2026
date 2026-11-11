@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-10-PLAN.md
-last_updated: "2026-11-11T05:38:52.146Z"
+stopped_at: Completed 03-11-PLAN.md
+last_updated: "2026-11-11T05:46:12.174Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: a49b1fe282650d5fe6913898be0fe3f1eaa087e4
+state_head: f59c3ba57b3e4e076ce463ce475de7f454994e8b
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 54
+  completed_plans: 55
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 14 of 15
+Plan: 15 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -110,6 +110,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P07 | 7 min | 2 tasks | 8 files |
 | Phase 03 P09 | 25min | 3 tasks | 9 files |
 | Phase 03 P10 | 7 min | 2 tasks | 9 files |
+| Phase 03 P11 | 15 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -227,6 +228,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-09: Upcoming details onJoinCall is an optional override (nil starts the call through CallCenter.startCall); Skype/Zoom Open in {provider} uses the same call path and never opens the URL; Cancel shows only for confirmed, pending_approval, pending_reschedule while end > now (UpcomingActionPolicy, D-13)
 - [Phase 03]: 03-10: post-cancel toast is worded from the server refund_amount plus the confirmed case; a bare 0 is never 'no refund' except charged inside 24 hours
 - [Phase 03]: 03-10: cancel comment sent as 'label: comment', comment capped 450 and reason 500 UTF-16 units on character boundaries
+- [Phase 03]: 03-11: RescheduleViewModel takes an injected ToastCenter and posts 'Reschedule request sent' on both success paths before onSuccess; Keep Booking and the reschedule return pop one level, only a confirmed cancel pops to the My Bookings root; showsPastEmptyState needs state .loaded, so a failed load never reads as no past bookings
 
 ### Pending Todos
 
@@ -247,6 +249,8 @@ Android follow-ups from Phase 3 (logged, not built):
 - Expert cancel line could apply the same D-14/D-16 rule: client-money line only where payment_action_required and payment_not_charged both read false (03-05; keys are live at backend 65bb2ed). iOS wording shipped in 03-08: "The client will get a full refund of {amount}" (plus the 3-5 business days footnote), "The client's {amount} hold will be released.", nothing for free or never-charged
 
 - Android Upcoming details Cancel rule should match D-13: show Cancel only for confirmed, pending_approval and pending_reschedule while the end time is in the future (03-09)
+
+- Android RESCHEDULE_OUTSIDE_AUTH_WINDOW copy should match the iOS wording: "This time is past the payment hold on your original booking. Choose a different time, or cancel this booking and book again. Cancelling releases the hold on your card, so you won't be charged." (03-11)
 
 Captured todos:
 
@@ -293,6 +297,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T05:38:51.936Z
-Stopped at: Completed 03-10-PLAN.md
+Last session: 2026-11-11T05:46:11.959Z
+Stopped at: Completed 03-11-PLAN.md
 Resume file: None

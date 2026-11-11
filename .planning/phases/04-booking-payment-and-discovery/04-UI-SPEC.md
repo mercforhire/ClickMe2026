@@ -78,15 +78,15 @@ Target tokens for any new or changed layout in this phase (points, multiples of 
 
 | Token | Value | Usage on Phase 04 surfaces |
 |-------|-------|----------------------------|
-| xs | 4 | Icon-to-text gap; gap between a state-view heading and its message |
-| sm | 8 | Gap between the new "Confirming your booking…" line and the Book button; gap between a paging footer spinner and its label |
+| xs | 4 | Icon-to-text gap; gap between a state-view heading and its message; vertical gap between wrapped Search tag pill rows |
+| sm | 8 | Gap between the new "Confirming your booking…" line and the Book button; gap between a paging footer spinner and its label; horizontal gap between Search tag pills |
 | md | 16 | Vertical gap between the icon, heading, message and button of a state view; vertical padding of a paging footer |
 | lg | 24 | Horizontal padding of a state view; side padding of the Book button area (unchanged 20 pt screen padding stays) |
 | xl | 32 | Horizontal inner padding of the Back and Retry capsules |
 | 2xl | 48 | Height of the Back and Retry capsules; bottom padding under the pinned Request Sent exits (existing value, kept) |
 | 3xl | 64 | Not used on Phase 04 surfaces |
 
-Exceptions declared for this phase: none. Every new interactive control is at least 44 pt tall (the Back and Retry capsules are 48 pt, the paging footer Retry has a 44 pt minimum hit area).
+Exceptions declared for new Phase 04 layout: none. Every new or changed spacing value in Phase 04 is a multiple of 4. The only off-grid values on the touched screens are the inherited, untouched ones listed under "Out of contract: pre-existing layout" below (14, 18, 22 by 10 and the other shipped values); they are acknowledged there as inherited exceptions, are not Phase 04 exceptions, and are not to be copied into new code. Every new interactive control is at least 44 pt tall (the Back and Retry capsules are 48 pt, the paging footer Retry has a 44 pt minimum hit area).
 
 ### Out of contract: pre-existing layout
 
@@ -96,7 +96,7 @@ Phase 04 does not touch these shipped values, so none is declared above. A plan 
 - The 22 pt by 10 pt padding of the existing Retry capsules on Favorites, Reviews and Request Sent error views. They stay; only the **new** state views use the on-grid values above.
 - The 14 pt card radius on the Make a Booking slots card, the 16 pt radius of the Book button and of the Request Sent details card, and the 18 pt padding inside the payment card (`PaymentLifecycleCard`).
 - The 56 pt capsule buttons and 14 pt gap on the Favorites empty state.
-- Tag pill padding (8 by 4) on the Search card. The pill shape changes (below) but its padding does not.
+- Tag pill padding (8 by 4) on the Search card. The pill shape changes (below) but its padding does not. The gap **between** pills is new layout and uses 8 and 4 (section 8), not the old 6.
 
 Rules for new Phase 04 layout code: use only the target tokens above; add no new off-grid value. Where a plan modifies a file that contains one of the pre-existing values, it leaves that value as is.
 
@@ -164,7 +164,7 @@ All strings below are exact. Executors must not paraphrase them. "Existing" mean
 | Retries exhausted, alert buttons | `Try again` (default, reuses the same PaymentIntent and card), `Check My Bookings`, `Not now` (cancel role) | new |
 | `SLOT_UNAVAILABLE` after a confirm for the same expert and slot timed out or was abandoned (D-04), alert title | `Couldn't book` (existing alert title) | existing |
 | Same, message | `You may already have this booking. Check My Bookings.` (D-04) | new |
-| Same, buttons | `Check My Bookings` (default), `OK` (cancel role) | new |
+| Same, buttons | `Check My Bookings` (default), `Close Alert` (cancel role) | new |
 | Every other `SLOT_UNAVAILABLE` | `That time slot was just taken. Please pick another.` with the existing `OK` | existing, unchanged (`BookingErrorMapper`) |
 | Server-coded errors (402, 409, 422 and so on) | `BookingErrorMapper` copy, unchanged | existing |
 | 3D Secure cancelled | silent reset, unchanged (P4 is by design; the toast is deferred to PORT-06) | existing |
@@ -245,7 +245,7 @@ Variant A is the shipped copy, unchanged, and is what every booking created by t
 |---------|------|--------|
 | Alert title | `Your account has been suspended` (Android `suspended_title`) | new |
 | Alert message | `You can't use ClickMe with this account right now. If you think this is a mistake, contact clickmeapp@uptrendinvestments.net.` (Android `suspended_body`, with the SET-02 support address) | new |
-| Alert button | `OK` (cancel role); dismissing calls `UserManager.clearSuspensionFlag()` | new |
+| Alert button | `Close Alert` (cancel role); dismissing calls `UserManager.clearSuspensionFlag()`. Android's `suspended_ok` reads `OK`; the new iOS label is a verb + noun by contract, and the copy difference is logged under "Android follow-ups", not aligned | new |
 
 ### Destructive confirmation
 
@@ -349,7 +349,7 @@ Both lists use the same pattern.
 | Property | Contract |
 |----------|----------|
 | Text | `lineLimit(1)` is removed; the pill text is never truncated |
-| Layout | The pills (still at most 3, as on Android) sit in `TopicsSetupFlowLayout(horizontalSpacing: 6, verticalSpacing: 6)`, replacing the one-line `HStack`, so a pill that does not fit moves to the next line (Android uses a `FlowRow`) |
+| Layout | The pills (still at most 3, as on Android) sit in `TopicsSetupFlowLayout(horizontalSpacing: 8, verticalSpacing: 4)` (on-grid tokens sm and xs; the shipped one-line `HStack` used 6, which is replaced, not carried over), replacing the one-line `HStack`, so a pill that does not fit moves to the next line (Android uses a `FlowRow`) |
 | Shape | A pill whose own text is wider than the row wraps its text inside the pill. The shape is `RoundedRectangle(cornerRadius: 12, style: .continuous)` with the same fill and stroke, which is visually identical to the current capsule for a one-line pill and does not distort when two lines |
 
 ### 9. Suspension on cold launch (D-13)
@@ -394,7 +394,7 @@ Android mirrors iOS behavior, so each iOS behavior change is a possible Android 
 | D-05 / D-06 Request Sent one-way, source-tab reset | not read | Check Android's back stack after Request Sent |
 | D-07 / D-08 Favorites paging and empty buttons | `favorites_pro_tip_body` already says "heart" (a deliberate deviation from iOS) | iOS now matches; check paging and the two empty-state buttons |
 | D-10 profile 404 | `expert_profile_unavailable_heading` / `_body` exist, and iOS reuses them | Verify the network-error Retry state |
-| D-13 suspension on cold launch | `suspended_title` / `suspended_body` exist | Check the cold-launch path |
+| D-13 suspension on cold launch | `suspended_title` / `suspended_body` exist; `suspended_ok` reads `OK` where iOS uses `Close Alert` | Check the cold-launch path; the button label differs, log and do not align now |
 | D-14 push prompt after reinstall | Check only (04-CONTEXT); no code change | Record the result; file a todo if there is a gap |
 
 ---

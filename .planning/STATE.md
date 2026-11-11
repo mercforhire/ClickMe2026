@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-15-PLAN.md
-last_updated: "2026-11-11T04:31:57.539Z"
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-11-11T04:42:49.889Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: 4db4004d616c4dabd57c4f73fc3869856af351dc
+state_head: f13bd275a426d97c56a1cac0370b1f0673b7fc37
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 46
+  completed_plans: 47
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 6 of 15
+Plan: 7 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -102,6 +102,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P03-03 | 25min | 3 tasks | 4 files |
 | Phase 03 P04 | 25m | 3 tasks | 9 files |
 | Phase 03 P15 | 6 min | 1 tasks | 2 files |
+| Phase 03 P05 | n/a (user decision wait) | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -210,6 +211,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-04: Expert Booking Summary Join visibility is ExpertJoinVisibility (confirmed/in_progress/pending_reschedule always, completed only in window), not JoinWindow.showsJoinButton
 - [Phase 03]: 03-04: Expert reschedule cap treats a booking as paid when consultationFee.amount > 0 (no payment_status on expert details), via PaidBookingWindow
 - [Phase 03]: 03-15: Android Booking Summary reuses upcoming_booking_id and shortBookingId (no new string) so the ID reads the same on every Android screen (BOOK-20 Android half, commit 0f2e8cd in ClickMe_Android)
+- [Phase 03]: 03-05: backend 65bb2ed (expert details payment_action_required, payment_action_deadline, payment_not_charged; D-14, D-16) deployed to production 2026-11-10 by user decision deploy-now, /health = 65bb2ed; the push shipped 4 commits (3 docs-only); EXP-11 stays Pending for 03-08; Android follow-up logged, not built
 
 ### Pending Todos
 
@@ -224,6 +226,10 @@ Android follow-ups from Phase 1 (logged, not built):
 - Map EXPERT_SETUP_REQUIRED and route to the setup hub (BACK-13). Only if wave-3c is revived; production does not return this code
 - Map SESSION_ALREADY_ENDED on client cancel (BACK-12)
 - Route payment-intent 409 DUPLICATE_BOOKING to detail.booking_id (BACK-15)
+
+Android follow-ups from Phase 3 (logged, not built):
+
+- Expert cancel line could apply the same D-14/D-16 rule: client-money line only where payment_action_required and payment_not_charged both read false (03-05; keys are live at backend 65bb2ed)
 
 Captured todos:
 
@@ -270,6 +276,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T04:31:57.234Z
-Stopped at: Completed 03-15-PLAN.md
+Last session: 2026-11-11T04:42:49.692Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None

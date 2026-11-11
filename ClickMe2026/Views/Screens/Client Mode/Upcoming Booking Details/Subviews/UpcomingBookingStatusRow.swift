@@ -8,28 +8,39 @@
 
 import SwiftUI
 
-// MARK: - "Confirmed" pill + right-aligned booking ID
+// MARK: - Status pill + right-aligned booking ID
 
+/// The pill shows the booking's real status (BOOK-09); the ID sits on the right.
+/// Both read as one VoiceOver element.
 struct UpcomingBookingStatusRow: View {
+    let pill: BookingStatusPill
     let bookingID: String
+
+    private var tint: Color {
+        switch pill.tone {
+        case .accent: return UpcomingBookingBrand.brandGreen
+        case .amber: return Color.orange
+        case .neutral: return UpcomingBookingBrand.onSurfaceVar
+        }
+    }
 
     var body: some View {
         HStack {
             HStack(spacing: 7) {
                 Circle()
-                    .fill(UpcomingBookingBrand.brandGreen)
+                    .fill(tint)
                     .frame(width: 8, height: 8)
-                    .shadow(color: UpcomingBookingBrand.brandGreen.opacity(0.80), radius: 4)
-                Text("Confirmed")
+                    .shadow(color: tint.opacity(0.80), radius: 4)
+                Text(pill.text)
                     .font(.brand(.caption, weight: .semibold))
-                    .foregroundColor(UpcomingBookingBrand.brandGreen)
+                    .foregroundColor(tint)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 7)
             .background(
                 Capsule()
-                    .fill(UpcomingBookingBrand.brandGreen.opacity(0.10))
-                    .overlay(Capsule().stroke(UpcomingBookingBrand.brandGreen.opacity(0.30), lineWidth: 1))
+                    .fill(tint.opacity(0.10))
+                    .overlay(Capsule().stroke(tint.opacity(0.30), lineWidth: 1))
             )
 
             Spacer()
@@ -38,5 +49,6 @@ struct UpcomingBookingStatusRow: View {
                 .font(.brand(.caption, weight: .medium))
                 .foregroundColor(UpcomingBookingBrand.onSurfaceVar)
         }
+        .accessibilityElement(children: .combine)
     }
 }

@@ -37,6 +37,9 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// card and surface a "Waiting for expert to accept" banner instead
     /// while the request is still awaiting the expert's decision.
     @Published var bookingStatus: BookingStatus
+    /// The server's status string, kept only so `statusPill` can humanize
+    /// `.unknown`. It never decides the text or tone of a known case.
+    @Published var statusRaw: String
     /// Pending reschedule proposal from `ClientBookingDetail.reschedule`, or
     /// `nil` when the booking has none. Read through `pendingProposal`.
     @Published var reschedule: RescheduleProposal?
@@ -91,6 +94,7 @@ final class UpcomingBookingViewModel: ObservableObject {
         self.joinLink = ""
         self.preparationNote = ""
         self.bookingStatus = .confirmed
+        self.statusRaw = ""
         self.reschedule = nil
         self.authorizationExpiresAt = nil
         self.startTime = nil
@@ -146,6 +150,7 @@ final class UpcomingBookingViewModel: ObservableObject {
         vm.joinLink = joinLink
         vm.preparationNote = preparationNote
         vm.bookingStatus = bookingStatus
+        vm.statusRaw = bookingStatus.rawValue
         vm.reschedule = reschedule
         vm.authorizationExpiresAt = authorizationExpiresAt
         vm.startTime = startTime
@@ -157,6 +162,13 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// the view to swap the Join card for a waiting banner.
     var isPendingExpertApproval: Bool {
         bookingStatus == .pendingApproval
+    }
+
+    /// The status pill for the details screen (BOOK-09). Decided by the decoded
+    /// `bookingStatus`; `statusRaw` only humanizes `.unknown`. Between a load
+    /// and the next refetch it keeps its previous value (D-03).
+    var statusPill: BookingStatusPill {
+        BookingStatusPill.make(status: bookingStatus, rawStatus: statusRaw)
     }
 
     /// The proposal to answer, only while the booking is `pending_reschedule`.
@@ -257,6 +269,7 @@ final class UpcomingBookingViewModel: ObservableObject {
         // same rule `BookingStatus.init(from:)` applies, so a new server
         // state is never shown as a confirmed booking.
         bookingStatus = BookingStatus(rawValue: data.status) ?? .unknown
+        statusRaw = data.status
         reschedule = data.reschedule
         authorizationExpiresAt = data.authorizationExpiresAt
         startTime = data.startTime

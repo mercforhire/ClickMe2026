@@ -124,7 +124,7 @@ struct UpcomingBookingView: View {
     private var loadedContent: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 14) {
-                UpcomingBookingStatusRow(bookingID: viewModel.bookingIDLabel)
+                UpcomingBookingStatusRow(pill: viewModel.statusPill, bookingID: viewModel.bookingIDLabel)
 
                 if let proposal = viewModel.pendingProposal,
                    let currentStart = viewModel.startTime
@@ -408,6 +408,13 @@ private struct LiveFetchUpcomingBookingBootstrap: View {
             ),
             startTime: Date().addingTimeInterval(3 * 86_400)
         ))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Pending reschedule pill") {
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Booking details") {
+        UpcomingBookingView(viewModel: .previewSeed(bookingStatus: .pendingReschedule))
     }
     .preferredColorScheme(.dark)
 }

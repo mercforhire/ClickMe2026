@@ -63,6 +63,55 @@ struct UpcomingBookingViewModelTests {
         #expect(vm.pendingProposal?.initiatedBy == .client)
     }
 
+    // MARK: Status pill (BOOK-09)
+
+    @Test("a status this build does not know loads as .unknown and reads as a neutral humanized pill")
+    func unknownStatusPill() async {
+        let vm = UpcomingBookingViewModel(
+            bookingId: bookingUUID,
+            api: detailAPI(body: Fixtures.detailJSON(status: "awaiting_payment"))
+        )
+        await vm.load()
+        #expect(vm.bookingStatus == .unknown)
+        #expect(vm.statusPill == BookingStatusPill(text: "Awaiting payment", tone: .neutral))
+    }
+
+    @Test("a pending_reschedule detail reads Pending reschedule in amber")
+    func pendingReschedulePill() async {
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: detailAPI(body: pendingDetail(initiatedBy: "expert")))
+        await vm.load()
+        #expect(vm.statusPill == BookingStatusPill(text: "Pending reschedule", tone: .amber))
+    }
+
+    @Test("the pill keeps its previous value when a silent refresh fails, then follows the server")
+    func pillKeepsValueUntilRefetchLands() async {
+        let path = detailPath
+        let pending = pendingDetail(initiatedBy: "expert")
+        let confirmed = Fixtures.detailJSON(status: "confirmed")
+        let api = APITestFactory.make { request in
+            let detailRequests = MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix(path) == true }
+            guard request.url?.path.hasSuffix(path) == true else {
+                return Fixtures.response(for: request, status: 404, body: Fixtures.errorBody(code: "NOT_FOUND"))
+            }
+            switch detailRequests.count {
+            case 1: return Fixtures.response(for: request, body: pending)
+            case 2: return Fixtures.response(for: request, status: 500, body: Fixtures.errorBody(code: "INTERNAL"))
+            default: return Fixtures.response(for: request, body: confirmed)
+            }
+        }
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: api)
+        await vm.load()
+        #expect(vm.statusPill.text == "Pending reschedule")
+
+        await vm.refresh()
+        #expect(vm.state == .loaded)
+        #expect(vm.statusPill.text == "Pending reschedule")
+
+        await vm.refresh()
+        #expect(vm.state == .loaded)
+        #expect(vm.statusPill == BookingStatusPill(text: "Confirmed", tone: .accent))
+    }
+
     // MARK: Accept in place
 
     @Test("accept sends one POST, then the screen shows the confirmed booking without leaving .loaded")

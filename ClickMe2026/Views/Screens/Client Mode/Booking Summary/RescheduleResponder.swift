@@ -25,6 +25,11 @@ import Observation
 @Observable
 final class RescheduleResponder {
 
+    // MARK: Limits
+
+    /// Server cap on the decline reason, counted in UTF-16 code units.
+    static let declineReasonLimit = 500
+
     // MARK: Identity
 
     /// Server booking UUID. `nil` in the preview-seed path, where every action is a no-op.
@@ -115,7 +120,9 @@ final class RescheduleResponder {
 
     /// Decline an expert-initiated reschedule with an optional reason.
     ///
-    /// The reason is trimmed and left out when blank.
+    /// The reason is trimmed, left out when blank, and capped at
+    /// `declineReasonLimit` UTF-16 units without splitting a character, matching
+    /// the server's `rescheduleDeclineSchema` (`z.string().max(500)`).
     /// - Parameter reason: Free text from the decline prompt. `nil` or blank sends no reason.
     func decline(reason: String?) async {
         guard !isSubmitting, let bookingId else { return }
@@ -123,8 +130,9 @@ final class RescheduleResponder {
         defer { isSubmitting = false }
 
         let trimmed = reason?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let capped = UTF16Prefix.prefix(trimmed, limit: Self.declineReasonLimit)
         do {
-            _ = try await api.declineClientReschedule(id: bookingId, reason: trimmed.isEmpty ? nil : trimmed)
+            _ = try await api.declineClientReschedule(id: bookingId, reason: capped.isEmpty ? nil : capped)
             await refetch?()
         } catch {
             apiError = error.userMessage

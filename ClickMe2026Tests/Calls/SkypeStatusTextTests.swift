@@ -60,4 +60,36 @@ struct SkypeStatusTextTests {
             }
         }
     }
+
+    // MARK: - Ending banner (D-15)
+
+    @Test("overtime warning at end + 55 reads 'This call will end in 5 minutes'")
+    func bannerOvertimeWarning() {
+        let vm = MeetingCallViewModel(
+            scheduledStart: Date().addingTimeInterval(-85 * 60),
+            scheduledEnd: Date().addingTimeInterval(-55 * 60)
+        )
+        vm.isOvertimeWarning = true
+        #expect(vm.endingBannerText == "This call will end in 5 minutes")
+    }
+
+    @Test("past the scheduled end without the warning reads 'Scheduled time complete'")
+    func bannerPastEnd() {
+        let vm = MeetingCallViewModel(
+            scheduledStart: Date().addingTimeInterval(-30 * 60),
+            scheduledEnd: Date().addingTimeInterval(-60)
+        )
+        vm.isOvertimeWarning = false
+        #expect(vm.endingBannerText == "Scheduled time complete — you can wrap up when ready.")
+    }
+
+    @Test("final stretch reads 'Session ending soon'")
+    func bannerFinalStretch() {
+        let vm = MeetingCallViewModel(
+            scheduledStart: Date().addingTimeInterval(-28 * 60),
+            scheduledEnd: Date().addingTimeInterval(120)
+        )
+        vm.isOvertimeWarning = false
+        #expect(vm.endingBannerText == "Session ending soon — please start wrapping up.")
+    }
 }

@@ -377,6 +377,21 @@ final class MeetingCallViewModel: ObservableObject {
         return f.string(from: end)
     }
 
+    /// Text of the amber session-ending banner, shared by both call layouts
+    /// so they read one string source. Precedence: the overtime warning
+    /// (scheduled end + 55 min), then past the scheduled end, then the final
+    /// stretch. The voice layout shows all three states; the Skype/Zoom
+    /// layout shows the banner only while `isOvertimeWarning` is true (D-15).
+    var endingBannerText: String {
+        if isOvertimeWarning {
+            return "This call will end in 5 minutes"
+        }
+        if isPastScheduledEnd {
+            return "Scheduled time complete — you can wrap up when ready."
+        }
+        return "Session ending soon — please start wrapping up."
+    }
+
     /// Status line under the Skype/Zoom link actions (CALL-06, D-09).
     /// A Skype/Zoom session does not end by itself at the scheduled time,
     /// so the copy always tells the user to tap End Session.

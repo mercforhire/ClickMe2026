@@ -137,6 +137,13 @@ struct MeetingCallView: View {
     /// the user can complete the booking after the external call.
     private var skypeCallContent: some View {
         VStack(spacing: 0) {
+            if viewModel.isOvertimeWarning {
+                endingSoonBanner
+                    .padding(.horizontal, 24)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             Spacer()
 
             SkypeSessionHero(
@@ -196,7 +203,9 @@ struct MeetingCallView: View {
 
     // MARK: - Session-ending banner
 
-    /// Amber banner shown across the top of the call in three states:
+    /// Amber banner shown across the top of the call. The voice layout shows
+    /// all three states; the Skype/Zoom layout shows only the end + 55 notice
+    /// (D-15). Text comes from `MeetingCallViewModel.endingBannerText`.
     ///
     /// - Within the last 5 minutes → "Session ending soon" with the
     ///   remaining count in a small chip.
@@ -209,7 +218,7 @@ struct MeetingCallView: View {
             Image(systemName: "hourglass")
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(.orange)
-            Text(bannerText)
+            Text(viewModel.endingBannerText)
                 .font(.brand(.caption, weight: .semibold))
                 .foregroundColor(MeetingCallBrand.onSurface)
                 .fixedSize(horizontal: false, vertical: true)
@@ -223,16 +232,6 @@ struct MeetingCallView: View {
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(Color.orange.opacity(0.50), lineWidth: 1))
         )
-    }
-
-    private var bannerText: String {
-        if viewModel.isOvertimeWarning {
-            return "This call will end in 5 minutes"
-        }
-        if viewModel.isPastScheduledEnd {
-            return "Scheduled time complete — you can wrap up when ready."
-        }
-        return "Session ending soon — please start wrapping up."
     }
 }
 

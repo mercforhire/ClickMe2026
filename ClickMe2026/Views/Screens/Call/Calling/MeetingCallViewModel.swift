@@ -367,14 +367,27 @@ final class MeetingCallViewModel: ObservableObject {
         return "\(f.string(from: start)) – \(f.string(from: end))"
     }
 
-    /// Just the end-time portion, e.g. `"3:00 PM"`. Used by the Skype
-    /// variant's status line to reassure the user the session will
-    /// auto-end without them having to come back to press anything.
+    /// Just the end-time portion, e.g. `"3:00 PM"`. The scheduled finish
+    /// time shown on the Skype/Zoom status line. It is information only:
+    /// the user ends an external meeting themselves with End Session.
     var scheduledEndLabel: String? {
         guard let end = scheduledEnd else { return nil }
         let f = DateFormatter()
         f.dateFormat = "h:mm a"
         return f.string(from: end)
+    }
+
+    /// Status line under the Skype/Zoom link actions (CALL-06, D-09).
+    /// A Skype/Zoom session does not end by itself at the scheduled time,
+    /// so the copy always tells the user to tap End Session.
+    var skypeStatusText: String {
+        if !hasOpenedExternalLink {
+            return "Open the meeting link to start the session."
+        }
+        if let endLabel = scheduledEndLabel {
+            return "Meeting in progress. Scheduled to finish at \(endLabel). Tap End Session when you're done."
+        }
+        return "Meeting in progress. Tap End Session when you're done."
     }
 
     // MARK: - Start

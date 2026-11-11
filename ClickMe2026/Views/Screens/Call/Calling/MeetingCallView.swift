@@ -156,10 +156,11 @@ struct MeetingCallView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
 
-            Text(skypeStatusText)
+            Text(viewModel.skypeStatusText)
                 .font(.brand(.caption, weight: .medium))
                 .foregroundColor(MeetingCallBrand.onSurfaceVar)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 32)
 
@@ -229,20 +230,6 @@ struct MeetingCallView: View {
             return "Scheduled time complete — you can wrap up when ready."
         }
         return "Session ending soon — please start wrapping up."
-    }
-
-    /// Status copy for the Skype variant. Softens the End Session
-    /// button — the auto-cutoff will close the session for us, so
-    /// coming back to press it is optional. Falls back to the older
-    /// generic string when the scheduled end isn't known.
-    private var skypeStatusText: String {
-        if !viewModel.hasOpenedExternalLink {
-            return "Open the meeting link to start the session."
-        }
-        if let endLabel = viewModel.scheduledEndLabel {
-            return "Meeting in progress. This will end automatically at \(endLabel) — or tap End Session when you're done."
-        }
-        return "Meeting in progress — tap End Session when you're done, or leave the session to end automatically."
     }
 }
 

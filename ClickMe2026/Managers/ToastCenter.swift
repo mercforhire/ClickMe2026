@@ -38,12 +38,20 @@ final class ToastCenter {
     private(set) var current: Toast?
 
     @ObservationIgnored private let displayDuration: Duration
+    @ObservationIgnored private let sleep: @Sendable (Duration) async throws -> Void
     @ObservationIgnored private var dismissTask: Task<Void, Never>?
 
-    /// - Parameter displayDuration: How long a toast stays. UI-SPEC says 4 seconds;
-    ///   tests inject a shorter or longer value.
-    init(displayDuration: Duration = .seconds(4)) {
+    /// - Parameters:
+    ///   - displayDuration: How long a toast stays. UI-SPEC says 4 seconds;
+    ///     tests inject a shorter or longer value.
+    ///   - sleep: How the dismiss timer waits. Tests inject a manually released
+    ///     wait so they never depend on wall-clock timing.
+    init(
+        displayDuration: Duration = .seconds(4),
+        sleep: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
+    ) {
         self.displayDuration = displayDuration
+        self.sleep = sleep
     }
 
     /// Show `message`, replacing any toast on screen and restarting the timer.
@@ -58,8 +66,9 @@ final class ToastCenter {
         current = toast
 
         let duration = displayDuration
+        let sleep = self.sleep
         dismissTask = Task { [weak self] in
-            try? await Task.sleep(for: duration)
+            try? await sleep(duration)
             guard !Task.isCancelled else { return }
             // Only clear the toast this task was started for, so a replaced
             // toast never cuts the new one short.

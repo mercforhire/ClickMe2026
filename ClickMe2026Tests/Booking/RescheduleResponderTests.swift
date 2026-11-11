@@ -314,6 +314,52 @@ struct RescheduleResponderTests {
         #expect(responder.apiError == nil)
     }
 
+    @Test("a successful decline posts the declined toast")
+    func declinePostsToast() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: Fixtures.successMessage)
+        }
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let responder = RescheduleResponder(bookingId: bookingUUID, api: api, toasts: toasts)
+
+        await responder.decline(reason: "No")
+
+        #expect(toasts.current?.message == "Reschedule declined")
+        toasts.dismiss()
+    }
+
+    @Test("a failed accept (409) leaves no toast")
+    func failedAcceptShowsNoToast() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(
+                for: request, status: 409, body: Fixtures.errorBody(code: "SOME_NEW_CODE", message: "Already handled")
+            )
+        }
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let responder = RescheduleResponder(bookingId: bookingUUID, api: api, toasts: toasts)
+
+        await responder.accept()
+
+        #expect(responder.apiError == "Already handled")
+        #expect(toasts.current == nil)
+    }
+
+    @Test("a failed decline (409) leaves no toast")
+    func failedDeclineShowsNoToast() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(
+                for: request, status: 409, body: Fixtures.errorBody(code: "SOME_NEW_CODE", message: "Already handled")
+            )
+        }
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let responder = RescheduleResponder(bookingId: bookingUUID, api: api, toasts: toasts)
+
+        await responder.decline(reason: nil)
+
+        #expect(responder.apiError == "Already handled")
+        #expect(toasts.current == nil)
+    }
+
     @Test("a failed decline shows the error and does not refetch")
     func declineFailure() async {
         let api = APITestFactory.make { request in

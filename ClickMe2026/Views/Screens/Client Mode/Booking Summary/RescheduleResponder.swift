@@ -143,6 +143,8 @@ final class RescheduleResponder {
         let capped = UTF16Prefix.prefix(trimmed, limit: Self.declineReasonLimit)
         do {
             _ = try await api.declineClientReschedule(id: bookingId, reason: capped.isEmpty ? nil : capped)
+            // Only after a 2xx: a failed decline never confirms (T-03-11).
+            toasts.show("Reschedule declined")
             await refetch?()
         } catch {
             apiError = error.userMessage

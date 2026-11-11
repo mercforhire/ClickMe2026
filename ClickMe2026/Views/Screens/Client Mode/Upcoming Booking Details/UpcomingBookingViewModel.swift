@@ -37,6 +37,21 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// card and surface a "Waiting for expert to accept" banner instead
     /// while the request is still awaiting the expert's decision.
     @Published var bookingStatus: BookingStatus
+    /// Pending reschedule proposal from `ClientBookingDetail.reschedule`, or
+    /// `nil` when the booking has none. Read through `pendingProposal`.
+    @Published var reschedule: RescheduleProposal?
+    /// End of the Stripe authorization window. Only decides whether accepting a
+    /// proposal needs the payment-conversion disclosure.
+    @Published var authorizationExpiresAt: Date?
+    /// The booking's current start, the FROM side of the response card.
+    @Published var startTime: Date?
+
+    // MARK: Reschedule response
+
+    /// Answers an expert-proposed time (BOOK-06). Its `refetch` is this model's
+    /// silent `refresh()`, so a successful accept or decline updates the screen
+    /// in place with no loading spinner (D-03).
+    let responder: RescheduleResponder
 
     // MARK: Load state
 
@@ -76,8 +91,12 @@ final class UpcomingBookingViewModel: ObservableObject {
         self.joinLink = ""
         self.preparationNote = ""
         self.bookingStatus = .confirmed
+        self.reschedule = nil
+        self.authorizationExpiresAt = nil
+        self.startTime = nil
         self.state = .idle
         self.api = api
+        self.responder = RescheduleResponder(bookingId: bookingId, api: api)
 
         // Any live change to this specific booking re-hits the detail
         // endpoint so status / times / meeting-type stay accurate while
@@ -85,8 +104,9 @@ final class UpcomingBookingViewModel: ObservableObject {
         let targetId = bookingId
         self.bookingUpdateSubscription = RealtimeService.shared.onBookingUpdate { [weak self] event in
             guard event.bookingId == targetId else { return }
-            Task { @MainActor in await self?.reload() }
+            Task { @MainActor in await self?.refresh() }
         }
+        responder.refetch = { [weak self] in await self?.refresh() }
     }
 
     /// Preview seam — pre-installs display strings so the canvas can render
@@ -106,7 +126,10 @@ final class UpcomingBookingViewModel: ObservableObject {
         meetingType: MeetingType = .inAppVoice,
         joinLink: String = "",
         preparationNote: String = "Please have your current product roadmap and user persona documents ready. We'll be diving deep into the Q4 objectives and identifying key friction points in the user journey.",
-        bookingStatus: BookingStatus = .confirmed
+        bookingStatus: BookingStatus = .confirmed,
+        reschedule: RescheduleProposal? = nil,
+        authorizationExpiresAt: Date? = nil,
+        startTime: Date? = nil
     ) -> UpcomingBookingViewModel {
         let vm = UpcomingBookingViewModel(bookingId: bookingId)
         vm.bookingIDLabel = bookingIDLabel
@@ -123,6 +146,9 @@ final class UpcomingBookingViewModel: ObservableObject {
         vm.joinLink = joinLink
         vm.preparationNote = preparationNote
         vm.bookingStatus = bookingStatus
+        vm.reschedule = reschedule
+        vm.authorizationExpiresAt = authorizationExpiresAt
+        vm.startTime = startTime
         vm.state = .loaded
         return vm
     }
@@ -133,7 +159,51 @@ final class UpcomingBookingViewModel: ObservableObject {
         bookingStatus == .pendingApproval
     }
 
+    /// The proposal to answer, only while the booking is `pending_reschedule`.
+    var pendingProposal: RescheduleProposal? {
+        bookingStatus == .pendingReschedule ? reschedule : nil
+    }
+
+    /// Body of the "Accept the proposed reschedule?" dialog.
+    var acceptDialogMessage: String {
+        RescheduleResponder.acceptDialogMessage(
+            proposal: reschedule,
+            authorizationExpiresAt: authorizationExpiresAt,
+            now: Date()
+        )
+    }
+
     // MARK: - Load
+
+    /// First appearance loads normally; later appearances (for example coming
+    /// back from Reschedule) refetch silently so the screen shows the server's
+    /// current state without blanking.
+    func appeared() async {
+        if case .loaded = state {
+            await refresh()
+        } else {
+            await load()
+        }
+    }
+
+    /// Re-fetches without leaving `.loaded`, so the content stays on screen
+    /// while it updates. A failure while loaded keeps the last good content.
+    /// Overlapping calls keep only the newest response. When not yet loaded
+    /// this runs a forced load instead, so the newest call settles `state`.
+    func refresh() async {
+        guard case .loaded = state else {
+            await forceLoad()
+            return
+        }
+        let token = reloads.begin()
+        do {
+            let response = try await api.getClientBookingDetail(id: bookingId)
+            guard reloads.isCurrent(token) else { return }
+            apply(response.data)
+        } catch {
+            // Intentionally swallowed: keep the last known good screen.
+        }
+    }
 
     /// Idempotent — skips when already loaded so it doesn't clobber the
     /// preview seed.
@@ -187,6 +257,9 @@ final class UpcomingBookingViewModel: ObservableObject {
         // same rule `BookingStatus.init(from:)` applies, so a new server
         // state is never shown as a confirmed booking.
         bookingStatus = BookingStatus(rawValue: data.status) ?? .unknown
+        reschedule = data.reschedule
+        authorizationExpiresAt = data.authorizationExpiresAt
+        startTime = data.startTime
     }
 
     // MARK: - Formatting helpers

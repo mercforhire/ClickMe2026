@@ -19,6 +19,10 @@ struct UpcomingBookingView: View {
     var onCancel: () -> Void
     var onCopyLink: () -> Void
 
+    @State private var showAcceptRescheduleConfirmation = false
+    @State private var showDeclineReschedulePrompt = false
+    @State private var declineRescheduleReason = ""
+
     // MARK: Inits
 
     /// Runtime init — hydrates from `GET /client/bookings/:id` on appear.
@@ -63,7 +67,44 @@ struct UpcomingBookingView: View {
         .toolbarBackground(UpcomingBookingBrand.bg, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .task { await viewModel.load() }
+        .task { await viewModel.appeared() }
+        .confirmationDialog(
+            "Accept the proposed reschedule?",
+            isPresented: $showAcceptRescheduleConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Accept New Time") {
+                Task { await viewModel.responder.accept() }
+            }
+            Button("Keep Current Time", role: .cancel) {}
+        } message: {
+            Text(viewModel.acceptDialogMessage)
+        }
+        .alert("Decline reschedule", isPresented: $showDeclineReschedulePrompt) {
+            TextField("Optional reason", text: $declineRescheduleReason)
+            Button("Decline New Time", role: .destructive) {
+                let reason = declineRescheduleReason
+                declineRescheduleReason = ""
+                Task { await viewModel.responder.decline(reason: reason) }
+            }
+            Button("Keep session as-is", role: .cancel) {
+                declineRescheduleReason = ""
+            }
+        } message: {
+            Text("The booking will revert to its original time.")
+        }
+        .alert(
+            "Couldn't update booking",
+            isPresented: Binding(
+                get: { viewModel.responder.apiError != nil },
+                set: { if !$0 { viewModel.responder.apiError = nil } }
+            ),
+            presenting: viewModel.responder.apiError
+        ) { _ in
+            Button("Back to Booking", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
     // MARK: Content router
@@ -84,6 +125,18 @@ struct UpcomingBookingView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 14) {
                 UpcomingBookingStatusRow(bookingID: viewModel.bookingIDLabel)
+
+                if let proposal = viewModel.pendingProposal,
+                   let currentStart = viewModel.startTime
+                {
+                    RescheduleResponseCard(
+                        proposal: proposal,
+                        currentStart: currentStart,
+                        isSubmitting: viewModel.responder.isSubmitting,
+                        onAccept: { showAcceptRescheduleConfirmation = true },
+                        onDecline: { showDeclineReschedulePrompt = true }
+                    )
+                }
 
                 UpcomingBookingExpertCard(
                     expertName: viewModel.expertName,
@@ -340,6 +393,20 @@ private struct LiveFetchUpcomingBookingBootstrap: View {
         UpcomingBookingView(viewModel: .previewSeed(
             meetingType: .skypeZoom,
             joinLink: "https://zoom.us/j/98237192834"
+        ))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Reschedule proposed") {
+    PreviewNavHarness(parentText: "Upcoming sessions", navTitle: "My Bookings", rowTitle: "Booking details") {
+        UpcomingBookingView(viewModel: .previewSeed(
+            bookingStatus: .pendingReschedule,
+            reschedule: RescheduleProposal.previewSample(
+                initiatedBy: .expert,
+                note: "Something came up on my side. Would this time work for you instead?"
+            ),
+            startTime: Date().addingTimeInterval(3 * 86_400)
         ))
     }
     .preferredColorScheme(.dark)

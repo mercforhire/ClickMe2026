@@ -13,9 +13,9 @@ import Observation
 /// reschedule (BOOK-06, D-01).
 ///
 /// Lifted from `BookingSummaryViewModel` so the money-affecting path exists once
-/// and both screens that show the response card use it. The owner supplies
-/// `refetch`, which is called after a successful accept or decline so the screen
-/// updates in place (D-03).
+/// and both screens that show the response card use it. After a successful
+/// accept or decline the owner's `onResolved` clears the card, then `refetch`
+/// brings the times and status up to date in place (D-03).
 ///
 /// Observable rather than `ObservableObject`: it is owned by view models that
 /// are themselves `ObservableObject`s, and Observation tracks reads of
@@ -45,9 +45,18 @@ final class RescheduleResponder {
     /// "Couldn't update booking" alert; the owner of the screen clears it on dismiss.
     var apiError: String?
 
-    /// Called after a successful accept or decline. The owner's silent refresh,
-    /// so the card disappears and the times update without a loading spinner.
+    /// Called after a successful accept or decline, once `onResolved` has run. The
+    /// owner's silent refresh, so the times and status update without a loading
+    /// spinner. It does not clear the card: a failed refresh keeps the old screen.
     @ObservationIgnored var refetch: (@MainActor () async -> Void)?
+
+    /// Called after every 2xx accept or decline, before `refetch`. The server has
+    /// accepted or declined the proposal, so the owner clears its proposal locally.
+    /// The card therefore disappears even when `refetch` fails and the owner's
+    /// silent refresh keeps the old screen (WR-01). Synchronous on purpose, so
+    /// nothing can interleave between the clear and the refetch. Never called
+    /// after a failed accept or decline.
+    @ObservationIgnored var onResolved: (@MainActor () -> Void)?
 
     // MARK: Dependencies
 
@@ -70,7 +79,7 @@ final class RescheduleResponder {
     // MARK: - Accept
 
     /// Accept an expert-initiated reschedule. The booking rolls forward
-    /// server-side, then `refetch` runs so the card clears and the times update.
+    /// server-side, then `onResolved` clears the card and `refetch` updates the times.
     /// No-op when there's no booking id (preview seed) or a submission is
     /// already in flight.
     ///
@@ -87,6 +96,7 @@ final class RescheduleResponder {
             _ = try await api.acceptClientReschedule(id: bookingId)
             // Only after a 2xx: a failed accept never confirms (T-03-11).
             toasts.show("Reschedule accepted")
+            onResolved?()
             await refetch?()
             return
         } catch {
@@ -113,6 +123,7 @@ final class RescheduleResponder {
         do {
             _ = try await api.acceptClientReschedule(id: bookingId, stripePaymentMethodId: paymentMethodId)
             toasts.show("Reschedule accepted")
+            onResolved?()
             await refetch?()
         } catch {
             // The second failure is terminal, including a repeat
@@ -145,6 +156,7 @@ final class RescheduleResponder {
             _ = try await api.declineClientReschedule(id: bookingId, reason: capped.isEmpty ? nil : capped)
             // Only after a 2xx: a failed decline never confirms (T-03-11).
             toasts.show("Reschedule declined")
+            onResolved?()
             await refetch?()
         } catch {
             apiError = error.userMessage

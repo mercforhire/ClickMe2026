@@ -376,6 +376,131 @@ struct RescheduleResponderTests {
         #expect(counter.count == 0)
     }
 
+    // MARK: onResolved order (WR-01)
+
+    @MainActor
+    final class CallLog {
+        var entries: [String] = []
+    }
+
+    /// A responder whose two hooks append to a shared log.
+    private func makeLoggingResponder(api: ClickMeAPI, log: CallLog) -> RescheduleResponder {
+        let responder = RescheduleResponder(bookingId: bookingUUID, api: api)
+        responder.onResolved = { log.entries.append("resolved") }
+        responder.refetch = { log.entries.append("refetch") }
+        return responder
+    }
+
+    nonisolated private static func paymentMethodRequired(_ request: URLRequest) -> (HTTPURLResponse, Data) {
+        Fixtures.response(for: request, status: 422, body: Fixtures.errorBody(code: "PAYMENT_METHOD_REQUIRED"))
+    }
+
+    @Test("a 2xx accept calls onResolved, then refetch")
+    func acceptResolvesBeforeRefetch() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: Fixtures.successMessage)
+        }
+        let log = CallLog()
+        let responder = makeLoggingResponder(api: api, log: log)
+
+        await responder.accept()
+
+        #expect(log.entries == ["resolved", "refetch"])
+    }
+
+    @Test("a saved-card retry that succeeds calls onResolved once, then refetch")
+    func retryAcceptResolvesOnce() async {
+        let api = APITestFactory.make { request in
+            if Self.isVault(request) {
+                return Fixtures.response(for: request, body: Self.vaultBody)
+            }
+            if Self.acceptPosts().count > 1 {
+                return Fixtures.response(for: request, body: Fixtures.successMessage)
+            }
+            return Fixtures.response(
+                for: request, status: 422, body: Fixtures.errorBody(code: "PAYMENT_METHOD_REQUIRED")
+            )
+        }
+        let log = CallLog()
+        let responder = makeLoggingResponder(api: api, log: log)
+
+        await responder.accept()
+
+        #expect(Self.acceptPosts().count == 2)
+        #expect(log.entries == ["resolved", "refetch"])
+    }
+
+    @Test("a 2xx decline calls onResolved, then refetch")
+    func declineResolvesBeforeRefetch() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: Fixtures.successMessage)
+        }
+        let log = CallLog()
+        let responder = makeLoggingResponder(api: api, log: log)
+
+        await responder.decline(reason: "No")
+
+        #expect(log.entries == ["resolved", "refetch"])
+    }
+
+    @Test("a failed accept (409) calls neither hook")
+    func failedAcceptDoesNotResolve() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(
+                for: request, status: 409, body: Fixtures.errorBody(code: "SOME_NEW_CODE", message: "Already handled")
+            )
+        }
+        let log = CallLog()
+        let responder = makeLoggingResponder(api: api, log: log)
+
+        await responder.accept()
+
+        #expect(log.entries.isEmpty)
+        #expect(responder.apiError == "Already handled")
+    }
+
+    @Test("an empty vault, a failed vault read and a second PAYMENT_METHOD_REQUIRED call neither hook")
+    func unrecoveredPaymentMethodDoesNotResolve() async {
+        let emptyVaultAPI = APITestFactory.make { request in
+            Self.isVault(request) ? Fixtures.response(for: request, body: Self.emptyVaultBody) : Self.paymentMethodRequired(request)
+        }
+        let emptyLog = CallLog()
+        await makeLoggingResponder(api: emptyVaultAPI, log: emptyLog).accept()
+        #expect(emptyLog.entries.isEmpty)
+
+        let failedVaultAPI = APITestFactory.make { request in
+            Self.isVault(request)
+                ? Fixtures.response(for: request, status: 500, body: Fixtures.errorBody(code: "INTERNAL"))
+                : Self.paymentMethodRequired(request)
+        }
+        let failedLog = CallLog()
+        await makeLoggingResponder(api: failedVaultAPI, log: failedLog).accept()
+        #expect(failedLog.entries.isEmpty)
+
+        let repeatAPI = APITestFactory.make { request in
+            Self.isVault(request) ? Fixtures.response(for: request, body: Self.vaultBody) : Self.paymentMethodRequired(request)
+        }
+        let repeatLog = CallLog()
+        await makeLoggingResponder(api: repeatAPI, log: repeatLog).accept()
+        #expect(repeatLog.entries.isEmpty)
+    }
+
+    @Test("a failed decline (409) calls neither hook")
+    func failedDeclineDoesNotResolve() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(
+                for: request, status: 409, body: Fixtures.errorBody(code: "SOME_NEW_CODE", message: "Already handled")
+            )
+        }
+        let log = CallLog()
+        let responder = makeLoggingResponder(api: api, log: log)
+
+        await responder.decline(reason: nil)
+
+        #expect(log.entries.isEmpty)
+        #expect(responder.apiError == "Already handled")
+    }
+
     // MARK: Accept dialog message
 
     private func proposal(start: Date, end: Date) -> RescheduleProposal {

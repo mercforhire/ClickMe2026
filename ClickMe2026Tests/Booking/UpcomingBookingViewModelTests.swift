@@ -234,6 +234,79 @@ struct UpcomingBookingViewModelTests {
         #expect(vm.responder.apiError == nil)
     }
 
+    // MARK: Failed refetch after a 2xx (WR-01)
+
+    /// First detail GET returns the expert's proposal, every later one a 500. Both
+    /// answer POSTs succeed. Anything else is a 404.
+    private func failingRefetchAPI() -> ClickMeAPI {
+        let path = detailPath
+        let pending = pendingDetail(initiatedBy: "expert")
+        return APITestFactory.make { request in
+            let requestPath = request.url?.path ?? ""
+            if request.httpMethod == "POST",
+               requestPath.hasSuffix("/accept-reschedule") || requestPath.hasSuffix("/decline-reschedule") {
+                return Fixtures.response(for: request, body: Fixtures.successMessage)
+            }
+            if request.httpMethod == "GET", requestPath.hasSuffix(path) {
+                let detailGets = MockURLProtocol.recordedRequests.filter {
+                    $0.httpMethod == "GET" && $0.url?.path.hasSuffix(path) == true
+                }
+                if detailGets.count == 1 {
+                    return Fixtures.response(for: request, body: pending)
+                }
+                return Fixtures.response(for: request, status: 500, body: Fixtures.errorBody(code: "INTERNAL"))
+            }
+            return Fixtures.response(for: request, status: 404, body: Fixtures.errorBody(code: "NOT_FOUND"))
+        }
+    }
+
+    private func detailGetCount() -> Int {
+        let path = detailPath
+        return MockURLProtocol.recordedRequests.filter {
+            $0.httpMethod == "GET" && $0.url?.path.hasSuffix(path) == true
+        }.count
+    }
+
+    private func postCount(suffix: String) -> Int {
+        MockURLProtocol.recordedRequests.filter {
+            $0.httpMethod == "POST" && $0.url?.path.hasSuffix(suffix) == true
+        }.count
+    }
+
+    @Test("accept whose follow-up detail GET returns 500 still clears the proposal")
+    func acceptWithFailedRefetchClearsProposal() async {
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
+        await vm.load()
+        #expect(vm.pendingProposal != nil)
+
+        await vm.responder.accept()
+
+        #expect(postCount(suffix: "/accept-reschedule") == 1)
+        #expect(detailGetCount() == 2)
+        #expect(vm.pendingProposal == nil)
+        #expect(vm.reschedule == nil)
+        #expect(vm.state == .loaded)
+        #expect(vm.responder.apiError == nil)
+        #expect(vm.responder.isSubmitting == false)
+    }
+
+    @Test("decline whose follow-up detail GET returns 500 still clears the proposal")
+    func declineWithFailedRefetchClearsProposal() async {
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
+        await vm.load()
+        #expect(vm.pendingProposal != nil)
+
+        await vm.responder.decline(reason: "No")
+
+        #expect(postCount(suffix: "/decline-reschedule") == 1)
+        #expect(detailGetCount() == 2)
+        #expect(vm.pendingProposal == nil)
+        #expect(vm.reschedule == nil)
+        #expect(vm.state == .loaded)
+        #expect(vm.responder.apiError == nil)
+        #expect(vm.responder.isSubmitting == false)
+    }
+
     // MARK: Silent refresh
 
     @Test("a refresh whose GET fails after a successful load keeps the content and .loaded")

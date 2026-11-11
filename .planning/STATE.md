@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-09-PLAN.md
-last_updated: "2026-11-11T05:30:23.481Z"
+stopped_at: Completed 03-10-PLAN.md
+last_updated: "2026-11-11T05:38:52.146Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: be60f6fbf812e0f8cb493cd47386dd3ef9ec4fef
+state_head: a49b1fe282650d5fe6913898be0fe3f1eaa087e4
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 53
+  completed_plans: 54
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 13 of 15
+Plan: 14 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -109,6 +109,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P08 | 6 min | 2 tasks | 8 files |
 | Phase 03 P07 | 7 min | 2 tasks | 8 files |
 | Phase 03 P09 | 25min | 3 tasks | 9 files |
+| Phase 03 P10 | 7 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -224,6 +225,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-08: expert cancel money line is a line only when payment_action_required and payment_not_charged are both present and false (ExpertCancelRefundLine); a missing key, either key true or a zero amount shows no money line and no footnote; refundLine has no default anywhere; EXP-11 complete, device checks pending in UAT, BACK-19 production smoke still unrun
 - [Phase 03]: 03-07: DeclineNote re-checks the raw status ('declined') and matches codes exactly; unknown codes show no reason line and never the raw code
 - [Phase 03]: 03-09: Upcoming details onJoinCall is an optional override (nil starts the call through CallCenter.startCall); Skype/Zoom Open in {provider} uses the same call path and never opens the URL; Cancel shows only for confirmed, pending_approval, pending_reschedule while end > now (UpcomingActionPolicy, D-13)
+- [Phase 03]: 03-10: post-cancel toast is worded from the server refund_amount plus the confirmed case; a bare 0 is never 'no refund' except charged inside 24 hours
+- [Phase 03]: 03-10: cancel comment sent as 'label: comment', comment capped 450 and reason 500 UTF-16 units on character boundaries
 
 ### Pending Todos
 
@@ -290,6 +293,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T05:30:23.068Z
-Stopped at: Completed 03-09-PLAN.md
+Last session: 2026-11-11T05:38:51.936Z
+Stopped at: Completed 03-10-PLAN.md
 Resume file: None

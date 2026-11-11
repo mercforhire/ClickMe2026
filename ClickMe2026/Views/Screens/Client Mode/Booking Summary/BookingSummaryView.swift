@@ -172,6 +172,10 @@ struct BookingSummaryView: View {
                     bookingIDLabel: viewModel.bookingIDLabel
                 )
 
+                if let declineNote = viewModel.declineNote {
+                    BookingSummaryDeclineNoteCard(note: declineNote)
+                }
+
                 if viewModel.hasSubmittedReview {
                     BookingSummaryFeedback(
                         feedbackStars: viewModel.feedbackStars,

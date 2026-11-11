@@ -265,6 +265,46 @@ struct BookingSummaryViewModelTests {
         #expect(vm.bookingIDLabel == "ID: #11111111")
     }
 
+    // MARK: Decline note (BACK-02)
+
+    private func declineModel(status: String, extraFields: String) async -> BookingSummaryViewModel {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: summaryAPI(detail: Fixtures.detailJSON(status: status, extraFields: extraFields))
+        )
+        await vm.load()
+        return vm
+    }
+
+    @Test("a declined detail exposes the reason line and the expert's note, and keeps the Cancelled badge")
+    func declinedDetailExposesNote() async {
+        let vm = await declineModel(
+            status: "declined",
+            extraFields: #""decline_reason_code":"PRICING","decline_reason_text":"Too low""#
+        )
+        #expect(vm.declineNote == DeclineNote(reasonLine: "Pricing mismatch", text: "Too low"))
+        #expect(vm.status == .cancelled)
+    }
+
+    @Test("a declined detail with neither code nor text shows no decline note")
+    func declinedWithoutNoteShowsNothing() async {
+        let vm = await declineModel(
+            status: "declined",
+            extraFields: #""decline_reason_code":null,"decline_reason_text":null"#
+        )
+        #expect(vm.loadState == .loaded)
+        #expect(vm.declineNote == nil)
+    }
+
+    @Test("a cancelled detail never shows a decline note")
+    func cancelledShowsNoDeclineNote() async {
+        let vm = await declineModel(
+            status: "cancelled",
+            extraFields: #""decline_reason_code":"PRICING","decline_reason_text":"Too low""#
+        )
+        #expect(vm.declineNote == nil)
+    }
+
     // MARK: Preview seam
 
     @Test("the preview init's responder records no request")

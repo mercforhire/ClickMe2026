@@ -81,4 +81,13 @@ struct ClientBookingDetail: Decodable {
     /// so nothing has been charged yet. Optional so older payloads decode
     /// (D-14). The cancel confirm step reads it as "not charged".
     let paymentActionRequired: Bool?
+    /// Reason code the expert chose when declining the request (BACK-02).
+    /// Non-null only when `status == "declined"`. Kept as a raw string so a
+    /// code this build does not know never breaks decoding; `DeclineNote`
+    /// maps the known ones to a reason line and drops the rest.
+    let declineReasonCode: String?
+    /// Free-text note the expert wrote when declining (BACK-02). Non-null
+    /// only when `status == "declined"`; up to 1000 characters of
+    /// expert-authored text. Render as plain text.
+    let declineReasonText: String?
 }

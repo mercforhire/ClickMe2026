@@ -61,6 +61,11 @@ final class BookingSummaryViewModel: ObservableObject {
     /// uses, so support sees one format across screens and platforms.
     @Published var bookingIDLabel: String?
 
+    /// The expert's reason for declining, or nil when the booking was not
+    /// declined or carries neither a code nor a note (BACK-02). The card shows
+    /// only when this is set.
+    @Published var declineNote: DeclineNote?
+
     /// Full text of the client's private note on this booking, surfaced
     /// from `ClientBookingDetail.privateNote`. `nil` while loading or
     /// when no note has been written — the "My Note" card renders an
@@ -272,6 +277,11 @@ final class BookingSummaryViewModel: ObservableObject {
         dateTime = Self.formatDateTime(start: detail.startTime, end: detail.endTime)
         pricePaid = Self.formatPrice(topic: detail.topic)
         status = Self.mapStatus(detail.status)
+        declineNote = DeclineNote.make(
+            status: detail.status,
+            code: detail.declineReasonCode,
+            text: detail.declineReasonText
+        )
         privateNote = detail.privateNote
         reschedule = detail.reschedule
         currentStartTime = detail.startTime

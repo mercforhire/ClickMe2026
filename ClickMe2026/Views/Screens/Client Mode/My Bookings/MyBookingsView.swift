@@ -147,11 +147,14 @@ struct MyBookingsView: View {
                         onConfirmCancellation: { _, _ in popToRoot() }
                     )
                 case let .rescheduleBooking(booking):
-                    // On success, pop all the way back to My Bookings
-                    // so the list re-fetches with the updated slot.
+                    // On success, pop exactly one level, back to where
+                    // Reschedule was tapped (Upcoming details, or the list
+                    // when started from a card). The "Reschedule request
+                    // sent" toast is posted by the view model, and the
+                    // screen underneath refetches (D-11, UI-SPEC N1).
                     RescheduleView(
                         bookingId: booking.id,
-                        onRescheduled: { popToRoot() }
+                        onRescheduled: { pop() }
                     )
                 case let .privateNote(booking):
                     ClientBookingNoteView(
@@ -176,6 +179,15 @@ struct MyBookingsView: View {
             navPath.push(route)
         } else {
             _localPath.append(route)
+        }
+    }
+
+    /// One level back, to the screen that pushed the current one.
+    private func pop() {
+        if let navPath {
+            navPath.pop()
+        } else if !_localPath.isEmpty {
+            _localPath.removeLast()
         }
     }
 

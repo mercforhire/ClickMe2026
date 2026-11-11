@@ -30,11 +30,28 @@ extension ClickMeAPI {
         try await service.httpRequest(url: url(.deleteAvailabilityOverride, id: id), method: .delete)
     }
 
-    func getExpertAvailability(id: UUID, month: String) async throws -> SuccessDataResponse<ExpertAvailabilityData> {
-        try await service.httpRequest(
+    /// `GET /experts/:id/availability?month=YYYY-MM`.
+    /// - Parameters:
+    ///   - id: The expert.
+    ///   - month: `yyyy-MM`.
+    ///   - excludeBookingId: The booking being rescheduled, so its own slot is not
+    ///     shown as taken (BOOK-16). Sent as `exclude_booking_id` only when set.
+    ///     The backend accepts a UUID in either case and ignores an invalid or
+    ///     non-matching value (`availability.controller.js`). Make a Booking and
+    ///     the expert reschedule picker leave it nil.
+    func getExpertAvailability(
+        id: UUID,
+        month: String,
+        excludeBookingId: UUID? = nil
+    ) async throws -> SuccessDataResponse<ExpertAvailabilityData> {
+        var parameters = ["month": month]
+        if let excludeBookingId {
+            parameters["exclude_booking_id"] = excludeBookingId.uuidString
+        }
+        return try await service.httpRequest(
             url: url(.getExpertAvailability, id: id),
             method: .get,
-            parameters: ["month": month]
+            parameters: parameters
         )
     }
 }

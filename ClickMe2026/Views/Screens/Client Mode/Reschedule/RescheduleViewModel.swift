@@ -84,13 +84,17 @@ final class RescheduleViewModel: ObservableObject {
     // MARK: Dependencies
 
     private let api: ClickMeAPI
+    /// Where "Reschedule request sent" is posted. The client shell hosts the
+    /// toast; tests inject their own instance.
+    private let toasts: ToastCenter
 
     /// Runtime init — hydrates from `GET /client/bookings/:id` then fetches
     /// availability for the current month. `PATCH /client/bookings/:id/reschedule`
     /// fires on submit.
     init(
         bookingId: UUID,
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        toasts: ToastCenter = .shared
     ) {
         self.bookingId = bookingId
         self.booking = RescheduleViewModel.placeholderBooking
@@ -110,6 +114,7 @@ final class RescheduleViewModel: ObservableObject {
         self.originalSessionDuration = nil
         self.isPaidBooking = false
         self.api = api
+        self.toasts = toasts
     }
 
     /// Preview seam — pre-populates the booking + availability as if the
@@ -143,6 +148,7 @@ final class RescheduleViewModel: ObservableObject {
         self.originalSessionDuration = nil
         self.isPaidBooking = isPaidBooking
         self.api = .shared
+        self.toasts = .shared
     }
 
     // MARK: - Load
@@ -219,7 +225,13 @@ final class RescheduleViewModel: ObservableObject {
 
         availabilityError = nil
         do {
-            let response = try await api.getExpertAvailability(id: expertId, month: key)
+            // The booking's own slot must not read as taken while picking its
+            // replacement (BOOK-16).
+            let response = try await api.getExpertAvailability(
+                id: expertId,
+                month: key,
+                excludeBookingId: bookingId
+            )
             let grouped = Self.groupSlots(response.data.days, calendar: calendar)
             for (dateKey, slots) in grouped {
                 let combined = (availabilityByDate[dateKey] ?? []) + slots
@@ -322,6 +334,7 @@ final class RescheduleViewModel: ObservableObject {
                 timezone: timezone,
                 note: note
             )
+            toasts.show("Reschedule request sent")
             onSuccess()
             return
         } catch {
@@ -345,7 +358,7 @@ final class RescheduleViewModel: ObservableObject {
 
         let preferredId = vault.first(where: { $0.isDefault })?.id ?? vault.first?.id
         guard let pmId = preferredId else {
-            submitError = "Please add a payment method in Settings > Payment before rescheduling this session."
+            submitError = "Please add a payment method in Profile > Payment before rescheduling this session."
             return
         }
 
@@ -362,14 +375,18 @@ final class RescheduleViewModel: ObservableObject {
             return
         }
 
+        toasts.show("Reschedule request sent")
         onSuccess()
     }
 
     /// Maps reschedule submit failures to user-visible copy. Two codes are
     /// reschedule-only and keep their client wording here:
-    /// - `RESCHEDULE_OUTSIDE_AUTH_WINDOW` (Phase 27.1, now rare) — the
-    ///   move is genuinely unconvertible (e.g. proposed <24h out); the
-    ///   user must re-book.
+    /// - `RESCHEDULE_OUTSIDE_AUTH_WINDOW` — a live hold whose move cannot be
+    ///   converted to a later charge (no connected account, direct charging
+    ///   off, or a charge time already due). The booking and its hold are
+    ///   untouched, so the copy offers a different time first, or cancelling
+    ///   and booking again; cancelling a live hold voids it in full, so the
+    ///   client is not charged (`reschedule.js assertConversionAllowed`).
     /// - `PAYMENT_METHOD_REQUIRED` on a retry — the picked card can't
     ///   be prepared for future billing (typically a one-off
     ///   PaymentSheet card); the user needs to add a reusable card.
@@ -381,9 +398,9 @@ final class RescheduleViewModel: ObservableObject {
         let code = BookingErrorMapper.code(for: error)
         switch code {
         case .rescheduleOutsideAuthWindow:
-            return "This time is past the payment hold on your original booking. Please cancel and book again to authorize a new payment."
+            return "This time is past the payment hold on your original booking. Choose a different time, or cancel this booking and book again. Cancelling releases the hold on your card, so you won't be charged."
         case .paymentMethodRequired:
-            return "The card on file can't be used for this reschedule. Please add a new payment method in Settings > Payment and try again."
+            return "The card on file can't be used for this reschedule. Please add a new payment method in Profile > Payment and try again."
         default:
             return BookingErrorMapper.message(for: code, fallback: error.userMessage)
         }

@@ -138,9 +138,9 @@ struct ErrorCopyRows {
 
     private static let slotTaken = "That time slot was just taken. Please pick another."
     private static let clientOutsideAuthWindow =
-        "This time is past the payment hold on your original booking. Please cancel and book again to authorize a new payment."
+        "This time is past the payment hold on your original booking. Choose a different time, or cancel this booking and book again. Cancelling releases the hold on your card, so you won't be charged."
     private static let clientPaymentMethodRequired =
-        "The card on file can't be used for this reschedule. Please add a new payment method in Settings > Payment and try again."
+        "The card on file can't be used for this reschedule. Please add a new payment method in Profile > Payment and try again."
     private static let expertOutsideAuthWindow =
         "This time is past the payment hold on the original booking. Please cancel and ask the client to book a new session."
 

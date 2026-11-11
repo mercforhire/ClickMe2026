@@ -35,12 +35,12 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BOOK-09** [B9]: The Upcoming Booking status pill shows the booking's real status
 - [x] **BOOK-10** [B10] **[major]**: Every money amount is shown with correct decimals for its currency (no dropped cents), using one shared formatter
 - [x] **BOOK-11** [B11]: The Past tab shows an empty state when there are no past bookings
-- [ ] **BOOK-12** [B12]: Keep Booking returns to the previous screen, not the My Bookings root
+- [x] **BOOK-12** [B12]: Keep Booking returns to the previous screen, not the My Bookings root
 - [x] **BOOK-13** [B13]: Cancel is hidden on a booking whose session has already ended
 - [x] **BOOK-14** [B14] **[major]**: Paid booking and reschedule pickers allow slots at most 6 days ahead, and the long-lead error codes show a clear error instead of an invalid confirm
 - [x] **BOOK-15** [B15] **[major]**: Tapping a `booking/payment_actions` push opens that booking (Q3 settled 2026-11-09 as route only, Phase 2 D-01: no recovery flow is built; an unanswered booking is cancelled by scaRecoveryWindowSweep)
-- [ ] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
-- [ ] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
+- [x] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
+- [x] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
 - [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
 - [ ] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
 - [x] **BOOK-20** [new, user request 2026-11-10]: The client Booking Summary screen shows the booking ID, on both iOS and Android, in the same short-ID format as Upcoming Booking details (`ID: …`). Android has no ID on this screen today either, so both apps change
@@ -199,12 +199,12 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-09 | Phase 3 | Complete |
 | BOOK-10 | Phase 2 | Complete |
 | BOOK-11 | Phase 3 | Complete |
-| BOOK-12 | Phase 3 | Pending |
+| BOOK-12 | Phase 3 | Complete |
 | BOOK-13 | Phase 3 | Complete |
 | BOOK-14 | Phase 2 | Complete |
 | BOOK-15 | Phase 2 | Complete |
-| BOOK-16 | Phase 3 | Pending |
-| BOOK-17 | Phase 3 | Pending |
+| BOOK-16 | Phase 3 | Complete |
+| BOOK-17 | Phase 3 | Complete |
 | BOOK-18 | Phase 2 | Complete |
 | BOOK-19 | Phase 4 | Pending |
 | BOOK-20 | Phase 3 | Complete |

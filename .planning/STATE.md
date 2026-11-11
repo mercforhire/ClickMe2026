@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
-status: executing
-stopped_at: Completed 03-11-PLAN.md
-last_updated: "2026-11-11T05:46:12.174Z"
+status: verifying
+stopped_at: Completed 03-12-PLAN.md
+last_updated: "2026-11-11T06:00:40.947Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: f59c3ba57b3e4e076ce463ce475de7f454994e8b
+state_head: 6a8fb82a46d6cd1d2f25b8cc67c1ae5b26d557eb
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 55
+  completed_plans: 56
   percent: 13
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
 Plan: 15 of 15
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-10 — Phase 03 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -111,6 +111,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P09 | 25min | 3 tasks | 9 files |
 | Phase 03 P10 | 7 min | 2 tasks | 9 files |
 | Phase 03 P11 | 15 min | 2 tasks | 8 files |
+| Phase 03 P12 | 25 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -229,6 +230,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-10: post-cancel toast is worded from the server refund_amount plus the confirmed case; a bare 0 is never 'no refund' except charged inside 24 hours
 - [Phase 03]: 03-10: cancel comment sent as 'label: comment', comment capped 450 and reason 500 UTF-16 units on character boundaries
 - [Phase 03]: 03-11: RescheduleViewModel takes an injected ToastCenter and posts 'Reschedule request sent' on both success paths before onSuccess; Keep Booking and the reschedule return pop one level, only a confirmed cancel pops to the My Bookings root; showsPastEmptyState needs state .loaded, so a failed load never reads as no past bookings
+- [Phase 03]: A confirmed cancel opened from a HomeRoute entry pops two levels (cancel screen and the cancelled details); My Bookings keeps pop-to-root
+- [Phase 03]: Expert shell stubs the three new routes and hides client Cancel, Reschedule and Leave a Review through hostsClientBookingFlows instead of rerouting chat rows to the expert summary
 
 ### Pending Todos
 
@@ -297,6 +300,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T05:46:11.959Z
-Stopped at: Completed 03-11-PLAN.md
+Last session: 2026-11-11T06:00:40.106Z
+Stopped at: Completed 03-12-PLAN.md
 Resume file: None

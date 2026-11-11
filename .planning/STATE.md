@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-11-11T04:29:10.137Z"
+stopped_at: Completed 03-15-PLAN.md
+last_updated: "2026-11-11T04:31:57.539Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: 25f3374f71dcb8b9771c671c32338427b8141a9a
+state_head: 4db4004d616c4dabd57c4f73fc3869856af351dc
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 45
+  completed_plans: 46
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 5 of 15
+Plan: 6 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -101,6 +101,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P02 | 25min | 2 tasks | 8 files |
 | Phase 03 P03-03 | 25min | 3 tasks | 4 files |
 | Phase 03 P04 | 25m | 3 tasks | 9 files |
+| Phase 03 P15 | 6 min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -208,6 +209,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-03 D-15: Skype/Zoom layout shows the shared end + 55 banner via MeetingCallViewModel.endingBannerText, gated on isOvertimeWarning only
 - [Phase 03]: 03-04: Expert Booking Summary Join visibility is ExpertJoinVisibility (confirmed/in_progress/pending_reschedule always, completed only in window), not JoinWindow.showsJoinButton
 - [Phase 03]: 03-04: Expert reschedule cap treats a booking as paid when consultationFee.amount > 0 (no payment_status on expert details), via PaidBookingWindow
+- [Phase 03]: 03-15: Android Booking Summary reuses upcoming_booking_id and shortBookingId (no new string) so the ID reads the same on every Android screen (BOOK-20 Android half, commit 0f2e8cd in ClickMe_Android)
 
 ### Pending Todos
 
@@ -268,6 +270,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T04:29:09.932Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-11-11T04:31:57.234Z
+Stopped at: Completed 03-15-PLAN.md
 Resume file: None

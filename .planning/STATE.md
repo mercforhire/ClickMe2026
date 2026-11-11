@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-08-PLAN.md
-last_updated: "2026-11-11T05:13:58.141Z"
+stopped_at: Completed 03-07-PLAN.md
+last_updated: "2026-11-11T05:22:05.245Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: 0e26f5dde4ed396701274d0063e72999e46a8c4b
+state_head: f6450457eee825511ddd98855ff9e5b31ddb2a07
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 51
+  completed_plans: 52
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 11 of 15
+Plan: 12 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -107,6 +107,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P13 | 7 min | 2 tasks | 3 files |
 | Phase 03 P14 | 15 min | 2 tasks | 8 files |
 | Phase 03 P08 | 6 min | 2 tasks | 8 files |
+| Phase 03 P07 | 7 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -220,6 +221,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-13: Booking Summary runs on the shared RescheduleResponder and RescheduleResponseCard; booking.update and the responder refetch both use the silent refresh(), which writes detail and review context under one newest-token check and keeps content on failure
 - [Phase 03]: 03-14: Upcoming details pill is decided by the decoded BookingStatus case through one exhaustive switch (statusRaw only humanizes .unknown, always neutral); BookingShortID is the one iOS short-ID formatter for 03-07 to reuse; BOOK-20 left open for 03-07
 - [Phase 03]: 03-08: expert cancel money line is a line only when payment_action_required and payment_not_charged are both present and false (ExpertCancelRefundLine); a missing key, either key true or a zero amount shows no money line and no footnote; refundLine has no default anywhere; EXP-11 complete, device checks pending in UAT, BACK-19 production smoke still unrun
+- [Phase 03]: 03-07: DeclineNote re-checks the raw status ('declined') and matches codes exactly; unknown codes show no reason line and never the raw code
 
 ### Pending Todos
 
@@ -284,6 +286,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T05:13:57.935Z
-Stopped at: Completed 03-08-PLAN.md
+Last session: 2026-11-11T05:22:04.872Z
+Stopped at: Completed 03-07-PLAN.md
 Resume file: None

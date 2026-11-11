@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-11-11T03:56:00.640Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-11-11T04:15:12.556Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: 31fd502100fb414db3a236b6b529e8e74e0017dd
+state_head: 8c24f8604a03cbbbccbee3b186f4c14841dc1478
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 42
+  completed_plans: 43
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 2 of 15
+Plan: 3 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -98,6 +98,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 02 P15 | 23 min | 2 tasks | 7 files |
 | Phase 02 P12 | 23min | 3 tasks | 8 files |
 | Phase 03 P01 | 15min | 2 tasks | 9 files |
+| Phase 03 P02 | 25min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -199,6 +200,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Involuntary logouts (suspension, rejected token, refresh 401, no refresh token) skip the DELETE: session cleared synchronously, deleteToken in the background; login/signup await the owed retry before registering
 - [Phase 02]: Phase 2 device checklist uses the latest SUMMARY/WINDOWS wording (BOOK-14 dimmed slots, CALL-02 Join disabled, BOOK-10 CAD and real net earnings); WINDOWS.md entries annotated as carried over, none waived
 - [Phase 03]: RescheduleResponder is @MainActor @Observable (shared by two ObservableObject view models); decline reason capped on submit at 500 UTF-16 units via UTF16Prefix
+- [Phase 03]: 03-02: cancel preview uses the list price; held with no authorization_expires_at is treated as charged; payment_action_required or payment_status none reads as not charged
+- [Phase 03]: 03-02: a refund case that changed at the Confirm Cancellation tap blocks the submit once (notice shown); the next tap submits
 
 ### Pending Todos
 
@@ -259,6 +262,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T03:56:00.456Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-11-11T04:15:12.368Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

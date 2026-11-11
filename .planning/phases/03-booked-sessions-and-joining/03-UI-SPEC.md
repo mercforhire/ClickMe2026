@@ -1,7 +1,7 @@
 ---
 phase: "03"
 slug: booked-sessions-and-joining
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-11-10"
@@ -455,7 +455,7 @@ One primary focal point per screen Phase 03 changes. Nothing else on the screen 
 
 > Shape-rooted state coverage for the Phase 03 deltas, hand-built from the decisions, the shipped code and the backend, using the 8-category probe taxonomy. Copy lives in the Copywriting Contract and is referenced, not restated.
 
-Applicable state considerations resolved: 21 covered, 5 backstop, 4 unresolved.
+Hand-built rows: 21 covered, 5 backstop, 3 dismissed as accepted limitations (K1, U2, U3; user decision 2026-11-10), 1 unresolved (K2). The engine probe run (below) maps onto these rows.
 
 | ID | Category | Element(s) | Status | Resolution / Reason |
 |----|----------|------------|--------|---------------------|
@@ -485,10 +485,63 @@ Applicable state considerations resolved: 21 covered, 5 backstop, 4 unresolved.
 | D2 | device-only | Toast placement above the tab bar and keyboard; VoiceOver announcement | 🧪 backstop | Needs a device check; SwiftUI rendering is not asserted by unit tests |
 | D3 | device-only | Open Meeting through `CallCenter.startCall` into the Skype screen, timer and `/end` | 🧪 backstop | Needs a Skype/Zoom booking on a real iPhone (UAT) |
 | D4 | device-only | Expert Join Session starts a call from Booking Summary within the window | 🧪 backstop | Needs two accounts and a device (UAT) |
-| K1 | known limitation | Declined booking shows the `Cancelled` badge on Booking Summary | ⚠ unresolved | `mapStatus` collapses `declined` into `.cancelled`, so the decline note sits under a "Cancelled" badge. Out of Phase 03's requirements; left as is. Ask the user if a "Declined" badge is wanted |
+| K1 | known limitation | Declined booking shows the `Cancelled` badge on Booking Summary | ⛔ dismissed | User decision 2026-11-10: keep `Cancelled`. `mapStatus` collapses `declined` into `.cancelled`; out of Phase 03's requirements. A plan must not change the badge |
 | K2 | partial | Skype/Zoom layout has no overtime banner | ⚠ unresolved | Carried from Phase 02 K2. D-09 says the existing banners "stay", which is true of the in-app layout only. Both call types still auto-end at end + 60 min, and the new status line no longer mentions it. The amber timer and remaining chip give the only signal. Revisit only if the user asks for the banner on the Skype layout |
-| U2 | data | Refund amount is the list price, not the amount paid | ⚠ unresolved | `topic.price.amount` is the unit price (backend comment, `clientBooking.controller.js` getDetail). A booking made with a promo code was held or charged for less, so the preview and the expert's `consultationFee` can overstate it. The post-cancel toast uses the server's real `refund_amount` for refunds, but a hold-release line still names the list price. Options: accept, or add an additive `amount_paid_minor_units` to `GET /client/bookings/{id}` and the expert details in the backend repo as a separate commit |
-| U3 | data | Expert cancel cannot tell a charged booking from a never-charged `scheduled` one | ⚠ unresolved | The expert detail has `authorizationExpiresAt` but no payment status. `authorizationExpiresAt == nil` covers a captured booking and a legacy long-lead booking that was never charged; the second would read "full refund" though nothing was charged. Paid long-lead bookings can no longer be created (Phase 02 W1-11), so it is rare. Options: accept, or add an additive `payment_status` to `GET /expert/bookings/{id}/details` |
+| U2 | data | Refund amount is the list price, not the amount paid | ⛔ dismissed | User decision 2026-11-10: accepted limitation, no backend change this phase. `topic.price.amount` is the unit price, so for a promo-code booking the preview and the expert's `consultationFee` can overstate it; the post-cancel toast uses the server's real `refund_amount`. A plan must not add `amount_paid_minor_units` |
+| U3 | data | Expert cancel cannot tell a charged booking from a never-charged `scheduled` one | ⛔ dismissed | User decision 2026-11-10: accepted limitation, no backend change this phase. `authorizationExpiresAt == nil` covers a captured booking and a rare legacy never-charged long-lead booking (no longer creatable, Phase 02 W1-11), which reads "full refund". A plan must not add `payment_status` to the expert details |
+
+### Probe run (ui-consideration-probe, 2026-11-10)
+
+Ten surfaces were fed to the engine. Detected kinds were corrected by the orchestrator and confirmed by the user (S1, S9 were mis-detected as lists; S6 was unclassified): S1 response card = interactive-control + static-content; S2 pill/ID = static-content; S3 join/cancel controls = interactive-control; S4 Skype hero = static-content + interactive-control; S5 client cancel = form + interactive-control + static-content; S6 expert refund line = static-content; S7 reschedule picker = list-collection + interactive-control; S8 Past tab = list-collection; S9 Booking Summary = static-content + interactive-control; S10 toast = static-content + interactive-control.
+
+Coverage: **44 applicable — 31 resolved (explicit), 7 resolved (backstop), 6 dismissed, 0 unresolved** (K2 above remains the one open assumption, outside the probe set). User accepted all resolutions 2026-11-10.
+
+| Surface | Category | Status | Resolution |
+|---------|----------|--------|------------|
+| S1 | loading | explicit | L1 |
+| S1 | error | explicit | E1 |
+| S1 | overflow | backstop | L2 (largest Dynamic Type on device) |
+| S1 | long-text | explicit | LT1 (expert note wraps, no truncation) |
+| S2 | overflow | explicit | P3 (humanized raw status, never hidden) |
+| S2 | long-text | explicit | D1 (fixed `ID: #` + 8 chars) |
+| S3 | loading | explicit | T1 (60 s timeline; disabled styling while closed) |
+| S3 | error | backstop | D4 + existing `CallCenter.joinError` alert (device/UAT) |
+| S3 | long-text | backstop | L3 (`Open in Microsoft Teams` on narrow phone) |
+| S4 | loading | dismissed | Reason: hero renders from local `MeetingCallViewModel` state; no fetch on this surface |
+| S4 | error | explicit | End Session reports `/end` through the unchanged Phase 02 path and its error handling |
+| S4 | overflow | backstop | L2 (status line at largest Dynamic Type) |
+| S4 | long-text | explicit | Status line wraps (`.fixedSize(horizontal: false, vertical: true)`); copy never mentions auto-end |
+| S5 | empty | explicit | M2 (case F copy) |
+| S5 | loading | explicit | Confirm Cancellation is disabled while the cancel request is in flight; a second tap cannot double-submit |
+| S5 | error | explicit | `Couldn't cancel booking` alert with `Review Cancellation`; `SESSION_ALREADY_ENDED` shows server message |
+| S5 | partial | explicit | M1 / M2 / M3 (all six money cases) |
+| S5 | overflow | backstop | L2 (warning block at largest Dynamic Type) |
+| S5 | long-text | explicit | LT2 (450 cap, counter, max 472 sent) |
+| S6 | overflow | dismissed | Reason: a single wrapping sentence inside an existing scrolling sheet; no container to overflow |
+| S6 | long-text | explicit | M4 fallback; line wraps |
+| S7 | empty | dismissed | Reason: picker's no-slots state is existing behavior Phase 03 does not change (only `exclude_booking_id` is added, which can only add a slot) |
+| S7 | loading | dismissed | Reason: existing availability loading state, unchanged |
+| S7 | error | dismissed | Reason: existing availability load error, unchanged; submit errors are covered by the S7 long-text row |
+| S7 | populated | explicit | Own slot is not blocked (`exclude_booking_id`); `Current` chip unchanged |
+| S7 | partial | explicit | Existing `Current` chip handling unchanged |
+| S7 | zero-one-many | dismissed | Reason: slot-list layout is existing and unchanged by Phase 03 |
+| S7 | overflow | explicit | Existing scrolling slot list, unchanged |
+| S7 | long-text | explicit | Changed error copy (three rows in "Reschedule request") wraps in the existing alert |
+| S8 | empty | explicit | EM1 |
+| S8 | loading | explicit | EM1 (empty state never shown while loading) |
+| S8 | error | explicit | EM1 (existing error state, never the empty state) |
+| S8 | populated | explicit | Existing Past cards and `PastBookingStatus` mapping, unchanged |
+| S8 | partial | explicit | Existing Past card fields, unchanged |
+| S8 | overflow | explicit | Existing scrolling list, unchanged |
+| S8 | zero-one-many | explicit | EM1 at zero; existing list at one and many |
+| S9 | loading | explicit | Leave a Review and the decline note render only after the detail has loaded (status known) |
+| S9 | error | explicit | Existing Booking Summary load error, unchanged |
+| S9 | overflow | explicit | LT1 (decline note full text in a scrolling screen) |
+| S9 | long-text | explicit | LT1 (1000 chars, wraps, no truncation) |
+| S10 | loading | explicit | N2 (toast appears only after the success response) |
+| S10 | error | explicit | A failed action shows its alert and never a toast |
+| S10 | overflow | backstop | D2 (placement above tab bar and keyboard, device) |
+| S10 | long-text | backstop | L2 (multi-line money toasts wrap at largest Dynamic Type) |
 
 <!-- Status vocabulary (locked by probe-core projectTruths):
      ✅ covered   → a plain truth string lifted into must_haves.truths
@@ -509,7 +562,7 @@ Applicable state considerations resolved: 21 covered, 5 backstop, 4 unresolved.
 | `exclude_booking_id` is an optional availability query parameter | `src/controllers/availability.controller.js` |
 | `RESCHEDULE_OUTSIDE_AUTH_WINDOW` causes: no connected account, direct charging off, or a conversion whose charge time is already due | `src/utils/reschedule.js` `assertConversionAllowed` |
 
-No backend change is required for the contract as written. U2 and U3 are optional additive backend items; if the planner takes either, it is a separate backend commit that stays safe for build 6 and the current Android build.
+No backend change is required for the contract as written. U2 and U3 were declined for this phase (user decision 2026-11-10); no backend field is added.
 
 ---
 
@@ -526,15 +579,17 @@ Phase 03 adds no packages. No `npx shadcn view` vetting was needed and none was 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+Final check (3rd pass, after revision 2):
 
-**Approval:** pending
+- [ ] Dimension 1 Copywriting: BLOCK, accepted as FLAG by force-approve. The shipped `Cancel` / `Reschedule` labels on `UpcomingBookingSecondaryActions` are kept unchanged on purpose (no copy change, no Android parity change). A plan must not rename them.
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: FLAG (inherited 15/16 pt closeness)
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
+
+**Approval:** force-approved by the user 2026-11-10 after max revisions (2)
 
 ---
 

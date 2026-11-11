@@ -17,14 +17,12 @@ struct RescheduleTimeSlotsCard: View {
     /// time. Renders it disabled with a "Current" label so the user
     /// can't reschedule to the same slot they're rescheduling from.
     var isCurrent: (BookingTimeSlot) -> Bool = { _ in false }
-    /// Whether a slot can be picked. The client picker passes the paid
-    /// 6-day limit (BOOK-14): a slot past it renders dimmed and cannot be
-    /// tapped, never hidden. The expert picker does not pass it and keeps
-    /// every slot selectable (D-13, EXP-13 in Phase 3).
+    /// Whether a slot can be picked. Both pickers pass the paid 6-day limit
+    /// (BOOK-14 client, EXP-13 expert): a slot past it renders dimmed and
+    /// cannot be tapped, never hidden.
     var isBookable: (BookingTimeSlot) -> Bool = { _ in true }
     /// Shows the fixed paid-window note under the title, whatever day is
-    /// selected (Android parity). The client picker passes it for a paid
-    /// booking; the expert picker does not.
+    /// selected (Android parity). Both pickers pass it for a paid booking.
     var showsPaidWindowNote: Bool = false
     let onSelect: (BookingTimeSlot) -> Void
 

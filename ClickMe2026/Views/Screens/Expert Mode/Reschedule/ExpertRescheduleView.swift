@@ -121,6 +121,8 @@ struct ExpertRescheduleView: View {
                     slots: viewModel.slotsForSelectedDate,
                     selectedTime: viewModel.selectedTime,
                     isCurrent: { viewModel.isCurrentSlot($0) },
+                    isBookable: { viewModel.isSelectableSlot($0) },
+                    showsPaidWindowNote: viewModel.latestBookableStart != nil,
                     onSelect: { viewModel.select(time: $0) }
                 )
 

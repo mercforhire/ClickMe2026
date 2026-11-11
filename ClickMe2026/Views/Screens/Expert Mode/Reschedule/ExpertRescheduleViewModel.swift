@@ -17,6 +17,11 @@ import SwiftUI
 /// propose slots that already exist in their published schedule. If they
 /// want a slot outside that grid they'd first add availability under
 /// `AvailabilitySettingsView` and come back.
+///
+/// A paid booking can only move to a start at most 6 days ahead
+/// (`PaidBookingWindow`, EXP-13, Phase 2 D-13): later slots stay listed but
+/// dimmed, and the submit refuses one locally. The server's lead-time check
+/// stays authoritative.
 @MainActor
 final class ExpertRescheduleViewModel: ObservableObject {
 
@@ -59,6 +64,11 @@ final class ExpertRescheduleViewModel: ObservableObject {
     /// advisory is added later.
     @Published var authorizationExpiresAt: Date?
 
+    /// Whether the booking counts as paid for the 6-day reschedule limit.
+    /// False until the detail loads, so the picker is uncapped until then
+    /// (as the client picker is). Set from `isPaid(consultationFeeAmount:)`.
+    @Published private(set) var isPaidBooking: Bool
+
     // MARK: Availability cache — keyed by "yyyy-MM-dd" in client's timezone
     @Published var availabilityByDate: [String: [BookingTimeSlot]]
     @Published var loadedMonths: Set<String>
@@ -82,8 +92,12 @@ final class ExpertRescheduleViewModel: ObservableObject {
     /// Runtime init — hydrates from `GET /expert/bookings/:id/details`
     /// then fetches availability for the current month via
     /// `GET /experts/:id/availability` using the expert's own id.
+    ///
+    /// - Parameter isPaidBooking: Test seam. Production leaves it false and
+    ///   the detail load sets it, so the picker is uncapped until then.
     init(
         bookingId: UUID,
+        isPaidBooking: Bool = false,
         api: ClickMeAPI = .shared,
         userManager: UserManager = .shared
     ) {
@@ -102,6 +116,7 @@ final class ExpertRescheduleViewModel: ObservableObject {
         self.submitError = nil
         self.currentSessionStart = nil
         self.authorizationExpiresAt = nil
+        self.isPaidBooking = isPaidBooking
         self.api = api
         self.userManager = userManager
     }
@@ -115,7 +130,8 @@ final class ExpertRescheduleViewModel: ObservableObject {
         selectedTime: BookingTimeSlot? = nil,
         message: String = "",
         availabilityByDate: [String: [BookingTimeSlot]] = [:],
-        currentSessionStart: Date? = nil
+        currentSessionStart: Date? = nil,
+        isPaidBooking: Bool = false
     ) {
         self.bookingId = nil
         self.booking = booking
@@ -132,6 +148,7 @@ final class ExpertRescheduleViewModel: ObservableObject {
         self.submitError = nil
         self.currentSessionStart = currentSessionStart
         self.authorizationExpiresAt = nil
+        self.isPaidBooking = isPaidBooking
         self.api = .shared
         self.userManager = .shared
     }
@@ -180,6 +197,7 @@ final class ExpertRescheduleViewModel: ObservableObject {
             let startTime = schedule.startTime
             currentSessionStart = startTime
             authorizationExpiresAt = response.data.authorizationExpiresAt
+            isPaidBooking = Self.isPaid(consultationFeeAmount: response.data.session.consultationFee.amount)
             if let monthStart = calendar.date(
                 from: calendar.dateComponents([.year, .month], from: startTime)
             ) {
@@ -231,7 +249,9 @@ final class ExpertRescheduleViewModel: ObservableObject {
     }
 
     func select(time: BookingTimeSlot) {
-        guard !isCurrentSlot(time) else { return }
+        // The chip is dimmed past the paid 6-day limit; this refuses it when
+        // pushed directly (twin of `RescheduleViewModel.select(time:)`).
+        guard !isCurrentSlot(time), isBookableStart(time.startTime) else { return }
         selectedTime = time
     }
 
@@ -265,6 +285,13 @@ final class ExpertRescheduleViewModel: ObservableObject {
 
         if isCurrentSlot(slot) {
             submitError = "Please choose a different time than the current session."
+            return
+        }
+
+        // The picker dims these; this catches a slot that drifted past the
+        // 6-day paid limit while the screen was open. No request is made.
+        guard isBookableStart(slot.startTime) else {
+            submitError = BookingErrorMapper.message(for: .rescheduleTooFarAhead, fallback: "")
             return
         }
 
@@ -322,6 +349,40 @@ final class ExpertRescheduleViewModel: ObservableObject {
         if calendar.startOfDay(for: day) < calendar.startOfDay(for: Date()) { return false }
         let slots = availabilityByDate[Self.dateKey(day, calendar: calendar)] ?? []
         return slots.contains { $0.isAvailable }
+    }
+
+    // MARK: - Paid reschedule window (BOOK-14, EXP-13)
+
+    /// Whether the booking counts as paid. The expert details carry no
+    /// `payment_status` (UI-SPEC U3), so paid means a non-zero amount paid,
+    /// which mirrors Android `ExpertBookingDetail.isPaid`. The amount is above
+    /// zero for every paid-topic booking, including a long-lead one with no
+    /// PaymentIntent yet, and zero for a free or fully discounted one.
+    /// Over-capping is safe: the server refuses with RESCHEDULE_TOO_FAR_AHEAD.
+    static func isPaid(consultationFeeAmount: Double) -> Bool {
+        consultationFeeAmount > 0
+    }
+
+    /// The latest start a paid booking can move to, or nil for no limit.
+    /// Read from the clock on every call so a screen left open never keeps a
+    /// stale limit. Non-nil also means the slots card shows the paid window
+    /// note. Twin of `RescheduleViewModel.latestBookableStart`.
+    var latestBookableStart: Date? {
+        PaidBookingWindow.latestStart(isPaid: isPaidBooking, now: Date())
+    }
+
+    /// Whether the server would accept a reschedule to `start`. Twin of
+    /// `RescheduleViewModel.isBookableStart(_:)`.
+    func isBookableStart(_ start: Date) -> Bool {
+        PaidBookingWindow.allows(start, latestStart: latestBookableStart)
+    }
+
+    /// Whether a chip can be tapped: the slot is available, has not started,
+    /// and is inside the paid limit. The "Current" chip is handled by the
+    /// card through `isCurrentSlot(_:)`. A slot that fails this is shown
+    /// dimmed, never hidden. Twin of `RescheduleViewModel.isSelectableSlot(_:)`.
+    func isSelectableSlot(_ slot: BookingTimeSlot) -> Bool {
+        slot.isAvailable && slot.startTime > Date() && isBookableStart(slot.startTime)
     }
 
     // MARK: - Calendar derivation

@@ -7,12 +7,32 @@
 //  client pickers. A free booking is not capped. Slots past the limit stay
 //  listed but cannot be selected.
 //
-//  These rows never reach the API and must not touch MockURLProtocol.
+//  Only `submitRefusesFarSlot` builds an API, and it is a stub that records any
+//  request, so a regressed guard fails the test instead of reaching production.
+//  Every other row never reaches the API.
 //
 
 import Foundation
 import Testing
 @testable import ClickMe2026
+
+/// Counts stub requests from the `@Sendable` network handler.
+private final class RequestCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = 0
+
+    var count: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func increment() {
+        lock.lock()
+        value += 1
+        lock.unlock()
+    }
+}
 
 @MainActor
 @Suite("Expert reschedule window")
@@ -77,15 +97,22 @@ struct ExpertRescheduleWindowTests {
     @Test("submit refuses a slot that drifted past the limit with the mapped copy and no request")
     func submitRefusesFarSlot() async {
         // A runtime-style view model (it has a booking id) with the paid flag
-        // set through the seam. A request would reach the shared API and
-        // produce a different error, so the exact copy proves the local refusal.
-        let viewModel = ExpertRescheduleViewModel(bookingId: UUID(), isPaidBooking: true)
+        // set through the seam. The API is a stub that counts requests and
+        // answers with a transport error, so a regressed guard can neither reach
+        // the live backend nor produce the mapped copy by accident.
+        let requests = RequestCounter()
+        let api = APITestFactory.make { _ in
+            requests.increment()
+            throw URLError(.notConnectedToInternet)
+        }
+        let viewModel = ExpertRescheduleViewModel(bookingId: UUID(), isPaidBooking: true, api: api)
         viewModel.selectedTime = Self.slot(at: 10 * Self.day)
 
         var succeeded = false
         await viewModel.submit(onSuccess: { succeeded = true })
 
         #expect(!succeeded)
+        #expect(requests.count == 0)
         #expect(!viewModel.isSubmitting)
         #expect(viewModel.submitError == BookingErrorMapper.message(for: .rescheduleTooFarAhead, fallback: ""))
         #expect(viewModel.submitError?.isEmpty == false)

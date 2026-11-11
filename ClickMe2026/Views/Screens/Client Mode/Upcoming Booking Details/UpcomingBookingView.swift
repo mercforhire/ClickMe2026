@@ -20,9 +20,15 @@ struct UpcomingBookingView: View {
     /// `CallCenter.startCall`, so the button works however the screen was opened
     /// (My Bookings, a push tap, a chat row, Explore, Payments) with no caller wiring.
     var onJoinCall: (() -> Void)?
-    var onReschedule: () -> Void
-    var onCancel: () -> Void
+    /// Overrides for the Reschedule and Cancel actions. `nil` means the screen
+    /// pushes its own `HomeRoute` on the tab's path, and hides the action in a
+    /// shell that does not host the client flows. My Bookings passes both.
+    var onReschedule: (() -> Void)?
+    var onCancel: (() -> Void)?
     var onCopyLink: () -> Void
+
+    @Environment(\.homeNavigationPath) private var homeNavigationPath
+    @Environment(\.hostsClientBookingFlows) private var hostsClientBookingFlows
 
     @State private var showAcceptRescheduleConfirmation = false
     @State private var showDeclineReschedulePrompt = false
@@ -34,8 +40,8 @@ struct UpcomingBookingView: View {
     init(
         bookingId: UUID,
         onJoinCall: (() -> Void)? = nil,
-        onReschedule: @escaping () -> Void = {},
-        onCancel: @escaping () -> Void = {},
+        onReschedule: (() -> Void)? = nil,
+        onCancel: (() -> Void)? = nil,
         onCopyLink: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: UpcomingBookingViewModel(bookingId: bookingId))
@@ -49,8 +55,8 @@ struct UpcomingBookingView: View {
     init(
         viewModel: UpcomingBookingViewModel,
         onJoinCall: (() -> Void)? = nil,
-        onReschedule: @escaping () -> Void = {},
-        onCancel: @escaping () -> Void = {},
+        onReschedule: (() -> Void)? = nil,
+        onCancel: (() -> Void)? = nil,
         onCopyLink: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
@@ -129,6 +135,32 @@ struct UpcomingBookingView: View {
             get: { callCenter.micPermissionDenied },
             set: { if !$0 { callCenter.micPermissionDenied = false } }
         ))
+    }
+
+    // MARK: Secondary actions
+
+    /// Reschedule and Cancel exist only where something can handle them: a
+    /// caller that supplied both closures, or a shell that renders the
+    /// `HomeRoute` flows. Inside the expert shell (chat rows reach this
+    /// screen) those routes are `EmptyView()` stubs, so the buttons are hidden.
+    private var offersClientActions: Bool {
+        hostsClientBookingFlows || (onReschedule != nil && onCancel != nil)
+    }
+
+    private func rescheduleTapped() {
+        if let onReschedule {
+            onReschedule()
+        } else {
+            homeNavigationPath?.push(HomeRoute.rescheduleBooking(bookingId: viewModel.bookingId))
+        }
+    }
+
+    private func cancelTapped() {
+        if let onCancel {
+            onCancel()
+        } else {
+            homeNavigationPath?.push(HomeRoute.cancelBooking(bookingId: viewModel.bookingId))
+        }
     }
 
     // MARK: Content router
@@ -210,16 +242,18 @@ struct UpcomingBookingView: View {
 
                 // Cancel hides once the server would refuse it (D-13), so this
                 // ticks once a minute like the Join card.
-                TimelineView(.periodic(from: .now, by: 60)) { context in
-                    UpcomingBookingSecondaryActions(
-                        showsCancel: UpcomingActionPolicy.canShowCancel(
-                            status: viewModel.bookingStatus,
-                            end: viewModel.endTime,
-                            now: context.date
-                        ),
-                        onReschedule: onReschedule,
-                        onCancel: onCancel
-                    )
+                if offersClientActions {
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        UpcomingBookingSecondaryActions(
+                            showsCancel: UpcomingActionPolicy.canShowCancel(
+                                status: viewModel.bookingStatus,
+                                end: viewModel.endTime,
+                                now: context.date
+                            ),
+                            onReschedule: { rescheduleTapped() },
+                            onCancel: { cancelTapped() }
+                        )
+                    }
                 }
             }
             .padding(.horizontal, 20)

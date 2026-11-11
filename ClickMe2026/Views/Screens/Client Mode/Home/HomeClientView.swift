@@ -224,6 +224,8 @@ struct HomeClientView: View {
     /// `homeStack(_:path:root:)` builds one `NavigationStack` per tab, with
     /// `HomeRoute` registered exactly once. Every tab goes through it so no
     /// routed destination can land on a stack that does not know it (CR-01).
+    /// Destinations receive the originating tab's path, so a flow that pops
+    /// itself (cancel, reschedule) pops the tab that pushed it.
     private func homeStack<Root: View>(
         _ nav: HomeNavigationPath,
         path: Binding<NavigationPath>,
@@ -232,7 +234,7 @@ struct HomeClientView: View {
         NavigationStack(path: path) {
             root()
                 .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
+                    homeRouteDestination(route, nav: nav)
                 }
         }
         .environment(\.homeNavigationPath, nav)
@@ -288,7 +290,7 @@ struct HomeClientView: View {
     // MARK: - Shared HomeRoute destination
 
     @ViewBuilder
-    private func homeRouteDestination(_ route: HomeRoute) -> some View {
+    private func homeRouteDestination(_ route: HomeRoute, nav: HomeNavigationPath) -> some View {
         switch route {
         case .notifications:
             NotificationsListView()
@@ -325,6 +327,31 @@ struct HomeClientView: View {
             EmptyView()
         case .accountSecurity:
             AccountSecurityView()
+        case let .cancelBooking(bookingId):
+            // Keep Booking goes back one level, to Upcoming details (BOOK-12).
+            // A confirmed cancel pops two: this screen and the details of the
+            // booking it just cancelled, landing on whatever opened them. The
+            // cancel toast is posted by the view model before this runs.
+            ClientCancellationView(
+                bookingId: bookingId,
+                onKeepBooking: { nav.pop() },
+                onConfirmCancellation: { _, _ in nav.pop(2) }
+            )
+        case let .rescheduleBooking(bookingId):
+            // A sent request pops one level, back to Upcoming details; the
+            // "Reschedule request sent" toast is posted by the view model
+            // (D-11, BOOK-16).
+            RescheduleView(
+                bookingId: bookingId,
+                onRescheduled: { nav.pop() }
+            )
+        case let .writeReview(bookingId, expertName):
+            // Only offered for completed sessions (BOOK-17), so the status is fixed.
+            WriteReviewView(
+                bookingId: bookingId,
+                bookingStatus: .completed,
+                seedExpertName: expertName
+            )
         case let .peerProfile(userId, name, avatarURL):
             // Client is viewing the expert they were chatting with —
             // seed the profile with what we already know, then let the

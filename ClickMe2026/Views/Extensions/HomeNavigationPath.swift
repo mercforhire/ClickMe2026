@@ -43,6 +43,16 @@ final class HomeNavigationPath: ObservableObject {
         path.removeLast()
     }
 
+    /// Pop up to `count` destinations. Never pops past the tab root, so a
+    /// count larger than the stack is safe, and 0 leaves the path alone.
+    /// A confirmed cancel opened from a `HomeRoute` pops two: the cancel
+    /// screen and the details screen of the booking it just cancelled.
+    func pop(_ count: Int) {
+        let n = min(count, path.count)
+        guard n > 0 else { return }
+        path.removeLast(n)
+    }
+
     /// Return to the tab root — used on tab switches so a user who
     /// navigated deep in one tab doesn't see that stack when they
     /// switch to another.
@@ -65,6 +75,14 @@ extension EnvironmentValues {
     /// SwiftUI previews) — callers should fall back to a local `@State`
     /// path in that case.
     @Entry var homeNavigationPath: HomeNavigationPath? = nil
+
+    /// True when the shell's `homeRouteDestination` renders
+    /// `HomeRoute.cancelBooking`, `.rescheduleBooking` and `.writeReview`.
+    /// A shell that stubs them as `EmptyView()` (the expert shell) sets it to
+    /// false, and client-only screens then hide the actions that would push
+    /// those routes. Defaults to true for the client shell, My Bookings and
+    /// previews.
+    @Entry var hostsClientBookingFlows: Bool = true
 }
 
 // MARK: - Shell-level routes
@@ -127,6 +145,17 @@ enum HomeRoute: Hashable {
     /// notifications (password changed, deletion requested). Lands on
     /// `AccountSecurityView`.
     case accountSecurity
+    /// Client cancel flow, pushed from an Upcoming Booking details screen
+    /// that was opened outside My Bookings (push tap, chat row, Explore,
+    /// Payments). Renders `ClientCancellationView`. Client shell only.
+    case cancelBooking(bookingId: UUID)
+    /// Client reschedule flow, pushed from the same screens as
+    /// `cancelBooking`. Renders `RescheduleView`. Client shell only.
+    case rescheduleBooking(bookingId: UUID)
+    /// Review form pushed from a Booking Summary opened outside My
+    /// Bookings. Completed sessions only. Renders `WriteReviewView`.
+    /// Client shell only.
+    case writeReview(bookingId: UUID, expertName: String)
 }
 
 // MARK: - Shell action: open a chat thread

@@ -188,6 +188,10 @@ struct HomeExpertView: View {
                 }
         }
         .environment(\.homeNavigationPath, nav)
+        // Pairs with the three client-only stubs below: the client Upcoming
+        // details and Booking Summary are reachable here from chat rows, and
+        // must not offer actions that would push a stubbed route.
+        .environment(\.hostsClientBookingFlows, false)
     }
 
     private var dashboardTab: some View {
@@ -266,6 +270,16 @@ struct HomeExpertView: View {
             PayoutsView()
         case .accountSecurity:
             AccountSecurityView()
+        case .cancelBooking:
+            // Client-only destination. Not reachable from the expert shell
+            // (hostsClientBookingFlows is false), but the case must be exhaustive.
+            EmptyView()
+        case .rescheduleBooking:
+            // Client-only destination. Not reachable from the expert shell.
+            EmptyView()
+        case .writeReview:
+            // Client-only destination. Not reachable from the expert shell.
+            EmptyView()
         }
     }
 }

@@ -82,7 +82,7 @@ struct ClientCancellationView: View {
             ),
             presenting: viewModel.cancelError
         ) { _ in
-            Button("OK", role: .cancel) {}
+            Button("Review Cancellation", role: .cancel) {}
         } message: { message in
             Text(message)
         }
@@ -189,12 +189,31 @@ struct ClientCancellationView: View {
     // MARK: - Step 2 — Confirm
 
     private var confirmStep: some View {
+        // The 60 s tick keeps the money line in step with the 24-hour edge (D-06).
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+            confirmStepContent
+                .onChange(of: context.date) {
+                    viewModel.recomputeRefundCase()
+                }
+        }
+    }
+
+    private var confirmStepContent: some View {
         VStack(spacing: 0) {
             Spacer()
 
             VStack(spacing: 28) {
                 CancellationConfirmCard(booking: viewModel.booking)
                     .padding(.horizontal, 20)
+
+                if viewModel.previewChangedNotice {
+                    Text("The session now starts within 24 hours, so your refund has changed. Review the updated amount and confirm again.")
+                        .font(.brand(.subheadline, weight: .regular))
+                        .foregroundColor(Color.orange)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 20)
+                }
 
                 CancellationActionButtons(
                     isConfirming: viewModel.isConfirming,

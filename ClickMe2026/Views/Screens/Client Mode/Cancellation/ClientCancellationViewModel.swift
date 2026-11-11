@@ -27,6 +27,9 @@ final class ClientCancellationViewModel: ObservableObject {
     @Published var loadState: LoadState
     /// Alert text for cancel-request failures (network / 4xx / 5xx).
     @Published var cancelError: String?
+    /// True after a Confirm Cancellation tap found the refund case had changed
+    /// since it was shown. The tap submitted nothing; the next tap does (D-06).
+    @Published var previewChangedNotice = false
 
     let reasons: [String]
 
@@ -138,8 +141,24 @@ final class ClientCancellationViewModel: ObservableObject {
     /// closure so the parent NavigationStack can pop back and refresh.
     /// Comment is intentionally dropped — the server only accepts a single
     /// `reason` field today.
+    ///
+    /// The refund case is recomputed first. If it differs from the one on
+    /// screen (for example the session crossed the 24-hour line while the step
+    /// was open), the new case is stored, `previewChangedNotice` is set and
+    /// nothing is sent; the next tap submits (D-06).
     func confirmCancellation(onConfirm: @escaping (String, String) -> Void) async {
         guard !isConfirming else { return }
+
+        if let facts = booking.refundFacts {
+            let current = CancelRefundPreview.refundCase(facts, now: now())
+            if current != booking.refundCase {
+                booking.refundCase = current
+                previewChangedNotice = true
+                return
+            }
+        }
+        previewChangedNotice = false
+
         guard let bookingId else {
             // Preview / seeded path — no real booking to cancel.
             onConfirm(selectedReason, comment)

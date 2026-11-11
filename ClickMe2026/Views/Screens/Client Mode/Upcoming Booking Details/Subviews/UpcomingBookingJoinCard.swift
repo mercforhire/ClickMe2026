@@ -14,8 +14,11 @@ import UIKit
 // Variant driven by `meetingType`:
 //   • .inAppVoice — no link (there's nothing to paste). Renders just the
 //     large "JOIN CALL" primary button.
-//   • .skypeZoom  — no "JOIN CALL" button (call happens outside the app).
-//     Renders the link row with a copy button.
+//   • .skypeZoom  — an "Open in {provider}" button above the link row with a
+//     copy button. The button runs the same action as JOIN CALL, so the booking
+//     goes through `CallCenter.startCall` into the Skype/Zoom session screen,
+//     which tracks the time, opens the link and reports `/end` (D-10). This
+//     card never opens the expert-supplied URL itself.
 
 struct UpcomingBookingJoinCard: View {
     let meetingType: MeetingType
@@ -34,7 +37,10 @@ struct UpcomingBookingJoinCard: View {
             case .inAppVoice:
                 inAppJoinButton
             case .skypeZoom:
-                linkRow
+                VStack(spacing: 16) {
+                    openMeetingButton
+                    linkRow
+                }
             }
         }
         .padding(16)
@@ -72,6 +78,34 @@ struct UpcomingBookingJoinCard: View {
     }
 
     // MARK: Skype/Zoom variant
+
+    private var openMeetingButton: some View {
+        let provider = ExternalMeetingProvider.detect(from: URL(string: joinLink))
+        return Button(action: onJoinCall) {
+            HStack(spacing: 8) {
+                Image(systemName: provider.iconSystemName)
+                    .font(.callout.weight(.semibold))
+                Text(provider.openButtonTitle)
+                    .font(.brand(.callout, weight: .semibold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .foregroundColor(UpcomingBookingBrand.onPrimary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(UpcomingBookingBrand.brandGreen.opacity(isJoinEnabled ? 1.0 : 0.55))
+                    .shadow(
+                        color: UpcomingBookingBrand.brandGreen.opacity(isJoinEnabled ? 0.45 : 0),
+                        radius: 14, x: 0, y: 4
+                    )
+            )
+        }
+        .buttonStyle(PressScaleButtonStyle())
+        .disabled(!isJoinEnabled)
+        .accessibilityHint(isJoinEnabled ? "" : "Available closer to the session start")
+    }
 
     private var linkRow: some View {
         HStack(spacing: 12) {
@@ -113,6 +147,35 @@ struct UpcomingBookingJoinCard: View {
             }
             .buttonStyle(.plain)
             .disabled(joinLink.isEmpty)
+            .accessibilityLabel(didCopyLink ? "Link copied" : "Copy meeting link")
         }
     }
+}
+
+// MARK: - Previews
+
+#Preview("Teams link") {
+    UpcomingBookingJoinCard(
+        meetingType: .skypeZoom,
+        joinLink: "https://teams.microsoft.com/l/meetup-join/19%3ameeting",
+        isJoinEnabled: true,
+        onJoinCall: {},
+        onCopyLink: {}
+    )
+    .padding(20)
+    .background(UpcomingBookingBrand.bg)
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Zoom, window closed") {
+    UpcomingBookingJoinCard(
+        meetingType: .skypeZoom,
+        joinLink: "https://zoom.us/j/98237192834",
+        isJoinEnabled: false,
+        onJoinCall: {},
+        onCopyLink: {}
+    )
+    .padding(20)
+    .background(UpcomingBookingBrand.bg)
+    .preferredColorScheme(.dark)
 }

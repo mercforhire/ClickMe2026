@@ -70,6 +70,17 @@ enum ExternalMeetingProvider {
         }
     }
 
+    /// Label of the button that opens this provider's meeting (CALL-08).
+    ///
+    /// An unrecognized host reads "Open Meeting". The label never reads
+    /// "Open in Meeting" (UI-SPEC), which is what `displayName` would give.
+    var openButtonTitle: String {
+        switch self {
+        case .unknown: return "Open Meeting"
+        default:       return "Open in \(displayName)"
+        }
+    }
+
     /// SF Symbol shown next to the "Open in …" button. `.unknown`
     /// falls back to the generic arrow-out icon so we never render a
     /// misleading brand-adjacent glyph.

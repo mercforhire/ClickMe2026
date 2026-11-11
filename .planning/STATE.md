@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-11-11T04:22:12.363Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-11-11T04:29:10.137Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: fd71b2543020e5cd8caf5e7eee767b3a982a7bb2
+state_head: 25f3374f71dcb8b9771c671c32338427b8141a9a
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 44
+  completed_plans: 45
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 4 of 15
+Plan: 5 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -100,6 +100,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P01 | 15min | 2 tasks | 9 files |
 | Phase 03 P02 | 25min | 2 tasks | 8 files |
 | Phase 03 P03-03 | 25min | 3 tasks | 4 files |
+| Phase 03 P04 | 25m | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -205,6 +206,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-02: a refund case that changed at the Confirm Cancellation tap blocks the submit once (notice shown); the next tap submits
 - [Phase 03]: 03-03 D-09: Skype/Zoom status line never implies an automatic end; it tells the user to tap End Session
 - [Phase 03]: 03-03 D-15: Skype/Zoom layout shows the shared end + 55 banner via MeetingCallViewModel.endingBannerText, gated on isOvertimeWarning only
+- [Phase 03]: 03-04: Expert Booking Summary Join visibility is ExpertJoinVisibility (confirmed/in_progress/pending_reschedule always, completed only in window), not JoinWindow.showsJoinButton
+- [Phase 03]: 03-04: Expert reschedule cap treats a booking as paid when consultationFee.amount > 0 (no payment_status on expert details), via PaidBookingWindow
 
 ### Pending Todos
 
@@ -265,6 +268,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T04:22:12.171Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-11-11T04:29:09.932Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None

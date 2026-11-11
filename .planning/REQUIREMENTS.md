@@ -20,7 +20,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **CALL-07** [C7]: The Skype/Zoom session screen shows the elapsed or remaining time
 - [ ] **CALL-08** [C8] **[major]**: User can open a Skype/Zoom meeting from the Upcoming Booking details screen
 - [x] **CALL-09** [C9]: Skype/Zoom detection matches the real host domain only, so a lookalike URL is not treated as a trusted provider
-- [ ] **CALL-10** [C10] **[major]**: Expert can join a session from the expert Booking Summary, within the same join window as CALL-02
+- [x] **CALL-10** [C10] **[major]**: Expert can join a session from the expert Booking Summary, within the same join window as CALL-02
 
 ### Client Bookings
 
@@ -86,7 +86,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **EXP-10** [E12]: The calendar event created from a confirmed booking is titled with the client's name
 - [ ] **EXP-11** [E13] **[major]**: The expert cancel screen states the client's refund correctly — policy per decision Q2
 - [ ] **EXP-12** [E14] (likely): Expired request cards stay readable (no 55% dim on text)
-- [ ] **EXP-13** [E15] **[major]**: Reschedule on an expert Upcoming card opens the expert reschedule flow
+- [x] **EXP-13** [E15] **[major]**: Reschedule on an expert Upcoming card opens the expert reschedule flow
 - [ ] **EXP-14** [E16]: The expert-side Client Profile shows real earnings in the booking currency
   - Note (2026-11-10): the Client Profile *history* rows were delivered early in plan 02-15 (Android parity, user decision at the tracer gate): `earnings_breakdown.net_amount` in the breakdown currency, gated to pending_approval / confirmed / pending_reschedule / in_progress / completed, dash otherwise. Device check pending in 02-12. Phase 6 planning should cover any remaining Client Profile earnings surface (for example the relationship summary) rather than redo the history rows.
 - [ ] **EXP-15** [E17]: The expert hub online dot reflects real presence, or is removed
@@ -187,7 +187,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | CALL-07 | Phase 3 | Complete |
 | CALL-08 | Phase 3 | Pending |
 | CALL-09 | Phase 2 | Complete |
-| CALL-10 | Phase 3 | Pending |
+| CALL-10 | Phase 3 | Complete |
 | BOOK-01 | Phase 4 | Pending |
 | BOOK-02 | Phase 4 | Pending |
 | BOOK-03 | Phase 4 | Pending |
@@ -238,7 +238,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXP-10 | Phase 6 | Pending |
 | EXP-11 | Phase 3 | Pending |
 | EXP-12 | Phase 6 | Pending |
-| EXP-13 | Phase 3 | Pending |
+| EXP-13 | Phase 3 | Complete |
 | EXP-14 | Phase 6 | Pending |
 | EXP-15 | Phase 6 | Pending |
 | EXP-16 | Phase 6 | Pending |

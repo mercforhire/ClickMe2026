@@ -202,14 +202,14 @@ Plans:
   4. Reschedule works from both sides. Reschedule on an expert Upcoming card opens the expert reschedule flow. The client picker excludes the booking being moved, returns to where the user started with a confirmation, and shows correct copy for held bookings.
   5. Booking screens show the real state: the status pill shows the booking's real status, a declined booking shows the expert's decline note (the iOS half of BACK-02), the Past tab has an empty state, Keep Booking returns one screen back, and Leave a Review appears only for completed sessions.
 
-**Plans**: 3/15 plans executed in 4 waves (iOS, one additive backend commit for D-14 and D-16 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
+**Plans**: 4/15 plans executed in 4 waves (iOS, one additive backend commit for D-14 and D-16 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
 
 Plans:
 **Wave 1**
 - [x] 03-01-PLAN.md — BOOK-06 first: client accepts/declines an expert reschedule on Upcoming details; shared RescheduleResponder and card; 500-unit decline cap
 - [x] 03-02-PLAN.md — BOOK-08 cancel refund preview mirroring refund.js (D-04, D-05, D-06 recompute, D-14)
 - [x] 03-03-PLAN.md — CALL-06/07 Skype/Zoom screen: timer from the voice layout, no auto-end promise, end + 55 notice (D-08, D-09, D-15)
-- [ ] 03-04-PLAN.md — CALL-10 expert Join on Booking Summary; EXP-13 expert card Reschedule on its own tab, expert picker 6-day paid cap (Phase 2 D-13)
+- [x] 03-04-PLAN.md — CALL-10 expert Join on Booking Summary; EXP-13 expert card Reschedule on its own tab, expert picker 6-day paid cap (Phase 2 D-13)
 - [ ] 03-05-PLAN.md — Backend: payment_action_required (D-14) and payment_not_charged (D-16) on expert booking details, one commit, with a deploy decision checkpoint
 - [ ] 03-15-PLAN.md — BOOK-20 Android: booking ID on the Android client Booking Summary (separate Android commit)
 
@@ -344,7 +344,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
-| 3. Booked Sessions and Joining | 3/15 | In Progress | - |
+| 3. Booked Sessions and Joining | 4/15 | In Progress | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |

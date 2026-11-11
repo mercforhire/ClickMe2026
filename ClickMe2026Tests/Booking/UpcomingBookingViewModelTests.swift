@@ -63,6 +63,16 @@ struct UpcomingBookingViewModelTests {
         #expect(vm.pendingProposal?.initiatedBy == .client)
     }
 
+    // MARK: Booking ID (BOOK-20)
+
+    @Test("after load, bookingIDLabel is the shared short ID of the booking")
+    func bookingIDLabelUsesSharedFormat() async {
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: detailAPI(body: Fixtures.detailJSON()))
+        await vm.load()
+        #expect(vm.bookingIDLabel == BookingShortID.short(bookingUUID))
+        #expect(vm.bookingIDLabel == "#11111111")
+    }
+
     // MARK: Status pill (BOOK-09)
 
     @Test("a status this build does not know loads as .unknown and reads as a neutral humanized pill")

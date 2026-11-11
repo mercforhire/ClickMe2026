@@ -80,7 +80,7 @@ final class UpcomingBookingViewModel: ObservableObject {
     /// on view appear.
     init(bookingId: UUID, api: ClickMeAPI = .shared) {
         self.bookingId = bookingId
-        self.bookingIDLabel = "#" + bookingId.uuidString.prefix(8).uppercased()
+        self.bookingIDLabel = BookingShortID.short(bookingId)
         self.expertName = ""
         self.expertTitle = ""
         self.expertImageURL = ""
@@ -250,7 +250,7 @@ final class UpcomingBookingViewModel: ObservableObject {
     // MARK: - Mapping
 
     private func apply(_ data: ClientBookingDetail) {
-        bookingIDLabel = "#" + data.bookingId.uuidString.prefix(8).uppercased()
+        bookingIDLabel = BookingShortID.short(data.bookingId)
         expertName = data.expert.fullName ?? "Expert"
         expertTitle = data.expert.title ?? ""
         expertImageURL = data.expert.avatarUrl ?? ""

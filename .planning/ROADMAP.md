@@ -202,7 +202,7 @@ Plans:
   4. Reschedule works from both sides. Reschedule on an expert Upcoming card opens the expert reschedule flow. The client picker excludes the booking being moved, returns to where the user started with a confirmation, and shows correct copy for held bookings.
   5. Booking screens show the real state: the status pill shows the booking's real status, a declined booking shows the expert's decline note (the iOS half of BACK-02), the Past tab has an empty state, Keep Booking returns one screen back, and Leave a Review appears only for completed sessions.
 
-**Plans**: 15 plans in 4 waves (iOS, one additive backend commit for D-14 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
+**Plans**: 15 plans in 4 waves (iOS, one additive backend commit for D-14 and D-16 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
 
 Plans:
 **Wave 1**
@@ -210,12 +210,12 @@ Plans:
 - [ ] 03-02-PLAN.md — BOOK-08 cancel refund preview mirroring refund.js (D-04, D-05, D-06 recompute, D-14)
 - [ ] 03-03-PLAN.md — CALL-06/07 Skype/Zoom screen: timer from the voice layout, no auto-end promise, end + 55 notice (D-08, D-09, D-15)
 - [ ] 03-04-PLAN.md — CALL-10 expert Join on Booking Summary; EXP-13 expert card Reschedule on its own tab, expert picker 6-day paid cap (Phase 2 D-13)
-- [ ] 03-05-PLAN.md — Backend: payment_action_required on expert booking details (D-14), with a deploy decision checkpoint
+- [ ] 03-05-PLAN.md — Backend: payment_action_required (D-14) and payment_not_charged (D-16) on expert booking details, one commit, with a deploy decision checkpoint
 - [ ] 03-15-PLAN.md — BOOK-20 Android: booking ID on the Android client Booking Summary (separate Android commit)
 
 **Wave 2** *(each plan waits for the wave 1 plans it names)*
 - [ ] 03-06-PLAN.md — Shared client toast; reschedule accept/decline confirmations (D-03) (after 03-01)
-- [ ] 03-08-PLAN.md — EXP-11 expert cancel states the client's refund or released hold, failing closed without payment_action_required (D-07, D-14) (after 03-04, 03-05)
+- [ ] 03-08-PLAN.md — EXP-11 expert cancel states the client's refund or released hold, with no money line for a never-charged booking and failing closed without the backend keys (D-07, D-14, D-16) (after 03-04, 03-05)
 - [ ] 03-13-PLAN.md — BOOK-06 Booking Summary on the shared responder and card, silent refresh (D-01, D-03) (after 03-01)
 - [ ] 03-14-PLAN.md — BOOK-09 real status pill from the shared decoder; BookingShortID on Upcoming details (after 03-01)
 

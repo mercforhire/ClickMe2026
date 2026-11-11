@@ -64,8 +64,8 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | CALL-06 / D-15 | Shared banner text (end + 55 notice first); Skype layout renders the banner while `isOvertimeWarning` | unit + grep gate + device | `SkypeStatusTextTests` | 03-03 | ❌ W0 | ⬜ pending |
 | CALL-07 | Hero shows the shared timer source | grep gate + device | n/a | 03-03 | n/a | ⬜ pending |
 | CALL-10 | Expert Join visibility matrix | unit | `ExpertJoinVisibilityTests` | 03-04 | ❌ W0 | ⬜ pending |
-| EXP-11 | Expert refund line cases, including fail closed when `payment_action_required` is absent and the decode states | unit + grep gate | `ExpertCancelRefundLineTests` | 03-08 | ❌ W0 | ⬜ pending |
-| EXP-11 / D-14 (backend) | Expert details return `payment_action_required` / `payment_action_deadline`, no raw payment columns | backend jest | `npm --prefix "../ClickMe2026 Backend" test -- tests/expertBooking.test.js` | 03-05 | partial (suite exists) | ⬜ pending |
+| EXP-11 | Expert refund line cases, including fail closed when `payment_action_required` or `payment_not_charged` is absent, no line when `payment_not_charged` is true (converted long-lead, D-16), the decode states, and no default refund line in any init | unit + grep gate | `ExpertCancelRefundLineTests` | 03-08 | ❌ W0 | ⬜ pending |
+| EXP-11 / D-14, D-16 (backend) | Expert details return `payment_action_required` / `payment_action_deadline` and `payment_not_charged` (true for a converted long-lead row, free and no-money rows; false for requires_capture and captured rows with a PaymentIntent), no raw payment columns | backend jest | `npm --prefix "../ClickMe2026 Backend" test -- tests/expertBooking.test.js` | 03-05 | partial (suite exists) | ⬜ pending |
 | EXP-13 | Expert reschedule reachable from Dashboard and Bookings; pop targets originating tab | grep gate + device | n/a | 03-04 | n/a | ⬜ pending |
 | EXP-13 | Expert picker 6-day paid cap through `PaidBookingWindow`: edge, free uncapped, select guard, paid flag | unit | `ExpertRescheduleWindowTests` (regression: `RescheduleWindowTests`, `PaidBookingWindowTests`) | 03-04 | ❌ W0 | ⬜ pending |
 | — | Toast: one at a time, replace restarts timer, dismiss | unit | `ToastCenterTests` | 03-06 | ❌ W0 | ⬜ pending |
@@ -94,7 +94,7 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | BOOK-06 end to end, from My Bookings and from a push tap | BOOK-06 | Needs real push and expert proposal | Expert proposes; client accepts and declines from both entry points |
 | Cancel just over and just under 24 h on a captured booking | BOOK-08 | Real payment state | Cancel two bookings either side of 24 h; compare toast with refund |
 | End + 55 notice on a Skype/Zoom session | CALL-06 / D-15 | Needs a session held to 55 minutes past its end | Keep a Skype/Zoom session open (or rejoin inside the reconnect tier) until end + 55; the amber notice shows; it ends at end + 60 |
-| Expert cancel money line before and after the D-14 deploy | EXP-11 | Depends on the production backend state | Before the 03-05 deploy: no money line on any booking (fail closed). After: hold, refund and free cases per D-07 |
+| Expert cancel money line before and after the D-14/D-16 deploy | EXP-11 | Depends on the production backend state | Before the 03-05 deploy: no money line on any booking (fail closed). After: hold, refund and free cases per D-07, and no money line on a booking converted to long-lead by an accepted reschedule (D-16) |
 | Expert reschedule picker 6-day cap | EXP-13 | Visual dimming and note | On a paid booking, chips past now + 6 days are dimmed and the note shows; a free booking is uncapped |
 
 ---

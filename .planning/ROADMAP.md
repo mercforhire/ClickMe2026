@@ -202,7 +202,7 @@ Plans:
   4. Reschedule works from both sides. Reschedule on an expert Upcoming card opens the expert reschedule flow. The client picker excludes the booking being moved, returns to where the user started with a confirmation, and shows correct copy for held bookings.
   5. Booking screens show the real state: the status pill shows the booking's real status, a declined booking shows the expert's decline note (the iOS half of BACK-02), the Past tab has an empty state, Keep Booking returns one screen back, and Leave a Review appears only for completed sessions.
 
-**Plans**: 8/15 plans executed in 4 waves (iOS, one additive backend commit for D-14 and D-16 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
+**Plans**: 9/15 plans executed in 4 waves (iOS, one additive backend commit for D-14 and D-16 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
 
 Plans:
 **Wave 1**
@@ -217,7 +217,7 @@ Plans:
 - [x] 03-06-PLAN.md — Shared client toast; reschedule accept/decline confirmations (D-03) (after 03-01)
 - [ ] 03-08-PLAN.md — EXP-11 expert cancel states the client's refund or released hold, with no money line for a never-charged booking and failing closed without the backend keys (D-07, D-14, D-16) (after 03-04, 03-05)
 - [x] 03-13-PLAN.md — BOOK-06 Booking Summary on the shared responder and card, silent refresh (D-01, D-03) (after 03-01)
-- [ ] 03-14-PLAN.md — BOOK-09 real status pill from the shared decoder; BookingShortID on Upcoming details (after 03-01)
+- [x] 03-14-PLAN.md — BOOK-09 real status pill from the shared decoder; BookingShortID on Upcoming details (after 03-01)
 
 **Wave 3**
 - [ ] 03-07-PLAN.md — Booking Summary: BOOK-17 review gate, BOOK-20 booking ID (iOS), decline note (after 03-01, 03-02, 03-13, 03-14)
@@ -344,7 +344,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
-| 3. Booked Sessions and Joining | 8/15 | In Progress | - |
+| 3. Booked Sessions and Joining | 9/15 | In Progress | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |

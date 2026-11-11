@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
 status: executing
-stopped_at: Completed 03-13-PLAN.md
-last_updated: "2026-11-11T04:57:16.265Z"
+stopped_at: Completed 03-14-PLAN.md
+last_updated: "2026-11-11T05:06:19.460Z"
 last_activity: 2026-11-10
 last_activity_desc: Phase 03 execution started
-state_head: ce0b7f534c6fa2f48fb2a29851e6fd197573fcb2
+state_head: 1891c5f6de260cf710d84499cbae8e4cbb4a3fd3
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 56
-  completed_plans: 49
+  completed_plans: 50
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 9 of 15
+Plan: 10 of 15
 Status: Ready to execute
 Last activity: 2026-11-10 — Phase 03 execution started
 
@@ -105,6 +105,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P05 | n/a (user decision wait) | 2 tasks | 3 files |
 | Phase 03 P06 | 25 min | 2 tasks | 6 files |
 | Phase 03 P13 | 7 min | 2 tasks | 3 files |
+| Phase 03 P14 | 15 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -216,6 +217,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-05: backend 65bb2ed (expert details payment_action_required, payment_action_deadline, payment_not_charged; D-14, D-16) deployed to production 2026-11-10 by user decision deploy-now, /health = 65bb2ed; the push shipped 4 commits (3 docs-only); EXP-11 stays Pending for 03-08; Android follow-up logged, not built
 - [Phase 03]: 03-06: ToastCenter takes displayDuration and RescheduleResponder takes toasts by injection (default .shared), so tests never touch the shell's toast
 - [Phase 03]: 03-13: Booking Summary runs on the shared RescheduleResponder and RescheduleResponseCard; booking.update and the responder refetch both use the silent refresh(), which writes detail and review context under one newest-token check and keeps content on failure
+- [Phase 03]: 03-14: Upcoming details pill is decided by the decoded BookingStatus case through one exhaustive switch (statusRaw only humanizes .unknown, always neutral); BookingShortID is the one iOS short-ID formatter for 03-07 to reuse; BOOK-20 left open for 03-07
 
 ### Pending Todos
 
@@ -280,6 +282,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T04:57:16.071Z
-Stopped at: Completed 03-13-PLAN.md
+Last session: 2026-11-11T05:06:19.235Z
+Stopped at: Completed 03-14-PLAN.md
 Resume file: None

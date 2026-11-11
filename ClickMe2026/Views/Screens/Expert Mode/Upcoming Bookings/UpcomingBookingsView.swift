@@ -240,7 +240,7 @@ struct UpcomingBookingsView: View {
                 sessions: viewModel.sessions,
                 onJoinSession: handleJoinSession(for:),
                 onMessage: handleMessage(for:),
-                onReschedule: viewModel.onReschedule,
+                onReschedule: handleReschedule(for:),
                 onCardTap: handleCardTap(for:),
                 onPrivateNote: handleUpcomingPrivateNoteTap(for:)
             )
@@ -319,6 +319,15 @@ struct UpcomingBookingsView: View {
     private func handleCardTap(for session: UpcomingSession) {
         guard let homeNavigationPath else { return }
         homeNavigationPath.push(HomeRoute.expertBookingSummary(bookingId: session.bookingId))
+    }
+
+    /// Reschedule on a card opens the expert reschedule flow on the tab that
+    /// shows this list (EXP-13). The Dashboard embeds this view under its own
+    /// tab path, so both tabs push onto their own stack and the shell pops the
+    /// same one when the submit succeeds. No-op outside a shell (previews).
+    private func handleReschedule(for session: UpcomingSession) {
+        guard let homeNavigationPath else { return }
+        homeNavigationPath.push(HomeRoute.expertReschedule(bookingId: session.bookingId))
     }
 
     /// Same destination as the upcoming card — the summary view

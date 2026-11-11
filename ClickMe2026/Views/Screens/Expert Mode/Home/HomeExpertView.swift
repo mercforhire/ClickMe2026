@@ -174,6 +174,8 @@ struct HomeExpertView: View {
     /// `homeStack(_:path:root:)` builds one `NavigationStack` per tab, with
     /// `HomeRoute` registered exactly once. Every tab goes through it so no
     /// routed destination can land on a stack that does not know it (CR-01).
+    /// Destinations receive the originating tab's path, so a route that pops
+    /// itself (the reschedule form) pops the tab that pushed it (EXP-13).
     private func homeStack<Root: View>(
         _ nav: HomeNavigationPath,
         path: Binding<NavigationPath>,
@@ -182,7 +184,7 @@ struct HomeExpertView: View {
         NavigationStack(path: path) {
             root()
                 .navigationDestination(for: HomeRoute.self) { route in
-                    homeRouteDestination(route)
+                    homeRouteDestination(route, nav: nav)
                 }
         }
         .environment(\.homeNavigationPath, nav)
@@ -228,7 +230,7 @@ struct HomeExpertView: View {
     // MARK: - Shared HomeRoute destination
 
     @ViewBuilder
-    private func homeRouteDestination(_ route: HomeRoute) -> some View {
+    private func homeRouteDestination(_ route: HomeRoute, nav: HomeNavigationPath) -> some View {
         switch route {
         case .notifications:
             NotificationsListView()
@@ -250,7 +252,7 @@ struct HomeExpertView: View {
             ExpertBookingSummaryView(bookingId: bookingId)
         case let .expertReschedule(bookingId):
             ExpertRescheduleView(bookingId: bookingId, onRescheduled: {
-                bookingsPath.pop()
+                nav.pop()
             })
         case let .peerProfile(userId, _, _):
             // Expert is viewing their client — ClientProfileView loads

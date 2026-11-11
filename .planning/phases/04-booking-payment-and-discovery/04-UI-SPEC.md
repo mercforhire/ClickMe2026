@@ -1,7 +1,7 @@
 ---
 phase: "04"
 slug: booking-payment-and-discovery
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-11-11"
@@ -175,7 +175,7 @@ All strings below are exact. Executors must not paraphrase them. "Existing" mean
 
 | Element | Copy | Status |
 |---------|------|--------|
-| Time-zone label beside `Available Time Slots` | the zone's localized generic name, for example `Eastern Time`, from `TimeZone(identifier:)?.localizedName(for: .generic, locale: .current)`. The raw id (`America/Toronto`) is never shown; when the id is missing, invalid or has no localized name the label is **omitted**, not replaced with a placeholder | changed |
+| Time-zone label beside `Available Time Slots` | the **device** zone's localized generic name (the zone the chip times are formatted in), for example `Eastern Time`, from `TimeZone.current.localizedName(for: .generic, locale: .current)`. It is never the expert's zone (user decision 2026-11-11, K2). The raw id (`America/Toronto`) is never shown; when there is no localized name the label is **omitted**, not replaced with a placeholder | changed |
 | Slot chip time | `DateFormatter` with `timeStyle = .short`, `dateStyle = .none`, `locale = .current`, so `2:00 PM` on a 12-hour device and `14:00` on a 24-hour one (via the shared `DateUtil`, not a new formatter instance) | changed |
 | Today's Sessions time range (Explore) | the same short style for start and end, joined by the existing ` - `, for example `2:00 PM - 3:00 PM` or `14:00 - 15:00` | changed |
 
@@ -421,7 +421,7 @@ One primary focal point per screen Phase 04 changes. Nothing else on the screen 
 
 > Shape-rooted state coverage for the Phase 04 deltas, hand-built from the decisions, the shipped code, the backend and Android's strings, using the 8-category taxonomy. Copy lives in the Copywriting Contract and is referenced, not restated. The engine probe (orchestrator Step 9.5) may replace or extend these rows.
 
-Applicable state considerations resolved: 21 covered, 6 backstop, 5 unresolved (K1 to K5). K1 to K5 are explicit planner assumptions, not silently dropped.
+Applicable state considerations resolved: 22 covered, 9 backstop, 4 unresolved (K1, K3, K4, K5). The step 9.5 engine probe (11 surfaces, 59 raw considerations) was reconciled against these rows on 2026-11-11: every proposal maps to a row above, does not apply to a single-record surface, or became T2 to T4. K2 was settled by the user on 2026-11-11 (device zone). The four unresolved rows are explicit planner assumptions, not silently dropped.
 
 | ID | Category | Element(s) | Status | Resolution / Reason |
 |----|----------|------------|--------|---------------------|
@@ -437,7 +437,7 @@ Applicable state considerations resolved: 21 covered, 6 backstop, 5 unresolved (
 | EM1 | empty | Favorites, zero favorites | ✅ covered | Existing empty state; both buttons wired (section 4) |
 | EM2 | empty | Expert Profile Expertise, Topics, Reviews | ✅ covered | Sections not rendered; no bare headers, no blank gap |
 | EM3 | empty | Reviews list, zero reviews | ✅ covered | Existing `No reviews yet` view, unchanged |
-| EM4 | empty | Slot zone label with a missing or invalid id | ✅ covered | Label omitted; raw id never shown |
+| EM4 | empty | Slot zone label when the device zone has no localized name | ✅ covered | Label omitted; raw id never shown |
 | Z1 | zero / one / many | Hero rating row | ✅ covered | `No reviews yet`, `(1 review)`, `(n reviews)` (copy table) |
 | Z2 | zero / one / many | Favorites and Reviews at 0, 1, 20, 21+ | ✅ covered | Paging section 7; stop at the server total; no end text |
 | P1 | partial | Profile seeded from a Favorites row (empty topics, rating 0) | ✅ covered | Heart seeds filled; empty Topics and Reviews are hidden until the details load; hero shows `— (— reviews)` until the summary arrives |
@@ -452,8 +452,11 @@ Applicable state considerations resolved: 21 covered, 6 backstop, 5 unresolved (
 | D3 | device-only | PAY-03 variant A on a live hold; EXPL-03 `Free`; EXPL-07 Explore load | 🧪 backstop | Device check only (built in quick 261109-323) |
 | D4 | device-only | Suspension alert on a cold launch | 🧪 backstop | Unit test in the phase; device check in the Phase 08 release pass |
 | L5 | long-text / large type | State views, status line, footers, alerts, flow-wrapped pills at the largest Dynamic Type | 🧪 backstop | Held-out preview or device check; every new block wraps and none uses a fixed height. The 44 and 48 pt controls keep their minimum |
+| T2 | error | Calendar or slots month load fails | 🧪 backstop | Existing behavior and copy unchanged by Phase 04; device check that it still shows after the BOOK-02 month-change fix (added by the 9.5 engine probe, user decision 2026-11-11) |
+| T3 | empty | A month or day with no available slots | 🧪 backstop | Existing behavior and copy unchanged; device check after the BOOK-02 fix (engine probe) |
+| T4 | overflow / many | A day with many slots | 🧪 backstop | Existing chip grid unchanged; device check with the 24-hour setting on, where chip text is shortest, and at the largest Dynamic Type (engine probe) |
 | K1 | partial | Request Sent status pill reads `Awaiting Approval` even if a replayed confirm returns a booking whose status has already moved | ⚠ unresolved | Planner assumption: leave the pill as is (the replay window is the confirm timeout). Switching the pill to the Phase 03 status mapping is the alternative |
-| K2 | data | The slots card names the **expert's** zone while chip times are formatted in the **device** zone (`DateFormatter` default) | ⚠ unresolved | BOOK-03 only asks for a readable name, so the contract keeps naming the zone it names today. This can read as a wrong label for a client in another zone; Android says `Times are in your time zone (EDT)`. Confirm with the user whether the label should name the device zone instead |
+| K2 | data | The slots card used to name the **expert's** zone while chip times are formatted in the **device** zone (`DateFormatter` default) | ✅ covered | User decision 2026-11-11: the label names the **device** zone, matching the chip times (and Android's `Times are in your time zone (EDT)` intent). See the copy row in "Make a Booking: slots" |
 | K3 | partial | Request Sent date and time (`MMM d, yyyy`, `h:mm a`, `en_US_POSIX`) is not in BOOK-04's evidence | ⚠ unresolved | Recommended: apply the same short time style to the Request Sent time range and `sessionWhenLabel` so a 24-hour user does not see `14:00` on the chip and `2:00 PM` on the confirmation. Treated as an assumption until the planner or user decides |
 | K4 | data | After the D-04 alert, is the slot selection cleared? | ⚠ unresolved | Planner assumption: yes, as for every `SLOT_UNAVAILABLE` today, so the taken slot cannot be resubmitted. 04-CONTEXT D-04 only says every other case keeps the reset |
 | K5 | loading | The seeded profile can show for a moment before a 404 replaces it | ⚠ unresolved | Accepted by this contract to keep the loading state unchanged (no spinner screen added). A full-screen spinner until the first details response is the alternative if the flash is judged confusing on a device |
@@ -493,15 +496,15 @@ Phase 04 adds no packages. No `npx shadcn view` vetting was needed and none was 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: BLOCK, force-approved (the shipped `OK` on the unchanged "That time slot was just taken" alert stays; single-word `Retry`/`Back` FLAGs accepted)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: FLAG accepted (default-tinted controls such as the back chevron render in accent)
+- [x] Dimension 4 Typography: FLAG accepted (15/16 pt one-point step; hierarchy rests on weight)
+- [x] Dimension 5 Spacing: FLAG accepted (20 pt side padding on the pinned Request Sent exits)
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** force-approved by the user 2026-11-11 after 2 revision iterations (gsd-ui-phase step 9 cap)
 
 ---
 

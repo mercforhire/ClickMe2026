@@ -35,6 +35,10 @@ struct ExpertBookingSummaryView: View {
     @Environment(\.openChatThread) private var openChatThread
     @Environment(\.homeNavigationPath) private var homeNavigationPath
 
+    /// Observed for the join-failure and microphone alerts (CALL-10). The call
+    /// surface itself is hosted by the shell.
+    @ObservedObject private var callCenter = CallCenter.shared
+
     /// Drives the `.sheet` presenting `ExpertCancellationView`. Flipped
     /// by the Cancel action button; cleared by the sheet's dismiss.
     @State private var showCancellationSheet: Bool = false
@@ -118,6 +122,24 @@ struct ExpertBookingSummaryView: View {
         } message: { message in
             Text(message)
         }
+        // A refused join surfaces here. The Bookings and Dashboard roots host
+        // an alert bound to the same `joinError`; SwiftUI presents one of them.
+        .alert(
+            "Couldn't join call",
+            isPresented: Binding(
+                get: { callCenter.joinError != nil },
+                set: { if !$0 { callCenter.joinError = nil } }
+            ),
+            presenting: callCenter.joinError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+        .micPermissionDeniedAlert(isPresented: Binding(
+            get: { callCenter.micPermissionDenied },
+            set: { if !$0 { callCenter.micPermissionDenied = false } }
+        ))
         .keyboardDismissToolbar()
     }
 
@@ -186,10 +208,7 @@ struct ExpertBookingSummaryView: View {
 
                 myNoteCard(detail: detail)
 
-                if detail.actions.canMessage {
-                    messageClientButton(detail: detail)
-                        .padding(.top, 4)
-                }
+                joinAndMessageSection(detail: detail)
 
                 if detail.actions.canReschedule || detail.actions.canCancel {
                     HStack(spacing: 12) {
@@ -216,6 +235,46 @@ struct ExpertBookingSummaryView: View {
             }
             .padding(16)
             .padding(.bottom, 24)
+        }
+    }
+
+    // MARK: - Join + Message section
+
+    /// Join Session sits directly above Message Client (CALL-10). The 60 s
+    /// timeline re-evaluates the shared `JoinWindow` rule so the button flips
+    /// without a refresh. While Join is shown, Message Client drops to the
+    /// outlined style so the screen keeps one accent fill.
+    @ViewBuilder
+    private func joinAndMessageSection(detail: ExpertBookingDetail) -> some View {
+        if detail.actions.canMessage
+            || detail.actions.canJoin
+            || ExpertJoinVisibility.alwaysShownStatuses.contains(detail.status.code)
+        {
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                let showsJoin = ExpertJoinVisibility.shows(
+                    status: detail.status.code,
+                    start: detail.session.schedule.startTime,
+                    end: detail.session.schedule.endTime,
+                    now: context.date,
+                    serverCanJoin: detail.actions.canJoin
+                )
+                let joinEnabled = ExpertJoinVisibility.isEnabled(
+                    status: detail.status.code,
+                    start: detail.session.schedule.startTime,
+                    end: detail.session.schedule.endTime,
+                    now: context.date,
+                    serverCanJoin: detail.actions.canJoin
+                )
+                VStack(spacing: 12) {
+                    if showsJoin {
+                        joinSessionButton(detail: detail, enabled: joinEnabled)
+                    }
+                    if detail.actions.canMessage {
+                        messageClientButton(detail: detail, outlined: showsJoin)
+                    }
+                }
+                .padding(.top, 4)
+            }
         }
     }
 
@@ -665,7 +724,10 @@ struct ExpertBookingSummaryView: View {
 
     // MARK: - Message CTA
 
-    private func messageClientButton(detail: ExpertBookingDetail) -> some View {
+    /// - Parameter outlined: True while Join Session is shown above it: a
+    ///   transparent fill with an accent label and a 1.5 pt accent stroke at
+    ///   50%, so only one button carries the accent fill.
+    private func messageClientButton(detail: ExpertBookingDetail, outlined: Bool = false) -> some View {
         Button {
             handleMessage(detail: detail)
         } label: {
@@ -675,16 +737,60 @@ struct ExpertBookingSummaryView: View {
                 Text("Message Client")
                     .font(.brand(.subheadline, weight: .semibold))
             }
-            .foregroundColor(Brand.onPrimary)
+            .foregroundColor(outlined ? Brand.primary : Brand.onPrimary)
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Brand.primary)
-                    .shadow(color: Brand.primary.opacity(0.50), radius: 14, x: 0, y: 4)
-            )
+            .background {
+                if outlined {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(Brand.primary.opacity(0.5), lineWidth: 1.5)
+                } else {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Brand.primary)
+                        .shadow(color: Brand.primary.opacity(0.50), radius: 14, x: 0, y: 4)
+                }
+            }
         }
         .buttonStyle(PressScaleButtonStyle())
+    }
+
+    // MARK: - Join CTA
+
+    /// Starts the call through `CallCenter` (CALL-10). The server still
+    /// decides `POST /bookings/:id/join`; a refusal shows the
+    /// "Couldn't join call" alert. Closed window: dimmed to 55%, no glow,
+    /// disabled, with the same hint as the list cards.
+    private func joinSessionButton(detail: ExpertBookingDetail, enabled: Bool) -> some View {
+        Button {
+            CallCenter.shared.startCall(
+                bookingId: detail.bookingId,
+                peerId: detail.client.id,
+                peerName: detail.client.name ?? "Client",
+                peerImageURL: detail.client.avatarUrl ?? "",
+                topic: detail.session.topicTitle ?? "",
+                scheduledStart: detail.session.schedule.startTime,
+                scheduledEnd: detail.session.schedule.endTime,
+                meetingType: detail.session.meetingType,
+                isRejoin: detail.status.code == .completed
+            )
+        } label: {
+            Text("Join Session")
+                .font(.brand(.callout, weight: .semibold))
+                .foregroundColor(Brand.onPrimary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Brand.primary.opacity(enabled ? 1.0 : 0.55))
+                        .shadow(
+                            color: Brand.primary.opacity(enabled ? 0.50 : 0),
+                            radius: 14, x: 0, y: 4
+                        )
+                )
+        }
+        .buttonStyle(PressScaleButtonStyle())
+        .disabled(!enabled)
+        .accessibilityHint(enabled ? "" : "Available closer to the session start")
     }
 
     /// `initiateChat` is idempotent — repeat calls return the existing thread.

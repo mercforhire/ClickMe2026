@@ -11,6 +11,8 @@ import SwiftUI
 // MARK: - Two-button row: Reschedule (glass) + Cancel (error-tinted)
 
 struct UpcomingBookingSecondaryActions: View {
+    /// False once the server would refuse a reschedule (`UpcomingActionPolicy`).
+    let showsReschedule: Bool
     /// False once the server would refuse a cancel (`UpcomingActionPolicy`);
     /// Reschedule then fills the row.
     let showsCancel: Bool
@@ -19,7 +21,9 @@ struct UpcomingBookingSecondaryActions: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            rescheduleButton
+            if showsReschedule {
+                rescheduleButton
+            }
 
             if showsCancel {
                 cancelButton

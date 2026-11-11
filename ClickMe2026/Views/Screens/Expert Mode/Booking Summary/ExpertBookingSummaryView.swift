@@ -163,8 +163,8 @@ struct ExpertBookingSummaryView: View {
                         consultationAmountMajor: detail.session.consultationFee.amount,
                         currency: detail.session.consultationFee.currency,
                         authorizationExpiresAt: detail.authorizationExpiresAt,
-                        paymentActionRequired: nil,
-                        paymentNotCharged: nil
+                        paymentActionRequired: detail.paymentActionRequired,
+                        paymentNotCharged: detail.paymentNotCharged
                     ),
                     onKeepBooking: { showCancellationSheet = false },
                     onConfirm: { _ in

@@ -84,4 +84,19 @@ struct ExpertBookingDetail: Decodable {
     /// field. The expert side has no direct disclosure use for this
     /// value today.
     let authorizationExpiresAt: Date?
+    /// Backend `paymentActionFields` via GET /expert/bookings/:id/details
+    /// (ios-p3 plan 03-05, additive). True when an off-session charge is
+    /// waiting on the client's card authentication and nothing was charged;
+    /// `nil` from a backend without the key.
+    /// `ExpertCancelRefundLine.make` treats `nil` as unknown and answers with
+    /// no money line (D-14).
+    let paymentActionRequired: Bool?
+    /// Backend `paymentNotCharged` via the same endpoint (plan 03-05, D-16,
+    /// additive). True when nothing is held on or taken from the client's card
+    /// for this booking, for example a free booking or one converted to
+    /// long-lead by an accepted reschedule (no PaymentIntent). False for a
+    /// live hold or a captured payment; `nil` from a backend without the key.
+    /// `ExpertCancelRefundLine.make` treats `nil` as unknown and answers with
+    /// no money line.
+    let paymentNotCharged: Bool?
 }

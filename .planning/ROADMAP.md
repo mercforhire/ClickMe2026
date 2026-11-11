@@ -202,7 +202,7 @@ Plans:
   4. Reschedule works from both sides. Reschedule on an expert Upcoming card opens the expert reschedule flow. The client picker excludes the booking being moved, returns to where the user started with a confirmation, and shows correct copy for held bookings.
   5. Booking screens show the real state: the status pill shows the booking's real status, a declined booking shows the expert's decline note (the iOS half of BACK-02), the Past tab has an empty state, Keep Booking returns one screen back, and Leave a Review appears only for completed sessions.
 
-**Plans**: 16/17 plans executed in 4 waves; 2 gap-closure plans (03-16, 03-17) added 2026-11-11 from 03-UAT test 3 (iOS, one additive backend commit for D-14 and D-16 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
+**Plans**: 17/17 plans executed in 4 waves; 2 gap-closure plans (03-16, 03-17) added 2026-11-11 from 03-UAT test 3 (iOS, one additive backend commit for D-14 and D-16 with a deploy decision, one Android commit for BOOK-20). Revised 2026-11-10 after the plan check: 03-13, 03-14 and 03-15 were split out of 03-01, 03-06 and 03-07 so no plan touches more than 10 files.
 
 Plans:
 **Wave 1**
@@ -230,7 +230,7 @@ Plans:
 
 **Gap closure** *(03-UAT test 3: code-review findings WR-01 and WR-02, user decision "fix both"; iOS only)*
 - [x] 03-16-PLAN.md — WR-01: a successful accept or decline clears the reschedule response card before the refetch, on Upcoming details and Booking Summary (BOOK-06, D-03; gap G-03-3-WR01)
-- [ ] 03-17-PLAN.md — WR-02: a server refund_amount of 0 on a booking confirmed as refundable gets a neutral post-cancel toast with no amount or timing (BOOK-08, D-06; gap G-03-3-WR02) (after 03-16: shared review ledger and device checklist)
+- [x] 03-17-PLAN.md — WR-02: a server refund_amount of 0 on a booking confirmed as refundable gets a neutral post-cancel toast with no amount or timing (BOOK-08, D-06; gap G-03-3-WR02) (after 03-16: shared review ledger and device checklist)
 
 **UI hint**: yes
 **Notes**:
@@ -348,7 +348,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
-| 3. Booked Sessions and Joining | 16/17 | In Progress | - |
+| 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 0/TBD | Not started | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |

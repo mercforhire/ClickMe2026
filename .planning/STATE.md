@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
-status: executing
-stopped_at: Completed 03-16-PLAN.md
-last_updated: "2026-11-11T20:44:13.224Z"
+status: verifying
+stopped_at: Completed 03-17-PLAN.md
+last_updated: "2026-11-11T20:49:29.534Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 03 execution started
-state_head: e96bc97b5ff0555737808e9b6fb1086ab820cd02
+state_head: "0b4c338434e6dface40aab1bd80eb630478ccd73"
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 58
-  completed_plans: 57
+  completed_plans: 58
   percent: 13
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
 Plan: 17 of 17
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-11 — Phase 03 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -113,6 +113,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P11 | 15 min | 2 tasks | 8 files |
 | Phase 03 P12 | 25 min | 3 tasks | 8 files |
 | Phase 03 P16 | 7 min | 2 tasks | 8 files |
+| Phase 03 P17 | 8 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -234,6 +235,7 @@ Recent decisions affecting current work:
 - [Phase 03]: A confirmed cancel opened from a HomeRoute entry pops two levels (cancel screen and the cancelled details); My Bookings keeps pop-to-root
 - [Phase 03]: Expert shell stubs the three new routes and hides client Cancel, Reschedule and Leave a Review through hostsClientBookingFlows instead of rerouting chat rows to the expert summary
 - [Phase 03]: 03-16 WR-01: RescheduleResponder.onResolved (synchronous) runs after every 2xx accept or decline and before refetch; both client screens clear reschedule there, so the Accept/Decline card goes even when the refetch fails; only the proposal is cleared, status and times wait for the next successful fetch; WR-01 fixed in the review ledger; BOOK-06 device check still pending in UAT item 1
+- [Phase 03]: 03-17: every server refund_amount 0 under the charged-refundable case gets the neutral policy toast (no amount, no timing); the success body cannot tell clock skew, a retried refund and the already-cancelled 200 apart
 
 ### Pending Todos
 
@@ -304,6 +306,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T20:44:12.874Z
-Stopped at: Completed 03-16-PLAN.md
+Last session: 2026-11-11T20:49:29.163Z
+Stopped at: Completed 03-17-PLAN.md
 Resume file: None

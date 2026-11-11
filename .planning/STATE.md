@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 03
 current_phase_name: Booked Sessions and Joining
-status: verifying
-stopped_at: Completed 03-12-PLAN.md
-last_updated: "2026-11-11T06:00:40.947Z"
-last_activity: 2026-11-10
+status: executing
+stopped_at: Completed 03-16-PLAN.md
+last_updated: "2026-11-11T20:44:13.224Z"
+last_activity: 2026-11-11
 last_activity_desc: Phase 03 execution started
-state_head: 6a8fb82a46d6cd1d2f25b8cc67c1ae5b26d557eb
+state_head: e96bc97b5ff0555737808e9b6fb1086ab820cd02
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 56
-  completed_plans: 56
+  total_plans: 58
+  completed_plans: 57
   percent: 13
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 03 (Booked Sessions and Joining) — EXECUTING
-Plan: 15 of 15
-Status: Phase complete — ready for verification
-Last activity: 2026-11-10 — Phase 03 execution started
+Plan: 17 of 17
+Status: Ready to execute
+Last activity: 2026-11-11 — Phase 03 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -112,6 +112,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P10 | 7 min | 2 tasks | 9 files |
 | Phase 03 P11 | 15 min | 2 tasks | 8 files |
 | Phase 03 P12 | 25 min | 3 tasks | 8 files |
+| Phase 03 P16 | 7 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -232,6 +233,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-11: RescheduleViewModel takes an injected ToastCenter and posts 'Reschedule request sent' on both success paths before onSuccess; Keep Booking and the reschedule return pop one level, only a confirmed cancel pops to the My Bookings root; showsPastEmptyState needs state .loaded, so a failed load never reads as no past bookings
 - [Phase 03]: A confirmed cancel opened from a HomeRoute entry pops two levels (cancel screen and the cancelled details); My Bookings keeps pop-to-root
 - [Phase 03]: Expert shell stubs the three new routes and hides client Cancel, Reschedule and Leave a Review through hostsClientBookingFlows instead of rerouting chat rows to the expert summary
+- [Phase 03]: 03-16 WR-01: RescheduleResponder.onResolved (synchronous) runs after every 2xx accept or decline and before refetch; both client screens clear reschedule there, so the Accept/Decline card goes even when the refetch fails; only the proposal is cleared, status and times wait for the next successful fetch; WR-01 fixed in the review ledger; BOOK-06 device check still pending in UAT item 1
 
 ### Pending Todos
 
@@ -254,6 +256,8 @@ Android follow-ups from Phase 3 (logged, not built):
 - Android Upcoming details Cancel rule should match D-13: show Cancel only for confirmed, pending_approval and pending_reschedule while the end time is in the future (03-09)
 
 - Android RESCHEDULE_OUTSIDE_AUTH_WINDOW copy should match the iOS wording: "This time is past the payment hold on your original booking. Choose a different time, or cancel this booking and book again. Cancelling releases the hold on your card, so you won't be charged." (03-11)
+
+- Android `RescheduleResponseController` has the same WR-01 behavior: `succeed()` (`screens/clientmode/mybookings/RescheduleResponse.kt`) awaits the quiet reload, then sets the notice, and a failed quiet reload (`UpcomingBookingViewModel.startLoad(quiet = true)`) keeps the old `Loaded` details, so the card and proposal stay and become tappable again when `submitting` resets. Follow-up: after a 2xx accept or decline, clear the proposal from the loaded state whether or not the quiet reload succeeds. No backend change (03-16)
 
 Captured todos:
 
@@ -300,6 +304,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T06:00:40.106Z
-Stopped at: Completed 03-12-PLAN.md
+Last session: 2026-11-11T20:44:12.874Z
+Stopped at: Completed 03-16-PLAN.md
 Resume file: None

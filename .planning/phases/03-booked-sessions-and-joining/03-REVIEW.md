@@ -1,6 +1,6 @@
 ---
 phase: 03-booked-sessions-and-joining
-reviewed: 2026-11-11T00:00:00Z
+reviewed: 2026-11-11T12:00:00Z
 depth: standard
 files_reviewed: 77
 files_reviewed_list:
@@ -81,19 +81,57 @@ files_reviewed_list:
   - ClickMe2026Tests/Utils/HomeNavigationPathTests.swift
   - ClickMe2026Tests/Utils/ToastCenterTests.swift
   - ClickMe2026Tests/Utils/UpcomingActionPolicyTests.swift
+incremental_review:
+  diff_base: aac974b62917fc8052e79df6c83873523bc18733
+  reviewed_at: 2026-11-11
+  scope: gap-closure plans 03-16 (WR-01) and 03-17 (WR-02)
+  files:
+    - ClickMe2026/Utils/CancelToastMessage.swift
+    - ClickMe2026/Views/Screens/Client Mode/Booking Summary/BookingSummaryViewModel.swift
+    - ClickMe2026/Views/Screens/Client Mode/Booking Summary/RescheduleResponder.swift
+    - ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/UpcomingBookingViewModel.swift
+    - ClickMe2026Tests/Booking/BookingSummaryViewModelTests.swift
+    - ClickMe2026Tests/Booking/ClientCancellationViewModelTests.swift
+    - ClickMe2026Tests/Booking/RescheduleResponderTests.swift
+    - ClickMe2026Tests/Booking/UpcomingBookingViewModelTests.swift
+    - ClickMe2026Tests/Utils/CancelToastMessageTests.swift
+  resolved_this_pass:
+    - WR-01
+    - WR-02
+  new_this_pass:
+    - WR-08
+    - WR-09
+    - IN-06
 findings:
   critical: 0
   warning: 7
-  info: 5
-  total: 12
+  info: 6
+  total: 13
+  open_ids:
+    - WR-03
+    - WR-04
+    - WR-05
+    - WR-06
+    - WR-07
+    - WR-08
+    - WR-09
+    - IN-01
+    - IN-02
+    - IN-03
+    - IN-04
+    - IN-05
+    - IN-06
+  resolved_ids:
+    - WR-01
+    - WR-02
 status: issues_found
 ---
 
 # Phase 3: Code Review Report
 
-**Reviewed:** 2026-11-11
+**Reviewed:** 2026-11-11 (incremental pass over 03-16 and 03-17; original full review 2026-11-11)
 **Depth:** standard
-**Files Reviewed:** 77
+**Files Reviewed:** 77 (full phase) plus 9 re-reviewed incrementally
 **Status:** issues_found
 
 ## Summary
@@ -112,9 +150,19 @@ The accept/decline flow is single-flight and only confirms after a 2xx.
 
 The warnings are about places where the UI states something about money or state that it cannot be sure of, an action offered on statuses the server refuses, a silent success path in the expert shell, and two tests that are unreliable. Nothing here changes what the backend charges or refunds.
 
+### Incremental pass: 03-16 (WR-01) and 03-17 (WR-02)
+
+Diffed `aac974b..HEAD` for the nine files and traced both fixes.
+
+- **03-16 / WR-01 is fixed.** `onResolved` is called only on a 2xx path (first accept, saved-card retry accept, decline), never in a `catch`, and runs synchronously before `refetch`. `ReloadGeneration` makes a refresh that was already in flight before the POST lose to the post-accept refetch, because `refetch` calls `begin()` in the same main-actor turn as `onResolved`. So a stale in-flight GET cannot re-add the card. Double-tap is still blocked by `isSubmitting`. The tests (hook order, retry fires once, no hook on 409 / empty vault / vault failure / repeat 422, 500 on refetch clears the card on both screens) are meaningful and isolated: the suites are `.serialized`, the test target is `parallelizable: false`, and `MockURLProtocol` records a request before the handler runs, so the "first detail GET only" counting in `failingRefetchAPI()` is sound. One residual gap is recorded as WR-08: only the card is cleared, not the stale time and status.
+- **03-17 / WR-02 is fixed for the case it named.** A server `refund_amount` of 0 under `.chargedRefundable` now returns the neutral line with no amount and no timing, a server amount above 0 still names the amount, and the other cases are unchanged. The neutral wording cannot leak into a case where the server refunded more than 0, because the `> 0` branch returns first. Two adjacent paths that the fix leaves open are recorded as WR-09 and IN-06.
+
 ## Warnings
 
 ### WR-01: After a successful accept, a failed refetch leaves the Accept/Decline card on screen
+
+**Status:** fixed in 03-16 (verified in this review).
+Verification: `RescheduleResponder.swift:99,126,159` call `onResolved?()` after the success toast and before `await refetch?()` on all three success paths. `UpcomingBookingViewModel.swift:126` and `BookingSummaryViewModel.swift:150` set `reschedule = nil`. The card is gated on `reschedule` (Booking Summary) and `pendingProposal` (Upcoming details, which derives from `reschedule`), so it goes even when `refresh()` swallows a failed GET. The hook is not reached from any `catch`. Tests in `RescheduleResponderTests`, `UpcomingBookingViewModelTests` and `BookingSummaryViewModelTests` cover the success and failure paths. See WR-08 for what the fix does not clear.
 
 **File:** `ClickMe2026/Views/Screens/Client Mode/Booking Summary/RescheduleResponder.swift:87-91` (with `UpcomingBookingViewModel.swift:262-275` and `BookingSummaryViewModel.swift:212-225`)
 **Issue:** `accept()` posts "Reschedule accepted" and then awaits `refetch`. Both owners implement `refetch` as `refresh()`, which deliberately swallows a failed detail GET and keeps the last known screen. After a flaky-network failure the user sees a green "Reschedule accepted" toast while the card still shows "Accept New Time" and "Decline New Time" for a proposal that no longer exists. Tapping Accept again sends a second money-affecting POST. The server then returns a status error that is shown as "Couldn't update booking". Decline has the same problem. Only a later `booking.update` socket event or a manual reopen clears the card. No test covers success followed by a failed refetch.
@@ -128,6 +176,9 @@ await refetch?()
 Add a responder test where the post-accept detail GET returns 500 and assert `pendingProposal == nil`.
 
 ### WR-02: Post-cancel toast can promise a refund the server did not issue
+
+**Status:** fixed in 03-17 (verified in this review).
+Verification: `CancelToastMessage.swift:51-52` now returns "Booking cancelled. Any refund due will follow our cancellation policy." for `.chargedRefundable` at server 0. The `serverRefundMajor > 0` branch (lines 39-44) returns before the `switch`, so an amount is named only when the server's amount is above 0. The idempotent already-cancelled 200 (also 0) gets the neutral line, covered by `alreadyCancelledShowsNeutralLine`. `CancelToastMessageTests` asserts no amount, no digits and no timing words. Two adjacent paths remain open: see WR-09 and IN-06.
 
 **File:** `ClickMe2026/Utils/CancelToastMessage.swift:44-45`, driven by `ClientCancellationViewModel.swift:136,159,191-195` and `CancelRefundPreview.swift:119`
 **Issue:** The refund case is decided with the device clock (`now()`), while the server decides with its own clock (`computeRefundAmountMinorUnits`, strict `> 24h`). If the phone clock runs behind, or the booking crosses the 24h line between the last recompute and the server handling the request, the user confirms under `.chargedRefundable` and the server returns `refund_amount: 0`. `CancelToastMessage` then shows "Your CA$45.00 refund is being processed." No refund is coming. The `0` is ambiguous by design (a refund retry also returns 0), but this branch resolves the ambiguity optimistically. The same applies to the idempotent "already cancelled" 200, which also returns 0. The 24h preview and toast are the headline money statement of this phase.
@@ -163,6 +214,46 @@ Add a responder test where the post-accept detail GET returns 500 and assert `pe
 **Issue:** The test builds `ExpertRescheduleViewModel(bookingId: UUID(), isPaidBooking: true)`, which uses `ClickMeAPI.shared` pointed at the Production `Environments.plist` URL. The file header says these rows "must not touch MockURLProtocol". If the local `isBookableStart` guard in `submit` is removed or reordered, the test sends a real unauthenticated PATCH to production, and the assertion fails with a different error string. A guard test should not have a live-network fallback.
 **Fix:** Inject a stubbed `ClickMeAPI` via the existing `api:` parameter (`APITestFactory.make { _ in fail }`) and assert `MockURLProtocol.recordedRequests.isEmpty`. That also proves "no request is made", which the current test only implies.
 
+### WR-08: After a successful accept or decline with a failed refetch, the screen still shows the old time and a "Pending reschedule" status, and nothing retries
+
+**File:** `ClickMe2026/Views/Screens/Client Mode/Booking Summary/RescheduleResponder.swift:99-100,126-127,159-160`; `ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/UpcomingBookingViewModel.swift:126,264-277`
+**Issue:** The 03-16 fix clears only `reschedule`. When `refresh()` then fails, `bookingStatus` stays `.pendingReschedule` and `date`, `timeRange`, `startTime`, `endTime` and `canJoin` stay at the pre-answer values. After a successful accept the user sees the "Reschedule accepted" toast, no card, and the OLD session time under a "Pending reschedule" pill. `joinWindowOpen(at:)` and `UpcomingActionPolicy.canShowCancel` still evaluate the old window, so Join can appear enabled for a window that no longer exists (the server refuses it, but the user was told the booking moved). After a decline the pill is wrong the other way (the booking is no longer pending). `refresh()` is called once; there is no retry, so only a `booking.update` socket event or reopening the screen repairs it. WR-01's double-money-POST risk is closed, but the screen is left in a state the server has already left.
+**Fix:** Give `onResolved` the outcome so each owner can update locally, and retry the refetch once.
+```swift
+enum Resolution { case accepted(RescheduleProposal), declined }
+@ObservationIgnored var onResolved: (@MainActor (Resolution) -> Void)?
+
+// UpcomingBookingViewModel
+responder.onResolved = { [weak self] resolution in
+    guard let self else { return }
+    if case .accepted(let proposal) = resolution {
+        startTime = proposal.proposedStart; endTime = proposal.proposedEnd
+        date = Self.dateString(proposal.proposedStart)
+        timeRange = Self.timeRangeString(from: proposal.proposedStart, to: proposal.proposedEnd)
+    }
+    bookingStatus = .confirmed; statusRaw = BookingStatus.confirmed.rawValue
+    canJoin = nil
+    reschedule = nil
+}
+```
+At minimum, make the owner's `refetch` retry once after a short delay when the first attempt throws, and add a test where the post-answer GET fails and asserts `bookingStatus != .pendingReschedule`.
+
+### WR-09: Post-cancel toast reads the refund case after the await, so the 60 s tick can change the case the user confirmed under
+
+**File:** `ClickMe2026/Views/Screens/Client Mode/Cancellation/ClientCancellationViewModel.swift:187-195` (with `ClientCancellationView.swift:193-197` and `ClientCancellationViewModel.swift:134-137`)
+**Issue:** `confirmCancellation` passes `booking.refundCase ?? .amountUnknown` to `CancelToastMessage.text` after `await api.cancelClientBooking(...)`. The confirm step's `TimelineView` calls `recomputeRefundCase()` every 60 seconds and nothing pauses it while `isConfirming` is true. If a tick lands during the request (and the cancel takes up to the 120 s request timeout on a bad network) and the booking has crossed the 24h line, `booking.refundCase` flips from `.chargedRefundable` to `.chargedNotRefundable`. With a server 0 the toast then says "No refund applies because the session was within 24 hours", which contradicts what the user confirmed and is worse than the neutral line 03-17 added. The doc on `CancelToastMessage.text` says the parameter is "the case the client last saw on the confirm step", and the code does not guarantee that.
+**Fix:** Capture the case once, next to the check that compares it, before any await.
+```swift
+let confirmedCase = booking.refundCase ?? .amountUnknown   // before cancelError = nil / the await
+...
+toasts.show(CancelToastMessage.text(
+    serverRefundMajor: response.data.refundAmount,
+    currency: response.data.currency,
+    confirmedCase: confirmedCase
+))
+```
+Also make `recomputeRefundCase()` return early while `isConfirming`. Add a test that advances the test clock inside the cancel handler and asserts the toast follows the pre-request case.
+
 ## Info
 
 ### IN-01: `bannerFinalStretch` test cannot distinguish the final-stretch branch
@@ -195,8 +286,14 @@ Add a responder test where the post-accept detail GET returns 500 and assert `pe
 **Issue:** If `expertId`, `startTime` or `endTime` is nil, the Join button does nothing and shows no error. The window gate (`joinWindowOpen`) already requires start and end, and `expertId` is set in the same `apply`, so it is unreachable now. Join is the app's core flow, so a future change to `apply` would produce a dead button with no diagnostics.
 **Fix:** Set `CallCenter.shared.joinError` (or assert in debug) in the guard's else branch.
 
+### IN-06: `.chargedNotRefundable` at server 0 still states "No refund applies", the same ambiguity WR-02 removed for the refundable case
+
+**File:** `ClickMe2026/Utils/CancelToastMessage.swift:53-54`
+**Issue:** The 03-17 fix made `.chargedRefundable` neutral because the case comes from the phone clock and a server 0 is ambiguous. The mirror case is left firm. If the phone clock runs ahead, a booking just over 24h out is previewed as `.chargedNotRefundable`. The server then refunds, which the `> 0` branch handles correctly, or it returns 0 because the refund failed and is being retried (`refund_failed`). In the second case the toast says "No refund applies because the session was within 24 hours" for a booking the server considered refundable. This needs a clock skew at the edge and a refund failure together, so it is rare.
+**Fix:** Either accept it and note it in the `CancelToastMessage` doc comment, or use the neutral line for `.chargedNotRefundable` too when the confirm-time margin to the 24h edge is under a few minutes.
+
 ---
 
-_Reviewed: 2026-11-11_
+_Reviewed: 2026-11-11 (incremental pass appended; original review preserved)_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

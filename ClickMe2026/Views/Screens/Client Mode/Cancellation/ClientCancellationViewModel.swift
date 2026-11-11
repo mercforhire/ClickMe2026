@@ -142,11 +142,11 @@ final class ClientCancellationViewModel: ObservableObject {
         withAnimation { step = .confirmation }
     }
 
-    /// Fires `POST /client/bookings/:id/cancel` with the picked reason as
-    /// a display string. On success, invokes the caller's `onConfirm`
-    /// closure so the parent NavigationStack can pop back and refresh.
-    /// Comment is intentionally dropped — the server only accepts a single
-    /// `reason` field today.
+    /// Fires `POST /client/bookings/:id/cancel`. The picked reason and the
+    /// comment are sent as one `reason`, `"label: comment"`, capped at 500
+    /// UTF-16 units; BACK-14 stores it on the booking and the expert sees it
+    /// (BOOK-07). On success, posts the toast and invokes the caller's
+    /// `onConfirm` closure so the parent NavigationStack can pop back and refresh.
     ///
     /// The refund case is recomputed first. If it differs from the one on
     /// screen (for example the session crossed the 24-hour line while the step
@@ -177,7 +177,10 @@ final class ClientCancellationViewModel: ObservableObject {
 
         let response: SuccessDataResponse<CancelBookingData>
         do {
-            response = try await api.cancelClientBooking(id: bookingId, reason: selectedReason)
+            response = try await api.cancelClientBooking(
+                id: bookingId,
+                reason: CancelReasonComposer.reason(label: selectedReason, comment: comment)
+            )
         } catch {
             cancelError = error.userMessage
             return

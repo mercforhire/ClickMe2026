@@ -47,7 +47,20 @@ struct CancellationCommentField: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 9)
                     .focused($commentFocused)
+                    .onChange(of: comment) { _, new in
+                        // Stops at the limit on a character boundary, so what is
+                        // shown is what the server receives (BOOK-07).
+                        let capped = CancelReasonComposer.capComment(new)
+                        if capped != new { comment = capped }
+                    }
             }
+
+            Text("\(comment.utf16.count)/\(CancelReasonComposer.commentLimit)")
+                .font(.brand(.caption, weight: .regular))
+                .foregroundColor(CancellationBrand.onSurfaceVar)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 4)
+                .accessibilityLabel("\(comment.utf16.count) of \(CancelReasonComposer.commentLimit) characters")
         }
     }
 }

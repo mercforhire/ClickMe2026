@@ -232,4 +232,40 @@ struct ClientCancellationViewModelTests {
         #expect(toasts.current == nil)
         #expect(confirmed.count == 0)
     }
+
+    // MARK: - Reason body (BOOK-07)
+
+    @Test("the cancel POST sends 'label: comment' as the reason")
+    func reasonBodyCarriesComment() async throws {
+        let clock = TestClock(Self.base)
+        let viewModel = await makeLoadedViewModel(
+            detail: capturedDetail(secondsAhead: 3 * 24 * 3600),
+            clock: clock
+        )
+        viewModel.selectedReason = "Change of plans"
+        viewModel.comment = "running late"
+
+        await viewModel.confirmCancellation { _, _ in }
+
+        let post = try #require(Self.cancelPosts().first)
+        let body = try #require(post.bodyDataForTest())
+        let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+        #expect(json["reason"] as? String == "Change of plans: running late")
+    }
+
+    @Test("a blank comment sends the label alone")
+    func reasonBodyLabelOnly() async throws {
+        let clock = TestClock(Self.base)
+        let viewModel = await makeLoadedViewModel(
+            detail: capturedDetail(secondsAhead: 3 * 24 * 3600),
+            clock: clock
+        )
+        viewModel.selectedReason = "Other"
+        viewModel.comment = "   "
+
+        await viewModel.confirmCancellation { _, _ in }
+
+        let json = try #require(Self.cancelPosts().first?.jsonBodyForTest())
+        #expect(json["reason"] as? String == "Other")
+    }
 }

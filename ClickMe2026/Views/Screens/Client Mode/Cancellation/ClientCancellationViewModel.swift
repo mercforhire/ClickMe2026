@@ -131,7 +131,12 @@ final class ClientCancellationViewModel: ObservableObject {
     /// Re-evaluates the money case from the booking facts and the clock.
     /// Called after a load and every 60 seconds while the confirm step is on
     /// screen, so the line follows the 24-hour edge (D-06).
+    ///
+    /// Does nothing while a cancel is in flight: the client confirmed under the
+    /// case on screen, and the post-cancel toast must be worded from that case
+    /// (WR-09).
     func recomputeRefundCase() {
+        guard !isConfirming else { return }
         guard let facts = booking.refundFacts else { return }
         booking.refundCase = CancelRefundPreview.refundCase(facts, now: now())
     }
@@ -165,6 +170,10 @@ final class ClientCancellationViewModel: ObservableObject {
         }
         previewChangedNotice = false
 
+        // The case the client confirmed under, captured before any await so a
+        // later recompute cannot change what the toast is worded from (WR-09).
+        let confirmedCase = booking.refundCase ?? .amountUnknown
+
         guard let bookingId else {
             // Preview / seeded path — no real booking to cancel.
             onConfirm(selectedReason, comment)
@@ -191,7 +200,7 @@ final class ClientCancellationViewModel: ObservableObject {
         toasts.show(CancelToastMessage.text(
             serverRefundMajor: response.data.refundAmount,
             currency: response.data.currency,
-            confirmedCase: booking.refundCase ?? .amountUnknown
+            confirmedCase: confirmedCase
         ))
         onConfirm(selectedReason, comment)
     }

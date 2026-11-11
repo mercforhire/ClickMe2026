@@ -213,6 +213,52 @@ struct ClientCancellationViewModelTests {
         #expect(toasts.current?.message == "Booking cancelled. Any refund due will follow our cancellation policy.")
     }
 
+    @Test("the 60 s tick landing during the cancel request cannot change the case the toast is worded from")
+    func tickDuringRequestKeepsConfirmedCase() async {
+        let clock = TestClock(Self.base)
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let threeDays: TimeInterval = 3 * 24 * 3600
+        let gate = DispatchSemaphore(value: 0)
+        let detail = capturedDetail(secondsAhead: threeDays)
+        let cancelBody = Self.cancelSuccess
+        let api = APITestFactory.make { request in
+            if Self.isCancel(request) {
+                // Hold the response until the test has moved the clock and ticked.
+                _ = gate.wait(timeout: .now() + 10)
+                return Fixtures.response(for: request, body: cancelBody)
+            }
+            return Fixtures.response(for: request, body: detail)
+        }
+        let viewModel = ClientCancellationViewModel(
+            bookingId: UUID(uuidString: Fixtures.bookingId)!,
+            api: api,
+            now: { clock.now },
+            toasts: toasts
+        )
+        await viewModel.load()
+        guard case .chargedRefundable = viewModel.booking.refundCase else {
+            Issue.record("expected .chargedRefundable at load, got \(String(describing: viewModel.booking.refundCase))")
+            gate.signal()
+            return
+        }
+
+        let confirmTask = Task { await viewModel.confirmCancellation { _, _ in } }
+        var polls = 0
+        while Self.cancelPosts().isEmpty, polls < 10_000 {
+            polls += 1
+            await Task.yield()
+        }
+        #expect(!Self.cancelPosts().isEmpty)
+
+        // The session crosses the 24-hour line and the confirm step's 60 s tick fires mid-request.
+        clock.now = Self.base.addingTimeInterval(threeDays - 12 * 3600)
+        viewModel.recomputeRefundCase()
+        gate.signal()
+        await confirmTask.value
+
+        #expect(toasts.current?.message == "Booking cancelled. Any refund due will follow our cancellation policy.")
+    }
+
     @Test("the idempotent already-cancelled 200 shows the neutral policy line and confirms once")
     func alreadyCancelledShowsNeutralLine() async {
         let clock = TestClock(Self.base)

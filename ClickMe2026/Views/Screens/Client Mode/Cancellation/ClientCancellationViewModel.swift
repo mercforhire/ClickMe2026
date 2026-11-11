@@ -38,6 +38,9 @@ final class ClientCancellationViewModel: ObservableObject {
     private let api: ClickMeAPI
     /// The clock the refund preview reads. Injected so tests can move time.
     private let now: @MainActor () -> Date
+    /// Where the post-cancel confirmation is posted. The client shell hosts it,
+    /// so the message survives the pop to My Bookings.
+    private let toasts: ToastCenter
 
     /// Runtime init — fetches display fields from `GET /client/bookings/:id`
     /// then lets the user pick a reason before calling
@@ -45,7 +48,8 @@ final class ClientCancellationViewModel: ObservableObject {
     init(
         bookingId: UUID,
         api: ClickMeAPI = .shared,
-        now: @escaping @MainActor () -> Date = { Date() }
+        now: @escaping @MainActor () -> Date = { Date() },
+        toasts: ToastCenter = .shared
     ) {
         self.bookingId = bookingId
         self.step = .reason
@@ -57,6 +61,7 @@ final class ClientCancellationViewModel: ObservableObject {
         self.reasons = ClientCancellationViewModel.defaultReasons
         self.api = api
         self.now = now
+        self.toasts = toasts
     }
 
     /// Preview seam — pre-populates the display booking as if the fetch had
@@ -79,6 +84,7 @@ final class ClientCancellationViewModel: ObservableObject {
         self.reasons = reasons
         self.api = .shared
         self.now = { Date() }
+        self.toasts = .shared
         recomputeRefundCase()
     }
 
@@ -169,13 +175,21 @@ final class ClientCancellationViewModel: ObservableObject {
         withAnimation { isConfirming = true }
         defer { isConfirming = false }
 
+        let response: SuccessDataResponse<CancelBookingData>
         do {
-            _ = try await api.cancelClientBooking(id: bookingId, reason: selectedReason)
+            response = try await api.cancelClientBooking(id: bookingId, reason: selectedReason)
         } catch {
             cancelError = error.userMessage
             return
         }
 
+        // Worded from the server's answer and the case the client confirmed
+        // under, posted before the pop so the shell's toast outlives this screen.
+        toasts.show(CancelToastMessage.text(
+            serverRefundMajor: response.data.refundAmount,
+            currency: response.data.currency,
+            confirmedCase: booking.refundCase ?? .amountUnknown
+        ))
         onConfirm(selectedReason, comment)
     }
 

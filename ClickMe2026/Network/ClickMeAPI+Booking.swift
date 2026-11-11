@@ -217,7 +217,12 @@ extension ClickMeAPI {
         )
     }
 
-    func cancelClientBooking(id: UUID, reason: String) async throws -> SuccessMessageResponse {
+    /// Client cancels a booking. The 200 body carries `data.refund_amount`
+    /// (major units) and `data.currency`. The amount is 0 for a released hold, a
+    /// within-24-hour charge, a free booking, and a void or refund being
+    /// retried, so callers must not read 0 as "no refund" (see
+    /// `CancelToastMessage`). The already-cancelled 200 also returns 0.
+    func cancelClientBooking(id: UUID, reason: String) async throws -> SuccessDataResponse<CancelBookingData> {
         try await service.httpRequest(
             url: url(.cancelClientBooking, id: id),
             method: .post,

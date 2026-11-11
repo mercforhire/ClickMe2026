@@ -68,12 +68,14 @@ struct ClientCancellationViewModelTests {
         detail: Data,
         clock: TestClock,
         cancelStatus: Int = 200,
-        cancelBody: Data = ClientCancellationViewModelTests.cancelSuccess
+        cancelBody: Data = ClientCancellationViewModelTests.cancelSuccess,
+        toasts: ToastCenter = ToastCenter(displayDuration: .seconds(60))
     ) async -> ClientCancellationViewModel {
         let viewModel = ClientCancellationViewModel(
             bookingId: UUID(uuidString: Fixtures.bookingId)!,
             api: makeAPI(detail: detail, cancelStatus: cancelStatus, cancelBody: cancelBody),
-            now: { clock.now }
+            now: { clock.now },
+            toasts: toasts
         )
         await viewModel.load()
         return viewModel
@@ -174,5 +176,60 @@ struct ClientCancellationViewModelTests {
         #expect(viewModel.cancelError == message)
         #expect(confirmed.count == 0)
         #expect(viewModel.isConfirming == false)
+    }
+
+    // MARK: - Post-cancel toast (D-06)
+
+    @Test("a 200 with refund_amount 45 posts the refund toast and confirms once")
+    func successPostsRefundToast() async {
+        let clock = TestClock(Self.base)
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let viewModel = await makeLoadedViewModel(
+            detail: capturedDetail(secondsAhead: 3 * 24 * 3600),
+            clock: clock,
+            cancelBody: Data(#"{"status":"success","message":"ok","data":{"refund_amount":45,"currency":"CAD"}}"#.utf8),
+            toasts: toasts
+        )
+        let confirmed = ConfirmCounter()
+
+        await viewModel.confirmCancellation { _, _ in confirmed.count += 1 }
+
+        #expect(toasts.current?.message == "Booking cancelled. CA$45.00 will be refunded to your card.")
+        #expect(confirmed.count == 1)
+    }
+
+    @Test("a zero refund after confirming under a refundable charge says the refund is being processed")
+    func zeroRefundUsesConfirmedCase() async {
+        let clock = TestClock(Self.base)
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let viewModel = await makeLoadedViewModel(
+            detail: capturedDetail(secondsAhead: 3 * 24 * 3600),
+            clock: clock,
+            toasts: toasts
+        )
+
+        await viewModel.confirmCancellation { _, _ in }
+
+        #expect(toasts.current?.message == "Booking cancelled. Your CA$45.00 refund is being processed.")
+    }
+
+    @Test("a 409 shows the error, posts no toast and does not confirm")
+    func failurePostsNoToast() async {
+        let clock = TestClock(Self.base)
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let viewModel = await makeLoadedViewModel(
+            detail: capturedDetail(secondsAhead: 3 * 24 * 3600),
+            clock: clock,
+            cancelStatus: 409,
+            cancelBody: Fixtures.errorBody(code: "SESSION_ALREADY_ENDED", message: "This session has already ended."),
+            toasts: toasts
+        )
+        let confirmed = ConfirmCounter()
+
+        await viewModel.confirmCancellation { _, _ in confirmed.count += 1 }
+
+        #expect(viewModel.cancelError != nil)
+        #expect(toasts.current == nil)
+        #expect(confirmed.count == 0)
     }
 }

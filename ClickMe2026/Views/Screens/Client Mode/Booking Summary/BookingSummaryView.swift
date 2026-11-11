@@ -76,23 +76,6 @@ struct BookingSummaryView: View {
         )
     }
 
-    /// Confirmation-dialog body for the accept-reschedule sheet.
-    /// Falls back to the short "session will move" copy when the
-    /// proposed slot stays within the current auth window; swaps in
-    /// the Phase 27.1 payment-conversion disclosure when the move
-    /// would release the current hold and re-schedule the charge to
-    /// ~24h before the new session.
-    private var acceptRescheduleDialogMessage: String {
-        guard viewModel.requiresAcceptRescheduleDisclosure else {
-            return "The session will move to the new time the expert proposed."
-        }
-        var text = "The session will move to the new time the expert proposed.\n\nYour card hold will be released. Because the new time is more than a few days out, we'll release the current payment hold on your card and instead charge it automatically about 24 hours before your new session time. You won't be charged today."
-        if viewModel.acceptRescheduleChargesSoon {
-            text += "\n\nIf your new session is coming up soon, your card may be charged sooner than 24 hours from now."
-        }
-        return text
-    }
-
     // MARK: Body
 
     var body: some View {
@@ -111,22 +94,22 @@ struct BookingSummaryView: View {
             isPresented: $showAcceptRescheduleConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Accept") {
-                Task { await viewModel.acceptReschedule() }
+            Button("Accept New Time") {
+                Task { await viewModel.responder.accept() }
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Keep Current Time", role: .cancel) {}
         } message: {
-            Text(acceptRescheduleDialogMessage)
+            Text(viewModel.acceptDialogMessage)
         }
         .alert(
             "Decline reschedule",
             isPresented: $showDeclineReschedulePrompt
         ) {
             TextField("Optional reason", text: $declineRescheduleReason)
-            Button("Decline", role: .destructive) {
+            Button("Decline New Time", role: .destructive) {
                 let reason = declineRescheduleReason
                 declineRescheduleReason = ""
-                Task { await viewModel.declineReschedule(reason: reason) }
+                Task { await viewModel.responder.decline(reason: reason) }
             }
             Button("Keep session as-is", role: .cancel) {
                 declineRescheduleReason = ""
@@ -137,12 +120,12 @@ struct BookingSummaryView: View {
         .alert(
             "Couldn't update booking",
             isPresented: Binding(
-                get: { viewModel.rescheduleError != nil },
-                set: { if !$0 { viewModel.rescheduleError = nil } }
+                get: { viewModel.responder.apiError != nil },
+                set: { if !$0 { viewModel.responder.apiError = nil } }
             ),
-            presenting: viewModel.rescheduleError
+            presenting: viewModel.responder.apiError
         ) { _ in
-            Button("OK", role: .cancel) {}
+            Button("Back to Booking", role: .cancel) {}
         } message: { message in
             Text(message)
         }
@@ -169,7 +152,13 @@ struct BookingSummaryView: View {
                 if let proposal = viewModel.reschedule,
                    let currentStart = viewModel.currentStartTime
                 {
-                    rescheduleCard(proposal: proposal, currentStart: currentStart)
+                    RescheduleResponseCard(
+                        proposal: proposal,
+                        currentStart: currentStart,
+                        isSubmitting: viewModel.responder.isSubmitting,
+                        onAccept: { showAcceptRescheduleConfirmation = true },
+                        onDecline: { showDeclineReschedulePrompt = true }
+                    )
                 }
 
                 BookingSummaryExpertCard(
@@ -244,150 +233,6 @@ struct BookingSummaryView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    // MARK: - Reschedule banner
-
-    /// Amber card shown when a reschedule is pending. Same visual as
-    /// the expert-side twin. If the expert proposed → this client is
-    /// the counterparty → shows Accept + Decline. If the client
-    /// themselves proposed → shows the "Awaiting expert response" pill
-    /// with no actions.
-    private func rescheduleCard(
-        proposal: RescheduleProposal,
-        currentStart: Date
-    ) -> some View {
-        let clientIsCounterparty = proposal.initiatedBy == .expert
-        let headline = clientIsCounterparty
-            ? "Expert requested a new time"
-            : "You proposed a new time"
-
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-                Image(systemName: "clock.badge.exclamationmark")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.orange.opacity(0.9))
-                Text(headline)
-                    .font(.brand(.subheadline, weight: .semibold))
-                    .foregroundColor(MyBookingsBrand.onSurface)
-                Spacer()
-            }
-
-            HStack(alignment: .center, spacing: 10) {
-                timeBlock(label: "From", value: viewModel.formatSlot(currentStart))
-                Image(systemName: "arrow.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(MyBookingsBrand.onSurfaceVar)
-                timeBlock(label: "To", value: viewModel.formatSlot(proposal.proposedStart))
-                Spacer()
-            }
-
-            if let note = proposal.note?
-                .trimmingCharacters(in: .whitespacesAndNewlines),
-               !note.isEmpty
-            {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(clientIsCounterparty ? "Expert's message" : "Your message")
-                        .font(.brand(.caption2, weight: .semibold))
-                        .tracking(0.6)
-                        .foregroundColor(MyBookingsBrand.onSurfaceVar)
-                    Text(note)
-                        .font(.brand(.caption, weight: .regular))
-                        .foregroundColor(MyBookingsBrand.onSurface)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            if clientIsCounterparty {
-                rescheduleActionButtons
-            } else {
-                awaitingResponsePill
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.orange.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.orange.opacity(0.35), lineWidth: 1)
-                )
-        )
-    }
-
-    private func timeBlock(label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label.uppercased())
-                .font(.brand(.caption2, weight: .semibold))
-                .tracking(0.6)
-                .foregroundColor(MyBookingsBrand.onSurfaceVar)
-            Text(value)
-                .font(.brand(.caption, weight: .semibold))
-                .foregroundColor(MyBookingsBrand.onSurface)
-        }
-    }
-
-    private var rescheduleActionButtons: some View {
-        HStack(spacing: 12) {
-            Button {
-                showDeclineReschedulePrompt = true
-            } label: {
-                Text("Decline")
-                    .font(.brand(.subheadline, weight: .semibold))
-                    .foregroundColor(Color.red.opacity(0.95))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 42)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.red.opacity(0.10))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(Color.red.opacity(0.45), lineWidth: 1)
-                            )
-                    )
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .disabled(viewModel.isSubmittingReschedule)
-
-            Button {
-                showAcceptRescheduleConfirmation = true
-            } label: {
-                HStack(spacing: 6) {
-                    if viewModel.isSubmittingReschedule {
-                        ProgressView().tint(MyBookingsBrand.onPrimary).controlSize(.small)
-                    }
-                    Text("Accept")
-                        .font(.brand(.subheadline, weight: .semibold))
-                }
-                .foregroundColor(MyBookingsBrand.onPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 42)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(MyBookingsBrand.brandGreen)
-                )
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .disabled(viewModel.isSubmittingReschedule)
-        }
-    }
-
-    private var awaitingResponsePill: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "hourglass")
-                .font(.caption2.weight(.semibold))
-            Text("Awaiting expert's response")
-                .font(.brand(.caption, weight: .semibold))
-        }
-        .foregroundColor(MyBookingsBrand.onSurfaceVar)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(MyBookingsBrand.cardBg)
-                .overlay(Capsule().stroke(MyBookingsBrand.cardBorder, lineWidth: 1))
-        )
     }
 
     /// Full-text "My Note" surface. Renders the note inline when one

@@ -66,9 +66,14 @@ final class BookingSummaryViewModel: ObservableObject {
     /// the reschedule needs the payment-conversion disclosure copy.
     @Published var authorizationExpiresAt: Date?
 
-    /// In-flight flag for accept/decline reschedule.
-    @Published var isSubmittingReschedule: Bool = false
-    @Published var rescheduleError: String?
+    // MARK: Reschedule response
+
+    /// Answers an expert-proposed time (BOOK-06, D-01). The same responder the
+    /// Upcoming Booking details screen uses, so the accept disclosure and the
+    /// PAYMENT_METHOD_REQUIRED recovery exist once. Its `refetch` is this
+    /// model's silent `refresh()`, so a successful accept or decline updates
+    /// the screen in place with no loading spinner (D-03).
+    let responder: RescheduleResponder
 
     // MARK: Load state
     @Published var loadState: LoadState
@@ -109,6 +114,7 @@ final class BookingSummaryViewModel: ObservableObject {
         self.reschedule = nil
         self.loadState = .idle
         self.api = api
+        self.responder = RescheduleResponder(bookingId: bookingId, api: api)
 
         // Terminal state changes (e.g. completed) still land here — if
         // the booking is under this screen when it flips, refresh so
@@ -118,6 +124,7 @@ final class BookingSummaryViewModel: ObservableObject {
             guard event.bookingId == targetId else { return }
             Task { @MainActor in await self?.reload() }
         }
+        responder.refetch = { [weak self] in await self?.refresh() }
     }
 
     /// Preview seam — pre-populates all display fields as if the fetch had
@@ -154,6 +161,8 @@ final class BookingSummaryViewModel: ObservableObject {
         self.currentStartTime = nil
         self.loadState = loadState
         self.api = .shared
+        // No booking id, so the responder never sends a request.
+        self.responder = RescheduleResponder(bookingId: nil)
     }
 
     // MARK: - Load
@@ -170,6 +179,38 @@ final class BookingSummaryViewModel: ObservableObject {
     func reload() async {
         guard let bookingId else { return }
         await forceLoad(bookingId: bookingId)
+    }
+
+    /// Re-fetches without leaving `.loaded`, so the content stays on screen
+    /// while it updates (D-03). A failed detail fetch while loaded keeps the
+    /// last good content; a failed review-context fetch keeps the previous
+    /// review state. The detail and the review context are written together,
+    /// and only while this call is still the newest. When not yet loaded this
+    /// runs the full load instead, so the newest call settles `loadState`.
+    func refresh() async {
+        guard let bookingId else { return }
+        guard case .loaded = loadState else {
+            await forceLoad(bookingId: bookingId)
+            return
+        }
+        let token = reloads.begin()
+        let detail: ClientBookingDetail
+        do {
+            detail = try await api.getClientBookingDetail(id: bookingId).data
+        } catch {
+            // Intentionally swallowed: keep the last known good screen.
+            return
+        }
+        guard reloads.isCurrent(token) else { return }
+
+        // Review context is a soft dependency, as in the full load.
+        let reviewContext = try? await api.getReviewContext(bookingId: bookingId).data
+        guard reloads.isCurrent(token) else { return }
+
+        apply(detail: detail)
+        if let reviewContext {
+            apply(reviewContext: reviewContext)
+        }
     }
 
     /// Fetches the booking detail, then the review context, and hydrates the
@@ -227,117 +268,15 @@ final class BookingSummaryViewModel: ObservableObject {
     /// has run.
     @Published var currentStartTime: Date?
 
-    // MARK: - Payment-conversion disclosure (Phase 27.1)
-
-    /// True when accepting the pending reschedule would push the
-    /// session past this booking's authorization window — in which
-    /// case the server voids the current hold and re-schedules the
-    /// charge to ~24h before the new session. Drives the accept-
-    /// reschedule confirmation dialog's copy.
-    var requiresAcceptRescheduleDisclosure: Bool {
-        guard let expiresAt = authorizationExpiresAt,
-              let proposal = reschedule
-        else { return false }
-        return proposal.proposedEnd > expiresAt
-    }
-
-    /// True when the T-24h charge would fire within the next ~24 hours
-    /// (proposed session start under 48h from now). Used to append the
-    /// near-term caveat to the disclosure copy. Sub-24h proposals are
-    /// refused server-side, so this only fires in the 24–48h band.
-    var acceptRescheduleChargesSoon: Bool {
-        guard let proposal = reschedule else { return false }
-        return proposal.proposedStart.timeIntervalSinceNow < 48 * 3600
-    }
-
-    // MARK: - Reschedule actions
-
-    /// Accept an expert-initiated reschedule. Rolls the booking
-    /// forward server-side, then reloads detail so the banner clears
-    /// and the times update. No-op when there's no booking id
-    /// (preview seed) or a submission is already in flight.
-    ///
-    /// **PAYMENT_METHOD_REQUIRED recovery (Phase 27.1):** the check on
-    /// this endpoint is DB-only — a 422 does not mean "user has no
-    /// cards." Fetch the vault and retry with a `stripe_payment_method_id`
-    /// when possible. See `RESCHEDULE-PAYMENT-CONVERSION.md` §3.1.
-    func acceptReschedule() async {
-        guard !isSubmittingReschedule, let bookingId else { return }
-        isSubmittingReschedule = true
-        defer { isSubmittingReschedule = false }
-
-        do {
-            _ = try await api.acceptClientReschedule(id: bookingId)
-            await forceLoad(bookingId: bookingId)
-            return
-        } catch {
-            guard Self.errorCode(for: error) == .paymentMethodRequired else {
-                rescheduleError = error.userMessage
-                return
-            }
-            // Fall through to pm-recovery below.
-        }
-
-        let vault: [PaymentMethodItem]
-        do {
-            vault = try await api.getPaymentMethods().data.paymentMethods
-        } catch {
-            rescheduleError = "Couldn't check your saved payment methods. Please try again."
-            return
-        }
-
-        let preferredId = vault.first(where: { $0.isDefault })?.id ?? vault.first?.id
-        guard let pmId = preferredId else {
-            rescheduleError = "Please add a payment method in Settings > Payment before accepting this reschedule."
-            return
-        }
-
-        do {
-            _ = try await api.acceptClientReschedule(id: bookingId, stripePaymentMethodId: pmId)
-            await forceLoad(bookingId: bookingId)
-        } catch {
-            // Second failure is terminal — including a repeat
-            // PAYMENT_METHOD_REQUIRED (the chosen card can't be
-            // prepared for future billing either).
-            if Self.errorCode(for: error) == .paymentMethodRequired {
-                rescheduleError = "The card on file can't be used for this reschedule. Please add a new payment method in Settings > Payment and try again."
-            } else {
-                rescheduleError = error.userMessage
-            }
-        }
-    }
-
-    private static func errorCode(for error: Error) -> ErrorCode? {
-        guard case let NetworkError.httpError(_, data) = error,
-              let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        else { return nil }
-        return response.code
-    }
-
-    /// Decline an expert-initiated reschedule with an optional reason.
-    func declineReschedule(reason: String?) async {
-        guard !isSubmittingReschedule, let bookingId else { return }
-        isSubmittingReschedule = true
-        defer { isSubmittingReschedule = false }
-        let trimmed = reason?.trimmingCharacters(in: .whitespacesAndNewlines)
-        do {
-            _ = try await api.declineClientReschedule(
-                id: bookingId,
-                reason: (trimmed?.isEmpty ?? true) ? nil : trimmed
-            )
-            await forceLoad(bookingId: bookingId)
-        } catch {
-            rescheduleError = error.userMessage
-        }
-    }
-
-    /// "Wed, Jul 10 · 10:00 AM" — used by the from/to row on the
-    /// reschedule banner.
-    func formatSlot(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "EEE, MMM d · h:mm a"
-        return f.string(from: date)
+    /// Body of the "Accept the proposed reschedule?" dialog. Comes from the
+    /// shared responder, so the payment-conversion disclosure and the
+    /// near-term caveat read the same as on Upcoming Booking details.
+    var acceptDialogMessage: String {
+        RescheduleResponder.acceptDialogMessage(
+            proposal: reschedule,
+            authorizationExpiresAt: authorizationExpiresAt,
+            now: Date()
+        )
     }
 
     /// Collapse the raw wire status to the 3-case badge enum. Same rule

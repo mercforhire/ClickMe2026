@@ -16,8 +16,8 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **CALL-03** [C3] **[major]**: Tapping Join on the client Upcoming Booking details screen starts the call
 - [x] **CALL-04** [C4]: Ending a call with a 0-second leg is accepted by the server (send at least 1 second)
 - [x] **CALL-05** [C5] (likely): The call screen reaches the Ended state when the Agora connection fails or is aborted
-- [ ] **CALL-06** [C6]: Skype/Zoom status copy no longer promises the meeting ends automatically at the scheduled time
-- [ ] **CALL-07** [C7]: The Skype/Zoom session screen shows the elapsed or remaining time
+- [x] **CALL-06** [C6]: Skype/Zoom status copy no longer promises the meeting ends automatically at the scheduled time
+- [x] **CALL-07** [C7]: The Skype/Zoom session screen shows the elapsed or remaining time
 - [ ] **CALL-08** [C8] **[major]**: User can open a Skype/Zoom meeting from the Upcoming Booking details screen
 - [x] **CALL-09** [C9]: Skype/Zoom detection matches the real host domain only, so a lookalike URL is not treated as a trusted provider
 - [ ] **CALL-10** [C10] **[major]**: Expert can join a session from the expert Booking Summary, within the same join window as CALL-02
@@ -183,8 +183,8 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | CALL-03 | Phase 3 | Pending |
 | CALL-04 | Phase 2 | Complete |
 | CALL-05 | Phase 2 | Complete |
-| CALL-06 | Phase 3 | Pending |
-| CALL-07 | Phase 3 | Pending |
+| CALL-06 | Phase 3 | Complete |
+| CALL-07 | Phase 3 | Complete |
 | CALL-08 | Phase 3 | Pending |
 | CALL-09 | Phase 2 | Complete |
 | CALL-10 | Phase 3 | Pending |

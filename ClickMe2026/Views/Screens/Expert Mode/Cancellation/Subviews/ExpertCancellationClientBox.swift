@@ -15,7 +15,7 @@ struct ExpertCancellationClientBox: View {
     let clientImageURL: String
     let sessionTopic: String
     let dateTime: String
-    let refundType: String
+    let refundLine: ExpertCancelRefundLine
 
     var body: some View {
         VStack(spacing: 0) {
@@ -85,25 +85,32 @@ struct ExpertCancellationClientBox: View {
                     .foregroundColor(ExpertCancellationBrand.onSurface)
             }
 
-            HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "creditcard")
-                    .font(.body.weight(.regular))
-                    .foregroundColor(ExpertCancellationBrand.onSurfaceVar)
-                    .frame(width: 20)
-                (
-                    Text("A ")
+            if let text = refundLine.text, let iconName = refundLine.iconName {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: iconName)
+                        .font(.body.weight(.regular))
                         .foregroundColor(ExpertCancellationBrand.onSurfaceVar)
-                        + Text(refundType)
-                        .foregroundColor(ExpertCancellationBrand.brandGreen)
-                        .fontWeight(.semibold)
-                        + Text(" will be processed to the client according to our policy.")
+                        .frame(width: 20)
+                    refundSentence(text)
+                        .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(ExpertCancellationBrand.onSurface)
-                )
-                .font(.brand(.subheadline, weight: .regular))
-                .lineSpacing(3)
-                .fixedSize(horizontal: false, vertical: true)
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(16)
+    }
+
+    // MARK: Refund sentence
+
+    /// The sentence with the amount set semibold in the same color (never accent).
+    private func refundSentence(_ text: String) -> Text {
+        guard let emphasis = refundLine.emphasis, let range = text.range(of: emphasis) else {
+            return Text(text)
+        }
+        return Text(String(text[..<range.lowerBound]))
+            + Text(emphasis).fontWeight(.semibold)
+            + Text(String(text[range.upperBound...]))
     }
 }

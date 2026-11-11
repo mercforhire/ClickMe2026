@@ -17,7 +17,8 @@ final class ExpertCancellationViewModel: ObservableObject {
     @Published var clientImageURL: String
     @Published var sessionTopic: String
     @Published var dateTime: String
-    @Published var refundType: String
+    /// Set only from the caller. No default: a default is a refund claim no rule produced.
+    @Published var refundLine: ExpertCancelRefundLine
 
     // MARK: Form state
     @Published var selectedReason: CancellationReason
@@ -46,7 +47,7 @@ final class ExpertCancellationViewModel: ObservableObject {
         clientImageURL: String = ExpertCancellationViewModel.sampleImageURL,
         sessionTopic: String = "Advanced UX Mentorship",
         dateTime: String = "Wed, Oct 25 • 2:00 PM - 3:00 PM",
-        refundType: String = "full refund",
+        refundLine: ExpertCancelRefundLine,
         selectedReason: CancellationReason = .none,
         showReasonPicker: Bool = false,
         isCancelling: Bool = false,
@@ -57,7 +58,7 @@ final class ExpertCancellationViewModel: ObservableObject {
         self.clientImageURL = clientImageURL
         self.sessionTopic = sessionTopic
         self.dateTime = dateTime
-        self.refundType = refundType
+        self.refundLine = refundLine
         self.selectedReason = selectedReason
         self.showReasonPicker = showReasonPicker
         self.isCancelling = isCancelling

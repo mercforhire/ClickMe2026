@@ -158,7 +158,14 @@ struct ExpertBookingSummaryView: View {
                     clientImageURL: detail.client.avatarUrl ?? "",
                     sessionTopic: detail.session.topicTitle ?? "Session",
                     dateTime: "\(viewModel.dateLabel) • \(viewModel.timeRangeLabel)",
-                    refundType: "full refund",
+                    // D-14 / D-16: a money line only when the payload says money is held or taken.
+                    refundLine: ExpertCancelRefundLine.make(
+                        consultationAmountMajor: detail.session.consultationFee.amount,
+                        currency: detail.session.consultationFee.currency,
+                        authorizationExpiresAt: detail.authorizationExpiresAt,
+                        paymentActionRequired: nil,
+                        paymentNotCharged: nil
+                    ),
                     onKeepBooking: { showCancellationSheet = false },
                     onConfirm: { _ in
                         showCancellationSheet = false

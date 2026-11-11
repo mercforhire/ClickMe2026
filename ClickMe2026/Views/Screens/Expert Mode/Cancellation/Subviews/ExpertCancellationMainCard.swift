@@ -15,7 +15,7 @@ struct ExpertCancellationMainCard: View {
     let clientImageURL: String
     let sessionTopic: String
     let dateTime: String
-    let refundType: String
+    let refundLine: ExpertCancelRefundLine
     let selectedReason: CancellationReason
     let onTapReasonPicker: () -> Void
 
@@ -29,16 +29,18 @@ struct ExpertCancellationMainCard: View {
                 clientImageURL: clientImageURL,
                 sessionTopic: sessionTopic,
                 dateTime: dateTime,
-                refundType: refundType
+                refundLine: refundLine
             )
 
             reasonSelector
 
-            Text("Refunds typically appear in the client's account within 3–5 business days.")
-                .font(.brand(.caption, weight: .regular))
-                .foregroundColor(ExpertCancellationBrand.onSurfaceVar.opacity(0.60))
-                .italic()
-                .multilineTextAlignment(.center)
+            if refundLine.showsFootnote {
+                Text("Refunds typically appear in the client's account within 3–5 business days.")
+                    .font(.brand(.caption, weight: .regular))
+                    .foregroundColor(ExpertCancellationBrand.onSurfaceVar.opacity(0.60))
+                    .italic()
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding(20)
         .background(

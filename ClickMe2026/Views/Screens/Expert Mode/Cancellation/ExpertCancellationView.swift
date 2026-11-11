@@ -38,7 +38,7 @@ struct ExpertCancellationView: View {
     // MARK: Init
 
     init(
-        viewModel: ExpertCancellationViewModel = ExpertCancellationViewModel(),
+        viewModel: ExpertCancellationViewModel,
         onKeepBooking: @escaping () -> Void = {},
         onConfirm: @escaping (CancellationReason) -> Void = { _ in }
     ) {
@@ -58,7 +58,7 @@ struct ExpertCancellationView: View {
         clientImageURL: String = ExpertCancellationViewModel.sampleImageURL,
         sessionTopic: String = "Advanced UX Mentorship",
         dateTime: String = "Wed, Oct 25 • 2:00 PM - 3:00 PM",
-        refundType: String = "full refund",
+        refundLine: ExpertCancelRefundLine,
         onKeepBooking: @escaping () -> Void = {},
         onConfirm: @escaping (CancellationReason) -> Void = { _ in }
     ) {
@@ -69,7 +69,7 @@ struct ExpertCancellationView: View {
                 clientImageURL: clientImageURL,
                 sessionTopic: sessionTopic,
                 dateTime: dateTime,
-                refundType: refundType
+                refundLine: refundLine
             ),
             onKeepBooking: onKeepBooking,
             onConfirm: onConfirm
@@ -90,7 +90,7 @@ struct ExpertCancellationView: View {
                         clientImageURL: viewModel.clientImageURL,
                         sessionTopic: viewModel.sessionTopic,
                         dateTime: viewModel.dateTime,
-                        refundType: viewModel.refundType,
+                        refundLine: viewModel.refundLine,
                         selectedReason: viewModel.selectedReason,
                         onTapReasonPicker: { viewModel.showReasonPicker = true }
                     )
@@ -151,7 +151,9 @@ private struct LiveFetchExpertCancellationBootstrap: View {
                 clientImageURL: booking.client.avatarUrl ?? ExpertCancellationViewModel.sampleImageURL,
                 sessionTopic: booking.session.topic ?? "Session",
                 dateTime: formatDateTime(booking.session.startTime, booking.session.endTime),
-                refundType: "full refund"
+                // The list item carries neither payment key, so this makes no
+                // client-money claim (D-14 fail closed).
+                refundLine: .none
             )
         } else if let errorMessage {
             Text(errorMessage)
@@ -198,14 +200,21 @@ private struct LiveFetchExpertCancellationBootstrap: View {
 
 #Preview("Expert Cancellation") {
     PreviewNavHarness(parentText: "Booking details", navTitle: "Upcoming session", rowTitle: "Cancel session") {
-        ExpertCancellationView()
+        ExpertCancellationView(refundLine: .fullRefund(amount: "CA$45.00"))
     }
     .preferredColorScheme(.dark)
 }
 
-#Preview("Partial Refund") {
+#Preview("Hold Released") {
     PreviewNavHarness(parentText: "Booking details", navTitle: "Upcoming session", rowTitle: "Cancel session") {
-        ExpertCancellationView(refundType: "partial refund")
+        ExpertCancellationView(refundLine: .holdReleased(amount: "CA$45.00"))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Free") {
+    PreviewNavHarness(parentText: "Booking details", navTitle: "Upcoming session", rowTitle: "Cancel session") {
+        ExpertCancellationView(refundLine: .none)
     }
     .preferredColorScheme(.dark)
 }

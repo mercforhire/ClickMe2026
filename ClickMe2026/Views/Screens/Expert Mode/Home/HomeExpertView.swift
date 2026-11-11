@@ -78,6 +78,11 @@ struct HomeExpertView: View {
                 peerAvatarURL: peerAvatarURL
             ))
         })
+        // Shared transient confirmation. A dual-role user can open a client
+        // booking from a chat row here and answer a reschedule proposal, so
+        // "Reschedule accepted" / "Reschedule declined" need a host in this
+        // shell too, or they surface later in client mode (WR-05).
+        .modifier(ToastHost())
         // Consume the queued push tap. Fires when a tap arrives while this
         // shell is up, when the shell mounts with a tap already queued (cold
         // launch, or a mode switch made for that tap), when the account's

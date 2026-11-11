@@ -10,7 +10,7 @@ import SwiftUI
 
 /// Renders `ToastCenter.shared.current` as a bottom-anchored chip above the
 /// tab bar (UI-SPEC section 10). Applied once, beside `CallOverlayHost`, on
-/// the client shell.
+/// the client and expert shells.
 ///
 /// The fade is the only motion, so Reduce Motion needs no separate branch.
 struct ToastHost: ViewModifier {

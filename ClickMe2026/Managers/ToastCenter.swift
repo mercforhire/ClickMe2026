@@ -12,9 +12,10 @@ import SwiftUI
 
 /// The one shared transient confirmation (BOOK-06, D-03; UI-SPEC section 10).
 ///
-/// Owned above the screens, at the client shell, so a message posted just
-/// before a pop is still shown after it. Client mode only in this phase: the
-/// expert shell does not host a `ToastHost`.
+/// Owned above the screens, at the client and expert shells (each applies a
+/// `ToastHost`), so a message posted just before a pop is still shown after
+/// it. The expert shell needs one because a dual-role user can answer a client
+/// reschedule proposal from a chat row there.
 ///
 /// Producers call `show` after the server answered 2xx and before they pop.
 /// There is one toast at a time: a new message replaces the current one and

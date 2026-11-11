@@ -111,7 +111,7 @@ struct HomeClientView: View {
         })
         // Shared transient confirmation ("Reschedule accepted", ...). Owned
         // here, above the tab stacks, so a message posted just before a pop
-        // still shows after it. Client mode only; the expert shell has none.
+        // still shows after it. The expert shell hosts one too.
         .modifier(ToastHost())
         .task {
             // Show the onboarding modal exactly once per login. `logout()`

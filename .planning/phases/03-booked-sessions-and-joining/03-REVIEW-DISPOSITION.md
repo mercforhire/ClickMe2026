@@ -31,6 +31,14 @@ findings:
     severity: warning
     disposition: open
     title: "`submitRefusesFarSlot` would call the live backend if its guard regressed"
+  - id: WR-08
+    severity: warning
+    disposition: open
+    title: "After a successful accept or decline with a failed refetch, the screen still shows the old time and a \"Pending reschedule\" status, and nothing retries"
+  - id: WR-09
+    severity: warning
+    disposition: open
+    title: "Post-cancel toast reads the refund case after the await, so the 60 s tick can change the case the user confirmed under"
   - id: IN-01
     severity: info
     disposition: open
@@ -51,9 +59,13 @@ findings:
     severity: info
     disposition: open
     title: "`startCall()` returns silently when join inputs are missing"
-open: 10
-total: 12
-recorded: 2026-11-11T06:18:15.400Z
+  - id: IN-06
+    severity: info
+    disposition: open
+    title: "`.chargedNotRefundable` at server 0 still states \"No refund applies\", the same ambiguity WR-02 removed for the refundable case"
+open: 13
+total: 15
+recorded: 2026-11-11T20:55:36.547Z
 ---
 
 # Phase 03: Code Review Disposition
@@ -67,11 +79,14 @@ recorded: 2026-11-11T06:18:15.400Z
 | WR-05 | warning | open | - |
 | WR-06 | warning | open | - |
 | WR-07 | warning | open | - |
+| WR-08 | warning | open | - |
+| WR-09 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
 | IN-04 | info | open | - |
 | IN-05 | info | open | - |
+| IN-06 | info | open | - |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.

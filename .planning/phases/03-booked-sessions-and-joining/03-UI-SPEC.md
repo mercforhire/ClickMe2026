@@ -61,7 +61,7 @@ Phase 03 surfaces that already exist and are modified in place (screen-prefixed,
 | Client cancel flow, confirm step and comment field | `Client Mode/Cancellation/ClientCancellationView.swift`, `Subviews/CancellationConfirmCard.swift`, `CancellationBookingSummary.swift`, `CancellationCommentField.swift` | BOOK-07, 08, 12 |
 | Expert cancel sheet refund line and footnote | `Expert Mode/Cancellation/Subviews/ExpertCancellationClientBox.swift`, `ExpertCancellationMainCard.swift` | EXP-11 |
 | Client reschedule picker copy and return path | `Client Mode/Reschedule/RescheduleViewModel.swift`, `RescheduleView.swift` | BOOK-16 |
-| My Bookings: Past empty state, navigation | `Client Mode/My Bookings/MyBookingsView.swift`, `Subviews/UpcomingEmptyState.swift` | BOOK-11, 12, 16 |
+| My Bookings: Past empty state (new sibling of `UpcomingEmptyState`), navigation | `Client Mode/My Bookings/MyBookingsView.swift`, `Subviews/UpcomingEmptyState.swift` | BOOK-11, 12, 16 |
 | Client Booking Summary: ID line, decline note card, Leave a Review gate | `Client Mode/Booking Summary/BookingSummaryView.swift`, `Subviews/BookingSummaryExpertCard.swift` | BOOK-17, 20, BACK-02 |
 | Skype/Zoom session screen | `Call/Calling/MeetingCallView.swift`, `Subviews/SkypeSessionHero.swift` | CALL-06, 07 |
 | Expert Booking Summary Join button | `Expert Mode/Booking Summary/ExpertBookingSummaryView.swift` | CALL-10 |
@@ -83,14 +83,16 @@ Target tokens for any new or changed layout in this phase (points, multiples of 
 | 2xl | 48 | Not used on Phase 03 surfaces |
 | 3xl | 64 | Not used on Phase 03 surfaces |
 
-Exception declared for this phase: the shared reschedule response card's Accept and Decline buttons go from 42 pt to **44 pt** tall, the platform minimum touch target, because this card now hosts a critical decision on a second screen. No other control is added or kept below 44 pt.
+Corner radii and heights for **new** controls and blocks are on the same grid: radius 12 or 16, height 44, 48 or 52. Specifically: the new Open in {provider} button is 52 pt tall with a 16 pt radius; the new expert Join Session on Booking Summary is 52 pt tall with a 12 pt radius (the radius its neighbor `Message Client` already has); the new zero-refund warning block has a 16 pt radius. The old 14 pt radius is not used by any new control or block.
+
+Exception declared for this phase: the shared reschedule response card's Accept New Time and Decline New Time buttons go from 42 pt to **44 pt** tall, the platform minimum touch target, because this card now hosts a critical decision on a second screen. No other control is added or kept below 44 pt.
 
 ### Out of contract: pre-existing layout
 
 Phase 03 does not touch these shipped values, so none is declared above. A plan must not "fix" them:
 
-- The 14 pt card corner radius, 14 pt inter-card `VStack` spacing and 20 pt screen padding on Upcoming Booking details, and the 14 pt internal padding, 14 pt radius and 12 pt button gap of the reschedule card as it exists in Booking Summary (the extracted shared card keeps them; only the button height changes, above).
-- The 52 pt height and 14 pt radius of the in-app JOIN CALL button, which the new Open Meeting button copies exactly; the 50 pt expert Join Session and Message Client buttons.
+- The 14 pt card corner radius, 14 pt inter-card `VStack` spacing and 20 pt screen padding on Upcoming Booking details, and the 14 pt internal padding, 14 pt radius and 12 pt button gap of the reschedule card as it exists in Booking Summary (the extracted shared card keeps them as reuse of an existing component; only the button height changes, above). The same applies to the 14 pt radius of the existing `BookingSummaryGlassCardBackground` that the decline note card instantiates: it is reuse, not a new value.
+- The 52 pt height and 14 pt radius of the in-app JOIN CALL button (untouched; the new Open in {provider} button does not copy its radius), and the 50 pt height and 12 pt radius of the expert `Message Client` button.
 - The 20 pt radius and 24 pt padding of the cancel confirm card, and the 54 pt / 56 pt capsule buttons of the cancel flow.
 - The 152 pt avatar ring and 40 pt hero gaps on the Skype screen.
 
@@ -105,14 +107,18 @@ All text uses `Font.brand(_ style:weight:)` (rounded, Dynamic Type). Sizes are t
 | Role | Style / size | Weight | Line height | Phase 03 usage |
 |------|--------------|--------|-------------|----------------|
 | Label | `.caption` / 12 pt | Regular (400) for notes and footnotes; Semibold (600) for the time blocks in the reschedule card and the status pill | system | Reschedule card time blocks and note; status pill text; Booking Summary ID line; cancel footnote; comment counter; Skype remaining chip |
-| Body | `.subheadline` / 15 pt | Regular (400) for explanatory copy; Semibold (600) for card titles, reason lines and the toast message | system | Refund line, warning block text, decline note text and reason line, reschedule card title, toast message, empty-state body (reused) |
-| Heading | `.callout` / 16 pt | Semibold (600) | system | Warning-style refund amount line only |
+| Body | `.subheadline` / 15 pt | Regular (400) for explanatory copy; Semibold (600) for card titles, reason lines, the reschedule card buttons and the toast message | system | Refund line, warning block text, decline note text and reason line, reschedule card title and buttons, toast message |
+| Heading | `.callout` / 16 pt | Regular (400) for the Past empty state body; Semibold (600) for the warning-style refund amount line and for the labels of the two new buttons, `Open in {provider}` and expert `Join Session` | system | Warning amount line; Open in {provider}; expert Join Session; Past empty state body |
+| Display | `.title2` / 22 pt | Regular (400) for the Skype timer (monospaced digits, the `MeetingCallInfo` style, D-08); Semibold (600) for the Past empty state title | system | Skype timer in the hero; `No past bookings yet` |
 
-Declared for new or changed text in this phase: **3 sizes** (12, 15, 16) and **2 weights** (Regular 400, Semibold 600).
+Declared for new or changed text in this phase: **4 sizes** (12, 15, 16, 22) and **2 weights** (Regular 400, Semibold 600). This is the truthful set: it includes the Skype timer (22 pt) and the labels of every new button. The timer style is not changed to reach the count (D-08 requires it to match the voice layout); the other two items were brought into the set instead:
+
+- The Past empty state does not instantiate `UpcomingEmptyState` (which uses `.title` bold at 28 pt). It is a sibling subview that shares the calendar illustration and the layout (40 pt side padding, 28 pt section spacing, centered stack) and sets its title at 22 pt Semibold and its body at 16 pt Regular. "Matching the Upcoming empty-state style" (CONTEXT, Claude's discretion) is read as the same illustration and layout; the type scale is the only difference.
+- The new `Open in {provider}` and expert `Join Session` labels are Semibold, not the bold of `JOIN CALL`. The two never share a screen: `JOIN CALL` is the in-app variant and `Open in {provider}` the Skype/Zoom variant of the same slot.
 
 ### Out of contract: pre-existing text styling
 
-Reused as is, not re-declared, and Phase 03 adds no weight to them: the bold labels on `JOIN CALL`, `Join Session`, `Book Again` and the cancel capsule buttons (the new Open Meeting button copies the JOIN CALL label style); the bold `.title` / `.callout` text in `UpcomingEmptyState` (the new Past empty state instantiates the same view); the `.title2` monospaced timer and the 34 pt peer name already used by `MeetingCallInfo` (the Skype hero reuses the timer style so both call types look the same, D-08). All of these use text styles, so they scale with Dynamic Type.
+Text Phase 03 neither adds nor changes, and therefore does not declare: the bold labels on `JOIN CALL`, the existing expert-list `Join Session`, `Book Again` and the cancel capsule buttons; the bold `.title` / `.callout` text in `UpcomingEmptyState` (the Upcoming tab's own empty state, untouched); the 34 pt peer name in the voice layout and the Skype hero. All of these use text styles, so they scale with Dynamic Type.
 
 Inherited exception, size closeness: Body (15) and Heading (16) differ by 1 pt, so the warning amount line is distinguished by weight, the warning icon and its amber block, not by size. This is the same inherited closeness recorded in Phase 02.
 
@@ -129,14 +135,14 @@ Values come from `Brand.swift`, with the same one exception Phase 02 recorded: w
 | Dominant (60%) | `Brand.surface` #131313 (`UpcomingBookingBrand.bg`, `BookingSummaryBrand.bg`, `MeetingCallBrand.bg`); the cancel screen's own black `CancellationBrand.bg` and `ExpertCancellationBrand.bg` stay | Screen backgrounds |
 | Secondary (30%) | `Brand.surfaceContainer` #201f1f and `Brand.surfaceContainerHigh` #2a2a2a; outline `Brand.outlineVariant` #3c4a3f; glass cards `UpcomingBookingBrand.cardBg` / `BookingSummaryBrand.cardBg` | New decline note card, refund block, toast fill (`surfaceContainerHigh`) |
 | Accent (10%) | `Brand.primary` #44f697; text on accent `Brand.onPrimary` #00391d | See reserved list below |
-| Destructive | `Brand.error` #ffb4ab for the client Cancel and Confirm Cancellation controls (existing); `Brand.destructive` (about #FF4D4D) for the reschedule Decline button (existing) | No new destructive action. Both values unchanged |
+| Destructive | `Brand.error` #ffb4ab for the client Cancel and Confirm Cancellation controls (existing); `Brand.destructive` for the reschedule Decline New Time button (existing; defined in `Brand.swift` as `Color(red: 1.00, green: 0.30, blue: 0.30)`, which renders as about #FF4D4D) | No new destructive action. Both values unchanged |
 | Warning (not in template) | SwiftUI `Color.orange` (inherited exception): fill 10%, stroke 45%, icon and title at 100% | Zero-refund block (D-05), pending-approval and pending-reschedule status pills, the reschedule response card (unchanged, 8% fill / 35% stroke), the Skype remaining chip and near-end timer |
 | Text | `Brand.onSurface` #e5e2e1 (primary), `Brand.onSurfaceVariant` #bacbbc (secondary) | All Phase 03 surfaces |
 
 Accent reserved for (Phase 03 surfaces only):
 
 1. The Join button fill: JOIN CALL and the new Open Meeting button on Upcoming Booking details, and Join Session on the expert Booking Summary
-2. The Accept button of the reschedule response card (existing styling)
+2. The Accept New Time button of the reschedule response card (existing styling)
 3. The Keep Booking capsule on the cancel screen (existing)
 4. The status pill for `confirmed`, `in_progress` and `completed` on Upcoming details (existing Confirmed treatment, extended to the other two accent-toned states)
 5. The toast's 60% outline stroke (matches the existing "Link copied" chip)
@@ -159,15 +165,15 @@ All strings below are exact. Executors must not paraphrase them. "Existing" mean
 | Card title, expert proposed | `Expert requested a new time` | existing (Booking Summary), reused |
 | Time block labels | `FROM` / `TO` (uppercased from "From" / "To") | existing |
 | Note label | `Expert's message` | existing |
-| Primary CTA | `Accept` | existing |
-| Secondary CTA | `Decline` | existing |
+| Primary CTA | `Accept New Time` | changed (was `Accept`; Android keeps `Accept`, logged as a copy difference) |
+| Secondary CTA | `Decline New Time` | changed (was `Decline`) |
 | Awaiting pill, client proposed | `Awaiting expert's response` | existing |
 | Accept dialog title | `Accept the proposed reschedule?` | existing |
 | Accept dialog message, no payment change | `The session will move to the new time the expert proposed.` | existing |
-| Accept dialog message, payment change | existing disclosure text unchanged, including the "charges soon" caveat | existing |
-| Accept dialog buttons | `Accept` / `Cancel` | existing |
+| Accept dialog message, payment change | `The session will move to the new time the expert proposed.` then a blank line, then `Your card hold will be released. Because the new time is more than a few days out, we'll release the current payment hold on your card and instead charge it automatically about 24 hours before your new session time. You won't be charged today.` When the proposed time is coming up soon, a further blank line and `If your new session is coming up soon, your card may be charged sooner than 24 hours from now.` (`BookingSummaryView.acceptRescheduleDialogMessage`) | existing, quoted verbatim |
+| Accept dialog buttons | `Accept New Time` / `Keep Current Time` (cancel role) | changed (was `Accept` / `Cancel`) |
 | Decline prompt title and message | `Decline reschedule` / `The booking will revert to its original time.` | existing |
-| Decline prompt field, buttons | placeholder `Optional reason`; `Decline` (destructive) / `Keep session as-is` (cancel) | existing |
+| Decline prompt field, buttons | placeholder `Optional reason`; `Decline New Time` (destructive) / `Keep session as-is` (cancel) | changed (destructive button was `Decline`) |
 | Decline reason limit | input stops at 500 characters (the endpoint limit, D-02); no counter, because an alert field cannot host one | new rule |
 | Accept confirmation (toast) | `Reschedule accepted` (Android `reschedule_accepted`) | new |
 | Decline confirmation (toast) | `Reschedule declined` (Android `reschedule_declined`) | new |
@@ -209,6 +215,7 @@ The pill reads the **raw decoded status string**, not a hard-coded "Confirmed". 
 | Join, expert Booking Summary | `Join Session` | existing label, new surface (CALL-10) |
 | Disabled Join / Open hint (VoiceOver) | `Available closer to the session start` | existing (02-14), reused |
 | Meeting link row | `Meeting Link`, `Not available yet`, copy button | existing, kept |
+| Copy button, VoiceOver label (icon-only button) | `Copy meeting link`; `Link copied` while the checkmark shows; the button stays disabled with the same label when the link is empty | new |
 | Join failure | the existing `CallCenter.joinError` alert text, unchanged | existing |
 
 ### Cancel flows (BOOK-07, BOOK-08, BOOK-12, BOOK-13, EXP-11)
@@ -317,14 +324,14 @@ Why the `RESCHEDULE_OUTSIDE_AUTH_WINDOW` line changed. Verified in the backend (
 | Property | Contract |
 |----------|----------|
 | Where | `UpcomingBookingView.loadedContent`, directly below the status row and above the expert card, so the decision is the first thing a client sees |
-| When | server status `pending_reschedule` and `reschedule.initiatedBy == .expert`: title, FROM/TO blocks, optional note, Accept and Decline. `initiatedBy == .client`: the same card with the title `You proposed a new time` and the `Awaiting expert's response` pill in place of the buttons (Claude's discretion: the shared card already has this variant, and without it the screen would show a Pending reschedule pill with no explanation) |
-| Component | one shared subview extracted from `BookingSummaryView`, used by both screens; Booking Summary keeps its own Accept/Decline entry points. Both screens share the Accept and Decline logic, the disclosure dialog and the payment-method recovery path (`BookingSummaryViewModel.acceptReschedule`) |
-| Look | unchanged amber card: `clock.badge.exclamationmark`, orange 8% fill, 35% stroke, 14 pt radius. Buttons 44 pt tall (exception above). Decline is the red-tinted button, Accept the accent button |
-| Accept in flight | both buttons disabled, a small `ProgressView` in Accept, as Booking Summary does today |
+| When | server status `pending_reschedule` and `reschedule.initiatedBy == .expert`: title, FROM/TO blocks, optional note, Accept New Time and Decline New Time. `initiatedBy == .client`: the same card with the title `You proposed a new time` and the `Awaiting expert's response` pill in place of the buttons (Claude's discretion: the shared card already has this variant, and without it the screen would show a Pending reschedule pill with no explanation) |
+| Component | one shared subview extracted from `BookingSummaryView`, used by both screens; Booking Summary keeps its own Accept New Time / Decline New Time entry points. Both screens share the accept and decline logic, the disclosure dialog and the payment-method recovery path (`BookingSummaryViewModel.acceptReschedule`) |
+| Look | unchanged amber card: `clock.badge.exclamationmark`, orange 8% fill, 35% stroke, 14 pt radius. Buttons 44 pt tall (exception above). Decline New Time is the red-tinted button, Accept New Time the accent button |
+| Accept in flight | both buttons disabled, a small `ProgressView` in Accept New Time, as Booking Summary does today |
 | After Accept or Decline succeeds | the user **stays** on the screen. The card disappears, the date, time range and the status pill update in place, and a toast (section 10) says `Reschedule accepted` or `Reschedule declined`. The screen refetches through the Phase 02 `ReloadGeneration` helper so only the newest response writes |
 | After a failure | the existing `Couldn't update booking` alert with `OK`; the card and buttons stay as they were. The `PAYMENT_METHOD_REQUIRED` recovery (re-propose with the default saved card) is the existing path and only its copy changes |
 | Join while pending | visible but disabled (section 3) |
-| VoiceOver | the card is one accessibility container; its title is the header trait; Accept and Decline announce as buttons with the proposed time in their label |
+| VoiceOver | the card is one accessibility container; its title is the header trait; Accept New Time and Decline New Time announce as buttons with the proposed time in their label, e.g. `Accept New Time, Wed, Jul 10 · 10:00 AM` |
 
 ### 2. Status pill and booking ID (BOOK-09, BOOK-20)
 
@@ -341,8 +348,8 @@ Every Join/Open control in this phase uses `JoinWindow.isOpen(status:start:end:n
 
 | Surface | In-app voice | Skype/Zoom | Window closed or status not joinable | `pending_approval` |
 |---------|--------------|------------|--------------------------------------|--------------------|
-| Client Upcoming details join card | `JOIN CALL`, existing 52 pt accent button with glow; tap calls `onJoinCall`, wired by every caller to `CallCenter.startCall` | **new** `Open in {provider}` button above the link row, same size, shape, glow and `PressScaleButtonStyle` as `JOIN CALL`, icon `iconSystemName`; tap calls `onJoinCall` so the booking goes through `CallCenter.startCall` into the Skype/Zoom session screen. It never opens the URL directly. The `Meeting Link` row with its copy button stays below it | the same button **dimmed and disabled**: accent at 55% opacity, no glow, accessibility hint `Available closer to the session start`. This includes `pending_reschedule` (visible, disabled) | the existing `Waiting for expert to accept` banner replaces the whole join card (unchanged) |
-| Expert Booking Summary | `Join Session`, text only, 50 pt, 14 pt radius, accent fill with glow, placed **directly above** `Message Client` | same button; the session screen is chosen by `CallCenter.startCall`, as on the other expert surfaces | dimmed and disabled, same 55% treatment and hint | not rendered |
+| Client Upcoming details join card | `JOIN CALL`, existing 52 pt accent button with glow; tap calls `onJoinCall`, wired by every caller to `CallCenter.startCall` | **new** `Open in {provider}` button above the link row, 52 pt tall like `JOIN CALL`, with a 16 pt radius, accent fill with the same glow, `PressScaleButtonStyle`, label `.callout` Semibold, icon `iconSystemName`; tap calls `onJoinCall` so the booking goes through `CallCenter.startCall` into the Skype/Zoom session screen. It never opens the URL directly. The `Meeting Link` row with its copy button stays below it | the same button **dimmed and disabled**: accent at 55% opacity, no glow, accessibility hint `Available closer to the session start`. This includes `pending_reschedule` (visible, disabled) | the existing `Waiting for expert to accept` banner replaces the whole join card (unchanged) |
+| Expert Booking Summary | `Join Session`, text only, `.callout` Semibold, 52 pt tall, 12 pt radius, accent fill with glow, placed **directly above** `Message Client` | same button; the session screen is chosen by `CallCenter.startCall`, as on the other expert surfaces | dimmed and disabled, same 55% treatment and hint | not rendered |
 
 Expert summary visibility: render Join when the status is `confirmed`, `in_progress` or `pending_reschedule`, or when `JoinWindow.isOpen` is true (a completed booking inside its reconnect window). Never render it for `pending_approval`, `cancelled`, `declined`, `missed` or `expired`.
 
@@ -368,7 +375,7 @@ Cancel visibility (BOOK-13): the Upcoming details `Cancel` button is **hidden** 
 | Property | Contract |
 |----------|----------|
 | Neutral lines (B, C, E, F) | `creditcard` icon in `onSurfaceVariant`; text `.subheadline` Regular in `onSurface`; the formatted amount inside the sentence is Semibold. The amount is never accent-colored. Case B uses `lock.fill` instead of `creditcard` |
-| Warning line (case D, D-05) | a block inside the summary card: orange 10% fill, 45% stroke, 14 pt radius, 16 pt padding, `exclamationmark.triangle.fill` in `Color.orange`. First line `Refund: CA$0.00` in `.callout` Semibold `onSurface`, second line `the session starts within 24 hours` in `.subheadline` Regular `onSurfaceVariant`. The block is the focal point of the step. The full sentence is also the block's single accessibility label |
+| Warning line (case D, D-05) | a block inside the summary card: orange 10% fill, 45% stroke, 16 pt radius, 16 pt padding, `exclamationmark.triangle.fill` in `Color.orange`. First line `Refund: CA$0.00` in `.callout` Semibold `onSurface`, second line `the session starts within 24 hours` in `.subheadline` Regular `onSurfaceVariant`. The block is the focal point of the step. The full sentence is also the block's single accessibility label |
 | No extra dialog | no confirmation alert. The existing `Confirm Cancellation` button is the gate |
 | Live recompute (D-06) | the case is computed from `Date()` at render and re-evaluated inside a 60-second `TimelineView` while the confirm step is on screen |
 | At the moment of confirm | the case is computed again. If it differs from the case last displayed (the only possible change is C to D, because time moves forward), **nothing is submitted**: the block updates, the `Preview changed at confirm` line appears above the buttons in `.subheadline` Regular amber text, and the user must tap `Confirm Cancellation` again. If it is unchanged, the cancel is submitted |
@@ -393,7 +400,7 @@ Cancel visibility (BOOK-13): the Upcoming details `Cancel` button is **hidden** 
 
 | Property | Contract |
 |----------|----------|
-| Past empty state | shown when `selectedTab == 1` and `pastBookings` is empty and the load succeeded. It instantiates the same layout as `UpcomingEmptyState` (calendar illustration, `.title` bold title, `.callout` body, 40 pt horizontal padding) with the Past copy and **no button** |
+| Past empty state | shown when `selectedTab == 1` and `pastBookings` is empty and the load succeeded. It is a sibling of `UpcomingEmptyState` that reuses its calendar illustration and layout (40 pt horizontal padding, 28 pt section spacing, centered), with the title `.title2` Semibold, the body `.callout` Regular, the Past copy and **no button**. Its type scale differs from the Upcoming tab's on purpose (see Typography) |
 | Not shown | while loading (the existing loading state), or after a failed load (the existing error state) |
 | Navigation | the My Bookings destinations (`.cancelBooking`, `.rescheduleBooking`) use one-level pops as in sections 5 and 6; `Keep Booking` and the reschedule return no longer call `popToRoot()`. A confirmed cancel still lands on the My Bookings root |
 | Join wiring (CALL-03) | `onJoinCall` is passed into `UpcomingBookingView` from every caller (`MyBookingsView`, `HomeClientView`); no caller relies on the `{}` default |
@@ -417,7 +424,7 @@ One toast, used by sections 1, 5 and 6.
 | Property | Contract |
 |----------|----------|
 | Look | capsule, fill `Brand.surfaceContainerHigh`, stroke `Brand.primary` at 60% (the existing "Link copied" chip treatment), text `.subheadline` Semibold `onSurface`, optional leading SF Symbol at 4 pt gap. Horizontal padding 16, vertical padding 8. Multi-line text wraps; the capsule becomes a rounded rectangle of the same radius family when it wraps |
-| Position | bottom-anchored, 24 pt above the safe area and above the tab bar, with a 24 pt minimum side margin. It never covers the Accept/Decline buttons or the system keyboard |
+| Position | bottom-anchored, 24 pt above the safe area and above the tab bar, with a 24 pt minimum side margin. It never covers the Accept New Time / Decline New Time buttons or the system keyboard |
 | Timing | fades in and out over 0.25 s `easeInOut`; stays 4 seconds. Longer than the 1.5 s "Link copied" chip because several messages carry money |
 | Stacking | one toast at a time; a new message replaces the current one and restarts the timer |
 | Dismiss | tap dismisses early |
@@ -434,7 +441,7 @@ One primary focal point per screen Phase 03 changes. Nothing else on the screen 
 
 | Screen | Primary focal point | Secondary |
 |--------|---------------------|-----------|
-| Upcoming Booking details, `pending_reschedule` by expert | The reschedule response card (amber) with its accent Accept button | Join button (dimmed, so it yields) |
+| Upcoming Booking details, `pending_reschedule` by expert | The reschedule response card (amber) with its accent Accept New Time button | Join button (dimmed, so it yields) |
 | Upcoming Booking details, otherwise | The accent `JOIN CALL` or `Open in {provider}` button when the window is open; when it is closed the dimmed button yields to the date and time | Status pill |
 | Client cancel, confirm step | The money line; in case D the amber warning block | `Keep Booking` accent capsule |
 | Client Booking Summary | The expert card with its status badge | The decline note card (declined) or `Book Again` |
@@ -452,10 +459,10 @@ Applicable state considerations resolved: 21 covered, 5 backstop, 4 unresolved.
 
 | ID | Category | Element(s) | Status | Resolution / Reason |
 |----|----------|------------|--------|---------------------|
-| L1 | loading | Response card Accept / Decline | ✅ covered | Both buttons disable and Accept shows a `ProgressView` while the request is in flight; a second tap cannot double-submit (`isSubmittingReschedule`) |
-| E1 | error | Response card Accept / Decline | ✅ covered | Failure shows the `Couldn't update booking` alert; `PAYMENT_METHOD_REQUIRED` runs the saved-card recovery; `RESCHEDULE_OUTSIDE_AUTH_WINDOW` on accept shows the new copy; all other codes show `Error.userMessage` |
+| L1 | loading | Response card Accept New Time / Decline New Time | ✅ covered | Both buttons disable and Accept New Time shows a `ProgressView` while the request is in flight; a second tap cannot double-submit (`isSubmittingReschedule`) |
+| E1 | error | Response card Accept New Time / Decline New Time | ✅ covered | Failure shows the `Couldn't update booking` alert; `PAYMENT_METHOD_REQUIRED` runs the saved-card recovery; `RESCHEDULE_OUTSIDE_AUTH_WINDOW` on accept shows the new copy; all other codes show `Error.userMessage` |
 | P1 | partial | Response card note | ✅ covered | The note block is omitted when the note is nil or blank |
-| P2 | partial | Response card, `initiatedBy == .client` | ✅ covered | The awaiting variant replaces the buttons; no Accept/Decline for the client's own proposal |
+| P2 | partial | Response card, `initiatedBy == .client` | ✅ covered | The awaiting variant replaces the buttons; no Accept New Time / Decline New Time for the client's own proposal |
 | P3 | partial | Status pill, unknown or `rescheduled` status | ✅ covered | Neutral pill with the humanized raw string; never hidden, never a wrong label |
 | T1 | time-dependent | Join, Open Meeting, Join Session, Cancel visibility | ✅ covered | One `TimelineView(.periodic(from: .now, by: 60))` per control; edges come from `JoinWindow` (inclusive, unit tested in Phase 02) and `end < now`; up to 60 s tolerance |
 | T2 | time-dependent | Cancel refund case C to D while the screen is open | ✅ covered | 60 s re-evaluation plus a recompute at tap; a changed case blocks the submit and asks for a second tap (section 5) |
@@ -546,5 +553,5 @@ Phase 03 adds no packages. No `npx shadcn view` vetting was needed and none was 
 | Real payment path ("Profile > Payment") | `ClientProfileHomeScreen.swift`, `PaymentMethodsView.swift` |
 | Backend contract and behavior | Files listed in "Backend facts this contract relies on", in `../ClickMe2026 Backend` |
 | Android copy parity | `../ClickMe_Android/app/src/main/res/values/strings_cancel_booking.xml`, `strings_my_bookings.xml`, `strings_reschedule_response.xml`, `strings_reschedule_start.xml`, `strings_expert_cancel.xml` |
-| Claude's discretion in this file | Case E copy (not-yet-charged line); the awaiting variant of the card on Upcoming; the second-tap rule when the refund case changes at confirm (the reading of D-06 "recomputed at the moment the client confirms"); "Profile > Payment"; the `RESCHEDULE_OUTSIDE_AUTH_WINDOW` wording; the decline reason labels; toast timing and placement; expert Join placement and the Message Client demotion; 44 pt Accept/Decline |
+| Claude's discretion in this file | Case E copy (not-yet-charged line); the awaiting variant of the card on Upcoming; the second-tap rule when the refund case changes at confirm (the reading of D-06 "recomputed at the moment the client confirms"); "Profile > Payment"; the `RESCHEDULE_OUTSIDE_AUTH_WINDOW` wording; the decline reason labels; revision 1 changes (Accept New Time / Decline New Time / Keep Current Time labels, the 4-size type set, Past empty title at 22 pt Semibold, Semibold labels on the new buttons, 12 and 16 pt radii and the 52 pt Join heights); toast timing and placement; expert Join placement and the Message Client demotion; 44 pt Accept/Decline |
 | User input this session | none; every question was answered by CONTEXT, the code or the backend |

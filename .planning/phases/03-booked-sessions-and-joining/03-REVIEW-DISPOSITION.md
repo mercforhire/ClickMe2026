@@ -33,11 +33,11 @@ findings:
     title: "`submitRefusesFarSlot` would call the live backend if its guard regressed"
   - id: WR-08
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "After a successful accept or decline with a failed refetch, the screen still shows the old time and a \"Pending reschedule\" status, and nothing retries"
   - id: WR-09
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Post-cancel toast reads the refund case after the await, so the 60 s tick can change the case the user confirmed under"
   - id: IN-01
     severity: info
@@ -63,9 +63,9 @@ findings:
     severity: info
     disposition: open
     title: "`.chargedNotRefundable` at server 0 still states \"No refund applies\", the same ambiguity WR-02 removed for the refundable case"
-open: 8
+open: 6
 total: 15
-recorded: 2026-11-11T21:37:31.140Z
+recorded: 2026-11-11T21:37:45.177Z
 ---
 
 # Phase 03: Code Review Disposition
@@ -79,8 +79,8 @@ recorded: 2026-11-11T21:37:31.140Z
 | WR-05 | warning | fixed | 03-REVIEW-FIX.md |
 | WR-06 | warning | fixed | 03-REVIEW-FIX.md |
 | WR-07 | warning | fixed | 03-REVIEW-FIX.md |
-| WR-08 | warning | open | - |
-| WR-09 | warning | open | - |
+| WR-08 | warning | fixed | 03-REVIEW-FIX.md |
+| WR-09 | warning | fixed | 03-REVIEW-FIX.md |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |

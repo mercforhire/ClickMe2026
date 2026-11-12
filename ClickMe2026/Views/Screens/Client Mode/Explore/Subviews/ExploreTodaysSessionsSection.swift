@@ -20,10 +20,24 @@ struct ExploreTodaysSessionsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Today's Sessions")
-                .font(.brand(.title3, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
+            HStack(alignment: .firstTextBaseline) {
+                Text("Today's Sessions")
+                    .font(.brand(.title3, weight: .bold))
+                    .foregroundColor(.white)
+                    .layoutPriority(1)
+                Spacer(minLength: 8)
+                // The device zone, the zone the session times are formatted in
+                // (D-18, BOOK-03); the same helper as the slots card. Omitted
+                // when the device has no readable name.
+                if let zone = DateUtil.zoneName() {
+                    Text(zone)
+                        .font(.brand(.caption, weight: .medium))
+                        .foregroundColor(.white.opacity(0.65))
+                        .multilineTextAlignment(.trailing)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(.horizontal, 20)
 
             VStack(spacing: 12) {
                 ForEach(sessions) { session in

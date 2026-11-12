@@ -122,26 +122,33 @@ final class BookingRequestSentViewModel: ObservableObject {
 
     /// Short "Aug 15 · 2:00 PM" label — surfaced as the concrete step-2
     /// time on `PaymentLifecycleCard`. Distinct from the fuller
-    /// `dateTime` label used in the details card.
-    private static func whenLabel(from start: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "MMM d · h:mm a"
-        return f.string(from: start)
+    /// `dateTime` label used in the details card. The time follows the
+    /// device's 12/24-hour setting, as on the slot chips (K3).
+    static func whenLabel(
+        from start: Date,
+        timeZone: TimeZone = .current,
+        locale: Locale = .current
+    ) -> String {
+        let day = DateUtil.string(from: start, format: .shortMonthDay, timeZone: timeZone)
+        let time = DateUtil.shortTime(start, timeZone: timeZone, locale: locale)
+        return "\(day) · \(time)"
     }
 
     // MARK: - Formatting
 
     /// Renders "Oct 24, 2023 | 2:00 PM - 3:00 PM" from two `Date` moments in
-    /// the client's local timezone. Same shape as the sample copy.
-    private static func dateTimeString(from start: Date, to end: Date) -> String {
-        let dateF = DateFormatter()
-        dateF.locale = Locale(identifier: "en_US_POSIX")
-        dateF.dateFormat = "MMM d, yyyy"
-        let timeF = DateFormatter()
-        timeF.locale = Locale(identifier: "en_US_POSIX")
-        timeF.dateFormat = "h:mm a"
-        return "\(dateF.string(from: start)) | \(timeF.string(from: start)) - \(timeF.string(from: end))"
+    /// the client's local timezone. Same shape as the sample copy; the times
+    /// follow the device's 12/24-hour setting (K3).
+    static func dateTimeString(
+        from start: Date,
+        to end: Date,
+        timeZone: TimeZone = .current,
+        locale: Locale = .current
+    ) -> String {
+        let day = DateUtil.string(from: start, format: .shortMonthDayYear, timeZone: timeZone)
+        let startText = DateUtil.shortTime(start, timeZone: timeZone, locale: locale)
+        let endText = DateUtil.shortTime(end, timeZone: timeZone, locale: locale)
+        return "\(day) | \(startText) - \(endText)"
     }
 
     private static func message(for error: Error) -> String {

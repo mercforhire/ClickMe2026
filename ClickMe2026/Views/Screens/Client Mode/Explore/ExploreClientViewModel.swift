@@ -176,11 +176,17 @@ final class ExploreClientViewModel: ObservableObject {
         return f.string(from: date)
     }
 
-    private static func timeRangeString(from start: Date, to end: Date) -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "h:mm a"
-        return "\(f.string(from: start)) - \(f.string(from: end))"
+    /// Start and end in the device's time style (12 or 24 hour, BOOK-04), joined
+    /// by " - ". Internal so tests can pass an explicit zone and locale.
+    static func timeRangeString(
+        from start: Date,
+        to end: Date,
+        timeZone: TimeZone = .current,
+        locale: Locale = .current
+    ) -> String {
+        let startText = DateUtil.shortTime(start, timeZone: timeZone, locale: locale)
+        let endText = DateUtil.shortTime(end, timeZone: timeZone, locale: locale)
+        return "\(startText) - \(endText)"
     }
 
     /// After a fresh load remaps categories (wiping their `isSelected` flags),

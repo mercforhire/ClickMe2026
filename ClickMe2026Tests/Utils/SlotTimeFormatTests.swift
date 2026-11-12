@@ -68,4 +68,36 @@ struct SlotTimeFormatTests {
         let slot = BookingTimeSlot(startTime: start, endTime: nil, isAvailable: true)
         #expect(slot.displayLabel == DateUtil.shortTime(start))
     }
+
+    // MARK: Today's Sessions and Request Sent (BOOK-04, K3)
+
+    @Test("Today's Sessions range: 24-hour locale")
+    func timeRangeTwentyFourHour() {
+        let text = ExploreClientViewModel.timeRangeString(
+            from: utc(hour: 14), to: utc(hour: 15), timeZone: .utc, locale: enGB
+        )
+        #expect(text == "14:00 - 15:00")
+    }
+
+    @Test("Today's Sessions range: 12-hour locale")
+    func timeRangeTwelveHour() {
+        let text = ExploreClientViewModel.timeRangeString(
+            from: utc(hour: 14), to: utc(hour: 15), timeZone: .utc, locale: enUS
+        )
+        #expect(text == "2:00\u{202F}PM - 3:00\u{202F}PM")
+    }
+
+    @Test("Request Sent whenLabel: day, middle dot and the short time")
+    func requestSentWhenLabel() {
+        let text = BookingRequestSentViewModel.whenLabel(from: utc(hour: 14), timeZone: .utc, locale: enGB)
+        #expect(text == "Oct 24 · 14:00")
+    }
+
+    @Test("Request Sent dateTimeString: date, bar and the short time range")
+    func requestSentDateTime() {
+        let text = BookingRequestSentViewModel.dateTimeString(
+            from: utc(hour: 14), to: utc(hour: 15), timeZone: .utc, locale: enGB
+        )
+        #expect(text == "Oct 24, 2026 | 14:00 - 15:00")
+    }
 }

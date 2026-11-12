@@ -41,6 +41,10 @@ enum DateUtil {
         case longMonthYear          = "MMMM, yyyy"
         /// `Tue Oct 18`
         case shortWeekdayMonthDay   = "EE MMM d"
+        /// `Oct 18`
+        case shortMonthDay          = "MMM d"
+        /// `Oct 18, 2021`
+        case shortMonthDayYear      = "MMM d, yyyy"
     }
 
     // MARK: - Public API

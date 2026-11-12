@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
-status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-11-12T15:20:32.833Z"
+status: verifying
+stopped_at: Completed 04-14-PLAN.md
+last_updated: "2026-11-12T15:31:48.371Z"
 last_activity: 2026-11-12
 last_activity_desc: Phase 04 execution started
-state_head: b6136a6068aa957463c1cff84f1f9172761760f5
+state_head: a9dc1e1e81b4f8f14c2063b287a8a51559372a74
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 71
+  completed_plans: 72
   percent: 13
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
 Plan: 14 of 14
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-12 — 04-01 complete (D-12 live at backend ae3ec1a, Dashboard subscribed per user)
 
 Progress: [█░░░░░░░░░] 13%
@@ -127,6 +127,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P13 | 9 min | 2 tasks | 6 files |
 | Phase 04 P12 | 35 min | 3 tasks | 5 files |
 | Phase 04 P01 | 1 day wall clock (user deploy wait) | 3 tasks | 6 files |
+| Phase 04 P14 | 12 min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -270,6 +271,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-12: hero keeps the existing %.1f rating format (4.25 renders 4.2, printf tie rounding); only zero and one review copy changed
 - [Phase 04]: 04-01 D-12: live in production as backend ae3ec1a (user push 2026-11-12, route b: D-12 alone, rollback base 32fa6ec, /health = ae3ec1a); the user reported the platform endpoint subscribed to payment_method.detached. Mocked Stripe only; live proof is the 04-14 D-11 session. BACK-06, BACK-07, BACK-15 and BACK-19 stay Pending
 - [Phase 04]: 04-01: backend master does NOT contain D-12 and has moved to d4b897f (Phase 31 complete); it must MERGE origin/main (never rebase or force-push) and keep both ios-p4 D-12 describes passing before its next deploy; todo 2026-11-11-merge-d12-into-backend-master.md
+- [Phase 04]: 04-14: the D-11 session and the 01-17/01-19 checklists run as written on the new iOS build; their rollback SHAs (ddfe5bf, d356fdc) are stale because production is at ae3ec1a, so a stop condition that says roll back becomes stop and tell Claude. The BACK-15 replay cannot be observed on a device (no backend log on that path), so step c records one booking and one hold plus the user's airplane-mode timing; the 01-13 unvoided-PaymentIntent decision is session stop condition S-A
+- [Phase 04]: 04-14: EXPL-03, EXPL-07, BACK-06, BACK-07, BACK-15 and BACK-19 deliberately not marked complete; they close only when 04-DEVICE-UAT-CHECKLIST.md items 1, 2 and the D-11 session pass (ROADMAP Phase 4 note). Full suite 630 tests in 65 suites, build green
 
 ### Pending Todos
 
@@ -353,6 +356,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T15:20:32.416Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-11-12T15:31:47.968Z
+Stopped at: Completed 04-14-PLAN.md
 Resume file: None

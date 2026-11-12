@@ -28,6 +28,10 @@ import StripePayments
 /// the server later confirms the booking PI off-session against that
 /// method it won't bounce on fresh-card SCA.
 ///
+/// Closing the card sheet (X, swipe-down, tap-outside) is a cancel even when
+/// a saved card is preselected: only the sheet's Continue control goes on to
+/// the confirm, so a close never places a hold (PAY-01, D-01).
+///
 /// Two SwiftUI observers on the view model:
 ///  * `paidStep == .collectingPaymentMethod` → present the sheet in
 ///    setup mode via `PaymentSheet.FlowController`.
@@ -71,6 +75,8 @@ private struct MakeABookingStripePaymentSheetModifier: ViewModifier {
         var config = PaymentSheet.Configuration()
         config.merchantDisplayName = "ClickMe"
         config.allowsDelayedPaymentMethods = false
+        // D-16 (Android BUG-07): Link left on automatic can dismiss the sheet without a usable result.
+        config.link.display = .never
 
         // Saved-cards listing — needs the platform customer + a
         // short-lived ephemeral key returned by /me/payment-methods/setup-intent.
@@ -98,9 +104,11 @@ private struct MakeABookingStripePaymentSheetModifier: ViewModifier {
                 viewModel.bookingError = error.localizedDescription
                 viewModel.cancelPaidBooking()
             case .success(let flowController):
-                flowController.presentPaymentOptions(from: presenter) {
-                    guard flowController.paymentOption != nil else {
-                        // User dismissed without selecting.
+                flowController.presentPaymentOptions(from: presenter) { didCancel in
+                    // D-01: a close (X, swipe-down, tap-outside) cancels even with a saved card preselected.
+                    // D-02: the reset is silent; the topic and slot stay selected.
+                    let hasOption = flowController.paymentOption != nil
+                    guard PaymentSheetOutcome.proceeds(didCancel: didCancel, hasPaymentOption: hasOption) else {
                         viewModel.cancelPaidBooking()
                         return
                     }

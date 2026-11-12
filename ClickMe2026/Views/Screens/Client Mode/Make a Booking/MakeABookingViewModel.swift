@@ -199,6 +199,20 @@ final class MakeABookingViewModel: ObservableObject {
         let stripeAccount: String?
     }
 
+    /// How a paid confirm is retried when its outcome is unknown (D-03).
+    /// A test seam: tests inject zero delays so retries do not wait.
+    var confirmRetryPolicy: ConfirmRetryPolicy = .standard
+
+    /// The `pm_…` id of the confirm in flight, kept until the user leaves an
+    /// unknown outcome so Try again can send the same confirm. Internal so
+    /// `MakeABookingViewModel+PaidFlow.swift` can read and clear it.
+    var confirmPaymentMethodId: String?
+
+    /// True while a `POST /bookings/confirm` run (first attempt and automatic
+    /// retries) is in progress. Guards against a second confirm for the same
+    /// attempt (Pitfall 11).
+    private(set) var isConfirmRunning = false
+
     /// True while either the free flow is submitting or the paid flow is
     /// in-flight. The book button binds to this.
     var isSubmitting: Bool { isBooking || paidStep != .idle }
@@ -527,7 +541,16 @@ final class MakeABookingViewModel: ObservableObject {
     /// connected account, authorizes funds (not captured yet — capture
     /// runs post-session, ~15 min after the end time, per Phase 27),
     /// and creates the booking.
+    ///
+    /// PAY-02 (D-03): a confirm whose outcome is unknown (transport failure,
+    /// unmapped 5xx) keeps the PaymentIntent, the `pm_…` id and
+    /// `bookingAttemptId`, and is sent again with the same arguments. The
+    /// server replays the booking it already made (BACK-15), so a retry cannot
+    /// create a second hold. Server-coded errors keep the existing mapping.
     func completePaidBooking(paymentMethodId: String) async {
+        // One confirm at a time: a second call while one runs would start a
+        // second request for an attempt whose first outcome is still unknown.
+        guard !isConfirmRunning else { return }
         guard let topic = selectedTopic,
               let slot = selectedTimeSlot,
               let intentId = paymentIntentId
@@ -536,28 +559,44 @@ final class MakeABookingViewModel: ObservableObject {
             return
         }
 
+        confirmPaymentMethodId = paymentMethodId
         paidStep = .confirming
-        do {
-            let startTimeISO = Self.iso8601String(from: slot.startTime)
-            let response = try await api.confirmBooking(
+        isConfirmRunning = true
+        defer { isConfirmRunning = false }
+
+        let startTimeISO = Self.iso8601String(from: slot.startTime)
+        let notes = clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+        let result = await confirmRetryPolicy.run {
+            try await self.api.confirmBooking(
                 paymentIntentId: intentId,
-                expertId: expertId,
+                expertId: self.expertId,
                 topicId: topic.id,
                 startTime: startTimeISO,
-                meetingType: meetingType,
+                meetingType: self.meetingType,
                 stripePaymentMethodId: paymentMethodId,
-                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty,
+                clientNotes: notes,
                 promoCode: nil
             )
+        }
+
+        switch result {
+        case let .succeeded(response):
             // Funds are AUTHORIZED, not captured. Capture runs post-session
             // (~15 min after end time, per Phase 27). Success routes the
             // user to `BookingRequestSentView` where the payment
             // lifecycle is explained inline; the raw server message is
-            // no longer surfaced.
+            // no longer surfaced. A replayed 201 (BACK-15) lands here too.
             completedBookingId = response.data.bookingId
+            confirmPaymentMethodId = nil
             resetPaidFlow()
-        } catch {
+        case let .serverCoded(error):
+            confirmPaymentMethodId = nil
             handlePaidFlowError(error, phase: .confirm, topic: topic, slot: slot)
+        case .outcomeUnknown:
+            // D-03: keep every id and stay on `.confirming`. The hold may
+            // exist, so the flow must not reset and the attempt id must not
+            // change.
+            break
         }
     }
 
@@ -566,7 +605,10 @@ final class MakeABookingViewModel: ObservableObject {
         resetPaidFlow()
     }
 
-    private func resetPaidFlow() {
+    /// Clears every paid-flow field. Internal so `MakeABookingViewModel+PaidFlow.swift`
+    /// can reset the flow when the client leaves an unknown confirm outcome.
+    func resetPaidFlow() {
+        confirmPaymentMethodId = nil
         paidStep = .idle
         paymentIntentId = nil
         setupIntentClientSecret = nil

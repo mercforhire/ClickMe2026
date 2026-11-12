@@ -295,6 +295,17 @@ Android follow-ups from Phase 3 (logged, not built):
 
 - Android `RescheduleResponseController` has the same WR-01 behavior: `succeed()` (`screens/clientmode/mybookings/RescheduleResponse.kt`) awaits the quiet reload, then sets the notice, and a failed quiet reload (`UpcomingBookingViewModel.startLoad(quiet = true)`) keeps the old `Loaded` details, so the card and proposal stay and become tappable again when `submitting` resets. Follow-up: after a 2xx accept or decline, clear the proposal from the loaded state whether or not the quiet reload succeeds. No backend change (03-16)
 
+Android follow-ups from Phase 4 (logged, not built; nothing verified on an Android device, evidence is Android strings and code read 2026-11-11 and 2026-11-12):
+
+- PAY-01 / D-01: closing the card sheet cancels the booking; Q4 settled this as Android parity, so verify only, none expected (04-02)
+- D-03 retry and copy: Android's `make_a_booking_error_unconfirmed` wording is longer than iOS's. Also D-17: Android's `PaidFlowError.kt` treats only network, decoding and unmapped 5xx as outcome unknown, so a 409 PAYMENT_IN_PROGRESS is not retried the way iOS now retries it (04-08). Log, do not align now
+- D-04 copy difference: Android's `make_a_booking_error_slot_taken_check_bookings` wording differs from "You may already have this booking. Check My Bookings." (04-13). Log, do not align now
+- D-05 / D-06: check Android's back stack after Request Sent and the source-tab reset (04-03)
+- D-07 / D-08: Android loads favorites with `limit=100` and no paging; check Favorites paging and the two empty-state buttons (Explore Experts, View My History) (04-06, 04-10)
+- D-10: verify the network-error Retry state on the Android expert profile; its not-available strings already exist and iOS reuses them (04-05)
+- D-13 (04-07's finding): Android already routes a suspended cold launch to Login and shows the dialog, so no behavior change. Differences logged, not aligned: the button reads `OK` (iOS `Close Alert`), the dialog also offers contact support, and it is hosted at the app level
+- DUPLICATE_BOOKING routing to `detail.booking_id` is already listed under Phase 1 (BACK-15); 04-13 adds nothing new, so there is one entry
+
 Captured todos:
 
 - [2026-11-09] [general] Check the Android push prompt after a reinstall — [todo file](.planning/todos/pending/2026-11-08-check-the-android-push-prompt-after-a-reinstall.md)
@@ -312,6 +323,7 @@ Captured todos:
 - [Phase 1]: The backend is live production and also serves App Store build 6, so every change must be safe for build 6 and current Android. BACK-13 (expert promotion) carries the most risk.
 - [Phase 3]: If Q2 changes the backend refund policy, that is backend work outside Phase 1. It can be pulled forward into Phase 1's discuss step.
 - [Phase 4]: Every environment points at the production backend and live Stripe, so payment UAT places real holds.
+- [Phase 4]: D-11 real-money session not yet run; BACK-06, BACK-07, BACK-15, BACK-19, EXPL-03 and EXPL-07 stay Pending until `04-DEVICE-UAT-CHECKLIST.md` passes (written by plan 04-14; the user runs every production step). D-12 is live as backend `ae3ec1a` (rollback base `32fa6ec`); the Dashboard subscription to `payment_method.detached` is user-reported and first proved by D-11 step f. Check `/health` reports a commit containing `ae3ec1a` before the session.
 - [Phase 7]: CHAT-08 needs a device re-test before planning (Q8).
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.

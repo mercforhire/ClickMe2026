@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-12-PLAN.md
-last_updated: "2026-11-12T15:02:49.375Z"
-last_activity: 2026-11-11
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-11-12T15:20:32.833Z"
+last_activity: 2026-11-12
 last_activity_desc: Phase 04 execution started
-state_head: c6c34704e4ba1848ce73d47bf3a21173d2042ac6
+state_head: b6136a6068aa957463c1cff84f1f9172761760f5
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 70
+  completed_plans: 71
   percent: 13
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
 Plan: 14 of 14
 Status: Ready to execute
-Last activity: 2026-11-12 — 04-12 complete (EXPL-02 fix-now, EXPL-05 heart seed)
+Last activity: 2026-11-12 — 04-01 complete (D-12 live at backend ae3ec1a, Dashboard subscribed per user)
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -126,6 +126,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P11 | 13 min | 2 tasks | 6 files |
 | Phase 04 P13 | 9 min | 2 tasks | 6 files |
 | Phase 04 P12 | 35 min | 3 tasks | 5 files |
+| Phase 04 P01 | 1 day wall clock (user deploy wait) | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -267,6 +268,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-13: a matching SLOT_UNAVAILABLE or an unmatched DUPLICATE_BOOKING shows Couldn't book / You may already have this booking. Check My Bookings. (Check My Bookings, Close Alert); the slot and attempt id are reset (K4); device check logged in WINDOWS.md for 04-14
 - [Phase 04]: 04-12 Task 2: user chose fix-now for EXPL-02; empty Expertise/Topics/Reviews hidden from code evidence, device before/after check deferred to the 04-14 UAT list
 - [Phase 04]: 04-12: hero keeps the existing %.1f rating format (4.25 renders 4.2, printf tie rounding); only zero and one review copy changed
+- [Phase 04]: 04-01 D-12: live in production as backend ae3ec1a (user push 2026-11-12, route b: D-12 alone, rollback base 32fa6ec, /health = ae3ec1a); the user reported the platform endpoint subscribed to payment_method.detached. Mocked Stripe only; live proof is the 04-14 D-11 session. BACK-06, BACK-07, BACK-15 and BACK-19 stay Pending
+- [Phase 04]: 04-01: backend master does NOT contain D-12 and has moved to d4b897f (Phase 31 complete); it must MERGE origin/main (never rebase or force-push) and keep both ios-p4 D-12 describes passing before its next deploy; todo 2026-11-11-merge-d12-into-backend-master.md
 
 ### Pending Todos
 
@@ -296,10 +299,11 @@ Captured todos:
 
 - [2026-11-09] [general] Check the Android push prompt after a reinstall — [todo file](.planning/todos/pending/2026-11-08-check-the-android-push-prompt-after-a-reinstall.md)
 - [2026-11-09] [auth] Show the suspension message on a cold launch — [todo file](.planning/todos/pending/2026-11-08-show-the-suspension-message-on-a-cold-launch.md)
+- [2026-11-12] [payments] Merge D-12 (origin/main) into backend master before its next deploy — [todo file](.planning/todos/pending/2026-11-11-merge-d12-into-backend-master.md)
 
 ### Blockers/Concerns
 
-- [Before release]: T-01-32 accepted risk: card removal inside Stripe's PaymentSheet skips BACK-07, so a reschedule-converted booking could charge a stale clone. Backend fix tracked in `.planning/todos/pending/2026-11-09-handle-paymentsheet-card-removal-on-the-backend.md`; no phase assigned yet.
+- [Before release]: T-01-32 (card removal inside Stripe's PaymentSheet skipping BACK-07) is fixed in production by plan 04-01 (D-12, backend `ae3ec1a`, 2026-11-12), mocked Stripe only; the live proof is the 04-14 D-11 session. Backend `master` does not contain D-12: it must MERGE origin/main before its next deploy (`.planning/todos/pending/2026-11-11-merge-d12-into-backend-master.md`).
 - [Before release]: iOS tests: `LoginTests.swift`, `AuthSmokeTests.swift` and `SignupSmokeTests.swift` don't compile, so Cmd+U fails; `.github/workflows/test.yml` and `scripts/run-smoke-tests.sh` still name `ClickMe2026.xcodeproj` (quick 261109-323).
 - [Phase 1]: User accepted verification overrides for BACK-08 and BACK-13 (2026-11-09 UTC): not delivered, wave 3c stays dropped. The refund retry gap was fixed and deployed by plans 01-24 to 01-26 (backend `d86bf97`, 2026-11-09); it is proven on mocked Stripe only and BACK-19 stays Pending.
 - [Phase 1]: CR-01 fixed 2026-11-08 (backend `215adcb`, live, user device check passed): build 6 booking push taps open the app without navigating, in client and expert mode, until the new iOS build. Production is at `215adcb`; `master` matches it; `wave-3c` remains parked and unshipped.
@@ -337,6 +341,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T15:02:48.972Z
-Stopped at: Completed 04-12-PLAN.md
+Last session: 2026-11-12T15:20:32.416Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

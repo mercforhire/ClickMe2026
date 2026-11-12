@@ -5,11 +5,11 @@ titles: json
 findings:
   - id: CR-01
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "RESOLVED (iOS, plans 04-15)"
   - id: CR-02
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "RESOLVED for the platform-card check (backend `28da165`); the broader promise is still open as WR-06"
   - id: WR-01
     severity: warning
@@ -33,11 +33,11 @@ findings:
     title: "Favorites list races and stale state"
   - id: WR-06
     severity: warning
-    disposition: open
+    disposition: deferred
     title: "A transient error AFTER the stamp still ends in a wrongful cancellation about 6 h later (open, tracked as T-04-45) (new)"
   - id: WR-07
     severity: warning
-    disposition: open
+    disposition: deferred
     title: "The pre-stamp retry has no deadline, so a persistent error can leave a delivered session uncharged (accepted by the user, recorded for visibility) (new)"
   - id: IN-01
     severity: info
@@ -75,7 +75,7 @@ findings:
     severity: info
     disposition: open
     title: "Wall-clock timing in the confirm-race tests can flake under load (new)"
-open: 18
+open: 14
 total: 18
 recorded: 2026-11-12T19:37:05.523Z
 ---
@@ -84,15 +84,15 @@ recorded: 2026-11-12T19:37:05.523Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| CR-01 | critical | open | - |
-| CR-02 | critical | open | - |
+| CR-01 | critical | fixed | plan 04-15 (6184f6c, 50f55de, 2baa72d) |
+| CR-02 | critical | fixed | plan 04-16 (backend 28da165, deployed) |
 | WR-01 | warning | open | - |
 | WR-02 | warning | open | - |
 | WR-03 | warning | open | - |
 | WR-04 | warning | open | - |
 | WR-05 | warning | open | - |
-| WR-06 | warning | open | - |
-| WR-07 | warning | open | - |
+| WR-06 | warning | deferred | todo 2026-11-12-long-lead-sweep-transient-errors-after-stamp; T-04-45 |
+| WR-07 | warning | deferred | user-accepted limit (a)/(b), 04-16 checkpoint 2026-11-12; T-04-44 |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |

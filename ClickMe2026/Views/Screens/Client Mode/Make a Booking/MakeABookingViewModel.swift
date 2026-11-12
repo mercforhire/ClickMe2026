@@ -100,6 +100,15 @@ final class MakeABookingViewModel: ObservableObject {
     @Published var availabilityState: LoadState = .idle
     @Published var isBooking: Bool = false
 
+    /// BOOK-02: month changes start overlapping availability loads, and their
+    /// responses can land out of order. Only the newest load may write the
+    /// calendar; an older one finishes its call and writes nothing.
+    private var availabilityGate = ReloadGeneration()
+
+    /// The load started by the latest month change, cancelled when the next
+    /// month change starts so a superseded request stops early.
+    private var availabilityTask: Task<Void, Never>?
+
     // MARK: Payment-methods gating
 
     /// Whether the client has a saved card. Paid bookings require this
@@ -297,7 +306,15 @@ final class MakeABookingViewModel: ObservableObject {
     /// best-effort (silent on failure). Runs sequentially to avoid the
     /// Sendable-conformance pitfalls of parallel decoding across actor
     /// boundaries — acceptable since this only fires on month change.
+    ///
+    /// BOOK-02: the load takes a `ReloadGeneration` token first and checks it
+    /// after every `await`. It writes `availabilityByDate`, `expertTimezone`
+    /// and `availabilityState` only while it is the newest load and `month`
+    /// is still the displayed month, so a slower older month never lands on
+    /// top of a newer one. A cancelled or superseded request is not a
+    /// failure and never sets `.failed`; the newest load owns the state.
     func loadAvailability(for month: Date) async {
+        let token = availabilityGate.begin()
         availabilityState = .loading
         selectedTimeSlot = nil
 
@@ -306,16 +323,22 @@ final class MakeABookingViewModel: ObservableObject {
         do {
             center = try await api.getExpertAvailability(id: expertId, month: Self.monthKey(month))
         } catch {
+            guard availabilityGate.isCurrent(token), !Self.isCancellation(error) else { return }
             availabilityState = .failed(error.userMessage)
             return
         }
+        guard availabilityGate.isCurrent(token) else { return }
 
         // Neighbors — best-effort. `try?` swallows failures silently so a
         // flaky neighbor doesn't blank out the whole calendar.
         let prev = calendar.date(byAdding: .month, value: -1, to: month) ?? month
         let next = calendar.date(byAdding: .month, value: 1, to: month) ?? month
         let prevData = try? await api.getExpertAvailability(id: expertId, month: Self.monthKey(prev)).data
+        guard availabilityGate.isCurrent(token) else { return }
         let nextData = try? await api.getExpertAvailability(id: expertId, month: Self.monthKey(next)).data
+        guard availabilityGate.isCurrent(token),
+              calendar.isDate(month, equalTo: displayedMonth, toGranularity: .month)
+        else { return }
 
         var merged: [String: [BookingTimeSlot]] = [:]
         for data in [prevData, center.data, nextData].compactMap({ $0 }) {
@@ -339,12 +362,22 @@ final class MakeABookingViewModel: ObservableObject {
 
     func goToPreviousMonth() {
         displayedMonth = calendar.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
-        Task { await loadAvailability(for: displayedMonth) }
+        availabilityTask?.cancel()
+        availabilityTask = Task { await loadAvailability(for: displayedMonth) }
     }
 
     func goToNextMonth() {
         displayedMonth = calendar.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
-        Task { await loadAvailability(for: displayedMonth) }
+        availabilityTask?.cancel()
+        availabilityTask = Task { await loadAvailability(for: displayedMonth) }
+    }
+
+    /// A cancelled request is not a failure (same rule as
+    /// `ExploreClientViewModel.isCancellation`).
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
+        return false
     }
 
     // MARK: - Slots for the selected day

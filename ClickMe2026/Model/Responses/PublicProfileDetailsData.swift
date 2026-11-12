@@ -51,4 +51,10 @@ struct PublicProfileDetailsData: Decodable {
     /// to `true` (show the button) in `isBookable`, so we don't hide
     /// the CTA for existing experts before the field lands.
     let isBookable: Bool?
+
+    /// Whether the signed-in caller has favorited this expert. Caller-relative
+    /// (`publicProfile.controller.js`), and `false` when the server's lookup
+    /// failed. Optional so a response without the key still decodes; the
+    /// profile screen reads a missing key as `false` (D-09).
+    let isFavorite: Bool?
 }

@@ -29,6 +29,8 @@ final class ExpertProfileViewModel: ObservableObject {
 
     // MARK: View state
     @Published var glowPulse: Bool
+    /// The heart. Comes from `is_favorite` on the profile response (D-09);
+    /// until that arrives it shows whatever the caller seeded.
     @Published var isFavorited: Bool
     @Published var isFavoriteInFlight: Bool = false
     /// True once `/experts/:id/reviews` has come back with a summary
@@ -112,29 +114,23 @@ final class ExpertProfileViewModel: ObservableObject {
         }
         guard loadGate.isCurrent(token) else { return }
         expert = Self.merge(details.data, into: expert)
-        loadState = .loaded
-
-        // `/experts/:id/details` doesn't include `is_favorite` yet, so the
-        // heart would show empty even on already-favorited experts. Scan
-        // the caller's favorites list to reconcile.
-        let favorites = try? await api.getClientFavorites(page: 1, limit: 100)
-        let reviews = try? await api.getExpertReviews(id: expertId, page: 1, limit: 3)
-        guard loadGate.isCurrent(token) else { return }
-
-        if let reviews {
-            expert = Self.apply(
-                reviews: reviews.data.reviews,
-                summary: reviews.data.summary,
-                to: expert
-            )
-            isSummaryLoaded = true
-        }
-        if let favorites,
-           favorites.data.experts.contains(where: { $0.expertId == expertId }) {
+        // The server value replaces the caller's seed (D-09), but never an
+        // optimistic toggle that is still running: its response reconciles.
+        if !isFavoriteInFlight {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                isFavorited = true
+                isFavorited = details.data.isFavorite ?? false
             }
         }
+        loadState = .loaded
+
+        let reviews = try? await api.getExpertReviews(id: expertId, page: 1, limit: 3)
+        guard loadGate.isCurrent(token), let reviews else { return }
+        expert = Self.apply(
+            reviews: reviews.data.reviews,
+            summary: reviews.data.summary,
+            to: expert
+        )
+        isSummaryLoaded = true
     }
 
     /// Re-runs the details load from the load-failed state. A tap while a

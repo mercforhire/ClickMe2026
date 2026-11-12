@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-11-12T04:25:12.639Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-11-12T04:40:55.368Z"
 last_activity: 2026-11-11
-last_activity_desc: Phase 03 execution started
-state_head: 641345c96b6d3d5b8ac9cb109b6ab92ae85912e0
+last_activity_desc: Phase 04 execution started
+state_head: 4aa328d5182e9601e1f23f70cf70884fbc25ec21
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 58
+  completed_plans: 59
   percent: 13
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-09)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 03 — Booked Sessions and Joining
+**Current focus:** Phase 04 — Booking, Payment and Discovery
 
 ## Current Position
 
-Phase: 04 (Booking, Payment and Discovery) — READY TO EXECUTE
-Plan: 17 of 17
+Phase: 04 (Booking, Payment and Discovery) — EXECUTING
+Plan: 2 of 14
 Status: Ready to execute
-Last activity: 2026-11-11 — Phase 03 execution started
+Last activity: 2026-11-11 — Phase 04 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -114,6 +114,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P12 | 25 min | 3 tasks | 8 files |
 | Phase 03 P16 | 7 min | 2 tasks | 8 files |
 | Phase 03 P17 | 8 min | 2 tasks | 6 files |
+| Phase 04 P02 | 5 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -236,6 +237,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Expert shell stubs the three new routes and hides client Cancel, Reschedule and Leave a Review through hostsClientBookingFlows instead of rerouting chat rows to the expert summary
 - [Phase 03]: 03-16 WR-01: RescheduleResponder.onResolved (synchronous) runs after every 2xx accept or decline and before refetch; both client screens clear reschedule there, so the Accept/Decline card goes even when the refetch fails; only the proposal is cleared, status and times wait for the next successful fetch; WR-01 fixed in the review ledger; BOOK-06 device check still pending in UAT item 1
 - [Phase 03]: 03-17: every server refund_amount 0 under the charged-refundable case gets the neutral policy toast (no amount, no timing); the success body cannot tell clock skew, a retried refund and the already-cancelled 200 apart
+- [Phase 04]: 04-02 PAY-01: closing the Stripe card sheet (X, swipe-down, tap-outside) is a cancel even with a saved card preselected; only Continue (didCancel false) with a payment option reaches the setup-mode confirm, decided by PaymentSheetOutcome.proceeds; reset is silent (D-01, D-02)
+- [Phase 04]: 04-02 D-16: Stripe Link is off in the iOS payment sheet (config.link.display = .never), Android BUG-07 parity; tracer device check deferred to the 04-14 D-11 session and logged in WINDOWS.md as unrun-verify
 
 ### Pending Todos
 
@@ -306,6 +309,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-11T22:41:07.443Z
-Stopped at: Phase 4 UI-SPEC approved
-Resume file: .planning/phases/04-booking-payment-and-discovery/04-UI-SPEC.md
+Last session: 2026-11-12T04:40:54.987Z
+Stopped at: Completed 04-02-PLAN.md
+Resume file: None

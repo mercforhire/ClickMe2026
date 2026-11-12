@@ -47,7 +47,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Payments
 
-- [ ] **PAY-01** [P1] **[major]**: Closing the payment sheet without tapping pay never places a hold — behavior per decision Q4
+- [x] **PAY-01** [P1] **[major]**: Closing the payment sheet without tapping pay never places a hold — behavior per decision Q4
 - [ ] **PAY-02** [P2] **[major]**: A confirm that times out and is retried sends the user to their pending booking, not "slot taken"
 - [ ] **PAY-03** [P3]: The payment lifecycle card describes what actually happened (hold vs charge), including older long-lead bookings
 - [ ] **PAY-04** [P5]: The stale `TODO(backend): stripe_account` comments are removed
@@ -208,7 +208,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-18 | Phase 2 | Complete |
 | BOOK-19 | Phase 4 | Pending |
 | BOOK-20 | Phase 3 | Complete |
-| PAY-01 | Phase 4 | Pending |
+| PAY-01 | Phase 4 | Complete |
 | PAY-02 | Phase 4 | Pending |
 | PAY-03 | Phase 4 | Pending |
 | PAY-04 | Phase 4 | Pending |

@@ -81,6 +81,52 @@ enum DateUtil {
         return string(from: parsed, format: outputFormat, timeZone: outputTimeZone, locale: locale)
     }
 
+    // MARK: - Locale-aware time
+
+    /// The time of day in the device's own style: `2:00 PM` on a 12-hour
+    /// device, `14:00` on a 24-hour one (BOOK-04).
+    ///
+    /// The formatter is cached under the zone, the locale and the locale's
+    /// resolved hour pattern. The device's 12/24-hour setting does not change
+    /// the locale identifier, so the hour pattern is part of the key: toggling
+    /// the setting builds a new formatter instead of reusing a stale one
+    /// (RESEARCH Pattern 7). Never `Date.FormatStyle`: its en_GB output differs
+    /// in the leading zero (Pitfall 10).
+    static func shortTime(
+        _ date: Date,
+        timeZone: TimeZone = .current,
+        locale: Locale = .current
+    ) -> String {
+        let hourPattern = DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: locale) ?? ""
+        let key = "short|\(timeZone.identifier)|\(locale.identifier)|\(hourPattern)"
+        cacheLock.lock()
+        defer { cacheLock.unlock() }
+        if let cached = cache[key] {
+            return cached.string(from: date)
+        }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        formatter.timeZone = timeZone
+        formatter.locale = locale
+        cache[key] = formatter
+        return formatter.string(from: date)
+    }
+
+    /// Trims `raw`; nil when it is nil, empty or only whitespace.
+    static func normalizedZoneName(_ raw: String?) -> String? {
+        guard let trimmed = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+            return nil
+        }
+        return trimmed
+    }
+
+    /// The zone's readable generic name (for example `Eastern Time`), or nil
+    /// when the device has none. Never the raw IANA identifier.
+    static func zoneName(for timeZone: TimeZone = .current, locale: Locale = .current) -> String? {
+        normalizedZoneName(timeZone.localizedName(for: .generic, locale: locale))
+    }
+
     // MARK: - Formatter cache
 
     private static let cacheLock = NSLock()

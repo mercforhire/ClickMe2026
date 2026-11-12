@@ -14,10 +14,10 @@ struct BookingTimeSlot: Identifiable, Hashable {
     let endTime: Date?
     let isAvailable: Bool
 
+    /// The start time in the device's zone, following the device locale and its
+    /// 12/24-hour setting (BOOK-04). Shared by the Make a Booking chips, the
+    /// Reschedule picker and the Make a Booking summary line.
     var displayLabel: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "h:mm a"
-        return f.string(from: startTime)
+        DateUtil.shortTime(startTime)
     }
 }

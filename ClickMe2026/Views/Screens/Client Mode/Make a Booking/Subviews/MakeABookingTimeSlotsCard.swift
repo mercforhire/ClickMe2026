@@ -17,10 +17,14 @@ struct MakeABookingTimeSlotsCard: View {
                     .font(.brand(.callout, weight: .bold))
                     .foregroundColor(MakeABookingBrand.onSurface)
                 Spacer()
-                if let tz = viewModel.expertTimezone {
-                    Text(tz)
+                // The device zone, the zone the chip times are formatted in
+                // (K2, BOOK-03). Omitted when the device has no readable name.
+                if let zone = DateUtil.zoneName() {
+                    Text(zone)
                         .font(.brand(.caption, weight: .medium))
                         .foregroundColor(MakeABookingBrand.onSurfaceVar)
+                        .multilineTextAlignment(.trailing)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
 

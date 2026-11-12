@@ -21,6 +21,10 @@ struct FavoriteExpert: Identifiable, Hashable {
     let bio: String
     let imageURL: String
     var isFavorited: Bool = true
+
+    /// Identity for paging and dedupe: the server expert id. `id` is a fresh
+    /// UUID on every map, so it can never spot the same expert twice.
+    var pagingKey: UUID { expertId ?? id }
 }
 
 // MARK: - Favorite Experts View
@@ -121,7 +125,11 @@ struct FavoritesView: View {
             } else {
                 FavoritesPopulatedList(
                     favorites: viewModel.favorites,
-                    onUnfavorite: { pendingUnfavorite = $0 }
+                    isLoadingMore: viewModel.isLoadingMore,
+                    onUnfavorite: { pendingUnfavorite = $0 },
+                    onRowAppear: { expert in
+                        Task { await viewModel.loadNextPageIfNeeded(currentItem: expert) }
+                    }
                 )
             }
         case .failed(let message):

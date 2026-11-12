@@ -12,7 +12,12 @@ import SwiftUI
 
 struct FavoritesPopulatedList: View {
     let favorites: [FavoriteExpert]
+    /// True while the next page is loading; shows the spinner footer.
+    let isLoadingMore: Bool
     let onUnfavorite: (FavoriteExpert) -> Void
+    /// Called when a row scrolls into view. The view model decides whether
+    /// that row is close enough to the end to fetch the next page.
+    let onRowAppear: (FavoriteExpert) -> Void
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -27,7 +32,10 @@ struct FavoritesPopulatedList: View {
                     .padding(.top, 16)
                     .padding(.bottom, 20)
 
-                VStack(spacing: 14) {
+                // Lazy so a row's `.onAppear` means "scrolled into view";
+                // an eager stack would announce every row at once and page
+                // through the whole list on load.
+                LazyVStack(spacing: 14) {
                     ForEach(favorites) { expert in
                         NavigationLink(value: expert) {
                             FavoriteExpertCard(
@@ -36,6 +44,14 @@ struct FavoritesPopulatedList: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .onAppear { onRowAppear(expert) }
+                    }
+
+                    if isLoadingMore {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: FavoritesBrand.brandGreen))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
                     }
                 }
                 .padding(.horizontal, 16)

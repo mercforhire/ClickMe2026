@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 27
+open_count: 28
 waived_count: 0
 fixed_count: 7
-total_count: 34
-last_updated: 2026-11-12T06:01:27.372Z
+total_count: 35
+last_updated: 2026-11-12T15:02:14.464Z
 ---
 
 # Broken Windows Ledger
@@ -49,6 +49,7 @@ last_updated: 2026-11-12T06:01:27.372Z
 | 32 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Reviews/ExpertReviewsView.swift |  | 04-11 device check (UAT EXPL-06, D-07): expert with more than 20 reviews scrolls through every review with the spinner footer; airplane mode on a later page shows Couldn't load more reviews with a 44 pt Retry; pull-to-refresh keeps the rows when offline | open |  | 2026-11-12T05:50:56.788Z |  |
 | 33 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Search/Subviews/SearchExpertCard.swift |  | 04-11 device check (UAT EXPL-04, L5, LT1): search an expert with a 60 character tag and a non-Latin tag; every pill shows its whole text and wraps inside the pill at the largest Dynamic Type size; Favorites chips and expert topic setup chips look as before | open |  | 2026-11-12T05:50:56.918Z |  |
 | 34 | 04 | unrun-verify | .planning/phases/04-booking-payment-and-discovery/04-13-PLAN.md |  | 04-13 PAY-02 D-04/D-15 device check (UAT E5, 04-14 D-11 session): after the confirm-unknown alert tap Not now then Book Now on the same slot and land on Request Sent for the existing booking; a slot someone else holds still shows the plain slot-taken alert; SwiftUI alert layout (Check My Bookings, Close Alert) unseen on device | open |  | 2026-11-12T06:01:27.372Z |  |
+| 35 | 04 | unrun-verify | .planning/phases/04-booking-payment-and-discovery/04-12-PLAN.md |  | 04-12 EXPL-02 and EXPL-05 device check not run (user chose fix-now 2026-11-12, device check deferred to the 04-14 UAT list): chat View Profile for an expert with no reviews shows no Expertise header, no empty Recent Reviews card, no blank gap and 'No reviews yet' in the hero (compare before on the App Store build); one review shows '(1 review)'; a profile opened from Favorites shows a filled heart from the first frame while one opened from Search starts empty | open |  | 2026-11-12T15:02:14.464Z |  |
 
 ````json
 [
@@ -491,6 +492,19 @@ last_updated: 2026-11-12T06:01:27.372Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T06:01:27.372Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 35,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": ".planning/phases/04-booking-payment-and-discovery/04-12-PLAN.md",
+    "line": null,
+    "description": "04-12 EXPL-02 and EXPL-05 device check not run (user chose fix-now 2026-11-12, device check deferred to the 04-14 UAT list): chat View Profile for an expert with no reviews shows no Expertise header, no empty Recent Reviews card, no blank gap and 'No reviews yet' in the hero (compare before on the App Store build); one review shows '(1 review)'; a profile opened from Favorites shows a filled heart from the first frame while one opened from Search starts empty",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T15:02:14.464Z",
     "resolved_at": null,
     "milestone": null
   }

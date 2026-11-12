@@ -250,7 +250,7 @@ Plans:
   4. An unavailable (404) expert profile shows "This profile isn't available", and network errors offer a retry. Empty Expertise, Topics and Reviews sections are hidden. Free featured topics show "Free". Search tag pills show their full text.
   5. Favorites shows every favorite (paged), with working empty-state buttons and correct copy. A profile's favorite state matches its `is_favorite`. The full reviews list loads beyond 20 reviews.
 
-**Plans**: 11/14 plans executed in 4 waves (iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02)
+**Plans**: 12/14 plans executed in 4 waves (iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02)
 
 Plans:
 **Wave 1**
@@ -267,7 +267,7 @@ Plans:
 - [x] 04-09-PLAN.md — PAY-03 payment card variants from the booking's payment state; a held booking is never called charged (after 04-03, 04-04)
 - [x] 04-10-PLAN.md — EXPL-05 Favorites empty-state buttons: Explore Experts, View My History on Past (D-08) (after 04-03)
 - [x] 04-11-PLAN.md — EXPL-06 reviews paging; EXPL-04 full-text search pills (after 04-06)
-- [ ] 04-12-PLAN.md — Heart seed from Favorites (D-09); EXPL-02 empty sections and zero/one review copy after the device-confirm decision (after 04-05, 04-06)
+- [x] 04-12-PLAN.md — Heart seed from Favorites (D-09); EXPL-02 empty sections and zero/one review copy after the device-confirm decision (after 04-05, 04-06)
 
 **Wave 3**
 - [x] 04-13-PLAN.md — PAY-02 D-04 "You may already have this booking" and D-15 DUPLICATE_BOOKING route via the session ledger (after 04-08)
@@ -373,7 +373,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
-| 4. Booking, Payment and Discovery | 11/14 | In Progress | - |
+| 4. Booking, Payment and Discovery | 12/14 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |

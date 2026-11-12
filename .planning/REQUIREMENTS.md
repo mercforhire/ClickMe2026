@@ -56,10 +56,10 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 ### Explore, Profile, Favorites, Reviews
 
 - [x] **EXPL-01** [X1] **[major]**: An unavailable (404) expert profile shows "This profile isn't available", and network errors show a retry
-- [ ] **EXPL-02** [X2] (likely): Empty Expertise, Topics and Reviews sections are hidden, and zero reviews renders cleanly
+- [x] **EXPL-02** [X2] (likely): Empty Expertise, Topics and Reviews sections are hidden, and zero reviews renders cleanly
 - [ ] **EXPL-03** [X3]: Featured topic cards show "Free" for free topics
 - [x] **EXPL-04** [X4]: Search result tag pills show their full text
-- [ ] **EXPL-05** [X5] **[major]**: Favorites shows all favorites (paged), its empty-state buttons work, its copy is correct, and favorite state comes from the profile's `is_favorite`
+- [x] **EXPL-05** [X5] **[major]**: Favorites shows all favorites (paged), its empty-state buttons work, its copy is correct, and favorite state comes from the profile's `is_favorite`
 - [x] **EXPL-06** [X6]: The full reviews list loads more than 20 reviews (paging)
 - [ ] **EXPL-07** **[major]**: Explore loads when the home feed has a free topic with no currency or one bad featured topic. The free topic shows "Free", a bad topic is dropped alone, a failed load shows readable text, and no stale Featured Topics sit beside section errors
 
@@ -214,10 +214,10 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | PAY-04 | Phase 4 | Complete |
 | PAY-05 | Phase 2 | Complete |
 | EXPL-01 | Phase 4 | Complete |
-| EXPL-02 | Phase 4 | Pending |
+| EXPL-02 | Phase 4 | Complete |
 | EXPL-03 | Phase 4 | Pending |
 | EXPL-04 | Phase 4 | Complete |
-| EXPL-05 | Phase 4 | Pending |
+| EXPL-05 | Phase 4 | Complete |
 | EXPL-06 | Phase 4 | Complete |
 | EXPL-07 | Phase 4 | Pending |
 | SIGN-01 | Phase 5 | Pending |

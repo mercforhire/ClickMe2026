@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-06-PLAN.md
-last_updated: "2026-11-12T05:12:25.941Z"
+stopped_at: Completed 04-07-PLAN.md
+last_updated: "2026-11-12T05:17:16.327Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 04 execution started
-state_head: 3ed0c8ad81b432b9db083b7ebdc5da68c63626df
+state_head: a48c5a444c67001c209b2c3f1e3e0f2c81f4a8fc
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 63
+  completed_plans: 64
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 6 of 14
+Plan: 7 of 14
 Status: Ready to execute
 Last activity: 2026-11-11 — Phase 04 execution started
 
@@ -119,6 +119,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P04 | 8 min | 3 tasks | 9 files |
 | Phase 04 P05 | 8 min | 2 tasks | 5 files |
 | Phase 04 P06 | 7 min | 2 tasks | 7 files |
+| Phase 04 P07 | 15 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -249,6 +250,7 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-05: expert profile 404 is detected by HTTP status 404 or ErrorCode.notFound (never message text); other errors show Couldn't load profile with Retry
 - [Phase 04]: 04-05: the heart reads is_favorite from the details response (missing key false) and is not overwritten while a toggle is in flight; the /client/favorites scan is removed
 - [Phase 04]: 04-06: Favorites paging dedupes by expertId; an empty page always ends the list; after a failed later page only the footer Retry re-fires; unfavorite with more pages reloads page 1 on the next trigger
+- [Phase 04]: 04-07 D-13: tryAutoLogin resolves a 403 ACCOUNT_SUSPENDED to signed out through AutoLoginOutcome, so the splash routes to Login; Login shows the suspension alert once and Close Alert clears wasSuspended; Android already does this (button label OK vs Close Alert logged, not aligned); device check in the Phase 8 release pass
 
 ### Pending Todos
 
@@ -319,6 +321,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T05:12:25.561Z
-Stopped at: Completed 04-06-PLAN.md
+Last session: 2026-11-12T05:17:15.916Z
+Stopped at: Completed 04-07-PLAN.md
 Resume file: None

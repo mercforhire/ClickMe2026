@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 20
+open_count: 21
 waived_count: 0
 fixed_count: 7
-total_count: 27
-last_updated: 2026-11-12T05:11:40.658Z
+total_count: 28
+last_updated: 2026-11-12T05:16:40.722Z
 ---
 
 # Broken Windows Ledger
@@ -42,6 +42,7 @@ last_updated: 2026-11-12T05:11:40.658Z
 | 25 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Explore/Subviews/ExploreTodaysSessionsSection.swift |  | 04-04 device check (UAT BOOK-03, BOOK-04, D-18, T1-T4): with 24-Hour Time on, slot chips, Today's Sessions, Reschedule picker and Request Sent show 14:00-style times; slots card and Today's Sessions title say the zone in words (never America/Toronto); toggle 24-Hour Time off while app is open and return: 2:00 PM style; fast month taps always match the shown month; empty day and failed month keep their copy | open |  | 2026-11-12T04:55:04.962Z |  |
 | 26 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift |  | 04-05 device check (UAT EXPL-01, L3, EXPL-05): airplane mode on, open a profile: 'Couldn't load profile' with Retry and no heart or menu; network back on, Retry shows a spinner then the profile; a deleted or suspended expert shows 'This profile isn't available' with only Back (pops one level); heart matches is_favorite for a favorited expert; no /client/favorites call on open | open |  | 2026-11-12T05:03:15.847Z |  |
 | 27 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Favorites/Subviews/FavoritesPopulatedList.swift |  | 04-06 device check (UAT EXPL-05, D-07, D-09): with more than 20 favorites, scroll to the end: a spinner appears, then the rest load with no repeats and nothing shows at the end; airplane mode before the next page: footer 'Couldn't load more favorites' with Retry, earlier rows stay, Retry after network back appends the page; pull to refresh restarts at page 1; unfavorite a row then scroll to the end: list returns to the first 20 and no favorite is skipped; Pro Tip (shown with no favorites) says 'heart' | open |  | 2026-11-12T05:11:40.658Z |  |
+| 28 | 04 | unrun-verify | ClickMe2026/Views/Screens/Login Flow/Login/LoginView.swift |  | D-13 / UI-SPEC D4: suspension alert on a real cold launch (suspended account lands on Login, alert shows once, Close Alert clears the flag); device check in the Phase 8 release pass | open |  | 2026-11-12T05:16:40.722Z |  |
 
 ````json
 [
@@ -393,6 +394,19 @@ last_updated: 2026-11-12T05:11:40.658Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T05:11:40.658Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 28,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "ClickMe2026/Views/Screens/Login Flow/Login/LoginView.swift",
+    "line": null,
+    "description": "D-13 / UI-SPEC D4: suspension alert on a real cold launch (suspended account lands on Login, alert shows once, Close Alert clears the flag); device check in the Phase 8 release pass",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T05:16:40.722Z",
     "resolved_at": null,
     "milestone": null
   }

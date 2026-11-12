@@ -250,7 +250,7 @@ Plans:
   4. An unavailable (404) expert profile shows "This profile isn't available", and network errors offer a retry. Empty Expertise, Topics and Reviews sections are hidden. Free featured topics show "Free". Search tag pills show their full text.
   5. Favorites shows every favorite (paged), with working empty-state buttons and correct copy. A profile's favorite state matches its `is_favorite`. The full reviews list loads beyond 20 reviews.
 
-**Plans**: 5/14 plans executed in 4 waves (iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02)
+**Plans**: 6/14 plans executed in 4 waves (iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02)
 
 Plans:
 **Wave 1**
@@ -260,7 +260,7 @@ Plans:
 - [x] 04-04-PLAN.md — BOOK-02 month race; BOOK-03 zone name on slots and Today's Sessions (D-18); BOOK-04 12/24-hour on slots, Today's Sessions and Request Sent (K3)
 - [x] 04-05-PLAN.md — EXPL-01 not-available and load-failed profile states (D-10); heart from is_favorite (EXPL-05, D-09)
 - [x] 04-06-PLAN.md — EXPL-05 Favorites paging on the shared PagedList, footer retry, refresh, heart Pro Tip (D-07, D-09)
-- [ ] 04-07-PLAN.md — D-13 suspension on cold launch routes to Login with the notice
+- [x] 04-07-PLAN.md — D-13 suspension on cold launch routes to Login with the notice
 
 **Wave 2** *(each plan waits for the wave 1 plans it names)*
 - [ ] 04-08-PLAN.md — PAY-02 confirm timeout keeps the payment, retries, lands on Request Sent; confirm-unknown alert (D-03); 409 PAYMENT_IN_PROGRESS as outcome unknown (D-17); PAY-04 view-model comments (after 04-04)
@@ -373,7 +373,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
-| 4. Booking, Payment and Discovery | 5/14 | In Progress | - |
+| 4. Booking, Payment and Discovery | 6/14 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |

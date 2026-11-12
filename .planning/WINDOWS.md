@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 26
+open_count: 27
 waived_count: 0
 fixed_count: 7
-total_count: 33
-last_updated: 2026-11-12T05:50:56.918Z
+total_count: 34
+last_updated: 2026-11-12T06:01:27.372Z
 ---
 
 # Broken Windows Ledger
@@ -48,6 +48,7 @@ last_updated: 2026-11-12T05:50:56.918Z
 | 31 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Profile/ClientProfileHomeScreen.swift |  | 04-10 device check (UAT EXPL-05, D-08, N2): empty Favorites -> Explore Experts opens Explore, Profile back at root; View My History opens Bookings on Past, Profile back at root | open |  | 2026-11-12T05:43:19.260Z |  |
 | 32 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Reviews/ExpertReviewsView.swift |  | 04-11 device check (UAT EXPL-06, D-07): expert with more than 20 reviews scrolls through every review with the spinner footer; airplane mode on a later page shows Couldn't load more reviews with a 44 pt Retry; pull-to-refresh keeps the rows when offline | open |  | 2026-11-12T05:50:56.788Z |  |
 | 33 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Search/Subviews/SearchExpertCard.swift |  | 04-11 device check (UAT EXPL-04, L5, LT1): search an expert with a 60 character tag and a non-Latin tag; every pill shows its whole text and wraps inside the pill at the largest Dynamic Type size; Favorites chips and expert topic setup chips look as before | open |  | 2026-11-12T05:50:56.918Z |  |
+| 34 | 04 | unrun-verify | .planning/phases/04-booking-payment-and-discovery/04-13-PLAN.md |  | 04-13 PAY-02 D-04/D-15 device check (UAT E5, 04-14 D-11 session): after the confirm-unknown alert tap Not now then Book Now on the same slot and land on Request Sent for the existing booking; a slot someone else holds still shows the plain slot-taken alert; SwiftUI alert layout (Check My Bookings, Close Alert) unseen on device | open |  | 2026-11-12T06:01:27.372Z |  |
 
 ````json
 [
@@ -477,6 +478,19 @@ last_updated: 2026-11-12T05:50:56.918Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T05:50:56.918Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 34,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": ".planning/phases/04-booking-payment-and-discovery/04-13-PLAN.md",
+    "line": null,
+    "description": "04-13 PAY-02 D-04/D-15 device check (UAT E5, 04-14 D-11 session): after the confirm-unknown alert tap Not now then Book Now on the same slot and land on Request Sent for the existing booking; a slot someone else holds still shows the plain slot-taken alert; SwiftUI alert layout (Check My Bookings, Close Alert) unseen on device",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T06:01:27.372Z",
     "resolved_at": null,
     "milestone": null
   }

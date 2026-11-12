@@ -34,6 +34,19 @@ private final class ConfirmScript: @unchecked Sendable {
     }
 }
 
+/// Numbers only the requests it is asked about, behind a lock (the handler runs
+/// on a URL loading thread). Same shape as `ConfirmScript`.
+private final class CallCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var calls = 0
+
+    func next() -> Int {
+        lock.lock(); defer { lock.unlock() }
+        calls += 1
+        return calls
+    }
+}
+
 private enum PaidFlowFixture {
     static let bookingId = UUID()
     static let intentId = "pi_test"
@@ -732,5 +745,221 @@ struct MakeABookingPaidFlowTests {
         viewModel.dismissMayAlreadyBeBookedAlert()
 
         #expect(viewModel.paidFlowAlert == nil)
+    }
+
+    // MARK: Paid attempt stays intact (CR-01)
+
+    private func isoString(_ date: Date) -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.string(from: date)
+    }
+
+    /// Moves the form to another paid topic and a slot an hour later.
+    private func changeForm(_ viewModel: MakeABookingViewModel) {
+        let start = viewModel.selectedTimeSlot?.startTime ?? Date()
+        viewModel.selectedTopic = PaidFlowFixture.otherPaidTopic
+        viewModel.selectedTimeSlot = BookingTimeSlot(
+            startTime: start.addingTimeInterval(3600),
+            endTime: nil,
+            isAvailable: true
+        )
+    }
+
+    @Test("A calendar reload while a paid attempt is in flight keeps the slot, the ids and the booking attempt")
+    func reloadDuringConfirmKeepsSlot() async throws {
+        let confirms = CallCounter()
+        let viewModel = makeViewModel { _, request in
+            if request.url?.path.contains("/availability") == true {
+                return PaidFlowFixture.coded(request, status: 500, code: "INTERNAL")
+            }
+            if confirms.next() <= 3 { throw URLError(.timedOut) }
+            return PaidFlowFixture.created(request)
+        }
+        let slot = try #require(viewModel.selectedTimeSlot)
+        let attemptId = viewModel.bookingAttemptId
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(viewModel.paidFlowAlert == .confirmUnknown(paymentReference: "pi_test"))
+
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+
+        #expect(viewModel.selectedTimeSlot == slot)
+        #expect(viewModel.bookingAttemptId == attemptId)
+        #expect(viewModel.paymentIntentId == "pi_test")
+        #expect(viewModel.confirmPaymentMethodId == "pm_test")
+
+        await viewModel.retryConfirm()
+
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        let requests = confirmRequests()
+        #expect(requests.count == 4)
+        expectSameIntentAndCard(requests)
+        for request in requests {
+            #expect(bodyString(request, "start_time") == isoString(slot.startTime))
+        }
+    }
+
+    @Test("With no attempt in flight a reload still clears the selected slot")
+    func idleReloadClearsSlot() async {
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in
+            PaidFlowFixture.coded(request, status: 500, code: "INTERNAL")
+        }
+        #expect(viewModel.selectedTimeSlot != nil)
+        #expect(!viewModel.isSubmitting)
+
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+
+        #expect(viewModel.selectedTimeSlot == nil)
+    }
+
+    @Test("The 3DS retry sends the topic and slot the payment was made for")
+    func scaRetryKeepsOriginalSelection() async throws {
+        let body402 = """
+        {"status":"error","code":"PAYMENT_REQUIRES_ACTION","message":"Authentication required.",\
+        "detail":{"client_secret":"pi_test_secret_sca","stripe_account":"acct_test"}}
+        """
+        let viewModel = makeViewModel { number, request in
+            if number == 1 { return PaidFlowFixture.http(request, status: 402, body: Data(body402.utf8)) }
+            return PaidFlowFixture.created(request)
+        }
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(viewModel.pendingSCAChallenge != nil)
+        #expect(viewModel.paidStep == .confirming)
+
+        changeForm(viewModel)
+        await viewModel.retryConfirmAfterSCA(paymentMethodId: "pm_after_sca")
+
+        let requests = confirmRequests()
+        #expect(requests.count == 2)
+        let first = try #require(requests.first)
+        let second = try #require(requests.last)
+        #expect(bodyString(second, "start_time") == bodyString(first, "start_time"))
+        #expect(bodyString(second, "topic_id") == bodyString(first, "topic_id"))
+        #expect(bodyString(second, "topic_id") == PaidFlowFixture.paidTopic.id.uuidString.lowercased())
+        #expect(bodyString(second, "payment_intent_id") == PaidFlowFixture.intentId)
+        #expect(bodyString(second, "stripe_payment_method_id") == "pm_after_sca")
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+    }
+
+    @Test("The unconfirmed-booking record stays on the attempt's slot when the form changes")
+    func ledgerKeysOnPaidAttempt() async throws {
+        let viewModel = makeViewModel(timingOut: 3)
+        let original = try #require(viewModel.selectedTimeSlot).startTime
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        changeForm(viewModel)
+        let moved = try #require(viewModel.selectedTimeSlot).startTime
+
+        #expect(ledgerHolds(viewModel, start: original))
+        #expect(!ledgerHolds(viewModel, start: moved))
+
+        viewModel.dismissConfirmAlert()
+
+        #expect(ledgerHolds(viewModel, start: original))
+        #expect(!ledgerHolds(viewModel, start: moved))
+    }
+
+    @Test("A confirm with no paid attempt makes no request and leaves the flow idle")
+    func confirmWithoutAttemptMakesNoRequest() async {
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in
+            PaidFlowFixture.created(request)
+        }
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(MockURLProtocol.recordedRequests.isEmpty)
+        #expect(viewModel.paidStep == .idle)
+        #expect(viewModel.completedBookingId == nil)
+    }
+
+    @Test("Every way out of a paid attempt unlocks the form")
+    func everyResetUnlocksTheForm() async {
+        // The payment sheet is closed.
+        let cancelled = makeViewModel(timingOut: 0)
+        cancelled.paidStep = .collectingPaymentMethod
+        #expect(cancelled.isSubmitting)
+        cancelled.cancelPaidBooking()
+        #expect(!cancelled.isSubmitting)
+        #expect(cancelled.paidAttempt == nil)
+
+        // The 3DS sheet is closed.
+        let scaCancelled = makeViewModel(timingOut: 0)
+        scaCancelled.paidStep = .collectingPaymentMethod
+        #expect(scaCancelled.isSubmitting)
+        scaCancelled.cancelSCA(withMessage: nil)
+        #expect(!scaCancelled.isSubmitting)
+        #expect(scaCancelled.paidAttempt == nil)
+
+        // Not now on the confirm-unknown alert.
+        let dismissed = makeViewModel(timingOut: 3)
+        await dismissed.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(dismissed.isSubmitting)
+        dismissed.dismissConfirmAlert()
+        #expect(!dismissed.isSubmitting)
+        #expect(dismissed.paidAttempt == nil)
+
+        // A coded confirm error.
+        let expired = makeViewModel { _, request in
+            PaidFlowFixture.coded(request, status: 422, code: "INTENT_EXPIRED")
+        }
+        await expired.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(!expired.isSubmitting)
+        #expect(expired.paidAttempt == nil)
+    }
+
+    /// A view model whose first confirm times out and whose second answers 201,
+    /// with its first confirm running (one request recorded, `isConfirmRunning`)
+    /// and waiting 500 ms before the automatic retry. The handler is never
+    /// blocked: the wait is the retry delay, a `Task.sleep` on the main actor.
+    private func startSlowConfirm() async throws -> (MakeABookingViewModel, Task<Void, Never>) {
+        let viewModel = makeViewModel(timingOut: 1)
+        viewModel.confirmRetryPolicy = ConfirmRetryPolicy(delays: [.milliseconds(500), .zero])
+        let run = Task { await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId) }
+        for _ in 0 ..< 150 where !(confirmRequests().count == 1 && viewModel.isConfirmRunning) {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+        try #require(confirmRequests().count == 1)
+        try #require(viewModel.isConfirmRunning)
+        return (viewModel, run)
+    }
+
+    @Test("A form edit while a confirm runs changes nothing the confirm or its retry sends")
+    func formEditWhileConfirmRunsKeepsRequest() async throws {
+        let (viewModel, run) = try await startSlowConfirm()
+        let slot = try #require(viewModel.selectedTimeSlot)
+
+        changeForm(viewModel)
+        try #require(confirmRequests().count == 1)
+
+        await run.value
+
+        let requests = confirmRequests()
+        #expect(requests.count == 2)
+        expectSameIntentAndCard(requests)
+        for request in requests {
+            #expect(bodyString(request, "topic_id") == PaidFlowFixture.paidTopic.id.uuidString.lowercased())
+            #expect(bodyString(request, "start_time") == isoString(slot.startTime))
+            #expect(bodyString(request, "meeting_type") == MeetingType.inAppVoice.rawValue)
+        }
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+    }
+
+    @Test("A second confirm cannot start while one runs")
+    func secondConfirmWhileRunningIsRejected() async throws {
+        let (viewModel, run) = try await startSlowConfirm()
+
+        await viewModel.retryConfirm()
+        await viewModel.completePaidBooking(paymentMethodId: "pm_other")
+
+        #expect(confirmRequests().count == 1)
+        #expect(viewModel.confirmPaymentMethodId == PaidFlowFixture.paymentMethodId)
+
+        await run.value
+
+        let requests = confirmRequests()
+        #expect(requests.count == 2)
+        expectSameIntentAndCard(requests)
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        #expect(!viewModel.isConfirmRunning)
     }
 }

@@ -350,7 +350,9 @@ final class MakeABookingViewModel: ObservableObject {
     func loadAvailability(for month: Date) async {
         let token = availabilityGate.begin()
         availabilityState = .loading
-        selectedTimeSlot = nil
+        // A paid attempt in flight keeps its slot (CR-01): the confirm reads
+        // `paidAttempt`, and clearing would also regenerate `bookingAttemptId`.
+        if !isSubmitting { selectedTimeSlot = nil }
 
         // Center month — surfaces the error if this one fails.
         let center: SuccessDataResponse<ExpertAvailabilityData>
@@ -634,11 +636,6 @@ final class MakeABookingViewModel: ObservableObject {
         }
     }
 
-    /// Called when the user dismisses the PaymentSheet without paying.
-    func cancelPaidBooking() {
-        resetPaidFlow()
-    }
-
     /// Clears every paid-flow field. Internal so `MakeABookingViewModel+PaidFlow.swift`
     /// can reset the flow when the client leaves an unknown confirm outcome.
     func resetPaidFlow() {
@@ -794,22 +791,6 @@ final class MakeABookingViewModel: ObservableObject {
             resetPaidFlow()
         }
         _ = topic; _ = slot // reserved for future retry recovery
-    }
-
-    /// Called by the SCA challenge sheet after 3DS finishes. Re-hits
-    /// `/bookings/confirm` with the SAME `pm_…` — server sees the PI is
-    /// now `requires_capture` and skips its own confirm, just creating
-    /// the booking.
-    func retryConfirmAfterSCA(paymentMethodId: String) async {
-        pendingSCAChallenge = nil
-        await completePaidBooking(paymentMethodId: paymentMethodId)
-    }
-
-    /// Called if the SCA challenge failed or the user cancelled it.
-    func cancelSCA(withMessage message: String? = nil) {
-        pendingSCAChallenge = nil
-        if let message { bookingError = message }
-        resetPaidFlow()
     }
 
     // MARK: - Date helpers

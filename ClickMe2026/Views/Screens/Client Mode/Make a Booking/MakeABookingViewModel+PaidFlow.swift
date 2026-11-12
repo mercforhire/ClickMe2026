@@ -84,4 +84,27 @@ extension MakeABookingViewModel {
     var showsConfirmingStatus: Bool {
         paidStep == .confirming && paidFlowAlert == nil
     }
+
+    // MARK: - Payment sheet and 3DS entry points
+
+    /// Called when the user dismisses the PaymentSheet without paying.
+    func cancelPaidBooking() {
+        resetPaidFlow()
+    }
+
+    /// Called by the SCA challenge sheet after 3DS finishes. Re-hits
+    /// `/bookings/confirm` with the SAME `pm_…` — server sees the PI is
+    /// now `requires_capture` and skips its own confirm, just creating
+    /// the booking.
+    func retryConfirmAfterSCA(paymentMethodId: String) async {
+        pendingSCAChallenge = nil
+        await completePaidBooking(paymentMethodId: paymentMethodId)
+    }
+
+    /// Called if the SCA challenge failed or the user cancelled it.
+    func cancelSCA(withMessage message: String? = nil) {
+        pendingSCAChallenge = nil
+        if let message { bookingError = message }
+        resetPaidFlow()
+    }
 }

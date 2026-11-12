@@ -18,16 +18,16 @@ struct CancellationDeadlinesCard: View {
 
                 VStack(alignment: .leading, spacing: 16) {
                     deadlineRow(
-                        title: "24 hours before the meeting",
-                        subtitle: "Full refund"
+                        title: "More than 24 hours before the start",
+                        subtitle: "Not charged, or a full refund if already charged"
                     )
                     deadlineRow(
-                        title: "Within 24 hours of the meeting",
-                        subtitle: "Partial refund"
+                        title: "Within 24 hours of the start",
+                        subtitle: "Not charged, but no refund if already charged"
                     )
                     deadlineRow(
-                        title: "After the meeting has started",
-                        subtitle: "No refund"
+                        title: "After the session ends",
+                        subtitle: "Can't be cancelled; charged if the session went ahead"
                     )
                 }
             }

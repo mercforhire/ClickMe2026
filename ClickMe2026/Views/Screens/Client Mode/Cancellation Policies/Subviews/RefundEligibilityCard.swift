@@ -20,20 +20,20 @@ struct RefundEligibilityCard: View {
                     refundRow(
                         icon: "checkmark",
                         iconColor: CancellationPoliciesBrand.brandGreen,
-                        title: "Full Refund",
-                        body: "Cancellations made more than 24 hours before the scheduled meeting are eligible for a full refund, processed within 5–7 business days."
+                        title: "Not Charged",
+                        body: "Your card is only held until the session ends. Cancel before then and the hold is released, so you pay nothing. The same applies if the expert cancels or doesn't show up."
                     )
                     refundRow(
                         icon: "checkmark",
                         iconColor: CancellationPoliciesBrand.brandGreen,
-                        title: "Partial Refund",
-                        body: "Cancellations within 24 hours of the meeting may receive a partial refund at the expert's discretion, typically 50% of the session fee."
+                        title: "Full Refund",
+                        body: "If your card was already charged (for example, after a reschedule) and you cancel more than 24 hours before the start, you get a full refund to the same card."
                     )
                     refundRow(
                         icon: "xmark",
                         iconColor: CancellationPoliciesBrand.errorRed,
                         title: "No Refund",
-                        body: "No refund is issued for cancellations after the meeting has started, or for no-shows without prior notice."
+                        body: "No refund if your card was already charged and you cancel within 24 hours of the start, or if the expert joins and you don't."
                     )
                 }
             }

@@ -121,7 +121,7 @@ final class HelpViewModel: ObservableObject {
                     id: UUID(),
                     categoryId: UUID(),
                     question: "Can I change my booking time?",
-                    snippet: "Yes, you can reschedule bookings up to 24 hours before the start time.",
+                    snippet: "Yes. Open the booking and propose a new time. It changes only if the other person accepts.",
                     viewCount: 91
                 ),
             ]

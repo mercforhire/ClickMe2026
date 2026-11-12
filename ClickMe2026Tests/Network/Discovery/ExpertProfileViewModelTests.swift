@@ -111,10 +111,11 @@ private func route(
 
 @MainActor
 private func makeViewModel(
+    isFavorited: Bool = false,
     handler: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
 ) -> ExpertProfileViewModel {
     let api = APITestFactory.make(respond: handler)
-    return ExpertProfileViewModel(expert: ProfileFixture.seed(), api: api)
+    return ExpertProfileViewModel(expert: ProfileFixture.seed(), isFavorited: isFavorited, api: api)
 }
 
 private func requestCount(pathSuffix: String) -> Int {
@@ -240,5 +241,70 @@ struct ExpertProfileViewModelTests {
         #expect(requestCount(pathSuffix: "/details") == 1)
         #expect(!viewModel.isRetrying)
         #expect(viewModel.loadState == .loaded)
+    }
+
+    // MARK: Heart (EXPL-05, D-09)
+
+    @Test("is_favorite true replaces a seed of false")
+    func heartFromServerTrue() async {
+        let viewModel = makeViewModel(
+            isFavorited: false,
+            handler: route(detailsBody: ProfileFixture.details(isFavorite: "true"))
+        )
+
+        await viewModel.loadProfileDetails()
+
+        #expect(viewModel.isFavorited)
+    }
+
+    @Test("is_favorite false replaces a seed of true")
+    func heartFromServerFalse() async {
+        let viewModel = makeViewModel(
+            isFavorited: true,
+            handler: route(detailsBody: ProfileFixture.details(isFavorite: "false"))
+        )
+
+        await viewModel.loadProfileDetails()
+
+        #expect(!viewModel.isFavorited)
+    }
+
+    @Test("a missing is_favorite key reads false")
+    func heartMissingKeyIsFalse() async {
+        let viewModel = makeViewModel(
+            isFavorited: true,
+            handler: route(detailsBody: ProfileFixture.details(isFavorite: nil))
+        )
+
+        await viewModel.loadProfileDetails()
+
+        #expect(!viewModel.isFavorited)
+    }
+
+    @Test("a full load makes no /client/favorites request")
+    func noFavoritesScan() async {
+        let viewModel = makeViewModel(
+            handler: route(detailsBody: ProfileFixture.details(isFavorite: "true"))
+        )
+
+        await viewModel.loadProfileDetails()
+
+        #expect(viewModel.loadState == .loaded)
+        #expect(requestCount(pathSuffix: "/details") == 1)
+        #expect(MockURLProtocol.recordedRequests.allSatisfy { $0.url?.path.contains("/client/favorites") != true })
+    }
+
+    @Test("a favorite toggle in flight keeps its value when the details land")
+    func inFlightToggleWins() async {
+        let viewModel = makeViewModel(
+            handler: route(detailsBody: ProfileFixture.details(isFavorite: "false"))
+        )
+        // The state `toggleFavorite()` leaves while its request is running.
+        viewModel.isFavorited = true
+        viewModel.isFavoriteInFlight = true
+
+        await viewModel.loadProfileDetails()
+
+        #expect(viewModel.isFavorited)
     }
 }

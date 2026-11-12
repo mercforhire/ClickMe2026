@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 17
+open_count: 18
 waived_count: 0
 fixed_count: 7
-total_count: 24
-last_updated: 2026-11-12T04:46:26.205Z
+total_count: 25
+last_updated: 2026-11-12T04:55:04.962Z
 ---
 
 # Broken Windows Ledger
@@ -39,6 +39,7 @@ last_updated: 2026-11-12T04:46:26.205Z
 | 22 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Make a Booking/Subviews/MakeABookingStripePaymentSheet.swift |  | PAY-01 device check (close sheet with saved card preselected places no hold; Link off) not run; belongs to the D-11 session in plan 04-14 | open |  | 2026-11-12T04:40:17.963Z |  |
 | 23 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Request Sent/Subviews/BookingRequestSentPopGestureLock.swift |  | 04-03 device check (UAT D2, BOOK-01/BOOK-19): no Back on Request Sent, edge and iOS 26 content swipe do not pop from each source tab (Explore, Search, Profile>Favorites, chat View Profile), exits reset the source tab; swipe-back still works on other screens afterwards | open |  | 2026-11-12T04:46:26.094Z |  |
 | 24 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Request Sent/BookingRequestSentView.swift |  | 04-03 device check (UAT L1, E1, BOOK-05): slow network shows 'Loading booking…' with both exits pinned; airplane-mode error state shows Retry and both exits | open |  | 2026-11-12T04:46:26.205Z |  |
+| 25 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Explore/Subviews/ExploreTodaysSessionsSection.swift |  | 04-04 device check (UAT BOOK-03, BOOK-04, D-18, T1-T4): with 24-Hour Time on, slot chips, Today's Sessions, Reschedule picker and Request Sent show 14:00-style times; slots card and Today's Sessions title say the zone in words (never America/Toronto); toggle 24-Hour Time off while app is open and return: 2:00 PM style; fast month taps always match the shown month; empty day and failed month keep their copy | open |  | 2026-11-12T04:55:04.962Z |  |
 
 ````json
 [
@@ -351,6 +352,19 @@ last_updated: 2026-11-12T04:46:26.205Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T04:46:26.205Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 25,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "ClickMe2026/Views/Screens/Client Mode/Explore/Subviews/ExploreTodaysSessionsSection.swift",
+    "line": null,
+    "description": "04-04 device check (UAT BOOK-03, BOOK-04, D-18, T1-T4): with 24-Hour Time on, slot chips, Today's Sessions, Reschedule picker and Request Sent show 14:00-style times; slots card and Today's Sessions title say the zone in words (never America/Toronto); toggle 24-Hour Time off while app is open and return: 2:00 PM style; fast month taps always match the shown month; empty day and failed month keep their copy",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T04:55:04.962Z",
     "resolved_at": null,
     "milestone": null
   }

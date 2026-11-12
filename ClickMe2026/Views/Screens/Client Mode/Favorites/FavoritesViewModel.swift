@@ -39,6 +39,10 @@ final class FavoritesViewModel: ObservableObject {
     /// wrong list.
     private var generation = 0
 
+    /// True while a page-1 restart is running, so a second trigger or a second
+    /// pull cannot start another one.
+    private var isRefreshing = false
+
     // MARK: Inits
 
     /// Runtime init — starts empty; call `load()` on view appear to populate
@@ -97,13 +101,65 @@ final class FavoritesViewModel: ObservableObject {
     ///
     /// A 500 on a page after the first is PostgREST's out-of-range answer and
     /// ends the list quietly (the `ClientTransactionsViewModel` rule). Any other
-    /// failure keeps every loaded row and sets the list's `pageError`.
+    /// failure keeps every loaded row and sets the list's `pageError`; the
+    /// footer's Retry is then the only way forward, so scrolling back over the
+    /// last rows does not fire the request again by itself.
+    ///
+    /// Reload-on-next-trigger (RESEARCH Open Question 4): after an unfavorite
+    /// while more pages remain, the server's offsets have moved up by one, so
+    /// asking for the next offset would skip the row that moved into the gap.
+    /// The first trigger after that restarts at page 1 instead.
     func loadNextPageIfNeeded(currentItem: FavoriteExpert) async {
-        guard case .loaded = state else { return }
+        guard case .loaded = state, !isRefreshing, list.pageError == nil else { return }
         guard let index = list.items.firstIndex(where: { $0.pagingKey == currentItem.pagingKey }),
               list.shouldLoadMore(afterItemAt: index)
         else { return }
-        await fetchNextPage()
+
+        if list.isStale {
+            await refresh()
+        } else {
+            await fetchNextPage()
+        }
+    }
+
+    /// The footer's Retry after a failed later page. Runs the fetch without the
+    /// row-index check; a stale list restarts at page 1 instead.
+    func retryNextPage() async {
+        guard case .loaded = state, !isRefreshing else { return }
+        list.pageError = nil
+        if list.isStale {
+            await refresh()
+        } else {
+            await fetchNextPage()
+        }
+    }
+
+    /// Pull-to-refresh. Restarts at page 1 without touching `state`, so the
+    /// rows stay on screen. A success replaces the list; a failure keeps it and
+    /// raises the "Couldn't update favorites" alert through `apiError`.
+    func refresh() async {
+        guard case .loaded = state, !isRefreshing else { return }
+        isRefreshing = true
+        generation += 1
+        // A next-page fetch still in flight is now stale: its result is dropped
+        // and its `defer` no longer clears the marker, so clear it here.
+        list.isLoadingMore = false
+        let requestedGeneration = generation
+        defer { isRefreshing = false }
+
+        do {
+            let response = try await api.getClientFavorites(page: 1, limit: Self.pageSize)
+            guard requestedGeneration == generation else { return }
+            list.replace(
+                withFirstPage: response.data.experts.map(Self.map),
+                hasMore: response.data.pagination?.hasMoreOrDerived ?? false
+            )
+        } catch {
+            // The pull gesture's task is cancelled when the view goes away;
+            // that is not a failed refresh.
+            if error is CancellationError || (error as? URLError)?.code == .cancelled { return }
+            apiError = error.userMessage
+        }
     }
 
     private func fetchNextPage() async {
@@ -162,6 +218,9 @@ final class FavoritesViewModel: ObservableObject {
             guard let self else { return }
             do {
                 _ = try await self.api.removeFavorite(expertId: expertId)
+                // Every later row moved up one place on the server; see
+                // `loadNextPageIfNeeded`. No effect once every page is loaded.
+                self.list.markStale()
             } catch {
                 // Roll the row back into the position it came from.
                 if let removed {

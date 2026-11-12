@@ -129,7 +129,10 @@ struct FavoritesView: View {
                     onUnfavorite: { pendingUnfavorite = $0 },
                     onRowAppear: { expert in
                         Task { await viewModel.loadNextPageIfNeeded(currentItem: expert) }
-                    }
+                    },
+                    showsPageError: viewModel.hasPageError,
+                    onRetryPage: { Task { await viewModel.retryNextPage() } },
+                    onRefresh: { await viewModel.refresh() }
                 )
             }
         case .failed(let message):

@@ -28,7 +28,7 @@ struct FavoritesProTipCard: View {
                 Text("Pro Tip:")
                     .font(.brand(.caption, weight: .bold))
                     .foregroundColor(FavoritesBrand.onSurface)
-                Text("Tap the star icon on any expert's profile to add them to this list instantly.")
+                Text("Tap the heart icon on any expert's profile to add them to this list instantly.")
                     .font(.brand(.caption, weight: .regular))
                     .foregroundColor(FavoritesBrand.onSurfaceVar)
                     .lineSpacing(3)

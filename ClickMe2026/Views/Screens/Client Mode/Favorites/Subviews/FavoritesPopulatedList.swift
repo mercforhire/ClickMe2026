@@ -18,6 +18,12 @@ struct FavoritesPopulatedList: View {
     /// Called when a row scrolls into view. The view model decides whether
     /// that row is close enough to the end to fetch the next page.
     let onRowAppear: (FavoriteExpert) -> Void
+    /// True when a page after the first failed. The loaded rows stay; the
+    /// footer offers a Retry.
+    let showsPageError: Bool
+    let onRetryPage: () -> Void
+    /// Pull-to-refresh: restarts at page 1 and replaces the rows on success.
+    let onRefresh: () async -> Void
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -52,6 +58,8 @@ struct FavoritesPopulatedList: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: FavoritesBrand.brandGreen))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
+                    } else if showsPageError {
+                        pageErrorFooter
                     }
                 }
                 .padding(.horizontal, 16)
@@ -59,5 +67,27 @@ struct FavoritesPopulatedList: View {
                 .padding(.bottom, 40)
             }
         }
+        .refreshable { await onRefresh() }
+    }
+
+    // MARK: Footer
+
+    private var pageErrorFooter: some View {
+        VStack(spacing: 0) {
+            Text("Couldn't load more favorites")
+                .font(.brand(.caption, weight: .regular))
+                .foregroundColor(FavoritesBrand.onSurfaceVar)
+
+            Button(action: onRetryPage) {
+                Text("Retry")
+                    .font(.brand(.subheadline, weight: .semibold))
+                    .foregroundColor(FavoritesBrand.brandGreen)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
     }
 }

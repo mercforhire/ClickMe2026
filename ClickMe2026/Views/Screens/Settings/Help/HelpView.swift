@@ -17,7 +17,7 @@ struct HelpView: View {
 
     /// Support inbox surfaced by the "Email Us" contact row. Swap
     /// here (not per-callsite) if the address ever changes.
-    private static let supportEmail = "support@clickme.app"
+    private static let supportEmail = "clickmeapp@uptrendinvestments.net"
 
     init(viewModel: HelpViewModel = HelpViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)

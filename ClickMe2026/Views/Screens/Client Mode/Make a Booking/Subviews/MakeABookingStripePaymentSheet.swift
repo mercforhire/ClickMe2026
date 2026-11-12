@@ -180,10 +180,7 @@ private struct MakeABookingStripePaymentSheetModifier: ViewModifier {
     private func runSCA(_ challenge: MakeABookingViewModel.SCAChallenge) {
         #if canImport(StripePaymentSheet) && canImport(StripePayments)
         guard let stripeAccount = challenge.stripeAccount, !stripeAccount.isEmpty else {
-            // Backend hasn't shipped detail.stripe_account yet. Without
-            // it we can't scope the SDK to the connected account, so
-            // 3DS on the PI would fail. Fail loudly to avoid a silent
-            // "your card can't be used" state.
+            // The 402 detail carries stripe_account (backend WR-02); without it the SDK can't scope, so fail closed.
             viewModel.cancelSCA(withMessage: "This card needs additional verification, which isn't supported yet. Please try a different card.")
             return
         }

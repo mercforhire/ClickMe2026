@@ -55,7 +55,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Explore, Profile, Favorites, Reviews
 
-- [ ] **EXPL-01** [X1] **[major]**: An unavailable (404) expert profile shows "This profile isn't available", and network errors show a retry
+- [x] **EXPL-01** [X1] **[major]**: An unavailable (404) expert profile shows "This profile isn't available", and network errors show a retry
 - [ ] **EXPL-02** [X2] (likely): Empty Expertise, Topics and Reviews sections are hidden, and zero reviews renders cleanly
 - [ ] **EXPL-03** [X3]: Featured topic cards show "Free" for free topics
 - [ ] **EXPL-04** [X4]: Search result tag pills show their full text
@@ -213,7 +213,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | PAY-03 | Phase 4 | Pending |
 | PAY-04 | Phase 4 | Pending |
 | PAY-05 | Phase 2 | Complete |
-| EXPL-01 | Phase 4 | Pending |
+| EXPL-01 | Phase 4 | Complete |
 | EXPL-02 | Phase 4 | Pending |
 | EXPL-03 | Phase 4 | Pending |
 | EXPL-04 | Phase 4 | Pending |

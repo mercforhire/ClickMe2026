@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 15
+open_count: 17
 waived_count: 0
 fixed_count: 7
-total_count: 22
-last_updated: 2026-11-12T04:40:17.963Z
+total_count: 24
+last_updated: 2026-11-12T04:46:26.205Z
 ---
 
 # Broken Windows Ledger
@@ -37,6 +37,8 @@ last_updated: 2026-11-12T04:40:17.963Z
 | 20 | 02 | unrun-verify | .planning/phases/02-shared-ios-plumbing/02-15-SUMMARY.md |  | 02-15 BOOK-10 / EXP-14 device check DEFERRED (approve and defer at the tracer gate; behavior then changed to Android parity): as an expert, open a client's profile from a booking. Confirmed, completed or other gated rows (pending_approval, pending_reschedule, in_progress) show the net earnings as CA$x.xx. Cancelled and other non-gated rows show —. No row shows $0 or CA$0.00 unless the net really is zero. The layout is unchanged. Pending for 02-12 / 02-DEVICE-UAT-CHECKLIST.md — Carried into 02-DEVICE-UAT-CHECKLIST.md item 6 by 02-12 (2026-11-10); stays open until run on device | open |  | 2026-11-10T17:16:48.018Z |  |
 | 21 | 02 | unrun-verify | ClickMe2026/Managers/PushTokenCleanup.swift |  | 02-12 PUSH-04 device check DEFERRED (user approve and defer at the Task 1 tracer gate, 2026-11-10): sign in as A, log out from Profile, from another device send A a chat message; expected nothing arrives on the logged-out device. Plus the Task 2 paths: airplane-mode logout then relaunch and sign in as B (B gets B's pushes, A's do not arrive; residual window before the retry accepted under D-17/D-18) and an involuntary logout if a safe production trigger exists. Carried into 02-DEVICE-UAT-CHECKLIST.md item 14 | open |  | 2026-11-10T17:42:26.359Z |  |
 | 22 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Make a Booking/Subviews/MakeABookingStripePaymentSheet.swift |  | PAY-01 device check (close sheet with saved card preselected places no hold; Link off) not run; belongs to the D-11 session in plan 04-14 | open |  | 2026-11-12T04:40:17.963Z |  |
+| 23 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Request Sent/Subviews/BookingRequestSentPopGestureLock.swift |  | 04-03 device check (UAT D2, BOOK-01/BOOK-19): no Back on Request Sent, edge and iOS 26 content swipe do not pop from each source tab (Explore, Search, Profile>Favorites, chat View Profile), exits reset the source tab; swipe-back still works on other screens afterwards | open |  | 2026-11-12T04:46:26.094Z |  |
+| 24 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Request Sent/BookingRequestSentView.swift |  | 04-03 device check (UAT L1, E1, BOOK-05): slow network shows 'Loading booking…' with both exits pinned; airplane-mode error state shows Retry and both exits | open |  | 2026-11-12T04:46:26.205Z |  |
 
 ````json
 [
@@ -323,6 +325,32 @@ last_updated: 2026-11-12T04:40:17.963Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T04:40:17.963Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 23,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "ClickMe2026/Views/Screens/Client Mode/Request Sent/Subviews/BookingRequestSentPopGestureLock.swift",
+    "line": null,
+    "description": "04-03 device check (UAT D2, BOOK-01/BOOK-19): no Back on Request Sent, edge and iOS 26 content swipe do not pop from each source tab (Explore, Search, Profile>Favorites, chat View Profile), exits reset the source tab; swipe-back still works on other screens afterwards",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T04:46:26.094Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 24,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "ClickMe2026/Views/Screens/Client Mode/Request Sent/BookingRequestSentView.swift",
+    "line": null,
+    "description": "04-03 device check (UAT L1, E1, BOOK-05): slow network shows 'Loading booking…' with both exits pinned; airplane-mode error state shows Retry and both exits",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T04:46:26.205Z",
     "resolved_at": null,
     "milestone": null
   }

@@ -24,11 +24,11 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Client Bookings
 
-- [x] **BOOK-01** [B1] **[major]**: After a booking request is sent, the user cannot go Back to the form and submit it again
-- [x] **BOOK-02** [B2]: Changing month in the booking calendar never shows the previous month's availability
-- [x] **BOOK-03** [B3]: The slots card shows a readable time-zone name, not a raw IANA id
-- [x] **BOOK-04** [B4]: Slot and Today's Sessions times follow the device's locale (12/24-hour)
-- [x] **BOOK-05** [B5]: The Request Sent screen's loading copy reads "Loading booking…"
+- [ ] **BOOK-01** [B1] **[major]**: After a booking request is sent, the user cannot go Back to the form and submit it again
+- [ ] **BOOK-02** [B2]: Changing month in the booking calendar never shows the previous month's availability
+- [ ] **BOOK-03** [B3]: The slots card shows a readable time-zone name, not a raw IANA id
+- [ ] **BOOK-04** [B4]: Slot and Today's Sessions times follow the device's locale (12/24-hour)
+- [ ] **BOOK-05** [B5]: The Request Sent screen's loading copy reads "Loading booking…"
 - [x] **BOOK-06** [B6] **[crit]**: Client can accept or decline an expert-proposed reschedule from the upcoming-booking flow
 - [x] **BOOK-07** [B7]: The client's cancellation comment is sent with the cancel request (depends on BACK-14 to be stored)
 - [x] **BOOK-08** [B8] **[major]**: The client cancel screen previews the refund the backend will actually give (24-hour rule; a held booking shows as a release) — policy per decision Q2
@@ -42,25 +42,25 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
 - [x] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
 - [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
-- [x] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
+- [ ] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
 - [x] **BOOK-20** [new, user request 2026-11-10]: The client Booking Summary screen shows the booking ID, on both iOS and Android, in the same short-ID format as Upcoming Booking details (`ID: …`). Android has no ID on this screen today either, so both apps change
 
 ### Payments
 
-- [x] **PAY-01** [P1] **[major]**: Closing the payment sheet without tapping pay never places a hold — behavior per decision Q4
-- [x] **PAY-02** [P2] **[major]**: A confirm that times out and is retried sends the user to their pending booking, not "slot taken"
-- [x] **PAY-03** [P3]: The payment lifecycle card describes what actually happened (hold vs charge), including older long-lead bookings
-- [x] **PAY-04** [P5]: The stale `TODO(backend): stripe_account` comments are removed
+- [ ] **PAY-01** [P1] **[major]**: Closing the payment sheet without tapping pay never places a hold — behavior per decision Q4
+- [ ] **PAY-02** [P2] **[major]**: A confirm that times out and is retried sends the user to their pending booking, not "slot taken"
+- [ ] **PAY-03** [P3]: The payment lifecycle card describes what actually happened (hold vs charge), including older long-lead bookings
+- [ ] **PAY-04** [P5]: The stale `TODO(backend): stripe_account` comments are removed
 - [x] **PAY-05** [P6]: Paid and free booking paths show the same slot-taken and meeting-link error copy
 
 ### Explore, Profile, Favorites, Reviews
 
-- [x] **EXPL-01** [X1] **[major]**: An unavailable (404) expert profile shows "This profile isn't available", and network errors show a retry
-- [x] **EXPL-02** [X2] (likely): Empty Expertise, Topics and Reviews sections are hidden, and zero reviews renders cleanly
+- [ ] **EXPL-01** [X1] **[major]**: An unavailable (404) expert profile shows "This profile isn't available", and network errors show a retry
+- [ ] **EXPL-02** [X2] (likely): Empty Expertise, Topics and Reviews sections are hidden, and zero reviews renders cleanly
 - [ ] **EXPL-03** [X3]: Featured topic cards show "Free" for free topics
-- [x] **EXPL-04** [X4]: Search result tag pills show their full text
-- [x] **EXPL-05** [X5] **[major]**: Favorites shows all favorites (paged), its empty-state buttons work, its copy is correct, and favorite state comes from the profile's `is_favorite`
-- [x] **EXPL-06** [X6]: The full reviews list loads more than 20 reviews (paging)
+- [ ] **EXPL-04** [X4]: Search result tag pills show their full text
+- [ ] **EXPL-05** [X5] **[major]**: Favorites shows all favorites (paged), its empty-state buttons work, its copy is correct, and favorite state comes from the profile's `is_favorite`
+- [ ] **EXPL-06** [X6]: The full reviews list loads more than 20 reviews (paging)
 - [ ] **EXPL-07** **[major]**: Explore loads when the home feed has a free topic with no currency or one bad featured topic. The free topic shows "Free", a bad topic is dropped alone, a failed load shows readable text, and no stale Featured Topics sit beside section errors
 
 ### Signup and Mode Switch
@@ -188,11 +188,11 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | CALL-08 | Phase 3 | Complete |
 | CALL-09 | Phase 2 | Complete |
 | CALL-10 | Phase 3 | Complete |
-| BOOK-01 | Phase 4 | Complete |
-| BOOK-02 | Phase 4 | Complete |
-| BOOK-03 | Phase 4 | Complete |
-| BOOK-04 | Phase 4 | Complete |
-| BOOK-05 | Phase 4 | Complete |
+| BOOK-01 | Phase 4 | Gaps Found |
+| BOOK-02 | Phase 4 | Gaps Found |
+| BOOK-03 | Phase 4 | Gaps Found |
+| BOOK-04 | Phase 4 | Gaps Found |
+| BOOK-05 | Phase 4 | Gaps Found |
 | BOOK-06 | Phase 3 | Complete |
 | BOOK-07 | Phase 3 | Complete |
 | BOOK-08 | Phase 3 | Complete |
@@ -206,19 +206,19 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-16 | Phase 3 | Complete |
 | BOOK-17 | Phase 3 | Complete |
 | BOOK-18 | Phase 2 | Complete |
-| BOOK-19 | Phase 4 | Complete |
+| BOOK-19 | Phase 4 | Gaps Found |
 | BOOK-20 | Phase 3 | Complete |
-| PAY-01 | Phase 4 | Complete |
-| PAY-02 | Phase 4 | Complete |
-| PAY-03 | Phase 4 | Complete |
-| PAY-04 | Phase 4 | Complete |
+| PAY-01 | Phase 4 | Gaps Found |
+| PAY-02 | Phase 4 | Gaps Found |
+| PAY-03 | Phase 4 | Gaps Found |
+| PAY-04 | Phase 4 | Gaps Found |
 | PAY-05 | Phase 2 | Complete |
-| EXPL-01 | Phase 4 | Complete |
-| EXPL-02 | Phase 4 | Complete |
+| EXPL-01 | Phase 4 | Gaps Found |
+| EXPL-02 | Phase 4 | Gaps Found |
 | EXPL-03 | Phase 4 | Pending |
-| EXPL-04 | Phase 4 | Complete |
-| EXPL-05 | Phase 4 | Complete |
-| EXPL-06 | Phase 4 | Complete |
+| EXPL-04 | Phase 4 | Gaps Found |
+| EXPL-05 | Phase 4 | Gaps Found |
+| EXPL-06 | Phase 4 | Gaps Found |
 | EXPL-07 | Phase 4 | Pending |
 | SIGN-01 | Phase 5 | Pending |
 | SIGN-02 | Phase 5 | Pending |

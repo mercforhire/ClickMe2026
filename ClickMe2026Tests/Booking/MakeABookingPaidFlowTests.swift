@@ -62,6 +62,14 @@ private enum PaidFlowFixture {
         return http(request, status: 201, body: Data(body.utf8))
     }
 
+    nonisolated static func inProgress(_ request: URLRequest) -> (HTTPURLResponse, Data) {
+        let body = """
+        {"status":"error","code":"PAYMENT_IN_PROGRESS",\
+        "message":"This payment is still being processed. Please try again in a moment."}
+        """
+        return http(request, status: 409, body: Data(body.utf8))
+    }
+
     nonisolated static func coded(_ request: URLRequest, status: Int, code: String) -> (HTTPURLResponse, Data) {
         let body = #"{"status":"error","code":"\#(code)","message":"server text"}"#
         return http(request, status: status, body: Data(body.utf8))
@@ -280,5 +288,58 @@ struct MakeABookingPaidFlowTests {
 
         viewModel.paidFlowAlert = .confirmUnknown(paymentReference: nil)
         #expect(!viewModel.showsConfirmingStatus)
+    }
+
+    // MARK: 409 PAYMENT_IN_PROGRESS (D-17)
+
+    /// A view model whose first `inProgress` confirm calls answer 409
+    /// PAYMENT_IN_PROGRESS and whose later calls return 201.
+    private func makeViewModel(inProgress: Int) -> MakeABookingViewModel {
+        makeViewModel { number, request in
+            if number <= inProgress {
+                return PaidFlowFixture.inProgress(request)
+            }
+            return PaidFlowFixture.created(request)
+        }
+    }
+
+    @Test("409 PAYMENT_IN_PROGRESS then 201 retries the same confirm and lands on the booking")
+    func paymentInProgressThenReplay() async {
+        let viewModel = makeViewModel(inProgress: 1)
+        let attemptId = viewModel.bookingAttemptId
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        #expect(viewModel.bookingError == nil)
+        #expect(viewModel.paidFlowAlert == nil)
+        #expect(viewModel.bookingAttemptId == attemptId)
+        let requests = confirmRequests()
+        #expect(requests.count == 2)
+        expectSameIntentAndCard(requests)
+    }
+
+    @Test("Three 409 PAYMENT_IN_PROGRESS answers raise the alert, never server copy, and keep every id")
+    func paymentInProgressExhausted() async {
+        let viewModel = makeViewModel(inProgress: 3)
+        let attemptId = viewModel.bookingAttemptId
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(viewModel.paidFlowAlert == .confirmUnknown(paymentReference: "pi_test"))
+        #expect(viewModel.paymentIntentId == "pi_test")
+        #expect(viewModel.confirmPaymentMethodId == "pm_test")
+        #expect(viewModel.paidStep == .confirming)
+        #expect(viewModel.bookingAttemptId == attemptId)
+        #expect(viewModel.bookingError == nil)
+        #expect(confirmRequests().count == 3)
+
+        await viewModel.retryConfirm()
+
+        let requests = confirmRequests()
+        #expect(requests.count == 4)
+        expectSameIntentAndCard(requests)
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        #expect(viewModel.bookingAttemptId == attemptId)
     }
 }

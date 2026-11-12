@@ -72,6 +72,61 @@ struct ConfirmOutcomeTests {
         }
     }
 
+    // MARK: PAYMENT_IN_PROGRESS (D-17)
+
+    @Test("409 PAYMENT_IN_PROGRESS is an unknown outcome")
+    func paymentInProgressIsUnknown() {
+        #expect(ConfirmOutcome.classify(httpError(409, code: "PAYMENT_IN_PROGRESS")) == .outcomeUnknown)
+    }
+
+    @Test("Other 4xx answers stay server-coded, known or not")
+    func other4xxStayServerCoded() {
+        #expect(ConfirmOutcome.classify(httpError(409, code: "SLOT_UNAVAILABLE")) == .serverCoded)
+        #expect(ConfirmOutcome.classify(httpError(409, code: "A_CODE_THE_APP_DOES_NOT_KNOW")) == .serverCoded)
+        #expect(ConfirmOutcome.classify(httpError(409, code: "DUPLICATE_BOOKING")) == .serverCoded)
+    }
+
+    @Test("PAYMENT_IN_PROGRESS is the only code in the unknown set")
+    func onlyPaymentInProgress() {
+        #expect(ConfirmOutcome.outcomeUnknownCodes == [.paymentInProgress])
+        #expect(ErrorCode(rawValue: "PAYMENT_IN_PROGRESS") == .paymentInProgress)
+    }
+
+    @Test("PAYMENT_IN_PROGRESS then success makes two calls and succeeds")
+    func paymentInProgressThenSuccess() async {
+        var calls = 0
+        let result = await noWait.run { () async throws -> Int in
+            calls += 1
+            if calls == 1 { throw httpError(409, code: "PAYMENT_IN_PROGRESS") }
+            return 3
+        }
+        #expect(calls == 2)
+        guard case let .succeeded(value) = result else {
+            Issue.record("expected success")
+            return
+        }
+        #expect(value == 3)
+    }
+
+    @Test("Three PAYMENT_IN_PROGRESS answers make three calls and end unknown")
+    func paymentInProgressThreeTimes() async {
+        var calls = 0
+        let result = await noWait.run { () async throws -> Int in
+            calls += 1
+            throw httpError(409, code: "PAYMENT_IN_PROGRESS")
+        }
+        #expect(calls == 3)
+        guard case .outcomeUnknown = result else {
+            Issue.record("expected outcomeUnknown")
+            return
+        }
+    }
+
+    @Test("PAYMENT_IN_PROGRESS has no copy of its own: the server text is the fallback")
+    func paymentInProgressHasNoMappedCopy() {
+        #expect(BookingErrorMapper.message(for: .paymentInProgress, fallback: "server text") == "server text")
+    }
+
     // MARK: Retry policy
 
     private let noWait = ConfirmRetryPolicy(delays: [.zero, .zero])

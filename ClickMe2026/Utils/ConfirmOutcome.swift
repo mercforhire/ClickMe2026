@@ -49,11 +49,24 @@ enum ConfirmOutcome: Equatable {
         .cannotBookSelf,
     ]
 
-    /// Classifies by error type and status, never by message text.
+    /// Server codes that leave the outcome unknown whatever their HTTP status (D-17).
+    ///
+    /// `409 PAYMENT_IN_PROGRESS` is the only 4xx here. `POST /bookings/confirm`
+    /// answers it from `classifyConfirmedPI`'s fallback and from
+    /// `refetchAfterConfirmConflict` (booking.controller.js) when a concurrent
+    /// confirm, or a PaymentIntent that is still settling, stops the server from
+    /// finishing the request. The hold may already exist, so the app must not
+    /// reset the paid flow. Retrying the same PaymentIntent is safe: the server
+    /// either replays the booking it made (BACK-15) or classifies the settled
+    /// PaymentIntent.
+    static let outcomeUnknownCodes: Set<ErrorCode> = [.paymentInProgress]
+
+    /// Classifies by error type, status and code, never by message text.
     ///
     /// Unknown: any `URLError`, a `CancellationError`, `NetworkError.invalidResponse`
-    /// and `.decodingFailed`, and an HTTP status of 500 or more whose code
-    /// `handlePaidFlowError` does not map. Everything else is `serverCoded`.
+    /// and `.decodingFailed`, an error whose code is in `outcomeUnknownCodes`, and an
+    /// HTTP status of 500 or more whose code `handlePaidFlowError` does not map.
+    /// Everything else is `serverCoded`.
     static func classify(_ error: Error) -> ConfirmOutcome {
         if error is URLError || error is CancellationError {
             return .outcomeUnknown
@@ -63,10 +76,10 @@ enum ConfirmOutcome: Equatable {
         case .invalidResponse, .decodingFailed:
             return .outcomeUnknown
         case let .httpError(statusCode, _):
+            let code = BookingErrorMapper.code(for: error)
+            if let code, outcomeUnknownCodes.contains(code) { return .outcomeUnknown }
             guard statusCode >= 500 else { return .serverCoded }
-            if let code = BookingErrorMapper.code(for: error), explicitlyMappedCodes.contains(code) {
-                return .serverCoded
-            }
+            if let code, explicitlyMappedCodes.contains(code) { return .serverCoded }
             return .outcomeUnknown
         case .invalidURL, .encodingFailed, .invalidDate:
             return .serverCoded

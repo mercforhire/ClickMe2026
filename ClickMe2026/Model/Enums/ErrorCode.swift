@@ -93,7 +93,8 @@ enum ErrorCode: String, Decodable {
 
     // MARK: - Payments / booking-financial
     case paymentFailed             = "PAYMENT_FAILED"
-    case paymentRequiresAction     = "PAYMENT_REQUIRES_ACTION"    // 402 — SCA/3DS needed; `detail.client_secret` + (soon) `detail.stripe_account`
+    case paymentRequiresAction     = "PAYMENT_REQUIRES_ACTION"    // 402 — SCA/3DS needed; `detail.client_secret` + `detail.stripe_account` (the backend ships both, WR-02)
+    case paymentInProgress         = "PAYMENT_IN_PROGRESS"        // 409 — confirm or recover-payment while the PaymentIntent is still settling (a concurrent confirm)
     case intentExpired             = "INTENT_EXPIRED"
     case piContextMismatch         = "PI_CONTEXT_MISMATCH"
     case piAmountMismatch          = "PI_AMOUNT_MISMATCH"

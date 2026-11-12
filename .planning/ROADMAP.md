@@ -250,7 +250,31 @@ Plans:
   4. An unavailable (404) expert profile shows "This profile isn't available", and network errors offer a retry. Empty Expertise, Topics and Reviews sections are hidden. Free featured topics show "Free". Search tag pills show their full text.
   5. Favorites shows every favorite (paged), with working empty-state buttons and correct copy. A profile's favorite state matches its `is_favorite`. The full reviews list loads beyond 20 reviews.
 
-**Plans**: TBD
+**Plans**: 14 plans in 4 waves (iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02)
+
+Plans:
+**Wave 1**
+- [ ] 04-01-PLAN.md — D-12 backend: payment_method.detached evicts clones; T-24h sweep refuses a removed card; user deploys and subscribes the endpoint (checkpoint)
+- [ ] 04-02-PLAN.md — PAY-01 closing the card sheet cancels (didCancel, D-01, D-02); Link off (D-16); PAY-04 sheet comment
+- [ ] 04-03-PLAN.md — BOOK-01, BOOK-05, BOOK-19: Request Sent one-way (Back hidden, swipe locked, exits in every state) and source-tab exits (D-05, D-06)
+- [ ] 04-04-PLAN.md — BOOK-02 month race; BOOK-03 zone name; BOOK-04 12/24-hour on slots, Today's Sessions and Request Sent (K3)
+- [ ] 04-05-PLAN.md — EXPL-01 not-available and load-failed profile states (D-10); heart from is_favorite (EXPL-05, D-09)
+- [ ] 04-06-PLAN.md — EXPL-05 Favorites paging on the shared PagedList, footer retry, refresh, heart Pro Tip (D-07, D-09)
+- [ ] 04-07-PLAN.md — D-13 suspension on cold launch routes to Login with the notice
+
+**Wave 2** *(each plan waits for the wave 1 plans it names)*
+- [ ] 04-08-PLAN.md — PAY-02 confirm timeout keeps the payment, retries, lands on Request Sent; confirm-unknown alert (D-03); PAY-04 view-model comments (after 04-04)
+- [ ] 04-09-PLAN.md — PAY-03 payment card variants from the booking's payment state (after 04-03, 04-04)
+- [ ] 04-10-PLAN.md — EXPL-05 Favorites empty-state buttons: Explore Experts, View My History on Past (D-08) (after 04-03)
+- [ ] 04-11-PLAN.md — EXPL-06 reviews paging; EXPL-04 full-text search pills (after 04-06)
+- [ ] 04-12-PLAN.md — Heart seed from Favorites (D-09); EXPL-02 empty sections and zero/one review copy after the device-confirm decision (after 04-05, 04-06)
+
+**Wave 3**
+- [ ] 04-13-PLAN.md — PAY-02 D-04 "You may already have this booking" and D-15 DUPLICATE_BOOKING route via the session ledger (after 04-08)
+
+**Wave 4**
+- [ ] 04-14-PLAN.md — EXPL-03 and EXPL-07 regression; Phase 4 device UAT checklist with the D-11 real-money session (01-17, 01-19, backlog 999.1 and 999.2) and the D-14 Android check; full suite (after all)
+
 **UI hint**: yes
 **Notes**:
 - Q4 (PAY-01) is settled in this phase's discuss step.
@@ -349,7 +373,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
-| 4. Booking, Payment and Discovery | 0/TBD | Not started | - |
+| 4. Booking, Payment and Discovery | 0/14 | Planned | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |

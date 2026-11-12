@@ -90,14 +90,23 @@ struct ExpertProfileHero: View {
     // MARK: Rating
 
     private var ratingRow: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "star.fill")
-                .font(.subheadline)
-                .foregroundColor(ExpertProfileBrand.starYellow)
-            Text(summaryLoaded ? String(format: "%.1f", expert.rating) : "—")
-                .font(.brand(.subheadline, weight: .bold))
-                .foregroundColor(ExpertProfileBrand.onSurface)
-            Text(summaryLoaded ? "(\(expert.reviewCount) reviews)" : "(— reviews)")
+        let rating = ExpertProfileSections.rating(
+            summaryLoaded: summaryLoaded,
+            rating: expert.rating,
+            reviewCount: expert.reviewCount
+        )
+        return HStack(spacing: 5) {
+            if rating.showsStar {
+                Image(systemName: "star.fill")
+                    .font(.subheadline)
+                    .foregroundColor(ExpertProfileBrand.starYellow)
+            }
+            if let value = rating.value {
+                Text(value)
+                    .font(.brand(.subheadline, weight: .bold))
+                    .foregroundColor(ExpertProfileBrand.onSurface)
+            }
+            Text(rating.label)
                 .font(.brand(.caption, weight: .regular))
                 .foregroundColor(ExpertProfileBrand.onSurfaceVar)
         }

@@ -360,23 +360,31 @@ struct ExpertProfileView: View {
                     .padding(.horizontal, 20)
                     .padding(.bottom, 28)
 
-                ExpertProfileExpertiseSection(tags: expert.expertiseTags)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 28)
+                // EXPL-02: an empty section is not drawn, and its bottom
+                // padding goes with it, so no bare header or blank gap stays.
+                if ExpertProfileSections.showsExpertise(expert.expertiseTags) {
+                    ExpertProfileExpertiseSection(tags: expert.expertiseTags)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 28)
+                }
 
-                ExpertProfileTopicsCard(topics: expert.topics)
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 28)
+                if ExpertProfileSections.showsTopics(expert.topics) {
+                    ExpertProfileTopicsCard(topics: expert.topics)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 28)
+                }
 
-                ExpertProfileReviewsCard(
-                    reviews: expert.reviews,
-                    onSeeAllReviews: {
-                        showReviews = true
-                        onSeeAllReviews()
-                    }
-                )
-                .padding(.horizontal, 20)
-                .padding(.bottom, 48)
+                if ExpertProfileSections.showsReviews(expert.reviews) {
+                    ExpertProfileReviewsCard(
+                        reviews: expert.reviews,
+                        onSeeAllReviews: {
+                            showReviews = true
+                            onSeeAllReviews()
+                        }
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 48)
+                }
             }
         }
     }

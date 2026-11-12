@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-05-PLAN.md
-last_updated: "2026-11-12T05:03:57.598Z"
+stopped_at: Completed 04-06-PLAN.md
+last_updated: "2026-11-12T05:12:25.941Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 04 execution started
-state_head: e249d67deabcb9cfc5469d3299cae063547f8f47
+state_head: 3ed0c8ad81b432b9db083b7ebdc5da68c63626df
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 62
+  completed_plans: 63
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 5 of 14
+Plan: 6 of 14
 Status: Ready to execute
 Last activity: 2026-11-11 — Phase 04 execution started
 
@@ -118,6 +118,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P03 | 10 min | 2 tasks | 6 files |
 | Phase 04 P04 | 8 min | 3 tasks | 9 files |
 | Phase 04 P05 | 8 min | 2 tasks | 5 files |
+| Phase 04 P06 | 7 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -247,6 +248,7 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-04: DateUtil.shortTime is the single display formatter for booking-flow times; its cache key includes the locale hour pattern so a live 12/24-hour toggle takes effect
 - [Phase 04]: 04-05: expert profile 404 is detected by HTTP status 404 or ErrorCode.notFound (never message text); other errors show Couldn't load profile with Retry
 - [Phase 04]: 04-05: the heart reads is_favorite from the details response (missing key false) and is not overwritten while a toggle is in flight; the /client/favorites scan is removed
+- [Phase 04]: 04-06: Favorites paging dedupes by expertId; an empty page always ends the list; after a failed later page only the footer Retry re-fires; unfavorite with more pages reloads page 1 on the next trigger
 
 ### Pending Todos
 
@@ -317,6 +319,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T05:03:57.217Z
-Stopped at: Completed 04-05-PLAN.md
+Last session: 2026-11-12T05:12:25.561Z
+Stopped at: Completed 04-06-PLAN.md
 Resume file: None

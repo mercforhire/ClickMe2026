@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 18
+open_count: 19
 waived_count: 0
 fixed_count: 7
-total_count: 25
-last_updated: 2026-11-12T04:55:04.962Z
+total_count: 26
+last_updated: 2026-11-12T05:03:15.847Z
 ---
 
 # Broken Windows Ledger
@@ -40,6 +40,7 @@ last_updated: 2026-11-12T04:55:04.962Z
 | 23 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Request Sent/Subviews/BookingRequestSentPopGestureLock.swift |  | 04-03 device check (UAT D2, BOOK-01/BOOK-19): no Back on Request Sent, edge and iOS 26 content swipe do not pop from each source tab (Explore, Search, Profile>Favorites, chat View Profile), exits reset the source tab; swipe-back still works on other screens afterwards | open |  | 2026-11-12T04:46:26.094Z |  |
 | 24 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Request Sent/BookingRequestSentView.swift |  | 04-03 device check (UAT L1, E1, BOOK-05): slow network shows 'Loading booking…' with both exits pinned; airplane-mode error state shows Retry and both exits | open |  | 2026-11-12T04:46:26.205Z |  |
 | 25 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Explore/Subviews/ExploreTodaysSessionsSection.swift |  | 04-04 device check (UAT BOOK-03, BOOK-04, D-18, T1-T4): with 24-Hour Time on, slot chips, Today's Sessions, Reschedule picker and Request Sent show 14:00-style times; slots card and Today's Sessions title say the zone in words (never America/Toronto); toggle 24-Hour Time off while app is open and return: 2:00 PM style; fast month taps always match the shown month; empty day and failed month keep their copy | open |  | 2026-11-12T04:55:04.962Z |  |
+| 26 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift |  | 04-05 device check (UAT EXPL-01, L3, EXPL-05): airplane mode on, open a profile: 'Couldn't load profile' with Retry and no heart or menu; network back on, Retry shows a spinner then the profile; a deleted or suspended expert shows 'This profile isn't available' with only Back (pops one level); heart matches is_favorite for a favorited expert; no /client/favorites call on open | open |  | 2026-11-12T05:03:15.847Z |  |
 
 ````json
 [
@@ -365,6 +366,19 @@ last_updated: 2026-11-12T04:55:04.962Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T04:55:04.962Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 26,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift",
+    "line": null,
+    "description": "04-05 device check (UAT EXPL-01, L3, EXPL-05): airplane mode on, open a profile: 'Couldn't load profile' with Retry and no heart or menu; network back on, Retry shows a spinner then the profile; a deleted or suspended expert shows 'This profile isn't available' with only Back (pops one level); heart matches is_favorite for a favorited expert; no /client/favorites call on open",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T05:03:15.847Z",
     "resolved_at": null,
     "milestone": null
   }

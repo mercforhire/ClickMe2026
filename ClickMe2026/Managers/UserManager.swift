@@ -29,7 +29,9 @@ final class UserManager {
     /// `403 ACCOUNT_SUSPENDED`. Observed by the shell's splash/login
     /// route to present a "Your account has been suspended" message
     /// (with support contact) one shot after the logout settles.
-    /// Cleared on the next successful login. See
+    /// `LoginView` shows the alert and clears the flag when it is
+    /// dismissed (`clearSuspensionFlag()`), so a later fresh sign-in does
+    /// not show it again. In memory only. See
     /// `docs/ios/USER-REPORTING.md` §4.
     private(set) var wasSuspended: Bool = false
     /// Expert-scoped profile from `GET /expert/profile`. Carries the
@@ -251,7 +253,10 @@ final class UserManager {
     /// cached data is on disk. Returns `false` only when:
     ///   - no token exists in the keychain, OR
     ///   - the stored token is actually rejected (401 / 403 non-suspension),
-    ///     in which case stored state is cleared.
+    ///     in which case stored state is cleared, OR
+    ///   - the account is suspended (403 ACCOUNT_SUSPENDED): the suspension
+    ///     handler has already cleared the session, and Login shows the
+    ///     notice (D-13).
     ///
     /// Rationale: wiping credentials on a transient network blip is a
     /// terrible UX — a user who opens the app in airplane mode would
@@ -272,29 +277,38 @@ final class UserManager {
             retryPushCleanupIfNeeded()
             return false
         }
+        var result = AutoLoginOutcome.RefreshResult.succeeded
         do {
             try await refreshMe()
         } catch {
-            // Branch: real auth failure vs. transient network failure.
-            if Self.isAuthRejection(error) {
+            // Branch: suspension vs. real auth failure vs. transient
+            // network failure.
+            if wasSuspended || Self.isSuspension(error) {
+                // The suspension handler has already cleared the session
+                // and raised `wasSuspended` before the 403 was rethrown;
+                // Login reads the flag and shows the notice (D-13).
+                result = .suspended
+            } else if Self.isAuthRejection(error) {
                 // The stored token is dead: no DELETE could succeed with
                 // it, so clear at once and kill the FCM token in the
                 // background.
                 forceLogout()
-                return false
+                result = .authRejected
+            } else {
+                // Transient — keep the token, synthesize a minimal
+                // signed-in state from whatever's cached. `refreshMe` will
+                // be retried the next time any screen's `.task` fires a
+                // `/me` or any other authed request succeeds, which
+                // hydrates `me` for real. Until then the app renders
+                // cached profile data.
+                result = .transientFailure
             }
-            // Transient — keep the token, synthesize a minimal signed-in
-            // state from whatever's cached. `refreshMe` will be retried
-            // the next time any screen's `.task` fires a `/me` or any
-            // other authed request succeeds, which hydrates `me` for
-            // real. Until then the app renders cached profile data.
         }
-        // A 403 ACCOUNT_SUSPENDED lands in the transient branch above
-        // after the suspension handler has already logged out, so the
-        // token check is what keeps a logged-out user from being
-        // prompted. It can't be `isLoggedIn`: `me` is nil on the
-        // transient path, so that is false for a user who is still
-        // signed in.
+        // A suspension resolves to signed out, so the splash routes to
+        // Login instead of a home shell with no session (D-13).
+        guard AutoLoginOutcome.resolve(hadStoredToken: true, refresh: result) == .signedIn else {
+            return false
+        }
         if hasStoredToken {
             // Prompts on `.notDetermined` (fresh install, or reinstall),
             // and re-registers when already granted: the OS token can
@@ -306,6 +320,17 @@ final class UserManager {
             fetchAndUploadFCMToken()
         }
         return true
+    }
+
+    /// True when the error is a 403 whose body code is `ACCOUNT_SUSPENDED`.
+    /// The global suspension handler has normally run by then; this keeps the
+    /// decision correct if the error arrives some other way.
+    private static func isSuspension(_ error: Error) -> Bool {
+        guard case let NetworkError.httpError(status, data) = error, status == 403 else {
+            return false
+        }
+        let envelope = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
+        return envelope?.code == .accountSuspended
     }
 
     /// True when the error is a hard credential rejection (401 or non-

@@ -59,6 +59,12 @@ struct LoginView: View {
     @State private var contentOpacity: Double = 0
     @State private var contentOffset: CGFloat = 20
 
+    /// One-shot suspension notice (D-13): shown when Login appears with
+    /// `UserManager.wasSuspended` set, whether the suspension was met on a
+    /// cold launch or mid-session.
+    @State private var showSuspensionNotice = false
+    @State private var hasPresentedSuspensionNotice = false
+
     init(
         viewModel: LoginViewModel = LoginViewModel(),
         startAtSignupSetup: Bool = false,
@@ -301,6 +307,20 @@ struct LoginView: View {
                 contentOpacity = 1
                 contentOffset = 0
             }
+            if SuspensionNotice.shouldPresent(
+                wasSuspended: UserManager.shared.wasSuspended,
+                alreadyPresented: hasPresentedSuspensionNotice
+            ) {
+                hasPresentedSuspensionNotice = true
+                showSuspensionNotice = true
+            }
+        }
+        .alert(SuspensionNotice.title, isPresented: $showSuspensionNotice) {
+            Button(SuspensionNotice.dismissLabel, role: .cancel) {
+                UserManager.shared.clearSuspensionFlag()
+            }
+        } message: {
+            Text(SuspensionNotice.message)
         }
         .alert(
             "Something went wrong",

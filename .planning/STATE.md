@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-14-PLAN.md
-last_updated: "2026-11-12T17:48:28.891Z"
+stopped_at: Completed 04-15-PLAN.md
+last_updated: "2026-11-12T18:49:41.174Z"
 last_activity: 2026-11-12
 last_activity_desc: Phase 04 execution started
-state_head: 3f47408bed9b27fc09adff570fbfbc1cbadaf3c4
+state_head: c664bd454bc9c4cc63d1a77205a1ee2ab50b8a3a
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 74
-  completed_plans: 72
+  completed_plans: 73
   percent: 13
 ---
 
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 ## Current Position
 
-Phase: 04 (Booking, Payment and Discovery) — READY TO EXECUTE
-Plan: 14 of 14
+Phase: 04 (Booking, Payment and Discovery) — EXECUTING
+Plan: 16 of 16
 Status: Ready to execute
-Last activity: 2026-11-12 — 04-01 complete (D-12 live at backend ae3ec1a, Dashboard subscribed per user)
+Last activity: 2026-11-12 — Phase 04 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -128,6 +128,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P12 | 35 min | 3 tasks | 5 files |
 | Phase 04 P01 | 1 day wall clock (user deploy wait) | 3 tasks | 6 files |
 | Phase 04 P14 | 12 min | 3 tasks | 2 files |
+| Phase 04 P15 | 11 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -273,6 +274,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-01: backend master does NOT contain D-12 and has moved to d4b897f (Phase 31 complete); it must MERGE origin/main (never rebase or force-push) and keep both ios-p4 D-12 describes passing before its next deploy; todo 2026-11-11-merge-d12-into-backend-master.md
 - [Phase 04]: 04-14: the D-11 session and the 01-17/01-19 checklists run as written on the new iOS build; their rollback SHAs (ddfe5bf, d356fdc) are stale because production is at ae3ec1a, so a stop condition that says roll back becomes stop and tell Claude. The BACK-15 replay cannot be observed on a device (no backend log on that path), so step c records one booking and one hold plus the user's airplane-mode timing; the 01-13 unvoided-PaymentIntent decision is session stop condition S-A
 - [Phase 04]: 04-14: EXPL-03, EXPL-07, BACK-06, BACK-07, BACK-15 and BACK-19 deliberately not marked complete; they close only when 04-DEVICE-UAT-CHECKLIST.md items 1, 2 and the D-11 session pass (ROADMAP Phase 4 note). Full suite 630 tests in 65 suites, build green
+- [Phase 04]: 04-15: PaidAttempt snapshot (topic, slot, PaymentIntent, meeting type, notes) is taken when the PaymentIntent is created; every confirm and the D-04 ledger key read only it (CR-01)
+- [Phase 04]: 04-15: loadAvailability keeps the slot while isSubmitting (not moved into the month arrows) so WR-04 is unchanged; booking input cards are disabled while isSubmitting
 
 ### Pending Todos
 
@@ -356,6 +359,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T15:31:47.968Z
-Stopped at: Completed 04-14-PLAN.md
+Last session: 2026-11-12T18:49:40.741Z
+Stopped at: Completed 04-15-PLAN.md
 Resume file: None

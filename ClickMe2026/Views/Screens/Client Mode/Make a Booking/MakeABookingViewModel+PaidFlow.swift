@@ -19,15 +19,22 @@ extension MakeABookingViewModel {
         /// only, never the card id or a secret), shown so support can find the hold.
         case confirmUnknown(paymentReference: String?)
 
+        /// The slot is taken, or the server reports a duplicate, for an expert and
+        /// slot the client may already hold through an earlier confirm (D-04).
+        /// Never shown as "slot taken": the booking may be the client's own.
+        case mayAlreadyBeBooked
+
         var id: String {
             switch self {
             case .confirmUnknown: "confirmUnknown"
+            case .mayAlreadyBeBooked: "mayAlreadyBeBooked"
             }
         }
 
         var title: String {
             switch self {
             case .confirmUnknown: "We couldn't confirm your booking"
+            case .mayAlreadyBeBooked: "Couldn't book"
             }
         }
 
@@ -38,6 +45,8 @@ extension MakeABookingViewModel {
                     + "or look in My Bookings before booking again."
                 guard let paymentReference else { return text }
                 return text + "\n\nPayment reference: \(paymentReference)"
+            case .mayAlreadyBeBooked:
+                return "You may already have this booking. Check My Bookings."
             }
         }
     }
@@ -62,6 +71,12 @@ extension MakeABookingViewModel {
         paidFlowAlert = nil
         confirmPaymentMethodId = nil
         resetPaidFlow()
+    }
+
+    /// Closes the "Couldn't book" alert. The paid flow was already reset when the
+    /// alert was raised, so this only clears the alert.
+    func dismissMayAlreadyBeBookedAlert() {
+        paidFlowAlert = nil
     }
 
     /// True while a paid confirm or one of its automatic retries runs and no

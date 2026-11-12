@@ -146,7 +146,7 @@ struct MakeABookingPaidFlowTests {
         expectSameIntentAndCard(requests)
     }
 
-    @Test("A coded 409 SLOT_UNAVAILABLE is not retried and keeps the slot-taken copy")
+    @Test("A coded 409 SLOT_UNAVAILABLE on confirm is not retried and shows the may-already-be-booked alert")
     func slotUnavailableIsNotRetried() async {
         let viewModel = makeViewModel { _, request in
             PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
@@ -154,8 +154,11 @@ struct MakeABookingPaidFlowTests {
 
         await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
 
+        // The confirm itself recorded the slot (D-04), so "taken" could be the
+        // client's own booking and the plain copy must not be shown.
         #expect(confirmRequests().count == 1)
-        #expect(viewModel.bookingError == "That time slot was just taken. Please pick another.")
+        #expect(viewModel.paidFlowAlert == .mayAlreadyBeBooked)
+        #expect(viewModel.bookingError == nil)
         #expect(viewModel.selectedTimeSlot == nil)
         #expect(viewModel.completedBookingId == nil)
         #expect(viewModel.paidStep == .idle)
@@ -467,5 +470,138 @@ struct MakeABookingPaidFlowTests {
         #expect(viewModel.paidStep == .idle)
         #expect(!ledgerHolds(viewModel, start: start))
         #expect(confirmRequests().count == confirmsBefore)
+    }
+
+    // MARK: "You may already have this booking" (D-04)
+
+    /// A view model whose payment-intent call is answered by `answer`; a confirm
+    /// is never expected, so any other request is a test failure.
+    private func makeIntentViewModel(
+        recording: Bool,
+        _ answer: @escaping @Sendable (URLRequest) -> (HTTPURLResponse, Data)
+    ) -> MakeABookingViewModel {
+        let viewModel = makeViewModel { _, request in answer(request) }
+        if recording, let start = viewModel.selectedTimeSlot?.startTime {
+            viewModel.ledger.record(expertId: viewModel.expertId, start: start)
+        }
+        return viewModel
+    }
+
+    private let slotTakenCopy = "That time slot was just taken. Please pick another."
+
+    @Test("With a record, a payment-intent 409 SLOT_UNAVAILABLE shows the may-already-be-booked alert")
+    func intentSlotUnavailableWithRecord() async {
+        let viewModel = makeIntentViewModel(recording: true) { request in
+            PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+        let start = ledgerKey(viewModel).start
+
+        viewModel.book()
+        for _ in 0 ..< 150 where viewModel.paidFlowAlert == nil && viewModel.bookingError == nil {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.paidFlowAlert == .mayAlreadyBeBooked)
+        #expect(viewModel.bookingError == nil)
+        #expect(viewModel.selectedTimeSlot == nil)
+        #expect(viewModel.paidStep == .idle)
+        #expect(ledgerHolds(viewModel, start: start))
+    }
+
+    @Test("With a record, a confirm 409 SLOT_UNAVAILABLE gives the same alert and keeps the record")
+    func confirmSlotUnavailableWithRecord() async {
+        let viewModel = makeIntentViewModel(recording: true) { request in
+            PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(viewModel.paidFlowAlert == .mayAlreadyBeBooked)
+        #expect(viewModel.bookingError == nil)
+        #expect(viewModel.selectedTimeSlot == nil)
+        #expect(viewModel.paidStep == .idle)
+        #expect(ledgerHolds(viewModel, start: start))
+    }
+
+    @Test("With no record, a payment-intent 409 SLOT_UNAVAILABLE keeps the plain slot-taken copy")
+    func intentSlotUnavailableWithoutRecord() async {
+        let viewModel = makeIntentViewModel(recording: false) { request in
+            PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+
+        await bookAndWaitForOutcome(viewModel)
+
+        #expect(viewModel.bookingError == slotTakenCopy)
+        #expect(viewModel.paidFlowAlert == nil)
+        #expect(viewModel.selectedTimeSlot == nil)
+    }
+
+    @Test("With no record, a DUPLICATE_BOOKING shows the alert and does not open the booking")
+    func duplicateWithoutRecord() async {
+        let viewModel = makeIntentViewModel(recording: false) { request in
+            PaidFlowFixture.duplicate(request, bookingId: UUID().uuidString.lowercased())
+        }
+
+        viewModel.book()
+        for _ in 0 ..< 150 where viewModel.paidFlowAlert == nil && viewModel.bookingError == nil {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.paidFlowAlert == .mayAlreadyBeBooked)
+        #expect(viewModel.completedBookingId == nil)
+        #expect(viewModel.bookingError == nil)
+        #expect(viewModel.selectedTimeSlot == nil)
+        #expect(viewModel.paidStep == .idle)
+    }
+
+    @Test("A DUPLICATE_BOOKING whose booking_id is not a UUID shows the alert even with a record")
+    func duplicateWithUnparseableId() async {
+        let viewModel = makeIntentViewModel(recording: true) { request in
+            PaidFlowFixture.duplicate(request, bookingId: "not-a-uuid")
+        }
+
+        viewModel.book()
+        for _ in 0 ..< 150 where viewModel.paidFlowAlert == nil && viewModel.bookingError == nil {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.paidFlowAlert == .mayAlreadyBeBooked)
+        #expect(viewModel.completedBookingId == nil)
+        #expect(viewModel.selectedTimeSlot == nil)
+    }
+
+    @Test("Another expert's slot never matches the record: a different slot gets the plain copy")
+    func differentSlotDoesNotMatch() async {
+        let viewModel = makeIntentViewModel(recording: false) { request in
+            PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+        // A record for the same expert, an hour away from the chosen slot.
+        if let start = viewModel.selectedTimeSlot?.startTime {
+            viewModel.ledger.record(expertId: viewModel.expertId, start: start.addingTimeInterval(3600))
+            viewModel.ledger.record(expertId: UUID(), start: start)
+        }
+
+        await bookAndWaitForOutcome(viewModel)
+
+        #expect(viewModel.bookingError == slotTakenCopy)
+        #expect(viewModel.paidFlowAlert == nil)
+    }
+
+    @Test("The may-already-be-booked alert reads Couldn't book and points to My Bookings")
+    func mayAlreadyBeBookedCopy() {
+        let alert = MakeABookingViewModel.PaidFlowAlert.mayAlreadyBeBooked
+        #expect(alert.title == "Couldn't book")
+        #expect(alert.message == "You may already have this booking. Check My Bookings.")
+    }
+
+    @Test("Closing the may-already-be-booked alert clears it")
+    func dismissMayAlreadyBeBooked() {
+        let viewModel = makeViewModel(timingOut: 0)
+        viewModel.paidFlowAlert = .mayAlreadyBeBooked
+
+        viewModel.dismissMayAlreadyBeBookedAlert()
+
+        #expect(viewModel.paidFlowAlert == nil)
     }
 }

@@ -710,8 +710,16 @@ final class MakeABookingViewModel: ObservableObject {
             // just got taken.
             selectedTimeSlot = nil
             newBookingAttempt()
-            bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
+            // D-04: when a confirm of ours for this expert and slot may have
+            // succeeded, "taken" could be the client's own booking, so say so
+            // and point to My Bookings. The record stays. The alert is set after
+            // the reset because resetPaidFlow() clears paidFlowAlert.
+            if ledger.contains(expertId: expertId, start: slot.startTime) {
+                paidFlowAlert = .mayAlreadyBeBooked
+            } else {
+                bookingError = BookingErrorMapper.message(for: code, fallback: message)
+            }
 
         case .invalidPaymentMethod:
             bookingError = BookingErrorMapper.message(for: code, fallback: message)
@@ -744,8 +752,13 @@ final class MakeABookingViewModel: ObservableObject {
                 completedBookingId = bookingId
                 return
             }
-            bookingError = BookingErrorMapper.message(for: code, fallback: message)
+            // D-04: no record, or no usable id. The server says the caller already
+            // has this booking, so point to My Bookings. The slot is cleared so the
+            // same booking cannot be resubmitted (K4).
+            selectedTimeSlot = nil
+            newBookingAttempt()
             resetPaidFlow()
+            paidFlowAlert = .mayAlreadyBeBooked
 
         case .amountBelowMinimum:
             bookingError = BookingErrorMapper.message(for: code, fallback: message)

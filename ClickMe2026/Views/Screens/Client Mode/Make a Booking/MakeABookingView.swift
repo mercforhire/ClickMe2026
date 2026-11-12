@@ -172,15 +172,27 @@ struct MakeABooking: View {
         // so the buttons below are the only way forward.
         .alert(viewModel.paidFlowAlert?.title ?? "",
                isPresented: paidFlowAlertBinding,
-               presenting: viewModel.paidFlowAlert) { _ in
-            Button("Try again") {
-                Task { await viewModel.retryConfirm() }
-            }
-            Button("Check My Bookings") {
-                showMyBookings?()
-            }
-            Button("Not now", role: .cancel) {
-                viewModel.dismissConfirmAlert()
+               presenting: viewModel.paidFlowAlert) { alert in
+            switch alert {
+            case .confirmUnknown:
+                Button("Try again") {
+                    Task { await viewModel.retryConfirm() }
+                }
+                Button("Check My Bookings") {
+                    showMyBookings?()
+                }
+                Button("Not now", role: .cancel) {
+                    viewModel.dismissConfirmAlert()
+                }
+            case .mayAlreadyBeBooked:
+                // D-04: the flow was already reset when this was raised.
+                Button("Check My Bookings") {
+                    viewModel.dismissMayAlreadyBeBookedAlert()
+                    showMyBookings?()
+                }
+                Button("Close Alert", role: .cancel) {
+                    viewModel.dismissMayAlreadyBeBookedAlert()
+                }
             }
         } message: { alert in
             Text(alert.message)

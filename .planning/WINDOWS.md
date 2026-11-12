@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 21
+open_count: 22
 waived_count: 0
 fixed_count: 7
-total_count: 28
-last_updated: 2026-11-12T05:16:40.722Z
+total_count: 29
+last_updated: 2026-11-12T05:30:54.623Z
 ---
 
 # Broken Windows Ledger
@@ -43,6 +43,7 @@ last_updated: 2026-11-12T05:16:40.722Z
 | 26 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift |  | 04-05 device check (UAT EXPL-01, L3, EXPL-05): airplane mode on, open a profile: 'Couldn't load profile' with Retry and no heart or menu; network back on, Retry shows a spinner then the profile; a deleted or suspended expert shows 'This profile isn't available' with only Back (pops one level); heart matches is_favorite for a favorited expert; no /client/favorites call on open | open |  | 2026-11-12T05:03:15.847Z |  |
 | 27 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Favorites/Subviews/FavoritesPopulatedList.swift |  | 04-06 device check (UAT EXPL-05, D-07, D-09): with more than 20 favorites, scroll to the end: a spinner appears, then the rest load with no repeats and nothing shows at the end; airplane mode before the next page: footer 'Couldn't load more favorites' with Retry, earlier rows stay, Retry after network back appends the page; pull to refresh restarts at page 1; unfavorite a row then scroll to the end: list returns to the first 20 and no favorite is skipped; Pro Tip (shown with no favorites) says 'heart' | open |  | 2026-11-12T05:11:40.658Z |  |
 | 28 | 04 | unrun-verify | ClickMe2026/Views/Screens/Login Flow/Login/LoginView.swift |  | D-13 / UI-SPEC D4: suspension alert on a real cold launch (suspended account lands on Login, alert shows once, Close Alert clears the flag); device check in the Phase 8 release pass | open |  | 2026-11-12T05:16:40.722Z |  |
+| 29 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Make a Booking/MakeABookingViewModel+PaidFlow.swift |  | PAY-02 / D-03 / D-11 (UAT L2, E2): airplane mode during Confirming, wait for the We couldn't confirm your booking alert, restore the network, tap Try again: Request Sent opens for that same booking, My Bookings shows one booking and Stripe shows one hold; also once let a retry succeed on its own; 409 PAYMENT_IN_PROGRESS (D-17) cannot be forced on a device, proven by unit tests only; device check in the 04-14 session | open |  | 2026-11-12T05:30:54.623Z |  |
 
 ````json
 [
@@ -407,6 +408,19 @@ last_updated: 2026-11-12T05:16:40.722Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T05:16:40.722Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 29,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "ClickMe2026/Views/Screens/Client Mode/Make a Booking/MakeABookingViewModel+PaidFlow.swift",
+    "line": null,
+    "description": "PAY-02 / D-03 / D-11 (UAT L2, E2): airplane mode during Confirming, wait for the We couldn't confirm your booking alert, restore the network, tap Try again: Request Sent opens for that same booking, My Bookings shows one booking and Stripe shows one hold; also once let a retry succeed on its own; 409 PAYMENT_IN_PROGRESS (D-17) cannot be forced on a device, proven by unit tests only; device check in the 04-14 session",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T05:30:54.623Z",
     "resolved_at": null,
     "milestone": null
   }

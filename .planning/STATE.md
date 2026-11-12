@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-07-PLAN.md
-last_updated: "2026-11-12T05:17:16.327Z"
+stopped_at: Completed 04-08-PLAN.md
+last_updated: "2026-11-12T05:31:57.461Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 04 execution started
-state_head: a48c5a444c67001c209b2c3f1e3e0f2c81f4a8fc
+state_head: b3f86c284261928ad28fa37c613efe6714d6f5ae
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 64
+  completed_plans: 65
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 7 of 14
+Plan: 8 of 14
 Status: Ready to execute
 Last activity: 2026-11-11 — Phase 04 execution started
 
@@ -120,6 +120,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P05 | 8 min | 2 tasks | 5 files |
 | Phase 04 P06 | 7 min | 2 tasks | 7 files |
 | Phase 04 P07 | 15 min | 2 tasks | 6 files |
+| Phase 04 P08 | 13 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -251,6 +252,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-05: the heart reads is_favorite from the details response (missing key false) and is not overwritten while a toggle is in flight; the /client/favorites scan is removed
 - [Phase 04]: 04-06: Favorites paging dedupes by expertId; an empty page always ends the list; after a failed later page only the footer Retry re-fires; unfavorite with more pages reloads page 1 on the next trigger
 - [Phase 04]: 04-07 D-13: tryAutoLogin resolves a 403 ACCOUNT_SUSPENDED to signed out through AutoLoginOutcome, so the splash routes to Login; Login shows the suspension alert once and Close Alert clears wasSuspended; Android already does this (button label OK vs Close Alert logged, not aligned); device check in the Phase 8 release pass
+- [Phase 04]: 04-08 PAY-02: a paid confirm that fails with any URLError, CancellationError, invalidResponse, decodingFailed, an unmapped 5xx or 409 PAYMENT_IN_PROGRESS (D-17) keeps the PaymentIntent, pm_ id and booking_attempt_id, retries the same confirm at 2 s and 4 s, and ends in the confirm-unknown alert; server-coded errors keep the old mapping with no retry
+- [Phase 04]: 04-08: completePaidBooking ignores a call while a confirm run is in progress (isConfirmRunning); resetPaidFlow also clears the stored pm_ id and the alert; the alert binding setter is a no-op so only Not now resets the flow; device check logged in WINDOWS.md for 04-14
 
 ### Pending Todos
 
@@ -321,6 +324,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T05:17:15.916Z
-Stopped at: Completed 04-07-PLAN.md
+Last session: 2026-11-12T05:31:57.006Z
+Stopped at: Completed 04-08-PLAN.md
 Resume file: None

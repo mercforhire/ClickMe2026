@@ -90,6 +90,21 @@ struct HomeShellExitTests {
         #expect(exit.showsPastBookings == false)
     }
 
+    /// T-04-26: no exit may leave a tab holding a stale stack, and only the
+    /// history exit may ask for the Past segment.
+    @Test("Every action from every tab keeps the exit invariants")
+    func invariants() {
+        let actions: [HomeShellExit.Action] = [.backToHome, .viewMyBookings, .viewMyHistory]
+        for action in actions {
+            for source in HomeClientTab.allCases {
+                let exit = HomeShellExit.plan(action, selectedTab: source)
+                #expect([HomeClientTab.explore, .bookings].contains(exit.showTab), "\(action) from \(source)")
+                #expect(exit.resetTabs.contains(source), "\(action) from \(source)")
+                #expect(exit.showsPastBookings == (action == .viewMyHistory), "\(action) from \(source)")
+            }
+        }
+    }
+
     @Test("A double tap gives the same plan", arguments: HomeClientTab.allCases)
     func idempotent(source: HomeClientTab) {
         #expect(

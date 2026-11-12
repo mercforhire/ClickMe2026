@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-10-PLAN.md
-last_updated: "2026-11-12T05:43:48.824Z"
+stopped_at: Completed 04-11-PLAN.md
+last_updated: "2026-11-12T05:51:52.846Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 04 execution started
-state_head: 2ad7df2d7d09e15d9282a5ad639d7bd65335b841
+state_head: 7c45863582a4e677c6411e692443e519b2913358
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 67
+  completed_plans: 68
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 10 of 14
+Plan: 11 of 14
 Status: Ready to execute
 Last activity: 2026-11-11 — Phase 04 execution started
 
@@ -123,6 +123,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P08 | 13 min | 3 tasks | 8 files |
 | Phase 04 P09 | 12 min | 2 tasks | 5 files |
 | Phase 04 P10 | 15min | 2 tasks | 5 files |
+| Phase 04 P11 | 13 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -258,6 +259,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-08: completePaidBooking ignores a call while a confirm run is in progress (isConfirmRunning); resetPaidFlow also clears the stored pm_ id and the alert; the alert binding setter is a no-op so only Not now resets the flow; device check logged in WINDOWS.md for 04-14
 - [Phase 04]: 04-09 PAY-03: Request Sent's payment card is chosen by PaymentLifecycleVariant.choose from booking status, payment_status and authorization_expires_at: live hold needs held plus a live expiry, scheduled charge needs none on pending_approval, pending_reschedule or confirmed, already charged is captured only; held without an expiry, none on any other status, refunded and unknown hide the card; device check logged in WINDOWS.md for 04-14
 - [Phase 04]: 04-10: Explore Experts reuses returnToHome (Back to Home from Profile); View My History is a new HomeShellExit action; HomeClientView owns MyBookingsViewModel so the shell can select the Past segment
+- [Phase 04]: 04-11: Reviews dedupe on ExpertReview.pagingKey (serverId ?? id); a failed pull-to-refresh on Reviews shows no alert and keeps the rows
+- [Phase 04]: 04-11: TopicsSetupFlowLayout only changes for a subview wider than the row (proposed the row width); fitting subviews keep .unspecified, proven by a test against the old algorithm
 
 ### Pending Todos
 
@@ -328,6 +331,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T05:43:48.410Z
-Stopped at: Completed 04-10-PLAN.md
+Last session: 2026-11-12T05:51:52.447Z
+Stopped at: Completed 04-11-PLAN.md
 Resume file: None

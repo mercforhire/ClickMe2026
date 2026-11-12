@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
-status: executing
-stopped_at: Completed 04-15-PLAN.md
-last_updated: "2026-11-12T18:49:41.174Z"
+status: verifying
+stopped_at: Completed 04-16-PLAN.md
+last_updated: "2026-11-12T19:11:13.970Z"
 last_activity: 2026-11-12
 last_activity_desc: Phase 04 execution started
-state_head: c664bd454bc9c4cc63d1a77205a1ee2ab50b8a3a
+state_head: 15e7a9b7e49046ad9bb4e1fabad4fd698501104f
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 74
-  completed_plans: 73
+  completed_plans: 74
   percent: 13
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
 Plan: 16 of 16
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-12 — Phase 04 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -129,6 +129,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P01 | 1 day wall clock (user deploy wait) | 3 tasks | 6 files |
 | Phase 04 P14 | 12 min | 3 tasks | 2 files |
 | Phase 04 P15 | 11 min | 3 tasks | 8 files |
+| Phase 04 P16 | multi-session (user deploy wait) | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -276,6 +277,7 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-14: EXPL-03, EXPL-07, BACK-06, BACK-07, BACK-15 and BACK-19 deliberately not marked complete; they close only when 04-DEVICE-UAT-CHECKLIST.md items 1, 2 and the D-11 session pass (ROADMAP Phase 4 note). Full suite 630 tests in 65 suites, build green
 - [Phase 04]: 04-15: PaidAttempt snapshot (topic, slot, PaymentIntent, meeting type, notes) is taken when the PaymentIntent is created; every confirm and the D-04 ledger key read only it (CR-01)
 - [Phase 04]: 04-15: loadAvailability keeps the slot while isSubmitting (not moved into the month arrows) so WR-04 is unchanged; booking input cards are disabled while isSubmitting
+- [Phase 04]: 04-16 CR-02: backend 28da165 live; the profiles read and platform-card check run before the T-24h stamp, so a transient error is retried on the next run. Truth 17 is partially closed: errors after the stamp still reach the 6 h window (todo 2026-11-12). User accepted the unbounded-retry limit and Q-CR02 returned 0 rows.
 
 ### Pending Todos
 
@@ -317,10 +319,11 @@ Captured todos:
 - [2026-11-09] [general] Check the Android push prompt after a reinstall — [todo file](.planning/todos/pending/2026-11-08-check-the-android-push-prompt-after-a-reinstall.md)
 - [2026-11-09] [auth] Show the suspension message on a cold launch — [todo file](.planning/todos/pending/2026-11-08-show-the-suspension-message-on-a-cold-launch.md)
 - [2026-11-12] [payments] Merge D-12 (origin/main) into backend master before its next deploy — [todo file](.planning/todos/pending/2026-11-11-merge-d12-into-backend-master.md)
+- [2026-11-12] [payments] Long-lead T-24h sweep: transient errors after the stamp still cancel at 6 h — [todo file](.planning/todos/pending/2026-11-12-long-lead-sweep-transient-errors-after-stamp.md)
 
 ### Blockers/Concerns
 
-- [Before release]: T-01-32 (card removal inside Stripe's PaymentSheet skipping BACK-07) is fixed in production by plan 04-01 (D-12, backend `ae3ec1a`, 2026-11-12), mocked Stripe only; the live proof is the 04-14 D-11 session. Backend `master` does not contain D-12: it must MERGE origin/main before its next deploy (`.planning/todos/pending/2026-11-11-merge-d12-into-backend-master.md`).
+- [Before release]: T-01-32 (card removal inside Stripe's PaymentSheet skipping BACK-07) is fixed in production by plan 04-01 (D-12, backend `ae3ec1a`, 2026-11-12), mocked Stripe only; the live proof is the 04-14 D-11 session. CR-02 follows as backend `28da165` (user push 2026-11-12; production `/health` = 28da165, rollback base ae3ec1a). Backend `master` contains neither commit: it must MERGE origin/main before its next deploy (`.planning/todos/pending/2026-11-11-merge-d12-into-backend-master.md`).
 - [Before release]: iOS tests: `LoginTests.swift`, `AuthSmokeTests.swift` and `SignupSmokeTests.swift` don't compile, so Cmd+U fails; `.github/workflows/test.yml` and `scripts/run-smoke-tests.sh` still name `ClickMe2026.xcodeproj` (quick 261109-323).
 - [Phase 1]: User accepted verification overrides for BACK-08 and BACK-13 (2026-11-09 UTC): not delivered, wave 3c stays dropped. The refund retry gap was fixed and deployed by plans 01-24 to 01-26 (backend `d86bf97`, 2026-11-09); it is proven on mocked Stripe only and BACK-19 stays Pending.
 - [Phase 1]: CR-01 fixed 2026-11-08 (backend `215adcb`, live, user device check passed): build 6 booking push taps open the app without navigating, in client and expert mode, until the new iOS build. Production is at `215adcb`; `master` matches it; `wave-3c` remains parked and unshipped.
@@ -329,7 +332,7 @@ Captured todos:
 - [Phase 1]: The backend is live production and also serves App Store build 6, so every change must be safe for build 6 and current Android. BACK-13 (expert promotion) carries the most risk.
 - [Phase 3]: If Q2 changes the backend refund policy, that is backend work outside Phase 1. It can be pulled forward into Phase 1's discuss step.
 - [Phase 4]: Every environment points at the production backend and live Stripe, so payment UAT places real holds.
-- [Phase 4]: D-11 real-money session not yet run; BACK-06, BACK-07, BACK-15, BACK-19, EXPL-03 and EXPL-07 stay Pending until `04-DEVICE-UAT-CHECKLIST.md` passes (written by plan 04-14; the user runs every production step). D-12 is live as backend `ae3ec1a` (rollback base `32fa6ec`); the Dashboard subscription to `payment_method.detached` is user-reported and first proved by D-11 step f. Check `/health` reports a commit containing `ae3ec1a` before the session.
+- [Phase 4]: D-11 real-money session not yet run; BACK-06, BACK-07, BACK-15, BACK-19, EXPL-03 and EXPL-07 stay Pending until `04-DEVICE-UAT-CHECKLIST.md` passes (written by plan 04-14; the user runs every production step). D-12 is live as backend `ae3ec1a` (rollback base `32fa6ec`) plus CR-02 `28da165` (rollback base `ae3ec1a`; transient errors after the stamp still reach the 6 h window, todo 2026-11-12); the Dashboard subscription to `payment_method.detached` is user-reported and first proved by D-11 step f. Check `/health` reports a commit containing `ae3ec1a` and `28da165` before the session.
 - [Phase 7]: CHAT-08 needs a device re-test before planning (Q8).
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
@@ -359,6 +362,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T18:49:40.741Z
-Stopped at: Completed 04-15-PLAN.md
+Last session: 2026-11-12T19:11:06.909Z
+Stopped at: Completed 04-16-PLAN.md
 Resume file: None

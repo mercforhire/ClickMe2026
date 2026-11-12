@@ -250,7 +250,7 @@ Plans:
   4. An unavailable (404) expert profile shows "This profile isn't available", and network errors offer a retry. Empty Expertise, Topics and Reviews sections are hidden. Free featured topics show "Free". Search tag pills show their full text.
   5. Favorites shows every favorite (paged), with working empty-state buttons and correct copy. A profile's favorite state matches its `is_favorite`. The full reviews list loads beyond 20 reviews.
 
-**Plans**: 15/16 plans executed (14/14 executed in 4 waves: iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02. Plus 2 gap closure plans, 04-15 iOS and 04-16 backend with a user deploy checkpoint)
+**Plans**: 16/16 plans executed (14/14 executed in 4 waves: iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02. Plus 2 gap closure plans, 04-15 iOS and 04-16 backend with a user deploy checkpoint)
 
 Plans:
 **Wave 1**
@@ -277,7 +277,7 @@ Plans:
 
 **Gap closure** *(from 04-VERIFICATION.md; both wave 1, independent, different repos)*
 - [x] 04-15-PLAN.md — CR-01 / PAY-02: PaidAttempt snapshot at PaymentIntent creation drives every confirm and the D-04 ledger key; reload keeps the slot while submitting; booking inputs locked while a booking is in flight
-- [ ] 04-16-PLAN.md — CR-02 / D-12 backend: platform-card check before the stamp so a transient Stripe error is retried, not cancelled at 6 h; comments and contract note corrected; user deploys the one commit (checkpoint)
+- [x] 04-16-PLAN.md — CR-02 / D-12 backend: platform-card check before the stamp so a transient Stripe error is retried, not cancelled at 6 h; comments and contract note corrected; user deploys the one commit (checkpoint)
 
 **UI hint**: yes
 **Notes**:
@@ -377,7 +377,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
-| 4. Booking, Payment and Discovery | 15/16 | In Progress | - |
+| 4. Booking, Payment and Discovery | 16/16 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |

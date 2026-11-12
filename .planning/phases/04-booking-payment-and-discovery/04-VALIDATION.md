@@ -47,19 +47,19 @@ Task IDs are filled in by the planner; the requirement-to-suite mapping is fixed
 | Requirement | Behavior | Test Type | Automated Command (`-only-testing:ClickMe2026Tests/…`) | File Exists | Status |
 |-------------|----------|-----------|----------------------------------------------------------|-------------|--------|
 | PAY-01 | Closing the sheet never proceeds, even with a saved card | unit | `PaymentSheetOutcomeTests` | ❌ W0 | ⬜ pending |
-| PAY-02 | Transport failure = unknown; coded 402/409/422 = server-coded | unit | `ConfirmOutcomeTests` | ❌ W0 | ⬜ pending |
-| PAY-02 | Unknown keeps PI/pm/attempt id, retries ≤2, replay lands on Request Sent, Try again reuses the PI | unit (stubbed) | `MakeABookingPaidFlowTests` | ❌ W0 | ⬜ pending |
-| PAY-02 / D-04 / D-15 | Ledger-backed "maybe" alert; DUPLICATE_BOOKING smart route | unit | `MakeABookingPaidFlowTests`, `UnconfirmedBookingLedgerTests` | ❌ W0 | ⬜ pending |
-| PAY-03 | Lifecycle card variant chooser (free / held+expiry / none / captured), fail closed | unit | `PaymentLifecycleVariantTests` | ❌ W0 | ⬜ pending |
+| PAY-02 / D-17 | Transport failure = unknown; 409 PAYMENT_IN_PROGRESS = unknown (D-17); other coded 402/409/422 = server-coded; `ConfirmRetryPolicy` bounded retries | unit | `ConfirmOutcomeTests` (classifier and retry-policy rows; plus `BookingErrorMapperTests` regression) | ❌ W0 | ⬜ pending |
+| PAY-02 / D-17 | Unknown (including PAYMENT_IN_PROGRESS) keeps PI/pm/attempt id, retries ≤2, replay lands on Request Sent, Try again reuses the PI | unit (stubbed) | `MakeABookingPaidFlowTests` | ❌ W0 | ⬜ pending |
+| PAY-02 / D-04 / D-15 / D-17 | Ledger-backed "maybe" alert; DUPLICATE_BOOKING smart route; record kept on SLOT_UNAVAILABLE and PAYMENT_IN_PROGRESS (`keepsRecord(afterServerCode:)`) | unit | `MakeABookingPaidFlowTests`, `UnconfirmedBookingLedgerTests` | ❌ W0 | ⬜ pending |
+| PAY-03 | Lifecycle card variant chooser (free / held+expiry / none / captured; held without expiry hidden, never "charged"), fail closed | unit | `PaymentLifecycleVariantTests`, `BookingRequestSentVariantTests` | ❌ W0 | ⬜ pending |
 | PAY-04 | No stale `TODO(backend)` / "Backend hasn't shipped" comments | grep gate | see RESEARCH § Validation Architecture | n/a | ⬜ pending |
 | BOOK-01 / BOOK-19 | Shell exit plan per action × source tab; Past segment | unit | `HomeShellExitTests` (+ `HomeNavigationPathTests`) | ❌ W0 | ⬜ pending |
 | BOOK-02 | Stale month response never overwrites the newer month | unit | `MakeABookingAvailabilityTests` (+ `ReloadGenerationTests`) | ❌ W0 | ⬜ pending |
-| BOOK-03 / BOOK-04 | Zone name; 12/24-hour short time; shared helper | unit | `SlotTimeFormatTests` | ❌ W0 | ⬜ pending |
+| BOOK-03 / BOOK-04 / D-18 | Zone name (slots card and Today's Sessions); 12/24-hour short time; shared helper | unit + grep gate | `SlotTimeFormatTests`; `ExploreTodaysSessionsSection.swift` calls `DateUtil.zoneName()` | ❌ W0 | ⬜ pending |
 | BOOK-05 | "Loading booking…" copy | grep gate | `BookingRequestSentView.swift` contains `Loading booking…` | n/a | ⬜ pending |
 | EXPL-01 / EXPL-05 | 404 → not-found; transport → retry; `is_favorite` drives the heart | unit (stubbed) | `ExpertProfileViewModelTests` | ❌ W0 | ⬜ pending |
 | EXPL-02 | Empty sections hidden | unit | `ExpertProfileSectionsTests` | ❌ W0 | ⬜ pending |
 | EXPL-03 / EXPL-07 | Free label, failed-load text | unit (existing) | `ClientHomeFeedTests` | ✅ | ⬜ pending |
-| EXPL-04 | Pills not truncated | grep gate | `SearchExpertCard.swift` has no `lineLimit(1)` | n/a | ⬜ pending |
+| EXPL-04 | Pills not truncated; shared flow layout places fitting subviews as before, wraps overflowing ones | grep gate + unit | `SearchExpertCard.swift` has no `lineLimit(1)`; `TopicsSetupFlowLayoutTests` | ❌ W0 | ⬜ pending |
 | EXPL-05 / EXPL-06 | Shared paging: append, dedupe, stop on `has_more` | unit | `PagedListTests` | ❌ W0 | ⬜ pending |
 | EXPL-05 | Favorites paging, refresh, later-page error | unit (stubbed) | `FavoritesViewModelPagingTests` | ❌ W0 | ⬜ pending |
 | EXPL-06 | Reviews paging beyond 20 | unit (stubbed) | `ExpertReviewsViewModelPagingTests` | ❌ W0 | ⬜ pending |
@@ -72,7 +72,7 @@ Task IDs are filled in by the planner; the requirement-to-suite mapping is fixed
 
 ## Wave 0 Requirements
 
-- [ ] Pure types and suites: `PaymentSheetOutcome`, `ConfirmOutcome`, `PagedList`, `HomeShellExit`, `PaymentLifecycleVariant`, `AutoLoginOutcome`, `UnconfirmedBookingLedger`, `DateUtil` short-time / zone-name helpers
+- [ ] Pure types and suites: `PaymentSheetOutcome`, `ConfirmOutcome`, `ConfirmRetryPolicy`, `ErrorCode.paymentInProgress`, `PagedList`, `HomeShellExit`, `PaymentLifecycleVariant`, `AutoLoginOutcome`, `UnconfirmedBookingLedger`, `DateUtil` short-time / zone-name helpers, `TopicsSetupFlowLayout` math helpers
 - [ ] New suites listed in the map above
 - [ ] Paging and 404 fixtures under `ClickMe2026Tests/Fixtures/` (or inline JSON, as `ClientHomeFeedTests` does)
 - [ ] Test seams: `ExpertReview.serverId`, `ExpertProfileView.init(isFavorited:)`
@@ -91,6 +91,7 @@ Task IDs are filled in by the planner; the requirement-to-suite mapping is fixed
 | Variant A card on a live hold | PAY-03 | Live hold | D-11 session |
 | Back hidden; edge swipe doesn't pop from each source tab | BOOK-01 | Gesture | Device |
 | 12/24-hour toggle while running | BOOK-04 | System setting | Device |
+| Zone name in words on the slots card and Today's Sessions | BOOK-03 / D-18 | Device locale and zone | Device |
 | Empty profile sections on a real profile | EXPL-02 | LIKELY item | Device, before the fix |
 | Free label; topic load failure | EXPL-03 / EXPL-07 | Built in quick 261109-323 | Device |
 | Android push prompt after reinstall | D-14 | Check only | Android device |

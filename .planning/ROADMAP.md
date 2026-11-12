@@ -257,14 +257,14 @@ Plans:
 - [ ] 04-01-PLAN.md — D-12 backend: payment_method.detached evicts clones; T-24h sweep refuses a removed card; user deploys and subscribes the endpoint (checkpoint)
 - [ ] 04-02-PLAN.md — PAY-01 closing the card sheet cancels (didCancel, D-01, D-02); Link off (D-16); PAY-04 sheet comment
 - [ ] 04-03-PLAN.md — BOOK-01, BOOK-05, BOOK-19: Request Sent one-way (Back hidden, swipe locked, exits in every state) and source-tab exits (D-05, D-06)
-- [ ] 04-04-PLAN.md — BOOK-02 month race; BOOK-03 zone name; BOOK-04 12/24-hour on slots, Today's Sessions and Request Sent (K3)
+- [ ] 04-04-PLAN.md — BOOK-02 month race; BOOK-03 zone name on slots and Today's Sessions (D-18); BOOK-04 12/24-hour on slots, Today's Sessions and Request Sent (K3)
 - [ ] 04-05-PLAN.md — EXPL-01 not-available and load-failed profile states (D-10); heart from is_favorite (EXPL-05, D-09)
 - [ ] 04-06-PLAN.md — EXPL-05 Favorites paging on the shared PagedList, footer retry, refresh, heart Pro Tip (D-07, D-09)
 - [ ] 04-07-PLAN.md — D-13 suspension on cold launch routes to Login with the notice
 
 **Wave 2** *(each plan waits for the wave 1 plans it names)*
-- [ ] 04-08-PLAN.md — PAY-02 confirm timeout keeps the payment, retries, lands on Request Sent; confirm-unknown alert (D-03); PAY-04 view-model comments (after 04-04)
-- [ ] 04-09-PLAN.md — PAY-03 payment card variants from the booking's payment state (after 04-03, 04-04)
+- [ ] 04-08-PLAN.md — PAY-02 confirm timeout keeps the payment, retries, lands on Request Sent; confirm-unknown alert (D-03); 409 PAYMENT_IN_PROGRESS as outcome unknown (D-17); PAY-04 view-model comments (after 04-04)
+- [ ] 04-09-PLAN.md — PAY-03 payment card variants from the booking's payment state; a held booking is never called charged (after 04-03, 04-04)
 - [ ] 04-10-PLAN.md — EXPL-05 Favorites empty-state buttons: Explore Experts, View My History on Past (D-08) (after 04-03)
 - [ ] 04-11-PLAN.md — EXPL-06 reviews paging; EXPL-04 full-text search pills (after 04-06)
 - [ ] 04-12-PLAN.md — Heart seed from Favorites (D-09); EXPL-02 empty sections and zero/one review copy after the device-confirm decision (after 04-05, 04-06)

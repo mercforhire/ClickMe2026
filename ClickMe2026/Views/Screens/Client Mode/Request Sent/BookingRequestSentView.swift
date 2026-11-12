@@ -114,15 +114,15 @@ struct BookingRequestSentView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 28)
 
-                // Payment-lifecycle explainer. Suppressed for free
-                // bookings — no card was authorized, so the "hold /
-                // capture" narrative doesn't apply. Reuses the same
-                // card component the pre-payment sheet mounts, so the
-                // language is identical on both sides of the flow.
-                if !viewModel.isFree {
+                // Payment-lifecycle explainer. The variant comes from the
+                // loaded booking (PAY-03): hold, scheduled charge or already
+                // charged. Hidden for free bookings and whenever the payment
+                // data cannot say which story is true.
+                if let variant = viewModel.paymentVariant {
                     PaymentLifecycleCard(
                         currentStep: .holdPlaced,
-                        sessionWhen: viewModel.sessionWhenLabel
+                        sessionWhen: viewModel.sessionWhenLabel,
+                        variant: variant
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 28)

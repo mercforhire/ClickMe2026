@@ -42,9 +42,20 @@ struct PaymentLifecycleCard: View {
     /// have the concrete booking loaded.
     let sessionWhen: String?
 
-    init(currentStep: CurrentStep, sessionWhen: String? = nil) {
+    /// Which payment story steps 1 and 3 tell (hold, scheduled charge or
+    /// already charged). Defaults to the live-hold copy, which is what the
+    /// pre-payment sheet shows. Request Sent passes the variant chosen from
+    /// the loaded booking (PAY-03).
+    let variant: PaymentLifecycleVariant
+
+    init(
+        currentStep: CurrentStep,
+        sessionWhen: String? = nil,
+        variant: PaymentLifecycleVariant = .liveHold
+    ) {
         self.currentStep = currentStep
         self.sessionWhen = sessionWhen
+        self.variant = variant
     }
 
     // MARK: Body
@@ -58,9 +69,9 @@ struct PaymentLifecycleCard: View {
 
             stepRow(
                 index: 0,
-                title: "A hold is placed on your card",
-                subtitle: "No charge yet — funds are just reserved.",
-                icon: "lock.fill"
+                title: variant.stepOneTitle,
+                subtitle: variant.stepOneSubtitle,
+                icon: variant.stepOneIcon
             )
 
             connector(above: 1)
@@ -76,9 +87,9 @@ struct PaymentLifecycleCard: View {
 
             stepRow(
                 index: 2,
-                title: "Your card is charged after the session",
-                subtitle: "Usually within 15 minutes of the session ending.",
-                icon: "checkmark.seal.fill"
+                title: variant.stepThreeTitle,
+                subtitle: variant.stepThreeSubtitle,
+                icon: variant.stepThreeIcon
             )
         }
         .padding(18)
@@ -185,6 +196,32 @@ struct PaymentLifecycleCard: View {
         PaymentLifecycleCard(
             currentStep: .holdPlaced,
             sessionWhen: "Aug 15, 2:00 PM"
+        )
+        .padding(20)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Charge scheduled") {
+    ZStack {
+        Brand.surface.ignoresSafeArea()
+        PaymentLifecycleCard(
+            currentStep: .holdPlaced,
+            sessionWhen: "Aug 15, 2:00 PM",
+            variant: .chargeScheduled
+        )
+        .padding(20)
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Already charged") {
+    ZStack {
+        Brand.surface.ignoresSafeArea()
+        PaymentLifecycleCard(
+            currentStep: .holdPlaced,
+            sessionWhen: "Aug 15, 2:00 PM",
+            variant: .alreadyCharged
         )
         .padding(20)
     }

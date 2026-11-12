@@ -31,6 +31,10 @@ final class BookingRequestSentViewModel: ObservableObject {
     /// so step 2 ("Your session runs on …") shows the concrete session
     /// time instead of the generic fallback copy.
     @Published var sessionWhenLabel: String
+    /// Which payment story the card tells, chosen from the loaded booking
+    /// (PAY-03). `nil` hides the card: a free topic, or a payment state the
+    /// data cannot describe truthfully.
+    @Published var paymentVariant: PaymentLifecycleVariant?
 
     // MARK: Load state
 
@@ -74,7 +78,8 @@ final class BookingRequestSentViewModel: ObservableObject {
         topic: String = "Advanced UI Architecture",
         dateTime: String = "Oct 24, 2023 | 2:00 PM - 3:00 PM",
         isFree: Bool = false,
-        sessionWhenLabel: String = "Oct 24 · 2:00 PM"
+        sessionWhenLabel: String = "Oct 24 · 2:00 PM",
+        paymentVariant: PaymentLifecycleVariant? = .liveHold
     ) -> BookingRequestSentViewModel {
         let vm = BookingRequestSentViewModel(bookingId: bookingId)
         vm.expertName = expertName
@@ -82,6 +87,7 @@ final class BookingRequestSentViewModel: ObservableObject {
         vm.dateTime = dateTime
         vm.isFree = isFree
         vm.sessionWhenLabel = sessionWhenLabel
+        vm.paymentVariant = isFree ? nil : paymentVariant
         vm.state = .loaded
         return vm
     }
@@ -118,6 +124,12 @@ final class BookingRequestSentViewModel: ObservableObject {
         dateTime = Self.dateTimeString(from: data.startTime, to: data.endTime)
         isFree = data.topic.isFree
         sessionWhenLabel = Self.whenLabel(from: data.startTime)
+        paymentVariant = PaymentLifecycleVariant.choose(
+            isFree: data.topic.isFree,
+            bookingStatus: data.status,
+            paymentStatus: data.paymentStatus,
+            authorizationExpiresAt: data.authorizationExpiresAt
+        )
     }
 
     /// Short "Aug 15 · 2:00 PM" label — surfaced as the concrete step-2

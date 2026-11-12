@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-08-PLAN.md
-last_updated: "2026-11-12T05:31:57.461Z"
+stopped_at: Completed 04-09-PLAN.md
+last_updated: "2026-11-12T05:37:21.642Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 04 execution started
-state_head: b3f86c284261928ad28fa37c613efe6714d6f5ae
+state_head: 158cf7ae163f4504b25026481edb3e2ea1a5ddcf
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 65
+  completed_plans: 66
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 8 of 14
+Plan: 9 of 14
 Status: Ready to execute
 Last activity: 2026-11-11 — Phase 04 execution started
 
@@ -121,6 +121,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P06 | 7 min | 2 tasks | 7 files |
 | Phase 04 P07 | 15 min | 2 tasks | 6 files |
 | Phase 04 P08 | 13 min | 3 tasks | 8 files |
+| Phase 04 P09 | 12 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -254,6 +255,7 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-07 D-13: tryAutoLogin resolves a 403 ACCOUNT_SUSPENDED to signed out through AutoLoginOutcome, so the splash routes to Login; Login shows the suspension alert once and Close Alert clears wasSuspended; Android already does this (button label OK vs Close Alert logged, not aligned); device check in the Phase 8 release pass
 - [Phase 04]: 04-08 PAY-02: a paid confirm that fails with any URLError, CancellationError, invalidResponse, decodingFailed, an unmapped 5xx or 409 PAYMENT_IN_PROGRESS (D-17) keeps the PaymentIntent, pm_ id and booking_attempt_id, retries the same confirm at 2 s and 4 s, and ends in the confirm-unknown alert; server-coded errors keep the old mapping with no retry
 - [Phase 04]: 04-08: completePaidBooking ignores a call while a confirm run is in progress (isConfirmRunning); resetPaidFlow also clears the stored pm_ id and the alert; the alert binding setter is a no-op so only Not now resets the flow; device check logged in WINDOWS.md for 04-14
+- [Phase 04]: 04-09 PAY-03: Request Sent's payment card is chosen by PaymentLifecycleVariant.choose from booking status, payment_status and authorization_expires_at: live hold needs held plus a live expiry, scheduled charge needs none on pending_approval, pending_reschedule or confirmed, already charged is captured only; held without an expiry, none on any other status, refunded and unknown hide the card; device check logged in WINDOWS.md for 04-14
 
 ### Pending Todos
 
@@ -324,6 +326,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T05:31:57.006Z
-Stopped at: Completed 04-08-PLAN.md
+Last session: 2026-11-12T05:37:21.224Z
+Stopped at: Completed 04-09-PLAN.md
 Resume file: None

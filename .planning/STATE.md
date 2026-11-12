@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-11-12T04:40:55.368Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-11-12T04:47:06.076Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 04 execution started
-state_head: 4aa328d5182e9601e1f23f70cf70884fbc25ec21
+state_head: 50f3c9d6314dec7d0b904fd5d935fbeeaf11228e
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 59
+  completed_plans: 60
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 2 of 14
+Plan: 3 of 14
 Status: Ready to execute
 Last activity: 2026-11-11 — Phase 04 execution started
 
@@ -115,6 +115,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 03 P16 | 7 min | 2 tasks | 8 files |
 | Phase 03 P17 | 8 min | 2 tasks | 6 files |
 | Phase 04 P02 | 5 min | 2 tasks | 3 files |
+| Phase 04 P03 | 10 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -239,6 +240,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-17: every server refund_amount 0 under the charged-refundable case gets the neutral policy toast (no amount, no timing); the success body cannot tell clock skew, a retried refund and the already-cancelled 200 apart
 - [Phase 04]: 04-02 PAY-01: closing the Stripe card sheet (X, swipe-down, tap-outside) is a cancel even with a saved card preselected; only Continue (didCancel false) with a payment option reaches the setup-mode confirm, decided by PaymentSheetOutcome.proceeds; reset is silent (D-01, D-02)
 - [Phase 04]: 04-02 D-16: Stripe Link is off in the iOS payment sheet (config.link.display = .never), Android BUG-07 parity; tracer device check deferred to the 04-14 D-11 session and logged in WINDOWS.md as unrun-verify
+- [Phase 04]: 04-03 BOOK-01/BOOK-19: Request Sent hides Back and locks both pop recognizers (edge and iOS 26 content); both exits are decided by HomeShellExit.plan(_:selectedTab:) and reset the tab selected at tap time (Back to Home: source; View My Bookings: source and Bookings); the exits are pinned in loading and error states; device checks (D2, L1, E1) deferred to the end-of-phase session and logged in WINDOWS.md
 
 ### Pending Todos
 
@@ -309,6 +311,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T04:40:54.987Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-11-12T04:47:05.685Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None

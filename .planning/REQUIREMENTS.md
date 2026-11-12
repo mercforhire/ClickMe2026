@@ -24,11 +24,11 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Client Bookings
 
-- [ ] **BOOK-01** [B1] **[major]**: After a booking request is sent, the user cannot go Back to the form and submit it again
+- [x] **BOOK-01** [B1] **[major]**: After a booking request is sent, the user cannot go Back to the form and submit it again
 - [ ] **BOOK-02** [B2]: Changing month in the booking calendar never shows the previous month's availability
 - [ ] **BOOK-03** [B3]: The slots card shows a readable time-zone name, not a raw IANA id
 - [ ] **BOOK-04** [B4]: Slot and Today's Sessions times follow the device's locale (12/24-hour)
-- [ ] **BOOK-05** [B5]: The Request Sent screen's loading copy reads "Loading booking…"
+- [x] **BOOK-05** [B5]: The Request Sent screen's loading copy reads "Loading booking…"
 - [x] **BOOK-06** [B6] **[crit]**: Client can accept or decline an expert-proposed reschedule from the upcoming-booking flow
 - [x] **BOOK-07** [B7]: The client's cancellation comment is sent with the cancel request (depends on BACK-14 to be stored)
 - [x] **BOOK-08** [B8] **[major]**: The client cancel screen previews the refund the backend will actually give (24-hour rule; a held booking shows as a release) — policy per decision Q2
@@ -42,7 +42,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
 - [x] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
 - [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
-- [ ] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
+- [x] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
 - [x] **BOOK-20** [new, user request 2026-11-10]: The client Booking Summary screen shows the booking ID, on both iOS and Android, in the same short-ID format as Upcoming Booking details (`ID: …`). Android has no ID on this screen today either, so both apps change
 
 ### Payments
@@ -188,11 +188,11 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | CALL-08 | Phase 3 | Complete |
 | CALL-09 | Phase 2 | Complete |
 | CALL-10 | Phase 3 | Complete |
-| BOOK-01 | Phase 4 | Pending |
+| BOOK-01 | Phase 4 | Complete |
 | BOOK-02 | Phase 4 | Pending |
 | BOOK-03 | Phase 4 | Pending |
 | BOOK-04 | Phase 4 | Pending |
-| BOOK-05 | Phase 4 | Pending |
+| BOOK-05 | Phase 4 | Complete |
 | BOOK-06 | Phase 3 | Complete |
 | BOOK-07 | Phase 3 | Complete |
 | BOOK-08 | Phase 3 | Complete |
@@ -206,7 +206,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-16 | Phase 3 | Complete |
 | BOOK-17 | Phase 3 | Complete |
 | BOOK-18 | Phase 2 | Complete |
-| BOOK-19 | Phase 4 | Pending |
+| BOOK-19 | Phase 4 | Complete |
 | BOOK-20 | Phase 3 | Complete |
 | PAY-01 | Phase 4 | Complete |
 | PAY-02 | Phase 4 | Pending |

@@ -9,6 +9,21 @@
 import Foundation
 import SwiftUI
 
+/// Where the profile screen is in loading `GET /experts/:id/details`.
+///
+/// `loading` is the initial state and keeps the seeded profile on screen with
+/// no spinner. `notFound` and `failed` replace the whole profile with a state
+/// view, so a seeded profile is never presented as if it had loaded (D-10).
+enum ExpertProfileLoadState: Equatable {
+    case loading
+    case loaded
+    /// The server answered 404: a deleted, suspended or non-expert account.
+    /// It will not change on its own, so there is no Retry.
+    case notFound
+    /// Any other failure (transport, 5xx, decoding), with the text to show.
+    case failed(String)
+}
+
 @MainActor
 final class ExpertProfileViewModel: ObservableObject {
 
@@ -27,11 +42,23 @@ final class ExpertProfileViewModel: ObservableObject {
     /// fails. Cleared when the alert dismisses.
     @Published var apiError: String?
 
+    /// Decided only by the details call; see `loadProfileDetails()`.
+    @Published private(set) var loadState: ExpertProfileLoadState = .loading
+
+    /// True while a Retry tap is running. The state view swaps its capsule
+    /// for a spinner and further taps are ignored.
+    @Published private(set) var isRetrying: Bool = false
+
     // MARK: Data
     @Published var expert: PublicExpertProfile
 
     // MARK: Dependencies
     private let api: ClickMeAPI
+
+    /// Lets only the most recently started load write the profile, the heart
+    /// or the load state, so a `.task` rerun or a Retry cannot be overwritten
+    /// by an older response that lands later.
+    private var loadGate = ReloadGeneration()
 
     init(
         expert: PublicExpertProfile = .placeholder,
@@ -47,53 +74,89 @@ final class ExpertProfileViewModel: ObservableObject {
 
     // MARK: - Load
 
-    /// Refreshes the profile from `GET /experts/:expertId/details` AND
-    /// fetches the first page of `GET /experts/:expertId/reviews` so the
-    /// Recent Reviews card renders 3 rows inline (not just a "See all"
-    /// link).
+    /// Loads the profile from `GET /experts/:expertId/details`, then fetches
+    /// the first page of `GET /experts/:expertId/reviews` so the Recent
+    /// Reviews card renders 3 rows inline (not just a "See all" link).
     ///
-    /// Both calls fire in parallel. No-ops when `expert.expertId` is nil
-    /// (hardcoded sample profile). Either call failing is silent — the
-    /// pre-seeded profile stays visible.
+    /// The details call alone decides `loadState` (D-10). A 404 (status or
+    /// `ErrorCode.notFound`, never message text) means `.notFound`; any other
+    /// thrown error means `.failed` with `Error.userMessage`. While it runs
+    /// the seeded profile shows as before, with no spinner. The reviews call
+    /// runs only after details succeeded and stays best-effort and silent.
+    ///
+    /// Only the newest started load writes anything (`loadGate`); a
+    /// cancelled load (the view went away) writes nothing. No-ops to
+    /// `.loaded` when `expert.expertId` is nil (hardcoded sample profile).
     ///
     /// The details endpoint returns bio, stats, and topics of discussion,
     /// but not rating / reviewCount / expertiseTags / avatarUrl / isOnline
     /// — those fields are preserved from whatever the caller seeded (e.g.,
     /// `/client/home` recommended-expert data).
     func loadProfileDetails() async {
-        guard let expertId = expert.expertId else { return }
+        guard let expertId = expert.expertId else {
+            loadState = .loaded
+            return
+        }
+        let token = loadGate.begin()
+
         // Sequential rather than `async let` — `async let` bodies run in
         // a nonisolated context, which Swift 6 concurrency rejects for
         // our `@MainActor`-scoped Decodable conformances.
-        let details = try? await api.getExpertDetails(id: expertId)
-        let reviews = try? await api.getExpertReviews(id: expertId, page: 1, limit: 3)
-        // `/experts/:id/details` doesn't include `is_favorite`, so the
-        // heart would show empty even on already-favorited experts. Scan
-        // the caller's favorites list to reconcile. Cheap for typical
-        // accounts; won't cover >100 favorites without pagination — see
-        // the follow-up in the summary.
-        let favorites = try? await api.getClientFavorites(page: 1, limit: 100)
-
-        var next = expert
-        if let details {
-            next = Self.merge(details.data, into: next)
+        let details: SuccessDataResponse<PublicProfileDetailsData>
+        do {
+            details = try await api.getExpertDetails(id: expertId)
+        } catch {
+            guard loadGate.isCurrent(token), !Self.isCancellation(error) else { return }
+            loadState = Self.isNotFound(error) ? .notFound : .failed(error.userMessage)
+            return
         }
+        guard loadGate.isCurrent(token) else { return }
+        expert = Self.merge(details.data, into: expert)
+        loadState = .loaded
+
+        // `/experts/:id/details` doesn't include `is_favorite` yet, so the
+        // heart would show empty even on already-favorited experts. Scan
+        // the caller's favorites list to reconcile.
+        let favorites = try? await api.getClientFavorites(page: 1, limit: 100)
+        let reviews = try? await api.getExpertReviews(id: expertId, page: 1, limit: 3)
+        guard loadGate.isCurrent(token) else { return }
+
         if let reviews {
-            next = Self.apply(
+            expert = Self.apply(
                 reviews: reviews.data.reviews,
                 summary: reviews.data.summary,
-                to: next
+                to: expert
             )
             isSummaryLoaded = true
         }
-        expert = next
-
         if let favorites,
            favorites.data.experts.contains(where: { $0.expertId == expertId }) {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                 isFavorited = true
             }
         }
+    }
+
+    /// Re-runs the details load from the load-failed state. A tap while a
+    /// retry is already running is ignored, so quick double taps issue one
+    /// request.
+    func retry() async {
+        guard !isRetrying else { return }
+        isRetrying = true
+        defer { isRetrying = false }
+        await loadProfileDetails()
+    }
+
+    /// True for a 404, by status code or by the body's `ErrorCode`.
+    private static func isNotFound(_ error: Error) -> Bool {
+        if case let NetworkError.httpError(statusCode, _) = error, statusCode == 404 {
+            return true
+        }
+        return BookingErrorMapper.code(for: error) == .notFound
+    }
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        error is CancellationError || (error as? URLError)?.code == .cancelled
     }
 
     /// Overlays the fields the details endpoint owns (name, title, bio,

@@ -91,6 +91,9 @@ struct ExpertProfileView: View {
     /// a specific thread. Used by the "Message" button.
     @Environment(\.openChatThread) private var openChatThread
 
+    /// Pops one level; the Back capsule of the not-available state.
+    @Environment(\.dismiss) private var dismiss
+
     /// Optional caller-provided hook; if wired, it runs INSTEAD of the
     /// default push. Left as an escape hatch — no current caller uses
     /// it, so the default MakeABooking push is the effective behavior.
@@ -161,63 +164,32 @@ struct ExpertProfileView: View {
         )
     }
 
+    /// The heart and the overflow menu belong to a loaded (or still loading)
+    /// profile; the not-available and load-failed states remove them.
+    private var showsProfileActions: Bool {
+        switch viewModel.loadState {
+        case .loading, .loaded: true
+        case .notFound, .failed: false
+        }
+    }
+
     // MARK: Body
 
     var body: some View {
         ZStack {
             ExpertProfileBrand.bg.ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    ExpertProfileHero(
-                        expert: expert,
-                        glowPulse: viewModel.glowPulse,
-                        summaryLoaded: viewModel.isSummaryLoaded
-                    )
-                        .padding(.top, 16)
-                        .padding(.bottom, 24)
-
-                    ExpertProfileStatsBar(
-                        yearsExp: expert.yearsExp,
-                        bookings: expert.bookings
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 20)
-
-                    // Book / Message CTAs are for clients — hide when
-                    // the expert is viewing their own profile.
-                    if !isSelfView {
-                        ExpertProfileActionButtons(
-                            onBookSession: handleBookSession,
-                            onMessage: handleMessage,
-                            isBookable: expert.isBookable
-                        )
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 28)
-                    }
-
-                    ExpertProfileAboutCard(bio: expert.bio)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 28)
-
-                    ExpertProfileExpertiseSection(tags: expert.expertiseTags)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 28)
-
-                    ExpertProfileTopicsCard(topics: expert.topics)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 28)
-
-                    ExpertProfileReviewsCard(
-                        reviews: expert.reviews,
-                        onSeeAllReviews: {
-                            showReviews = true
-                            onSeeAllReviews()
-                        }
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 48)
-                }
+            switch viewModel.loadState {
+            case .notFound:
+                ExpertProfileStateView(kind: .notFound, onAction: { dismiss() })
+            case .failed(let message):
+                ExpertProfileStateView(
+                    kind: .failed(message: message),
+                    isWorking: viewModel.isRetrying,
+                    onAction: { Task { await viewModel.retry() } }
+                )
+            case .loading, .loaded:
+                profileScroll
             }
         }
         // Transparent nav bar so hero + scroll content shows through. Dark
@@ -228,7 +200,7 @@ struct ExpertProfileView: View {
         .toolbar {
             // Favorite (heart) is a client action — hide when the
             // expert is viewing their own profile.
-            if !isSelfView {
+            if !isSelfView && showsProfileActions {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         Task {
@@ -345,6 +317,62 @@ struct ExpertProfileView: View {
             Button("OK", role: .cancel) {}
         } message: { message in
             Text(message)
+        }
+    }
+
+    /// The profile content, shown while loading (seeded) and once loaded.
+    private var profileScroll: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                ExpertProfileHero(
+                    expert: expert,
+                    glowPulse: viewModel.glowPulse,
+                    summaryLoaded: viewModel.isSummaryLoaded
+                )
+                    .padding(.top, 16)
+                    .padding(.bottom, 24)
+
+                ExpertProfileStatsBar(
+                    yearsExp: expert.yearsExp,
+                    bookings: expert.bookings
+                )
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+
+                // Book / Message CTAs are for clients — hide when
+                // the expert is viewing their own profile.
+                if !isSelfView {
+                    ExpertProfileActionButtons(
+                        onBookSession: handleBookSession,
+                        onMessage: handleMessage,
+                        isBookable: expert.isBookable
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 28)
+                }
+
+                ExpertProfileAboutCard(bio: expert.bio)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 28)
+
+                ExpertProfileExpertiseSection(tags: expert.expertiseTags)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 28)
+
+                ExpertProfileTopicsCard(topics: expert.topics)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 28)
+
+                ExpertProfileReviewsCard(
+                    reviews: expert.reviews,
+                    onSeeAllReviews: {
+                        showReviews = true
+                        onSeeAllReviews()
+                    }
+                )
+                .padding(.horizontal, 20)
+                .padding(.bottom, 48)
+            }
         }
     }
 

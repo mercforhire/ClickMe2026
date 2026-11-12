@@ -83,18 +83,16 @@ struct HomeClientView: View {
             ))
         })
         // Post-booking navigation shortcuts consumed by
-        // `BookingRequestSentView`. Both unwind the source tab (Explore
-        // — where MakeABookingView was pushed from) so the user
+        // `BookingRequestSentView`. Both unwind the source tab (the tab
+        // selected at tap time, where MakeABookingView was pushed from:
+        // Explore, Search, Bookings, Chats or Profile) so the user
         // doesn't find the booking flow still on the stack when they
-        // navigate back there later.
+        // navigate back there later (BOOK-19, D-06).
         .environment(\.showMyBookings, HomeShellAction {
-            explorePath.reset()
-            bookingsPath.reset()
-            selectedTab = .bookings
+            applyExit(HomeShellExit.plan(.viewMyBookings, selectedTab: selectedTab))
         })
         .environment(\.returnToHome, HomeShellAction {
-            explorePath.reset()
-            selectedTab = .explore
+            applyExit(HomeShellExit.plan(.backToHome, selectedTab: selectedTab))
         })
         // Global call surface + floating pill overlays. Sits above the
         // TabView but below any modal (sheet / fullScreenCover), so
@@ -216,6 +214,28 @@ struct HomeClientView: View {
         case .notificationsList:
             selectedTab = .explore
             explorePath.replace(with: HomeRoute.notifications)
+        }
+    }
+
+    // MARK: - Booking-flow exits
+
+    /// Apply a planned exit: empty every stack in `resetTabs`, then show
+    /// `showTab`. `HomeNavigationPath.reset()` is a no-op on an empty path, so
+    /// a repeated exit changes nothing (BOOK-19, D-06).
+    private func applyExit(_ exit: HomeShellExit) {
+        for tab in exit.resetTabs {
+            path(for: tab).reset()
+        }
+        selectedTab = exit.showTab
+    }
+
+    private func path(for tab: HomeClientTab) -> HomeNavigationPath {
+        switch tab {
+        case .explore: return explorePath
+        case .search: return searchPath
+        case .bookings: return bookingsPath
+        case .chats: return chatsPath
+        case .profile: return profilePath
         }
     }
 

@@ -52,6 +52,10 @@ struct BookingRequestSentView: View {
         .toolbarBackground(BookingRequestSentBrand.bg, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        // D-05: the booking already exists once this screen opens, so the
+        // only exits are the two buttons. Going back would reopen the form
+        // and let the client submit the request a second time.
+        .navigationBarBackButtonHidden(true)
         .task {
             let wasLoaded = viewModel.state == .loaded
             await viewModel.load()

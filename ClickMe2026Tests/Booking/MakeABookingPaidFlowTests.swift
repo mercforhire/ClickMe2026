@@ -70,6 +70,14 @@ private enum PaidFlowFixture {
         return http(request, status: 409, body: Data(body.utf8))
     }
 
+    nonisolated static func duplicate(_ request: URLRequest, bookingId: String) -> (HTTPURLResponse, Data) {
+        let body = """
+        {"status":"error","code":"DUPLICATE_BOOKING","message":"You already have a booking for this time.",\
+        "detail":{"booking_id":"\(bookingId)"}}
+        """
+        return http(request, status: 409, body: Data(body.utf8))
+    }
+
     nonisolated static func coded(_ request: URLRequest, status: Int, code: String) -> (HTTPURLResponse, Data) {
         let body = #"{"status":"error","code":"\#(code)","message":"server text"}"#
         return http(request, status: status, body: Data(body.utf8))
@@ -91,6 +99,7 @@ struct MakeABookingPaidFlowTests {
             expertTitle: "Engineer",
             expertImageURL: "",
             topics: [PaidFlowFixture.paidTopic],
+            ledger: UnconfirmedBookingLedger(),
             api: api
         )
         viewModel.selectedTopic = PaidFlowFixture.paidTopic
@@ -341,5 +350,122 @@ struct MakeABookingPaidFlowTests {
         expectSameIntentAndCard(requests)
         #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
         #expect(viewModel.bookingAttemptId == attemptId)
+    }
+
+    // MARK: Unconfirmed-booking ledger (D-04, D-15, D-17)
+
+    /// The expert id and slot start the view model confirms for.
+    private func ledgerKey(_ viewModel: MakeABookingViewModel) -> (expertId: UUID, start: Date) {
+        (viewModel.expertId, viewModel.selectedTimeSlot?.startTime ?? .distantPast)
+    }
+
+    private func ledgerHolds(_ viewModel: MakeABookingViewModel, start: Date) -> Bool {
+        viewModel.ledger.contains(expertId: viewModel.expertId, start: start)
+    }
+
+    @Test("Three unknown confirm failures leave the record, also after Not now")
+    func unknownKeepsRecord() async {
+        let viewModel = makeViewModel(timingOut: 3)
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(ledgerHolds(viewModel, start: start))
+
+        viewModel.dismissConfirmAlert()
+        #expect(ledgerHolds(viewModel, start: start))
+    }
+
+    @Test("Three 409 PAYMENT_IN_PROGRESS confirms leave the record, also after Not now (D-17)")
+    func paymentInProgressKeepsRecord() async {
+        let viewModel = makeViewModel(inProgress: 3)
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(viewModel.paidFlowAlert == .confirmUnknown(paymentReference: "pi_test"))
+        #expect(ledgerHolds(viewModel, start: start))
+
+        viewModel.dismissConfirmAlert()
+        #expect(ledgerHolds(viewModel, start: start))
+    }
+
+    @Test("A 409 PAYMENT_IN_PROGRESS confirm followed by a 201 clears the record")
+    func paymentInProgressThenCreatedClearsRecord() async {
+        let viewModel = makeViewModel(inProgress: 1)
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        #expect(!ledgerHolds(viewModel, start: start))
+    }
+
+    @Test("A 201 confirm clears the record")
+    func createdClearsRecord() async {
+        let viewModel = makeViewModel { _, request in PaidFlowFixture.created(request) }
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        #expect(!ledgerHolds(viewModel, start: start))
+    }
+
+    @Test("A 422 INTENT_EXPIRED confirm clears the record")
+    func intentExpiredClearsRecord() async {
+        let viewModel = makeViewModel { _, request in
+            PaidFlowFixture.coded(request, status: 422, code: "INTENT_EXPIRED")
+        }
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(viewModel.bookingError != nil)
+        #expect(!ledgerHolds(viewModel, start: start))
+    }
+
+    @Test("A 409 SLOT_UNAVAILABLE confirm keeps the record")
+    func slotUnavailableKeepsRecord() async {
+        let viewModel = makeViewModel { _, request in
+            PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(ledgerHolds(viewModel, start: start))
+    }
+
+    /// Waits up to 3 s for the book() task to reach a result.
+    private func bookAndWaitForOutcome(_ viewModel: MakeABookingViewModel) async {
+        viewModel.book()
+        for _ in 0 ..< 150 {
+            if viewModel.completedBookingId != nil || viewModel.bookingError != nil { break }
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+    }
+
+    @Test("After a lost confirm, a DUPLICATE_BOOKING on the same slot opens that booking (D-15)")
+    func duplicateRoutesToExistingBooking() async {
+        let existing = UUID()
+        let viewModel = makeViewModel { _, request in
+            if request.url?.path.hasSuffix("/bookings/payment-intent") == true {
+                return PaidFlowFixture.duplicate(request, bookingId: existing.uuidString.lowercased())
+            }
+            throw URLError(.timedOut)
+        }
+        let start = ledgerKey(viewModel).start
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        viewModel.dismissConfirmAlert()
+        #expect(ledgerHolds(viewModel, start: start))
+        let confirmsBefore = confirmRequests().count
+
+        await bookAndWaitForOutcome(viewModel)
+
+        #expect(viewModel.completedBookingId == existing)
+        #expect(viewModel.paidFlowAlert == nil)
+        #expect(viewModel.bookingError == nil)
+        #expect(viewModel.paidStep == .idle)
+        #expect(!ledgerHolds(viewModel, start: start))
+        #expect(confirmRequests().count == confirmsBefore)
     }
 }

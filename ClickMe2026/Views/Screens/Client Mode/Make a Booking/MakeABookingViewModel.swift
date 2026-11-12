@@ -230,6 +230,11 @@ final class MakeABookingViewModel: ObservableObject {
 
     private let api: ClickMeAPI
 
+    /// Confirms whose booking may exist without the app knowing (PAY-02, D-04).
+    /// Internal so `MakeABookingViewModel+PaidFlow.swift` can read it. Tests pass
+    /// their own instance and never write to `.shared`.
+    let ledger: UnconfirmedBookingLedger
+
     // MARK: Init
 
     init(
@@ -237,12 +242,14 @@ final class MakeABookingViewModel: ObservableObject {
         expertName: String,
         expertTitle: String,
         expertImageURL: String,
+        ledger: UnconfirmedBookingLedger = .shared,
         api: ClickMeAPI = .shared
     ) {
         self.expertId = expertId
         self.expertName = expertName
         self.expertTitle = expertTitle
         self.expertImageURL = expertImageURL
+        self.ledger = ledger
         self.api = api
     }
 
@@ -257,12 +264,14 @@ final class MakeABookingViewModel: ObservableObject {
         availabilityByDate: [String: [BookingTimeSlot]] = [:],
         expertTimezone: String? = nil,
         paymentMethodsAvailability: PaymentMethodsAvailability = .available,
+        ledger: UnconfirmedBookingLedger = .shared,
         api: ClickMeAPI = .shared
     ) {
         self.expertId = expertId
         self.expertName = expertName
         self.expertTitle = expertTitle
         self.expertImageURL = expertImageURL
+        self.ledger = ledger
         self.api = api
         self.topics = topics
         self.availabilityByDate = availabilityByDate
@@ -568,6 +577,9 @@ final class MakeABookingViewModel: ObservableObject {
         isConfirmRunning = true
         defer { isConfirmRunning = false }
 
+        // D-04: from here a booking may exist that the app never hears about.
+        ledger.record(expertId: expertId, start: slot.startTime)
+
         let startTimeISO = Self.iso8601String(from: slot.startTime)
         let notes = clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
         let result = await confirmRetryPolicy.run {
@@ -591,15 +603,22 @@ final class MakeABookingViewModel: ObservableObject {
             // lifecycle is explained inline; the raw server message is
             // no longer surfaced. A replayed 201 (BACK-15) lands here too.
             completedBookingId = response.data.bookingId
+            ledger.clear(expertId: expertId, start: slot.startTime)
             confirmPaymentMethodId = nil
             resetPaidFlow()
         case let .serverCoded(error):
+            // D-04, D-17: the record stays for SLOT_UNAVAILABLE (the slot may be
+            // the client's own) and PAYMENT_IN_PROGRESS (it may still settle).
+            if !UnconfirmedBookingLedger.keepsRecord(afterServerCode: BookingErrorMapper.code(for: error)) {
+                ledger.clear(expertId: expertId, start: slot.startTime)
+            }
             confirmPaymentMethodId = nil
             handlePaidFlowError(error, phase: .confirm, topic: topic, slot: slot)
         case .outcomeUnknown:
             // D-03: keep every id and stay on `.confirming`. The hold may
             // exist, so the flow must not reset and the attempt id must not
             // change. The alert offers Try again, Check My Bookings or Not now.
+            // D-04: the ledger record stays, also after Not now or leaving the screen.
             paidFlowAlert = .confirmUnknown(paymentReference: paymentIntentId)
         }
     }
@@ -711,6 +730,20 @@ final class MakeABookingViewModel: ObservableObject {
             resetPaidFlow()
 
         case .duplicateBooking:
+            // D-15: the server answers the caller's own identical active booking
+            // with `detail.booking_id` (backend docs/ios/STRIPE-INTEGRATION.md,
+            // BACK-15). When a lost confirm of ours left a record for this expert
+            // and slot, open that booking. The id is used only when it parses as a
+            // UUID; Request Sent loads it through GET /client/bookings/:id, which
+            // re-checks ownership.
+            if let idText = Self.errorDetail(for: error)?["booking_id"] as? String,
+               let bookingId = UUID(uuidString: idText),
+               ledger.contains(expertId: expertId, start: slot.startTime) {
+                ledger.clear(expertId: expertId, start: slot.startTime)
+                resetPaidFlow()
+                completedBookingId = bookingId
+                return
+            }
             bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 

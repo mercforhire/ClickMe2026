@@ -18,6 +18,13 @@ struct ExpertReview: Identifiable {
     let stars: Double // supports half stars
     let dateLabel: String? // nil = hide date
     let body: String
+    /// The server review id (`ReviewItem.id`). `id` above is a fresh UUID on
+    /// every map, so only this can spot one review arriving on two adjacent
+    /// pages. Nil for preview and skeleton rows.
+    var serverId: UUID? = nil
+
+    /// Key the paged list dedupes on: the server id, falling back to `id`.
+    var pagingKey: UUID { serverId ?? id }
 }
 
 // MARK: - Expert Reviews View
@@ -56,7 +63,7 @@ struct ExpertReviewsView: View {
                     .padding(.top, 8)
                     .padding(.bottom, 48)
             }
-            .refreshable { await viewModel.reload() }
+            .refreshable { await viewModel.refresh() }
         }
         .navigationTitle(viewModel.navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
@@ -104,10 +111,53 @@ struct ExpertReviewsView: View {
             if viewModel.reviews.isEmpty {
                 emptyView
             } else {
-                ForEach(viewModel.reviews) { review in
-                    ExpertReviewsCard(review: review)
+                // Lazy so a row's `.onAppear` means "scrolled into view"; an
+                // eager stack would announce every row at once and page
+                // through the whole list on load.
+                LazyVStack(spacing: 14) {
+                    ForEach(viewModel.reviews) { review in
+                        ExpertReviewsCard(review: review)
+                            .onAppear {
+                                Task { await viewModel.loadNextPageIfNeeded(currentItem: review) }
+                            }
+                    }
+
+                    pagingFooter
                 }
             }
+        }
+    }
+
+    // MARK: Paging footer
+
+    /// Spinner while the next page loads; error plus Retry when a page after
+    /// the first failed (the loaded reviews stay). Nothing at the end of the list.
+    @ViewBuilder
+    private var pagingFooter: some View {
+        if viewModel.isLoadingMore {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: ExpertReviewsBrand.brandGreen))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+        } else if viewModel.hasPageError {
+            VStack(spacing: 0) {
+                Text("Couldn't load more reviews")
+                    .font(.brand(.caption, weight: .regular))
+                    .foregroundColor(ExpertReviewsBrand.onSurfaceVar)
+
+                Button {
+                    Task { await viewModel.retryNextPage() }
+                } label: {
+                    Text("Retry")
+                        .font(.brand(.subheadline, weight: .semibold))
+                        .foregroundColor(ExpertReviewsBrand.brandGreen)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
         }
     }
 

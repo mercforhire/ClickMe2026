@@ -15,9 +15,12 @@ struct BookingRequestSentActions: View {
     let onBackToHome: () -> Void
     let opacity: Double
     let yOffset: CGFloat
+    /// Gap between the two capsules. The loaded layout keeps 14; the pinned
+    /// loading and error placements pass 16 (UI-SPEC section 3).
+    var spacing: CGFloat = 14
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: spacing) {
             Button(action: onViewBookings) {
                 Text("View My Bookings")
                     .font(.brand(.body, weight: .bold))

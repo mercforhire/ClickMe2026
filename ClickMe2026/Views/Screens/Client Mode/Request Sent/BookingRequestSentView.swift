@@ -56,6 +56,9 @@ struct BookingRequestSentView: View {
         // only exits are the two buttons. Going back would reopen the form
         // and let the client submit the request a second time.
         .navigationBarBackButtonHidden(true)
+        // iOS 26 also pops from a swipe in the content area; lock both
+        // recognizers while this screen is visible.
+        .background(BookingRequestSentPopGestureLock())
         .task {
             let wasLoaded = viewModel.state == .loaded
             await viewModel.load()
@@ -139,18 +142,46 @@ struct BookingRequestSentView: View {
         }
     }
 
+    /// Both exits stay reachable while the booking loads: with Back hidden, a
+    /// slow load would otherwise trap the client (BOOK-01).
     private var loadingContent: some View {
-        VStack(spacing: 12) {
-            ProgressView()
-                .tint(BookingRequestSentBrand.onSurface)
-            Text("Sending your booking…")
-                .font(.brand(.caption))
-                .foregroundColor(BookingRequestSentBrand.onSurface.opacity(0.6))
+        VStack(spacing: 0) {
+            VStack(spacing: 12) {
+                ProgressView()
+                    .tint(BookingRequestSentBrand.onSurface)
+                Text("Loading booking…")
+                    .font(.brand(.caption))
+                    .foregroundColor(BookingRequestSentBrand.onSurface.opacity(0.6))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // Pinned exits: no entry animation, 16 pt gap. The loaded layout keeps
+            // its own 14 pt spacing and animation.
+            BookingRequestSentActions(
+                onViewBookings: onViewBookings, onBackToHome: onBackToHome,
+                opacity: 1, yOffset: 0, spacing: 16
+            )
+            .padding(.horizontal, 20)
+            .padding(.bottom, 48)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func errorContent(message: String) -> some View {
+        VStack(spacing: 0) {
+            errorDetails(message: message)
+
+            // Pinned exits: no entry animation, 16 pt gap. The loaded layout keeps
+            // its own 14 pt spacing and animation.
+            BookingRequestSentActions(
+                onViewBookings: onViewBookings, onBackToHome: onBackToHome,
+                opacity: 1, yOffset: 0, spacing: 16
+            )
+            .padding(.horizontal, 20)
+            .padding(.bottom, 48)
+        }
+    }
+
+    private func errorDetails(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.title.weight(.light))

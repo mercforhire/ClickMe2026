@@ -43,6 +43,11 @@ struct HomeClientView: View {
     @StateObject private var chatsPath = HomeNavigationPath()
     @StateObject private var profilePath = HomeNavigationPath()
 
+    /// Owned here, not by `MyBookingsView`, so the shell can select the Past
+    /// segment when the Favorites empty state's "View My History" fires
+    /// (D-08). It lives as long as the Bookings tab's view model already did.
+    @StateObject private var myBookingsViewModel = MyBookingsViewModel()
+
     var body: some View {
         TabView(selection: $selectedTab) {
             exploreTab
@@ -93,6 +98,11 @@ struct HomeClientView: View {
         })
         .environment(\.returnToHome, HomeShellAction {
             applyExit(HomeShellExit.plan(.backToHome, selectedTab: selectedTab))
+        })
+        // Favorites empty state's "View My History": Bookings on its Past
+        // segment, with the Profile stack (holding Favorites) reset (D-08).
+        .environment(\.showMyHistory, HomeShellAction {
+            applyExit(HomeShellExit.plan(.viewMyHistory, selectedTab: selectedTab))
         })
         // Global call surface + floating pill overlays. Sits above the
         // TabView but below any modal (sheet / fullScreenCover), so
@@ -226,6 +236,9 @@ struct HomeClientView: View {
         for tab in exit.resetTabs {
             path(for: tab).reset()
         }
+        if exit.showsPastBookings {
+            myBookingsViewModel.selectedTab = 1
+        }
         selectedTab = exit.showTab
     }
 
@@ -289,7 +302,7 @@ struct HomeClientView: View {
     /// open a booking here.
     private var bookingsTab: some View {
         homeStack(bookingsPath, path: $bookingsPath.path) {
-            MyBookingsView()
+            MyBookingsView(viewModel: myBookingsViewModel)
         }
     }
 

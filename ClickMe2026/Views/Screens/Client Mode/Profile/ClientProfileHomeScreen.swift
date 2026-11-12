@@ -41,6 +41,11 @@ struct ClientProfileHomeScreen: View {
     /// shell (previews, tests) the fallback `_localPath` provides a
     /// self-contained NavigationStack so the screen still works.
     @Environment(\.homeNavigationPath) private var navPath
+
+    /// Shell actions for the Favorites empty-state buttons (D-08). Nil outside
+    /// `HomeClientView` (previews, tests), where the buttons do nothing.
+    @Environment(\.returnToHome) private var returnToHome
+    @Environment(\.showMyHistory) private var showMyHistory
     @State private var _localPath: [ClientProfileHomeRoute] = []
     @State private var showLogoutConfirmation: Bool = false
 
@@ -209,7 +214,13 @@ struct ClientProfileHomeScreen: View {
         case .personalInfo:
             ClientProfileSettingsView()
         case .savedExperts:
-            FavoritesView()
+            // Favorites is reachable only from this tab, so "Explore Experts"
+            // is Back to Home from Profile and "View My History" opens Past
+            // bookings; both reset this stack (D-08, EXPL-05).
+            FavoritesView(
+                onExplore: { returnToHome?() },
+                onViewHistory: { showMyHistory?() }
+            )
         case .security:
             AccountSecurityView()
         case .notifications:

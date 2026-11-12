@@ -23,12 +23,19 @@ import Foundation
 /// `Back to Home`) is reset once. The plan depends only on its inputs, so a
 /// double tap gives the same plan and resetting an already-empty path is a
 /// no-op.
+///
+/// The Favorites empty state's two buttons use the same planner (D-08).
+/// "Explore Experts" is `backToHome` from the Profile tab: it resets Profile
+/// and shows Explore without touching Explore's stack. "View My History" is
+/// `viewMyHistory`: it resets the source tab and Bookings, shows Bookings and
+/// asks for its Past segment.
 struct HomeShellExit: Equatable {
 
     /// The shell actions that leave the booking flow.
     enum Action: Equatable {
         case backToHome
         case viewMyBookings
+        case viewMyHistory
     }
 
     /// Tabs whose stacks are emptied.
@@ -37,8 +44,8 @@ struct HomeShellExit: Equatable {
     /// Tab selected after the reset.
     let showTab: HomeClientTab
 
-    /// Whether the Bookings tab opens on its Past segment. False for the two
-    /// actions here; the history exit (plan 04-10) sets it.
+    /// Whether the Bookings tab opens on its Past segment. Only
+    /// `viewMyHistory` sets it.
     let showsPastBookings: Bool
 
     /// The exit for `action`, started from `selectedTab`.
@@ -59,6 +66,12 @@ struct HomeShellExit: Equatable {
                 resetTabs: [selectedTab, .bookings],
                 showTab: .bookings,
                 showsPastBookings: false
+            )
+        case .viewMyHistory:
+            return HomeShellExit(
+                resetTabs: [selectedTab, .bookings],
+                showTab: .bookings,
+                showsPastBookings: true
             )
         }
     }

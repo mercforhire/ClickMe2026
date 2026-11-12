@@ -57,6 +57,39 @@ struct HomeShellExitTests {
         #expect(exit.showTab == .explore)
     }
 
+    @Test("View My History resets the source tab and Bookings, shows Bookings on Past", arguments: HomeClientTab.allCases)
+    func viewMyHistory(source: HomeClientTab) {
+        let exit = HomeShellExit.plan(.viewMyHistory, selectedTab: source)
+        #expect(exit.resetTabs == [source, .bookings])
+        #expect(exit.showTab == .bookings)
+        #expect(exit.showsPastBookings == true)
+    }
+
+    @Test("View My History from Profile resets Profile and Bookings")
+    func viewMyHistoryFromProfile() {
+        let exit = HomeShellExit.plan(.viewMyHistory, selectedTab: .profile)
+        #expect(exit.resetTabs == [.profile, .bookings])
+        #expect(exit.showTab == .bookings)
+        #expect(exit.showsPastBookings)
+    }
+
+    @Test("View My History from Bookings resets Bookings once")
+    func viewMyHistoryFromBookings() {
+        let exit = HomeShellExit.plan(.viewMyHistory, selectedTab: .bookings)
+        #expect(exit.resetTabs == [.bookings])
+        #expect(exit.showTab == .bookings)
+        #expect(exit.showsPastBookings)
+    }
+
+    @Test("Explore Experts from Profile resets Profile only, leaving Explore's stack")
+    func exploreExpertsFromProfile() {
+        let exit = HomeShellExit.plan(.backToHome, selectedTab: .profile)
+        #expect(exit.resetTabs == [.profile])
+        #expect(exit.resetTabs.contains(.explore) == false)
+        #expect(exit.showTab == .explore)
+        #expect(exit.showsPastBookings == false)
+    }
+
     @Test("A double tap gives the same plan", arguments: HomeClientTab.allCases)
     func idempotent(source: HomeClientTab) {
         #expect(

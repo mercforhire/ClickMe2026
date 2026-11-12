@@ -209,4 +209,10 @@ extension EnvironmentValues {
     /// to unwind the whole booking flow. Installed by
     /// `HomeClientView` only.
     @Entry var returnToHome: HomeShellAction? = nil
+
+    /// Switch to the client shell's Bookings tab on its Past segment, after
+    /// resetting the source tab's stack and Bookings' (D-08). Used by the
+    /// Favorites empty state's "View My History". Installed by
+    /// `HomeClientView` only.
+    @Entry var showMyHistory: HomeShellAction? = nil
 }

@@ -100,12 +100,25 @@ struct MakeABooking: View {
                         .frame(maxWidth: .infinity)
                     }
 
-                    MakeABookingBookButton(
-                        title: bookButtonTitle,
-                        isBooking: viewModel.isSubmitting,
-                        isEnabled: canBook,
-                        action: bookButtonAction
-                    )
+                    // The 8 pt gap between the status line and the button is
+                    // its own stack because the outer spacing is 28.
+                    VStack(spacing: 8) {
+                        if showsConfirmingLine {
+                            Text(Self.confirmingStatusText)
+                                .font(.brand(.caption))
+                                .foregroundColor(MakeABookingBrand.onSurfaceVar)
+                                .multilineTextAlignment(.center)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity)
+                        }
+
+                        MakeABookingBookButton(
+                            title: bookButtonTitle,
+                            isBooking: viewModel.isSubmitting,
+                            isEnabled: canBook,
+                            action: bookButtonAction
+                        )
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 20)
@@ -153,6 +166,29 @@ struct MakeABooking: View {
             Button("OK", role: .cancel) {}
         } message: { text in
             Text(text)
+        }
+        // PAY-02 (D-03): the confirm outcome is still unknown after the
+        // automatic retries. The flow stays on `.confirming` while this is up,
+        // so the buttons below are the only way forward.
+        .alert(viewModel.paidFlowAlert?.title ?? "",
+               isPresented: paidFlowAlertBinding,
+               presenting: viewModel.paidFlowAlert) { _ in
+            Button("Try again") {
+                Task { await viewModel.retryConfirm() }
+            }
+            Button("Check My Bookings") {
+                showMyBookings?()
+            }
+            Button("Not now", role: .cancel) {
+                viewModel.dismissConfirmAlert()
+            }
+        } message: { alert in
+            Text(alert.message)
+        }
+        .onChange(of: showsConfirmingLine) { _, isShowing in
+            if isShowing {
+                AccessibilityNotification.Announcement(Self.confirmingStatusText).post()
+            }
         }
         // App-root keyboard toolbar doesn't reliably reach this deep
         // through the tab shell + booking-tab NavigationStack, so
@@ -213,6 +249,26 @@ struct MakeABooking: View {
             return "\(viewModel.shortDate(viewModel.selectedDate))"
         }
         return "\(viewModel.shortDate(viewModel.selectedDate)), \(slot.displayLabel)"
+    }
+
+    static let confirmingStatusText = "Confirming your booking…"
+
+    /// The status line shows for a paid booking while its confirm or an
+    /// automatic retry runs and no alert is up (UI-SPEC L2). Free bookings make
+    /// one call and never show it.
+    private var showsConfirmingLine: Bool {
+        viewModel.showsConfirmingStatus && viewModel.selectedTopic?.isFree == false
+    }
+
+    /// Presents the confirm-unknown alert while `paidFlowAlert` is set. The
+    /// setter does nothing on purpose: SwiftUI also writes `false` when a
+    /// button dismisses the alert, and only "Not now" may reset the paid flow.
+    /// Try again clears the alert itself, and Check My Bookings leaves the screen.
+    private var paidFlowAlertBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel.paidFlowAlert != nil },
+            set: { _ in }
+        )
     }
 
     /// Binding that's `true` while `keyPath` is non-nil; setting it to

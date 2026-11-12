@@ -153,6 +153,11 @@ final class MakeABookingViewModel: ObservableObject {
     /// Where we are in the paid booking flow. Free bookings never move past
     /// `.idle` — they use `isBooking` instead.
     @Published var paidStep: PaidStep = .idle
+    /// Raised when the automatic confirm retries run out with the outcome still
+    /// unknown (D-03). The paid flow stays on `.confirming` while it is set.
+    /// Declared here because a stored property cannot live in an extension; the
+    /// type and its actions are in `MakeABookingViewModel+PaidFlow.swift`.
+    @Published var paidFlowAlert: PaidFlowAlert?
     @Published var paymentIntentId: String?
     @Published var paymentSummary: PaymentSummary?
     /// SetupIntent client secret returned by
@@ -184,18 +189,17 @@ final class MakeABookingViewModel: ObservableObject {
     /// `PAYMENT_REQUIRES_ACTION` — the view presents a 3DS/SCA sheet,
     /// and after completion we retry `/bookings/confirm`.
     ///
-    /// TODO(backend): the `stripeAccount` needed to complete 3DS on the
-    /// connected-account PI is expected in `detail.stripe_account` of
-    /// the 402 error. Wire the full retry once that ships.
+    /// The 402 `detail` carries both `client_secret` and `stripe_account`
+    /// (backend WR-02 exception).
     @Published var pendingSCAChallenge: SCAChallenge?
 
-    /// Carries the `client_secret` (and, when the backend ships it,
-    /// the `stripe_account`) the SDK needs to complete 3DS.
+    /// Carries the `client_secret` and the `stripe_account` the SDK needs to
+    /// complete 3DS.
     struct SCAChallenge: Equatable {
         let clientSecret: String
-        /// Connected account id for the PI. Nil until backend adds it
-        /// to `detail.stripe_account`; the sheet handles nil as a
-        /// hard-fail.
+        /// Connected account id for the PI, from `detail.stripe_account` of the
+        /// 402. A missing value fails closed: the sheet treats nil as a
+        /// hard fail rather than guessing an account.
         let stripeAccount: String?
     }
 
@@ -595,8 +599,8 @@ final class MakeABookingViewModel: ObservableObject {
         case .outcomeUnknown:
             // D-03: keep every id and stay on `.confirming`. The hold may
             // exist, so the flow must not reset and the attempt id must not
-            // change.
-            break
+            // change. The alert offers Try again, Check My Bookings or Not now.
+            paidFlowAlert = .confirmUnknown(paymentReference: paymentIntentId)
         }
     }
 
@@ -609,6 +613,7 @@ final class MakeABookingViewModel: ObservableObject {
     /// can reset the flow when the client leaves an unknown confirm outcome.
     func resetPaidFlow() {
         confirmPaymentMethodId = nil
+        paidFlowAlert = nil
         paidStep = .idle
         paymentIntentId = nil
         setupIntentClientSecret = nil

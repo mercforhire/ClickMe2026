@@ -144,4 +144,141 @@ struct MakeABookingPaidFlowTests {
         #expect(viewModel.paidStep == .idle)
         #expect(viewModel.paymentIntentId == nil)
     }
+
+    // MARK: Retries exhausted (alert)
+
+    /// A view model whose first `failures` confirm calls time out and whose later calls return 201.
+    private func makeViewModel(timingOut failures: Int) -> MakeABookingViewModel {
+        makeViewModel { number, request in
+            if number <= failures { throw URLError(.timedOut) }
+            return PaidFlowFixture.created(request)
+        }
+    }
+
+    @Test("Three unknown failures raise the confirm-unknown alert and keep every id")
+    func retriesExhaustedRaisesAlert() async {
+        let viewModel = makeViewModel(timingOut: 3)
+        let attemptId = viewModel.bookingAttemptId
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        #expect(viewModel.paidFlowAlert == .confirmUnknown(paymentReference: "pi_test"))
+        #expect(viewModel.paidStep == .confirming)
+        #expect(viewModel.paymentIntentId == "pi_test")
+        #expect(viewModel.confirmPaymentMethodId == "pm_test")
+        #expect(viewModel.bookingAttemptId == attemptId)
+        #expect(viewModel.bookingError == nil)
+        #expect(viewModel.completedBookingId == nil)
+        #expect(viewModel.isSubmitting)
+        #expect(!viewModel.showsConfirmingStatus)
+        #expect(confirmRequests().count == 3)
+    }
+
+    @Test("Try again sends the same confirm and lands on the booking")
+    func tryAgainReplays() async {
+        let viewModel = makeViewModel(timingOut: 3)
+        let attemptId = viewModel.bookingAttemptId
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        await viewModel.retryConfirm()
+
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        #expect(viewModel.paidFlowAlert == nil)
+        #expect(viewModel.paidStep == .idle)
+        #expect(viewModel.bookingAttemptId == attemptId)
+        let requests = confirmRequests()
+        #expect(requests.count == 4)
+        expectSameIntentAndCard(requests)
+    }
+
+    @Test("Try again clears the alert while the status line shows again")
+    func tryAgainShowsStatusAgain() async {
+        let viewModel = makeViewModel(timingOut: 99)
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(viewModel.paidFlowAlert != nil)
+
+        // A second full cycle also ends unknown, so the alert comes back.
+        await viewModel.retryConfirm()
+
+        #expect(viewModel.paidFlowAlert == .confirmUnknown(paymentReference: "pi_test"))
+        #expect(viewModel.paidStep == .confirming)
+        #expect(confirmRequests().count == 6)
+    }
+
+    @Test("Not now resets the paid flow silently and keeps the form")
+    func notNowResetsSilently() async {
+        let viewModel = makeViewModel(timingOut: 3)
+        let topic = viewModel.selectedTopic
+        let slot = viewModel.selectedTimeSlot
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        viewModel.dismissConfirmAlert()
+
+        #expect(viewModel.paidStep == .idle)
+        #expect(viewModel.paymentIntentId == nil)
+        #expect(viewModel.confirmPaymentMethodId == nil)
+        #expect(viewModel.paidFlowAlert == nil)
+        #expect(viewModel.selectedTopic == topic)
+        #expect(viewModel.selectedTimeSlot == slot)
+        #expect(viewModel.bookingError == nil)
+        #expect(!viewModel.isSubmitting)
+    }
+
+    @Test("While the alert is up, Book Now makes no request")
+    func bookIsBlockedWhileAlertIsUp() async {
+        let viewModel = makeViewModel(timingOut: 3)
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        let before = MockURLProtocol.recordedRequests.count
+
+        viewModel.book()
+        try? await Task.sleep(for: .milliseconds(50))
+
+        #expect(MockURLProtocol.recordedRequests.count == before)
+        #expect(viewModel.paidFlowAlert != nil)
+    }
+
+    @Test("Try again does nothing without a stored card or outside Confirming")
+    func retryConfirmGuards() async {
+        let viewModel = makeViewModel(timingOut: 0)
+
+        // No stored pm_ id and an idle flow.
+        await viewModel.retryConfirm()
+        #expect(MockURLProtocol.recordedRequests.isEmpty)
+
+        // A stored pm_ id, but the flow is not on Confirming.
+        viewModel.confirmPaymentMethodId = PaidFlowFixture.paymentMethodId
+        await viewModel.retryConfirm()
+        #expect(MockURLProtocol.recordedRequests.isEmpty)
+
+        // On Confirming, but no stored pm_ id.
+        viewModel.confirmPaymentMethodId = nil
+        viewModel.paidStep = .confirming
+        await viewModel.retryConfirm()
+        #expect(MockURLProtocol.recordedRequests.isEmpty)
+    }
+
+    @Test("The alert message is the UI-SPEC sentence, plus the reference when there is one")
+    func alertCopy() {
+        let sentence = "Your request may already have been sent. Try again to check, "
+            + "or look in My Bookings before booking again."
+
+        let withReference = MakeABookingViewModel.PaidFlowAlert.confirmUnknown(paymentReference: "pi_test")
+        #expect(withReference.title == "We couldn't confirm your booking")
+        #expect(withReference.message == sentence + "\n\nPayment reference: pi_test")
+
+        let withoutReference = MakeABookingViewModel.PaidFlowAlert.confirmUnknown(paymentReference: nil)
+        #expect(withoutReference.message == sentence)
+    }
+
+    @Test("The status line shows only while a paid confirm runs and no alert is up")
+    func statusLineVisibility() {
+        let viewModel = makeViewModel(timingOut: 0)
+        #expect(!viewModel.showsConfirmingStatus)
+
+        viewModel.paidStep = .confirming
+        #expect(viewModel.showsConfirmingStatus)
+
+        viewModel.paidFlowAlert = .confirmUnknown(paymentReference: nil)
+        #expect(!viewModel.showsConfirmingStatus)
+    }
 }

@@ -426,7 +426,7 @@ Expected end state: one booking, cancelled, hold released. Result:
 **Status:** PENDING (WINDOWS.md #29).
 
 Steps:
-1. Book another slot, **Book Now**, **Continue**. When **Confirming your booking…** appears, turn airplane mode **on and leave it on**.
+1. Book another slot, **Book Now**, **Continue**. When **Confirming your booking…** appears, turn airplane mode **on and leave it on**. While it shows, tap a different time slot, the topic row, another day and the next-month arrow (CR-01, plan 04-15).
 2. Wait for the alert (about six seconds of retries). Read it, and write the last six characters of the `Payment reference` in the table.
 3. Turn airplane mode **off** and tap **Try again**.
 4. Check My Bookings and the Stripe Dashboard. Run Q1, then cancel the booking and prove the hold is gone.
@@ -436,6 +436,7 @@ Steps:
 Expected:
 - Alert title **We couldn't confirm your booking**; message `Your request may already have been sent. Try again to check, or look in My Bookings before booking again.` then a blank line and `Payment reference: {pi_id}`; buttons **Try again**, **Check My Bookings**, **Not now**.
 - **Try again** shows **Confirming your booking…** again with the same payment, then opens Request Sent for the existing booking. **One** booking in My Bookings and **one** hold in Stripe, not two.
+- None of the taps in step 1 changes the form while **Confirming your booking…** shows (CR-01, plan 04-15), and after **Try again** Request Sent shows the slot you first chose.
 
 Expected end state: one booking, cancelled, hold released. Result:
 
@@ -600,7 +601,7 @@ Nothing here changes `REQUIREMENTS.md` or `WINDOWS.md` by itself; `/gsd-verify-w
 | 3 | BOOK-01, BOOK-19 | #23 |
 | 4 | BOOK-05 | #24 |
 | 5, 6, 7 | BOOK-02, BOOK-03, BOOK-04, D-18 | #25 |
-| 8, steps a to e | PAY-01, PAY-02, PAY-03 | #22, #29, #30, #34 |
+| 8, steps a to e | PAY-01, PAY-02 (incl. CR-01, 04-15), PAY-03 | #22, #29, #30, #34 |
 | 9 | EXPL-01 | #26 |
 | 10 | EXPL-02 | #35 |
 | 11, 15 | EXPL-04, L5 | #33 |

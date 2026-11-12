@@ -62,15 +62,25 @@ struct MakeABooking: View {
                         expertImageURL: viewModel.expertImageURL
                     )
 
+                    // CR-01: the booking inputs stay locked from Book Now until the
+                    // booking completes or resets, so the form on screen is the one
+                    // being confirmed. The environment disables every control inside
+                    // each card (month arrows, day cells, slot chips, the topic row,
+                    // meeting type rows, the notes editor).
                     MakeABookingTopicPicker(viewModel: viewModel)
+                        .disabled(viewModel.isSubmitting)
 
                     MakeABookingCalendarCard(viewModel: viewModel)
+                        .disabled(viewModel.isSubmitting)
 
                     MakeABookingTimeSlotsCard(viewModel: viewModel)
+                        .disabled(viewModel.isSubmitting)
 
                     MakeABookingMeetingTypeCard(meetingType: $viewModel.meetingType)
+                        .disabled(viewModel.isSubmitting)
 
                     MakeABookingNotesCard(clientNotes: $viewModel.clientNotes)
+                        .disabled(viewModel.isSubmitting)
 
                     MakeABookingSummarySection(
                         topicLabel: viewModel.selectedTopic?.title ?? "—",

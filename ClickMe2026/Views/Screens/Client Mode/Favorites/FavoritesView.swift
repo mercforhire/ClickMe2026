@@ -68,7 +68,7 @@ struct FavoritesView: View {
     var body: some View {
         content
             .navigationDestination(for: FavoriteExpert.self) { expert in
-                ExpertProfileView(expert: PublicExpertProfile(from: expert))
+                ExpertProfileView(expert: PublicExpertProfile(from: expert), isFavorited: true)
             }
             .navigationTitle("Favorite Experts")
             .navigationBarTitleDisplayMode(.inline)

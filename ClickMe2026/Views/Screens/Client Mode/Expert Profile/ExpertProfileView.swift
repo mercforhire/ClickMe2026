@@ -146,8 +146,13 @@ struct ExpertProfileView: View {
 
     /// Convenience init mirroring the original signature so existing call sites
     /// that pass an expert directly keep compiling.
+    ///
+    /// - Parameter isFavorited: The caller's best knowledge of the favorite
+    ///   state, shown until the details load. The server's `is_favorite`
+    ///   replaces it when they arrive (D-09). Only Favorites passes `true`.
     init(
         expert: PublicExpertProfile,
+        isFavorited: Bool = false,
         onBookSession: @escaping () -> Void = {},
         onMessage: @escaping () -> Void = {},
         onFavorite: @escaping () -> Void = {},
@@ -155,7 +160,7 @@ struct ExpertProfileView: View {
         isSelfView: Bool = false
     ) {
         self.init(
-            viewModel: ExpertProfileViewModel(expert: expert),
+            viewModel: ExpertProfileViewModel(expert: expert, isFavorited: isFavorited),
             onBookSession: onBookSession,
             onMessage: onMessage,
             onFavorite: onFavorite,

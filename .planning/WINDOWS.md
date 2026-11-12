@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 23
+open_count: 24
 waived_count: 0
 fixed_count: 7
-total_count: 30
-last_updated: 2026-11-12T05:36:51.007Z
+total_count: 31
+last_updated: 2026-11-12T05:43:19.260Z
 ---
 
 # Broken Windows Ledger
@@ -45,6 +45,7 @@ last_updated: 2026-11-12T05:36:51.007Z
 | 28 | 04 | unrun-verify | ClickMe2026/Views/Screens/Login Flow/Login/LoginView.swift |  | D-13 / UI-SPEC D4: suspension alert on a real cold launch (suspended account lands on Login, alert shows once, Close Alert clears the flag); device check in the Phase 8 release pass | open |  | 2026-11-12T05:16:40.722Z |  |
 | 29 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Make a Booking/MakeABookingViewModel+PaidFlow.swift |  | PAY-02 / D-03 / D-11 (UAT L2, E2): airplane mode during Confirming, wait for the We couldn't confirm your booking alert, restore the network, tap Try again: Request Sent opens for that same booking, My Bookings shows one booking and Stripe shows one hold; also once let a retry succeed on its own; 409 PAYMENT_IN_PROGRESS (D-17) cannot be forced on a device, proven by unit tests only; device check in the 04-14 session | open |  | 2026-11-12T05:30:54.623Z |  |
 | 30 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Request Sent/BookingRequestSentView.swift |  | PAY-03 / UI-SPEC D3 (D-11 session): a new paid booking's Request Sent shows 'A hold is placed on your card' with the session time in step 2; a free booking shows no payment card. Variants B and C (older long-lead and charged rows) are unit-tested and previewed only | open |  | 2026-11-12T05:36:51.007Z |  |
+| 31 | 04 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Profile/ClientProfileHomeScreen.swift |  | 04-10 device check (UAT EXPL-05, D-08, N2): empty Favorites -> Explore Experts opens Explore, Profile back at root; View My History opens Bookings on Past, Profile back at root | open |  | 2026-11-12T05:43:19.260Z |  |
 
 ````json
 [
@@ -435,6 +436,19 @@ last_updated: 2026-11-12T05:36:51.007Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-12T05:36:51.007Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 31,
+    "kind": "unrun-verify",
+    "phase": "04",
+    "file": "ClickMe2026/Views/Screens/Client Mode/Profile/ClientProfileHomeScreen.swift",
+    "line": null,
+    "description": "04-10 device check (UAT EXPL-05, D-08, N2): empty Favorites -> Explore Experts opens Explore, Profile back at root; View My History opens Bookings on Past, Profile back at root",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-12T05:43:19.260Z",
     "resolved_at": null,
     "milestone": null
   }

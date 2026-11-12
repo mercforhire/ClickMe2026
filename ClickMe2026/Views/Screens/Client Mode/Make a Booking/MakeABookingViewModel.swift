@@ -158,7 +158,14 @@ final class MakeABookingViewModel: ObservableObject {
     /// Declared here because a stored property cannot live in an extension; the
     /// type and its actions are in `MakeABookingViewModel+PaidFlow.swift`.
     @Published var paidFlowAlert: PaidFlowAlert?
-    @Published var paymentIntentId: String?
+    /// The paid attempt in flight: topic, slot, PaymentIntent, meeting type and
+    /// notes as they were when Book Now created the PaymentIntent (CR-01). Set
+    /// only by `beginPaidBooking` and cleared only by `resetPaidFlow()`. Internal
+    /// so tests can install one (a test seam, like `confirmRetryPolicy`); not
+    /// published because no view renders it.
+    var paidAttempt: PaidAttempt?
+    /// The PaymentIntent of the current paid attempt.
+    var paymentIntentId: String? { paidAttempt?.paymentIntentId }
     @Published var paymentSummary: PaymentSummary?
     /// SetupIntent client secret returned by
     /// `POST /me/payment-methods/setup-intent`. Path A confirmation model:
@@ -529,7 +536,14 @@ final class MakeABookingViewModel: ObservableObject {
             )
             let setup = try await api.createPaymentMethodSetupIntent().data
 
-            paymentIntentId = intent.paymentIntentId
+            // CR-01: snapshot the Book Now values; the confirm reads only this.
+            paidAttempt = PaidAttempt(
+                topic: topic,
+                slot: slot,
+                paymentIntentId: intent.paymentIntentId,
+                meetingType: meetingType,
+                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+            )
             setupIntentClientSecret = setup.clientSecret
             // Customer + ephemeral come from the SetupIntent so PaymentSheet
             // lists the platform customer's saved cards. The PI response
@@ -560,14 +574,13 @@ final class MakeABookingViewModel: ObservableObject {
     /// `bookingAttemptId`, and is sent again with the same arguments. The
     /// server replays the booking it already made (BACK-15), so a retry cannot
     /// create a second hold. Server-coded errors keep the existing mapping.
+    /// The attempt's topic, slot, meeting type and notes come from `paidAttempt`
+    /// (CR-01), so a change on the form never reaches the request.
     func completePaidBooking(paymentMethodId: String) async {
         // One confirm at a time: a second call while one runs would start a
         // second request for an attempt whose first outcome is still unknown.
         guard !isConfirmRunning else { return }
-        guard let topic = selectedTopic,
-              let slot = selectedTimeSlot,
-              let intentId = paymentIntentId
-        else {
+        guard let attempt = paidAttempt else {
             resetPaidFlow()
             return
         }
@@ -578,19 +591,17 @@ final class MakeABookingViewModel: ObservableObject {
         defer { isConfirmRunning = false }
 
         // D-04: from here a booking may exist that the app never hears about.
-        ledger.record(expertId: expertId, start: slot.startTime)
+        ledger.record(expertId: expertId, start: attempt.slot.startTime)
 
-        let startTimeISO = Self.iso8601String(from: slot.startTime)
-        let notes = clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
         let result = await confirmRetryPolicy.run {
             try await self.api.confirmBooking(
-                paymentIntentId: intentId,
+                paymentIntentId: attempt.paymentIntentId,
                 expertId: self.expertId,
-                topicId: topic.id,
-                startTime: startTimeISO,
-                meetingType: self.meetingType,
+                topicId: attempt.topic.id,
+                startTime: Self.iso8601String(from: attempt.slot.startTime),
+                meetingType: attempt.meetingType,
                 stripePaymentMethodId: paymentMethodId,
-                clientNotes: notes,
+                clientNotes: attempt.clientNotes,
                 promoCode: nil
             )
         }
@@ -603,23 +614,23 @@ final class MakeABookingViewModel: ObservableObject {
             // lifecycle is explained inline; the raw server message is
             // no longer surfaced. A replayed 201 (BACK-15) lands here too.
             completedBookingId = response.data.bookingId
-            ledger.clear(expertId: expertId, start: slot.startTime)
+            ledger.clear(expertId: expertId, start: attempt.slot.startTime)
             confirmPaymentMethodId = nil
             resetPaidFlow()
         case let .serverCoded(error):
             // D-04, D-17: the record stays for SLOT_UNAVAILABLE (the slot may be
             // the client's own) and PAYMENT_IN_PROGRESS (it may still settle).
             if !UnconfirmedBookingLedger.keepsRecord(afterServerCode: BookingErrorMapper.code(for: error)) {
-                ledger.clear(expertId: expertId, start: slot.startTime)
+                ledger.clear(expertId: expertId, start: attempt.slot.startTime)
             }
             confirmPaymentMethodId = nil
-            handlePaidFlowError(error, phase: .confirm, topic: topic, slot: slot)
+            handlePaidFlowError(error, phase: .confirm, topic: attempt.topic, slot: attempt.slot)
         case .outcomeUnknown:
             // D-03: keep every id and stay on `.confirming`. The hold may
             // exist, so the flow must not reset and the attempt id must not
             // change. The alert offers Try again, Check My Bookings or Not now.
             // D-04: the ledger record stays, also after Not now or leaving the screen.
-            paidFlowAlert = .confirmUnknown(paymentReference: paymentIntentId)
+            paidFlowAlert = .confirmUnknown(paymentReference: attempt.paymentIntentId)
         }
     }
 
@@ -634,7 +645,7 @@ final class MakeABookingViewModel: ObservableObject {
         confirmPaymentMethodId = nil
         paidFlowAlert = nil
         paidStep = .idle
-        paymentIntentId = nil
+        paidAttempt = nil
         setupIntentClientSecret = nil
         stripeCustomerId = nil
         stripeEphemeralKey = nil

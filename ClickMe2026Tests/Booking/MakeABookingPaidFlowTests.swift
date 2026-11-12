@@ -44,6 +44,12 @@ private enum PaidFlowFixture {
         priceAmount: 5000, currency: "USD", isFree: false
     )
 
+    /// A second paid topic, used to change the form after the PaymentIntent exists (CR-01).
+    static let otherPaidTopic = BookingTopic(
+        id: UUID(), title: "Other paid session", durationMinutes: 45, description: nil,
+        priceAmount: 7500, currency: "USD", isFree: false
+    )
+
     nonisolated static func http(_ request: URLRequest, status: Int, body: Data) -> (HTTPURLResponse, Data) {
         let response = HTTPURLResponse(
             url: request.url!,
@@ -78,6 +84,25 @@ private enum PaidFlowFixture {
         return http(request, status: 409, body: Data(body.utf8))
     }
 
+    /// Bare 200 body of POST /bookings/payment-intent (no envelope).
+    nonisolated static func intentCreated(_ request: URLRequest) -> (HTTPURLResponse, Data) {
+        let body = """
+        {"payment_intent_id":"pi_snap","client_secret":"pi_snap_secret","customer_id":"cus_test",\
+        "ephemeral_key":"ek_test","total_amount":50,"currency":"USD",\
+        "summary":{"subtotal":50,"discount":0,"total":50}}
+        """
+        return http(request, status: 200, body: Data(body.utf8))
+    }
+
+    /// 200 body of POST /me/payment-methods/setup-intent.
+    nonisolated static func setupCreated(_ request: URLRequest) -> (HTTPURLResponse, Data) {
+        let body = """
+        {"status":"success","data":{"client_secret":"seti_test_secret_x","customer_id":"cus_test",\
+        "ephemeral_key":"ek_test"}}
+        """
+        return http(request, status: 200, body: Data(body.utf8))
+    }
+
     nonisolated static func coded(_ request: URLRequest, status: Int, code: String) -> (HTTPURLResponse, Data) {
         let body = #"{"status":"error","code":"\#(code)","message":"server text"}"#
         return http(request, status: status, body: Data(body.utf8))
@@ -88,9 +113,13 @@ private enum PaidFlowFixture {
 @MainActor
 struct MakeABookingPaidFlowTests {
 
-    /// A view model on a paid topic with a slot 2 days out, a PaymentIntent
-    /// already created, and zero retry delays.
-    private func makeViewModel(_ answer: @escaping ConfirmScript.Answer) -> MakeABookingViewModel {
+    /// A view model on a paid topic with a slot 2 days out, a paid attempt for
+    /// that topic and slot already installed (pass `installingAttempt: false`
+    /// to start without one), and zero retry delays.
+    private func makeViewModel(
+        installingAttempt: Bool = true,
+        _ answer: @escaping ConfirmScript.Answer
+    ) -> MakeABookingViewModel {
         MockURLProtocol.reset()
         let script = ConfirmScript(answer)
         let api = APITestFactory.make { request in try script.respond(to: request) }
@@ -103,12 +132,21 @@ struct MakeABookingPaidFlowTests {
             api: api
         )
         viewModel.selectedTopic = PaidFlowFixture.paidTopic
-        viewModel.selectedTimeSlot = BookingTimeSlot(
+        let slot = BookingTimeSlot(
             startTime: Date().addingTimeInterval(2 * 24 * 3600),
             endTime: nil,
             isAvailable: true
         )
-        viewModel.paymentIntentId = PaidFlowFixture.intentId
+        viewModel.selectedTimeSlot = slot
+        if installingAttempt {
+            viewModel.paidAttempt = MakeABookingViewModel.PaidAttempt(
+                topic: PaidFlowFixture.paidTopic,
+                slot: slot,
+                paymentIntentId: PaidFlowFixture.intentId,
+                meetingType: viewModel.meetingType,
+                clientNotes: nil
+            )
+        }
         viewModel.confirmRetryPolicy = ConfirmRetryPolicy(delays: [.zero, .zero])
         return viewModel
     }
@@ -116,6 +154,11 @@ struct MakeABookingPaidFlowTests {
     /// Every POST /bookings/confirm the mock saw, in order.
     private func confirmRequests() -> [URLRequest] {
         MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix("/bookings/confirm") == true }
+    }
+
+    /// A string field of one request body, nil when absent.
+    private func bodyString(_ request: URLRequest, _ key: String) -> String? {
+        request.jsonBodyForTest()?[key] as? String
     }
 
     /// Asserts that every confirm request carried the same PaymentIntent and card.
@@ -209,6 +252,92 @@ struct MakeABookingPaidFlowTests {
         let requests = confirmRequests()
         #expect(requests.count == 4)
         expectSameIntentAndCard(requests)
+    }
+
+    @Test("Book Now snapshots the paid attempt, and a later form change never reaches the confirm (CR-01)")
+    func bookCreatesPaidAttempt() async throws {
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in
+            let path = request.url?.path ?? ""
+            if path.hasSuffix("/bookings/payment-intent") { return PaidFlowFixture.intentCreated(request) }
+            if path.hasSuffix("/payment-methods/setup-intent") { return PaidFlowFixture.setupCreated(request) }
+            return PaidFlowFixture.created(request)
+        }
+        let slot = try #require(viewModel.selectedTimeSlot)
+        #expect(viewModel.paidAttempt == nil)
+
+        viewModel.book()
+        for _ in 0 ..< 150 where viewModel.paidStep != .collectingPaymentMethod {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.paidStep == .collectingPaymentMethod)
+        #expect(
+            viewModel.paidAttempt == MakeABookingViewModel.PaidAttempt(
+                topic: PaidFlowFixture.paidTopic,
+                slot: slot,
+                paymentIntentId: "pi_snap",
+                meetingType: .inAppVoice,
+                clientNotes: nil
+            )
+        )
+
+        viewModel.selectedTopic = PaidFlowFixture.otherPaidTopic
+        viewModel.selectedTimeSlot = BookingTimeSlot(
+            startTime: slot.startTime.addingTimeInterval(3600),
+            endTime: nil,
+            isAvailable: true
+        )
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        let requests = confirmRequests()
+        #expect(requests.count == 1)
+        let request = try #require(requests.first)
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        #expect(bodyString(request, "payment_intent_id") == "pi_snap")
+        #expect(bodyString(request, "topic_id") == PaidFlowFixture.paidTopic.id.uuidString.lowercased())
+        #expect(bodyString(request, "start_time") == formatter.string(from: slot.startTime))
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+    }
+
+    @Test("paymentIntentId reads the attempt and a reset clears both")
+    func paymentIntentIdFollowsAttempt() {
+        let viewModel = makeViewModel(timingOut: 0)
+        #expect(viewModel.paymentIntentId == viewModel.paidAttempt?.paymentIntentId)
+        #expect(viewModel.paymentIntentId == PaidFlowFixture.intentId)
+
+        viewModel.resetPaidFlow()
+
+        #expect(viewModel.paidAttempt == nil)
+        #expect(viewModel.paymentIntentId == nil)
+    }
+
+    @Test("Try again after the topic and slot changed still confirms the topic and slot that were paid for (CR-01)")
+    func retryKeepsOriginalSelection() async throws {
+        let viewModel = makeViewModel(timingOut: 3)
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        let first = try #require(confirmRequests().first?.jsonBodyForTest())
+        let originalSlot = try #require(viewModel.selectedTimeSlot)
+
+        viewModel.selectedTopic = PaidFlowFixture.otherPaidTopic
+        viewModel.selectedTimeSlot = BookingTimeSlot(
+            startTime: originalSlot.startTime.addingTimeInterval(3600),
+            endTime: nil,
+            isAvailable: true
+        )
+        await viewModel.retryConfirm()
+
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        let requests = confirmRequests()
+        #expect(requests.count == 4)
+        expectSameIntentAndCard(requests)
+        for request in requests {
+            let body = request.jsonBodyForTest()
+            #expect(body?["start_time"] as? String == first["start_time"] as? String)
+            #expect(body?["topic_id"] as? String == first["topic_id"] as? String)
+            #expect(body?["meeting_type"] as? String == first["meeting_type"] as? String)
+        }
+        #expect(first["topic_id"] as? String == PaidFlowFixture.paidTopic.id.uuidString.lowercased())
     }
 
     @Test("Try again clears the alert while the status line shows again")

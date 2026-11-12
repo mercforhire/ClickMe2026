@@ -250,7 +250,7 @@ Plans:
   4. An unavailable (404) expert profile shows "This profile isn't available", and network errors offer a retry. Empty Expertise, Topics and Reviews sections are hidden. Free featured topics show "Free". Search tag pills show their full text.
   5. Favorites shows every favorite (paged), with working empty-state buttons and correct copy. A profile's favorite state matches its `is_favorite`. The full reviews list loads beyond 20 reviews.
 
-**Plans**: 10/14 plans executed in 4 waves (iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02)
+**Plans**: 11/14 plans executed in 4 waves (iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02)
 
 Plans:
 **Wave 1**
@@ -270,7 +270,7 @@ Plans:
 - [ ] 04-12-PLAN.md — Heart seed from Favorites (D-09); EXPL-02 empty sections and zero/one review copy after the device-confirm decision (after 04-05, 04-06)
 
 **Wave 3**
-- [ ] 04-13-PLAN.md — PAY-02 D-04 "You may already have this booking" and D-15 DUPLICATE_BOOKING route via the session ledger (after 04-08)
+- [x] 04-13-PLAN.md — PAY-02 D-04 "You may already have this booking" and D-15 DUPLICATE_BOOKING route via the session ledger (after 04-08)
 
 **Wave 4**
 - [ ] 04-14-PLAN.md — EXPL-03 and EXPL-07 regression; Phase 4 device UAT checklist with the D-11 real-money session (01-17, 01-19, backlog 999.1 and 999.2) and the D-14 Android check; full suite (after all)
@@ -373,7 +373,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
-| 4. Booking, Payment and Discovery | 10/14 | In Progress | - |
+| 4. Booking, Payment and Discovery | 11/14 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |

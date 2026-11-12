@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: executing
-stopped_at: Completed 04-11-PLAN.md
-last_updated: "2026-11-12T05:51:52.846Z"
+stopped_at: Completed 04-13-PLAN.md
+last_updated: "2026-11-12T06:02:07.372Z"
 last_activity: 2026-11-11
 last_activity_desc: Phase 04 execution started
-state_head: 7c45863582a4e677c6411e692443e519b2913358
+state_head: 476252c8cf8c263aa5198ff0342e746a2c26d5e8
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 72
-  completed_plans: 68
+  completed_plans: 69
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 11 of 14
+Plan: 12 of 14
 Status: Ready to execute
 Last activity: 2026-11-11 — Phase 04 execution started
 
@@ -124,6 +124,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P09 | 12 min | 2 tasks | 5 files |
 | Phase 04 P10 | 15min | 2 tasks | 5 files |
 | Phase 04 P11 | 13 min | 2 tasks | 6 files |
+| Phase 04 P13 | 9 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -261,6 +262,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-10: Explore Experts reuses returnToHome (Back to Home from Profile); View My History is a new HomeShellExit action; HomeClientView owns MyBookingsViewModel so the shell can select the Past segment
 - [Phase 04]: 04-11: Reviews dedupe on ExpertReview.pagingKey (serverId ?? id); a failed pull-to-refresh on Reviews shows no alert and keeps the rows
 - [Phase 04]: 04-11: TopicsSetupFlowLayout only changes for a subview wider than the row (proposed the row width); fitting subviews keep .unspecified, proven by a test against the old algorithm
+- [Phase 04]: 04-13 PAY-02: UnconfirmedBookingLedger (expert id plus slot start to the second, session-only) is written when a paid confirm starts and kept on unknown outcome, 409 PAYMENT_IN_PROGRESS (D-17), SLOT_UNAVAILABLE and Not now; a DUPLICATE_BOOKING with a matching record and UUID detail.booking_id opens Request Sent for that booking (D-15)
+- [Phase 04]: 04-13: a matching SLOT_UNAVAILABLE or an unmatched DUPLICATE_BOOKING shows Couldn't book / You may already have this booking. Check My Bookings. (Check My Bookings, Close Alert); the slot and attempt id are reset (K4); device check logged in WINDOWS.md for 04-14
 
 ### Pending Todos
 
@@ -331,6 +334,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T05:51:52.447Z
-Stopped at: Completed 04-11-PLAN.md
+Last session: 2026-11-12T06:02:06.970Z
+Stopped at: Completed 04-13-PLAN.md
 Resume file: None

@@ -138,3 +138,92 @@ struct PaymentLifecycleVariantTests {
         #expect(variant.stepThreeIcon == "creditcard")
     }
 }
+
+// MARK: - View model
+
+/// The decoded booking, not a hard-coded step, decides what the card says.
+@Suite("Request Sent payment variant", .serialized)
+@MainActor
+struct BookingRequestSentVariantTests {
+
+    private typealias Fixtures = ClientBookingFixtures
+
+    private var bookingUUID: UUID { UUID(uuidString: Fixtures.bookingId)! }
+
+    /// Loads a view model against a stubbed `GET /client/bookings/:id`.
+    ///
+    /// - Parameters:
+    ///   - status: The raw booking status. Passed explicitly on every row; the fixture default is `confirmed`.
+    ///   - expiresAt: A raw JSON fragment for `authorization_expires_at`.
+    private func loadedVariant(
+        status: String,
+        paymentStatus: String,
+        isFree: Bool = false,
+        expiresAt: String = "null"
+    ) async -> (variant: PaymentLifecycleVariant?, state: LoadState) {
+        let body = Fixtures.detailJSON(
+            status: status,
+            paymentStatus: paymentStatus,
+            isFree: isFree,
+            priceAmount: isFree ? nil : 4500,
+            authorizationExpiresAt: expiresAt
+        )
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: body)
+        }
+        let vm = BookingRequestSentViewModel(bookingId: bookingUUID, api: api)
+        await vm.load()
+        return (vm.paymentVariant, vm.state)
+    }
+
+    @Test("a confirmed paid detail with a live hold loads the live-hold variant")
+    func liveHold() async {
+        let result = await loadedVariant(
+            status: "confirmed", paymentStatus: "held", expiresAt: #""2099-01-02T00:00:00.000Z""#
+        )
+        #expect(result.state == .loaded)
+        #expect(result.variant == .liveHold)
+    }
+
+    @Test("a confirmed paid detail with no PaymentIntent loads the charge-scheduled variant")
+    func chargeScheduled() async {
+        let result = await loadedVariant(status: "confirmed", paymentStatus: "none")
+        #expect(result.state == .loaded)
+        #expect(result.variant == .chargeScheduled)
+    }
+
+    @Test("a cancelled paid detail with payment_status none loads no card")
+    func cancelledNoneHidesCard() async {
+        let result = await loadedVariant(status: "cancelled", paymentStatus: "none")
+        #expect(result.state == .loaded)
+        #expect(result.variant == nil)
+    }
+
+    @Test("held with a null authorization_expires_at loads no card, never 'charged'")
+    func heldWithoutExpiryHidesCard() async {
+        let result = await loadedVariant(status: "confirmed", paymentStatus: "held")
+        #expect(result.state == .loaded)
+        #expect(result.variant == nil)
+    }
+
+    @Test("a completed paid detail with payment_status captured loads the already-charged variant")
+    func captured() async {
+        let result = await loadedVariant(status: "completed", paymentStatus: "captured")
+        #expect(result.state == .loaded)
+        #expect(result.variant == .alreadyCharged)
+    }
+
+    @Test("a free detail loads no card")
+    func freeHidesCard() async {
+        let result = await loadedVariant(status: "confirmed", paymentStatus: "none", isFree: true)
+        #expect(result.state == .loaded)
+        #expect(result.variant == nil)
+    }
+
+    @Test("a refunded paid detail loads no card")
+    func refundedHidesCard() async {
+        let result = await loadedVariant(status: "cancelled", paymentStatus: "refunded")
+        #expect(result.state == .loaded)
+        #expect(result.variant == nil)
+    }
+}

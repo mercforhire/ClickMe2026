@@ -18,10 +18,10 @@ final class SignupProfilePhotoViewModel: ObservableObject {
     @Published var selectedPhoto: PhotosPickerItem?
     @Published var profileImage: Image?
     @Published var zoomScale: CGFloat = 0.5
-    /// Raw JPEG bytes of the currently-picked photo. Held so `save()`
-    /// can upload the exact image that's on-screen; a re-encode from
-    /// `Image` back to Data isn't trivially reversible.
-    private var pendingJpegData: Data?
+    /// The photo picked this session. Held so `save()` can render the square
+    /// the preview shows at the current `zoomScale` (SIGN-05); an `Image`
+    /// can't be turned back into pixels. Stays nil for a downloaded avatar.
+    private var pickedImage: UIImage?
 
     // MARK: Submission state
     @Published var isSaving: Bool = false
@@ -29,6 +29,10 @@ final class SignupProfilePhotoViewModel: ObservableObject {
     @Published var saveError: String?
 
     var hasPhoto: Bool { profileImage != nil }
+
+    /// Whether the zoom slider can change what Save uploads. Only a newly
+    /// picked photo can be re-rendered; a downloaded avatar is display-only.
+    var canZoom: Bool { pickedImage != nil }
 
     // MARK: Dependencies
 
@@ -71,20 +75,21 @@ final class SignupProfilePhotoViewModel: ObservableObject {
         }
     }
 
-    /// Loads the image data for the currently selected `PhotosPickerItem`.
-    /// Re-encodes to JPEG so `save()` can hand a stable, compact byte
-    /// buffer to `POST /user/profile/avatar`.
+    /// Loads the image data for the currently selected `PhotosPickerItem`
+    /// and shows it in the ring. `save()` crops and encodes it later.
     func loadSelectedPhoto() async {
         guard let item = selectedPhoto else { return }
         guard let data = try? await item.loadTransferable(type: Data.self),
               let uiImage = UIImage(data: data) else { return }
+        usePickedImage(uiImage)
+    }
 
-        // Re-encode for a smaller upload than the raw HEIC/PNG.
-        let jpeg = uiImage.jpegData(compressionQuality: 0.85) ?? data
-        pendingJpegData = jpeg
-
+    /// Makes `image` the photo to upload: shows it in the ring and resets the
+    /// zoom to its default.
+    func usePickedImage(_ image: UIImage) {
+        pickedImage = image
         withAnimation(.easeInOut(duration: 0.3)) {
-            profileImage = Image(uiImage: uiImage)
+            profileImage = Image(uiImage: image)
             zoomScale = 0.5
         }
     }
@@ -118,7 +123,7 @@ final class SignupProfilePhotoViewModel: ObservableObject {
         withAnimation(.easeInOut(duration: 0.25)) {
             profileImage = nil
             selectedPhoto = nil
-            pendingJpegData = nil
+            pickedImage = nil
             zoomScale = 0.5
         }
         // Clear the accumulator so the checklist reflects the removal.
@@ -127,8 +132,9 @@ final class SignupProfilePhotoViewModel: ObservableObject {
 
     // MARK: - Save
 
-    /// Uploads the pending photo via `POST /user/profile/avatar` and
-    /// mirrors the returned URL onto the accumulator. Skips the network
+    /// Uploads the square the preview shows (the picked photo cropped at the
+    /// current zoom, see `ProfilePhotoCropper`) via `POST /user/profile/avatar`
+    /// and mirrors the returned URL onto the accumulator. Skips the network
     /// call in the preview / design path (no accumulator wired) so the
     /// canvas still animates the "Saved" state.
     func save() async {
@@ -142,10 +148,16 @@ final class SignupProfilePhotoViewModel: ObservableObject {
         }
 
         // Runtime path — real upload.
-        guard let data = pendingJpegData else {
-            // Nothing to upload (user hit Save with no photo picked).
-            // Treat as no-op success so the flow can continue.
+        guard let pickedImage else {
+            // Nothing to upload (user hit Save with no photo picked, or kept
+            // the downloaded avatar). Treat as no-op success so the flow can
+            // continue.
             isSaved = true
+            return
+        }
+
+        guard let data = ProfilePhotoCropper.squareCrop(pickedImage, zoom: zoomScale) else {
+            saveError = "Couldn't prepare this photo. Please choose another one."
             return
         }
 

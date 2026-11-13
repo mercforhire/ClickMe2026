@@ -663,6 +663,8 @@ final class UserManager {
             return .switched(.client)
         }
         isSwitchingMode = true
+        // Asking for Expert ends a Not now, even if this request is later superseded (D-01).
+        setupDeferral.clear()
         let setupCompleted = await lookUpSetupCompleted()
         let resolution = ExpertModeGate.resolveSwitch(
             isLatestRequest: token == modeSwitchGeneration,
@@ -716,6 +718,14 @@ final class UserManager {
         setupDeferral.set()
         setMode(.client)
         setupHubRequested = false
+    }
+
+    /// Publish from the setup hub (Android `completeSetup`): ends any
+    /// deferral and lands in Client mode, because a fresh expert has no topic
+    /// yet and the Expert dashboard would be empty.
+    func completeSetup() {
+        setupDeferral.clear()
+        setMode(.client)
     }
 
     /// True when the expert has at least one topic. Drives the "first

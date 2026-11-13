@@ -227,7 +227,7 @@ struct LoginView: View {
                                 // so the expert dashboard would be empty.
                                 // They can flip to expert mode manually from
                                 // the profile hub once they add a topic.
-                                UserManager.shared.setMode(.client)
+                                UserManager.shared.completeSetup()
                                 onSuccess(.client)
                             }
                         )

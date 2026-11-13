@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-05-PLAN.md
-last_updated: "2026-11-13T18:12:05.543Z"
+stopped_at: Completed 05-06-PLAN.md
+last_updated: "2026-11-13T18:14:57.915Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: 5a3a9b43f5cff662e0b993db0946d4debbe0ce4c
+state_head: c489e9a3d07843cb818e761e198c3e98dd7bdc30
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 80
+  completed_plans: 81
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 6 of 17
+Plan: 7 of 17
 Status: Ready to execute
 Last activity: 2026-11-13 — Phase 05 execution started
 
@@ -136,6 +136,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P03 | 12 min | 2 tasks | 5 files |
 | Phase 05 P04 | 13 min | 3 tasks | 9 files |
 | Phase 05 P05 | 20 min | 3 tasks | 9 files |
+| Phase 05 P06 | 8 min | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -295,6 +296,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-04: A cleared signup province is sent as empty string only when a province existed at open (provinceAtOpen); never-set empty sends no key
 - [Phase 05]: 05-04: All location labels go through LocationFormatter.format; unknown country code shown as given
 - [Phase 05]: 05-05: Feedback minimum counts the trimmed text's UTF-16 units (server JS length, Android String.length); NotificationSettingsViewModel dedupes saves with lastAppliedSnapshot; one SupportContact constant for the support address
+- [Phase 05]: 05-06: Cancellation policy link sits between the 24-hour notice and the action buttons as an underlined green text button; Deadlines and Refund Eligibility cards left unchanged after re-checking refund.js and the FAQ migration
 
 ### Pending Todos
 
@@ -379,6 +381,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T18:12:05.072Z
-Stopped at: Completed 05-05-PLAN.md
+Last session: 2026-11-13T18:14:57.435Z
+Stopped at: Completed 05-06-PLAN.md
 Resume file: None

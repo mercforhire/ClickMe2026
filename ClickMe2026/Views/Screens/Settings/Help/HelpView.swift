@@ -15,10 +15,6 @@ struct HelpView: View {
     @StateObject private var viewModel: HelpViewModel
     @Environment(\.openURL) private var openURL
 
-    /// Support inbox surfaced by the "Email Us" contact row. Swap
-    /// here (not per-callsite) if the address ever changes.
-    private static let supportEmail = "clickmeapp@uptrendinvestments.net"
-
     init(viewModel: HelpViewModel = HelpViewModel()) {
         _viewModel = StateObject(wrappedValue: viewModel)
     }
@@ -139,7 +135,7 @@ struct HelpView: View {
     /// simulator builds that have no mail handler configured — the
     /// button "does nothing" only in that edge case.
     private func openSupportEmail() {
-        guard let url = URL(string: "mailto:\(Self.supportEmail)") else { return }
+        guard let url = SupportContact.mailtoURL else { return }
         openURL(url)
     }
 }

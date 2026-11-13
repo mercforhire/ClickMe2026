@@ -15,7 +15,7 @@ import Foundation
 /// UI-SPEC label `Close Alert`, and the difference is logged, not aligned.
 nonisolated enum SuspensionNotice {
     static let title = "Your account has been suspended"
-    static let message = "You can't use ClickMe with this account right now. If you think this is a mistake, contact clickmeapp@uptrendinvestments.net."
+    static let message = "You can't use ClickMe with this account right now. If you think this is a mistake, contact \(SupportContact.email)."
     static let dismissLabel = "Close Alert"
 
     /// Whether Login should raise the alert now. True only while the account

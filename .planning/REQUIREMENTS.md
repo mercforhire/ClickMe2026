@@ -66,7 +66,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 ### Signup and Mode Switch
 
 - [x] **SIGN-01** [S1] **[major]**: Expert cannot publish the profile without a photo
-- [ ] **SIGN-02** [S3] **[major]**: Resuming signup keeps the already-verified email state
+- [x] **SIGN-02** [S3] **[major]**: Resuming signup keeps the already-verified email state
 - [x] **SIGN-03** [S4]: Expertise tags (and languages) are saved in the order the user tapped them, so the first pick is primary
 - [x] **SIGN-04** [S5]: The country code is normalized on publish
 - [x] **SIGN-05** [S6]: The uploaded photo matches the zoom/crop the user set
@@ -221,7 +221,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXPL-06 | Phase 4 | Gaps Found |
 | EXPL-07 | Phase 4 | Pending |
 | SIGN-01 | Phase 5 | Complete |
-| SIGN-02 | Phase 5 | Pending |
+| SIGN-02 | Phase 5 | Complete |
 | SIGN-03 | Phase 5 | Complete |
 | SIGN-04 | Phase 5 | Complete |
 | SIGN-05 | Phase 5 | Complete |

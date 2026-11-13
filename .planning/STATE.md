@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-09-PLAN.md
-last_updated: "2026-11-13T21:52:11.809Z"
+stopped_at: Completed 05-11-PLAN.md
+last_updated: "2026-11-13T21:58:25.385Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: 8ea517cb6797a1925e10cbbd31b7113e5b8b2500
+state_head: d957e1f01e938c24bba4e00168e3c1b2f773a67a
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 85
+  completed_plans: 86
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 11 of 17
+Plan: 12 of 17
 Status: Ready to execute
 Last activity: 2026-11-13 — Phase 05 execution started
 
@@ -141,6 +141,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P07 | 14 min | 2 tasks | 6 files |
 | Phase 05 P08 | 15 min | 2 tasks | 6 files |
 | Phase 05 P09 | 35 min | 2 tasks | 7 files |
+| Phase 05 P11 | 10 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -305,6 +306,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-07: requestModeSwitch refuses any switch during a call as its first statement; setup state only from lookUpSetupCompleted(), a failed lookup is nil and fails open, never the cached profile
 - [Phase 05]: 05-08: bookings button label is Title Case 'View My Bookings' (UI-SPEC CP1/A7 supersedes plan); a self-delete 409 keeps the user on the feedback step and retry fetches a fresh token
 - [Phase 05]: 05-09: Profile settings (client and expert) use the catalog LanguageSelectionView; customs are always sent with language_ids; a zero-language Done is never applied or sent (keeps previous list, 'Keep at least one language.')
+- [Phase 05]: 05-11: GET /auth/email/status is the only source for seeding the signup hub's emailVerified; read is best-effort (try?) and a local true is never downgraded
 
 ### Pending Todos
 
@@ -389,6 +391,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T21:52:11.339Z
-Stopped at: Completed 05-09-PLAN.md
+Last session: 2026-11-13T21:58:24.906Z
+Stopped at: Completed 05-11-PLAN.md
 Resume file: None

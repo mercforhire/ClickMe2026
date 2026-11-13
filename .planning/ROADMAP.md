@@ -303,7 +303,32 @@ Plans:
   4. Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`. Feedback cannot be sent with fewer than 10 characters. Delete Account has no Pause Account card and accurately says what is deleted and what is kept or anonymized.
   5. `CancellationPoliciesView` and `ReadyToStartCallView` are either reachable in the app or removed from the codebase (per Q7).
 
-**Plans**: TBD
+**Plans**: 13 plans in 5 waves (iOS only, no backend change; BACK-13 deferred per D-04)
+
+Plans:
+**Wave 1**
+- [ ] 05-01-PLAN.md — T8 / D-14: port remember-login-email (`b0629d9`) by hand; deletion forgets the email
+- [ ] 05-02-PLAN.md — SIGN-03: tags and languages keep tap order
+- [ ] 05-03-PLAN.md — SIGN-05: upload the cropped square the preview shows (orientation, metadata, max side)
+- [ ] 05-04-PLAN.md — SIGN-01, SIGN-04, D-05 to D-07: photo required, country normalized, province optional and clearable, one LocationFormatter
+- [ ] 05-05-PLAN.md — SET-04 notification preferences save nothing on open; SET-05 feedback 10 characters; SET-02 one support address
+- [ ] 05-06-PLAN.md — SET-07 / D-12, D-13: cancellation policy linked with corrected copy; ReadyToStartCallView deleted
+
+**Wave 2** *(each plan waits for the wave 1 plan it names)*
+- [ ] 05-07-PLAN.md — SIGN-06 tracer: one Expert-mode gate from Profile > Mode Switch to the setup hub; Not now and deferral (D-01 to D-04) (after 05-01)
+- [ ] 05-08-PLAN.md — SET-06, SET-03: self-delete 409 blockers with My Bookings on both shells; accurate Delete Account copy; pause card removed (after 05-01)
+- [ ] 05-09-PLAN.md — SET-01: client and expert language edits saved with ids and customs; old language sheet removed (after 05-02)
+
+**Wave 3**
+- [ ] 05-10-PLAN.md — SIGN-06 / D-03: remaining Mode Switch screens, both push handlers, Splash and Login through the gate; mode setter private (after 05-07, 05-08)
+- [ ] 05-11-PLAN.md — SIGN-02: resuming signup keeps a verified email verified (after 05-04, 05-07)
+
+**Wave 4**
+- [ ] 05-12-PLAN.md — D-02: role-guarded foreground setup re-check (cuttable) (after 05-10)
+
+**Wave 5**
+- [ ] 05-13-PLAN.md — full suite and phase gates, device UAT checklist, Android and saved-card todos (D-11, D-12, D-16), BACK-13 deferral in REQUIREMENTS.md (after all)
+
 **UI hint**: yes
 **Notes**:
 - These decisions are settled in this phase's discuss step:
@@ -381,7 +406,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
-| 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
+| 5. Signup, Mode Switch and Account | 0/13 | Planned | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |

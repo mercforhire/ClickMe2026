@@ -34,7 +34,16 @@ final class ExpertProfileSettingsViewModel {
     var state: String
     /// ISO-3166-1 alpha-3 code (e.g. "USA") — matches server contract.
     var country: String
-    var languages: [String]
+    /// Catalog languages (id + label) in the order the user picked them.
+    /// Only these ids are sent as `language_ids`.
+    var languageItems: [LanguageItem]
+    /// Id-less (custom) languages the server already holds. The picker cannot
+    /// add or remove them, but a languages save is a full replace, so they are
+    /// always sent back as `custom_languages` or the save would delete them.
+    private(set) var customLanguages: [String] = []
+
+    /// Display labels for the language row: catalog languages, then customs.
+    var languages: [String] { languageItems.map(\.label) + customLanguages }
 
     // MARK: Photo
 
@@ -82,6 +91,11 @@ final class ExpertProfileSettingsViewModel {
     @ObservationIgnored
     private var lastPersistedSnapshot: String?
 
+    /// Language ids the server holds as of the last hydration or successful
+    /// save. The `languages` group is sent only when the picked ids differ.
+    @ObservationIgnored
+    private var persistedLanguageIds: [String]
+
     // MARK: Load state
 
     var loadState: LoadState = .idle
@@ -115,7 +129,10 @@ final class ExpertProfileSettingsViewModel {
         city: String = "San Francisco",
         state: String = "CA",
         country: String = "USA",
-        languages: [String] = ["English", "Spanish"],
+        languageItems: [LanguageItem] = [
+            LanguageItem(id: "en", label: "English"),
+            LanguageItem(id: "es", label: "Spanish")
+        ],
         selectedPhoto: PhotosPickerItem? = nil,
         profileImage: Image? = nil,
         api: ClickMeAPI = .shared,
@@ -130,7 +147,8 @@ final class ExpertProfileSettingsViewModel {
         self.city = city
         self.state = state
         self.country = country
-        self.languages = languages
+        self.languageItems = languageItems
+        self.persistedLanguageIds = languageItems.map(\.id)
         self.selectedPhoto = selectedPhoto
         self.profileImage = profileImage
         self.api = api
@@ -226,7 +244,7 @@ final class ExpertProfileSettingsViewModel {
         lastPersistedSnapshot = currentSnapshot
     }
 
-    private func hydrate(from data: UserProfileData) {
+    func hydrate(from data: UserProfileData) {
         let personal = data.personalDetails
         let professional = data.professionalDetails
         let location = data.location
@@ -239,7 +257,16 @@ final class ExpertProfileSettingsViewModel {
         city = location.city ?? ""
         state = location.stateProvince ?? ""
         country = location.country ?? ""
-        languages = data.languages.compactMap(\.label)
+        // An entry with an id is a catalog language; an id-less entry carries
+        // its `custom_label` as the label (userProfile.controller.js).
+        languageItems = data.languages.compactMap { entry in
+            guard let id = entry.id, let label = entry.label else { return nil }
+            return LanguageItem(id: id, label: label)
+        }
+        customLanguages = data.languages.compactMap { entry in
+            entry.id == nil ? entry.label : nil
+        }
+        persistedLanguageIds = languageItems.map(\.id)
     }
 
     // MARK: - Auto-save (client fields → PATCH /user/profile)
@@ -263,16 +290,35 @@ final class ExpertProfileSettingsViewModel {
         }
     }
 
-    private func performAutoSave() async {
-        // `email` is 403 on this endpoint, so it's omitted. `languages` is
-        // skipped because the VM stores display strings and the server needs
-        // `language_ids` — wire once a picker sources IDs from GET /meta/languages.
+    /// Applies the picker's Done result. A selection that would leave the
+    /// profile with no language at all (no catalog id and no custom label) is
+    /// never applied: the backend would accept the empty list and delete every
+    /// row, so this guard is the only protection (UI-SPEC EM4, A9). A profile
+    /// that already had none gets a silent no-op.
+    func applyLanguageSelection(_ picked: [LanguageItem]) {
+        if picked.isEmpty && customLanguages.isEmpty {
+            if !languageItems.isEmpty {
+                autoSaveError = "Keep at least one language."
+            }
+            return
+        }
+        languageItems = picked
+    }
+
+    /// Builds the `PATCH /user/profile` body from the current fields.
+    ///
+    /// `email` is 403 on this endpoint, so it is omitted. The `languages`
+    /// group is a full replace on the server, so it is sent only when the
+    /// picked ids changed, always with the custom languages, and never when it
+    /// would leave zero languages.
+    func makeProfileUpdateBody() -> UpdateUserProfileRequest {
         var body = UpdateUserProfileRequest()
         body.basic = .init(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             lastName: lastName.trimmingCharacters(in: .whitespaces),
             bio: bio.trimmingCharacters(in: .whitespaces)
         )
+        // An emptied State/Province goes out as "" (the schema rejects null).
         body.location = .init(
             city: city.trimmingCharacters(in: .whitespaces),
             stateProvince: state.trimmingCharacters(in: .whitespaces),
@@ -282,6 +328,17 @@ final class ExpertProfileSettingsViewModel {
             jobTitle: jobTitle.trimmingCharacters(in: .whitespaces),
             company: company.trimmingCharacters(in: .whitespaces)
         )
+
+        let ids = languageItems.map(\.id)
+        if ids != persistedLanguageIds && !(ids.isEmpty && customLanguages.isEmpty) {
+            body.languages = .init(languageIds: ids, customLanguages: customLanguages)
+        }
+        return body
+    }
+
+    private func performAutoSave() async {
+        let body = makeProfileUpdateBody()
+        let sentLanguageIds = body.languages?.languageIds
 
         let snapshotAtSaveTime = currentSnapshot
         let trimmedMeetingUrl = meetingUrl.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -319,6 +376,7 @@ final class ExpertProfileSettingsViewModel {
             try? await userManager.refreshExpertProfile()
 
             lastPersistedSnapshot = snapshotAtSaveTime
+            if let sentLanguageIds { persistedLanguageIds = sentLanguageIds }
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
             autoSaveError = error.userMessage
@@ -328,8 +386,11 @@ final class ExpertProfileSettingsViewModel {
     /// Concatenated view of the auto-save-tracked fields. Used to dedup
     /// the debounced save against the server's known state.
     private var currentSnapshot: String {
-        [firstName, lastName, bio, jobTitle, company, meetingUrl, city, state, country]
-            .joined(separator: "|")
+        [
+            firstName, lastName, bio, jobTitle, company, meetingUrl, city, state, country,
+            languageItems.map(\.id).joined(separator: ","),
+            customLanguages.joined(separator: ","),
+        ].joined(separator: "|")
     }
 
     // MARK: - Error mapping

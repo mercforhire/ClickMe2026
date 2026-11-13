@@ -211,4 +211,91 @@ struct ProfileLanguagesSaveTests {
         #expect(vm.languages == ["French", "Spanish", "Klingon"])
         #expect(vm.autoSaveError == nil)
     }
+
+    // MARK: - Expert
+
+    /// Never call `load()`, `reload()` or the private auto-save on the expert
+    /// view model here: they refresh the expert profile through the shared
+    /// manager's real API. The body builder plus the mock API is the seam.
+    private static func makeExpert(
+        languagesJSON: String = englishAndKlingon
+    ) async throws -> (ExpertProfileSettingsViewModel, ClickMeAPI) {
+        let api = makeAPI(languagesJSON: languagesJSON)
+        let vm = ExpertProfileSettingsViewModel(api: api)
+        vm.hydrate(from: try await profile(from: api))
+        MockURLProtocol.recordedRequests = []
+        return (vm, api)
+    }
+
+    @Test("Expert: a language edit sends ids in picked order and the custom languages")
+    func expertLanguageEditSendsIdsAndCustoms() async throws {
+        let (vm, api) = try await Self.makeExpert()
+
+        vm.languageItems = [Self.french, Self.english]
+        _ = try await api.updateUserProfile(vm.makeProfileUpdateBody())
+
+        let sent = Self.patches()
+        #expect(sent.count == 1)
+        let group = try #require(sent.first.flatMap(Self.languagesGroup(of:)))
+        #expect(group["language_ids"] as? [String] == ["fr", "en"])
+        #expect(group["custom_languages"] as? [String] == ["Klingon"])
+    }
+
+    @Test("Expert: a city-only edit sends no languages group")
+    func expertTextEditOmitsLanguages() async throws {
+        let (vm, api) = try await Self.makeExpert()
+
+        vm.city = "Ottawa"
+        _ = try await api.updateUserProfile(vm.makeProfileUpdateBody())
+
+        let body = try #require(Self.patches().first?.jsonBodyForTest())
+        #expect(body["languages"] == nil)
+        #expect((body["location"] as? [String: Any])?["city"] as? String == "Ottawa")
+    }
+
+    @Test("Expert: clearing State/Province sends an empty string, never null")
+    func expertClearedStateSendsEmptyString() async throws {
+        let (vm, api) = try await Self.makeExpert()
+
+        vm.state = ""
+        _ = try await api.updateUserProfile(vm.makeProfileUpdateBody())
+
+        let request = try #require(Self.patches().first)
+        let location = try #require(request.jsonBodyForTest()?["location"] as? [String: Any])
+        #expect(location["state_province"] as? String == "")
+        let text = String(decoding: try #require(request.bodyDataForTest()), as: UTF8.self)
+        #expect(!text.contains("null"))
+    }
+
+    @Test("Expert: Done with nothing selected keeps the previous list and never builds a languages group")
+    func expertZeroDoneKeepsPreviousList() async throws {
+        let (vm, _) = try await Self.makeExpert(languagesJSON: #"[{"id":"en","label":"English"}]"#)
+
+        vm.applyLanguageSelection([])
+
+        #expect(vm.languageItems == [Self.english])
+        #expect(vm.autoSaveError == "Keep at least one language.")
+        #expect(vm.makeProfileUpdateBody().languages == nil)
+    }
+
+    @Test("Expert: Done with nothing selected on a profile that has none is a silent no-op")
+    func expertZeroDoneOnEmptyProfileIsSilent() async throws {
+        let (vm, _) = try await Self.makeExpert(languagesJSON: "[]")
+
+        vm.applyLanguageSelection([])
+
+        #expect(vm.languages.isEmpty)
+        #expect(vm.autoSaveError == nil)
+        #expect(vm.makeProfileUpdateBody().languages == nil)
+    }
+
+    @Test("Expert: Done with a selection applies it in picked order, customs kept after the catalog languages")
+    func expertDoneAppliesSelection() async throws {
+        let (vm, _) = try await Self.makeExpert()
+
+        vm.applyLanguageSelection([Self.french, Self.spanish])
+
+        #expect(vm.languageItems == [Self.french, Self.spanish])
+        #expect(vm.languages == ["French", "Spanish", "Klingon"])
+    }
 }

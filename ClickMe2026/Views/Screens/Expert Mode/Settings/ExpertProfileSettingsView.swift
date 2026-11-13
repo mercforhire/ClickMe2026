@@ -79,10 +79,10 @@ struct ExpertProfileSettingsView: View {
             .presentationBackground(ProfileSettingsBrand.sheetBg)
         }
         .sheet(isPresented: $vm.showLangSheet) {
-            LanguageEditorSheet(languages: $vm.languages)
-                .presentationDetents([.fraction(0.72)])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(ProfileSettingsBrand.sheetBg)
+            LanguageSelectionView(
+                initialSelection: vm.languageItems,
+                onDone: { viewModel.applyLanguageSelection($0) }
+            )
         }
         .sheet(isPresented: $vm.showExpertiseSheet) {
             ExpertiseEditorSheet { updated in
@@ -219,7 +219,8 @@ struct ExpertProfileSettingsView: View {
         [
             viewModel.firstName, viewModel.lastName, viewModel.bio,
             viewModel.jobTitle, viewModel.company, viewModel.meetingUrl,
-            viewModel.city, viewModel.state, viewModel.country
+            viewModel.city, viewModel.state, viewModel.country,
+            viewModel.languageItems.map(\.id).joined(separator: ",")
         ].joined(separator: "|")
     }
 

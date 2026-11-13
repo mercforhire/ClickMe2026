@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Phase 5 context gathered
-last_updated: "2026-11-13T07:52:45.124Z"
-last_activity: 2026-11-12
-last_activity_desc: Phase 04 execution started
-state_head: 3b77b5cb6c07d13d25d84f865f463bbbfc46440d
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-11-13T17:30:00.670Z"
+last_activity: 2026-11-13
+last_activity_desc: Phase 05 execution started
+state_head: cb86bcde9cdd916723918f330faf43e7b5abf981
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 75
+  completed_plans: 76
   percent: 13
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-09)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 04 — Booking, Payment and Discovery
+**Current focus:** Phase 05 — Signup, Mode Switch and Account
 
 ## Current Position
 
-Phase: 05 (Signup, Mode Switch and Account) — READY TO EXECUTE
-Plan: 17 of 17
+Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
+Plan: 2 of 17
 Status: Ready to execute
-Last activity: 2026-11-12 — Phase 04 execution started
+Last activity: 2026-11-13 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -131,6 +131,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P15 | 11 min | 3 tasks | 8 files |
 | Phase 04 P16 | multi-session (user deploy wait) | 3 tasks | 5 files |
 | Phase 04 P17 | 16 min | 3 tasks | 5 files |
+| Phase 05 P01 | 8 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -280,6 +281,9 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-15: loadAvailability keeps the slot while isSubmitting (not moved into the month arrows) so WR-04 is unchanged; booking input cards are disabled while isSubmitting
 - [Phase 04]: 04-16 CR-02: backend 28da165 live; the profiles read and platform-card check run before the T-24h stamp, so a transient error is retried on the next run. Truth 17 is partially closed: errors after the stamp still reach the 6 h window (todo 2026-11-12). User accepted the unbounded-retry limit and Q-CR02 returned 0 rows.
 - [Phase 04]: 04-17: Explore fetch is shielded in load() via an unstructured Task; a cancelled fetch settles each section from its prior state (first load shows the generic failure with Retry), never idle
+- [Phase 05]: Remembered login email: hand-ported from feature/remember-login-email (b0629d9), not merged (407 commits behind)
+- [Phase 05]: Remembered-email Keychain writes use do/catch with documented ignore, not try? (root CLAUDE.md); only init read uses try?
+- [Phase 05]: Tests for remembered email never call UserManager.logout() on the shared singleton
 
 ### Pending Todos
 
@@ -364,6 +368,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T05:39:48.396Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-signup-mode-switch-and-account/05-CONTEXT.md
+Last session: 2026-11-13T17:30:00.219Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None

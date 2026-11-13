@@ -85,4 +85,51 @@ struct RememberedLoginEmailTests {
 
         #expect(viewModel.email == "reset@example.com")
     }
+
+    @Test("a successful account deletion forgets the email")
+    func deletionForgetsEmail() async {
+        userManager.rememberLoginEmail("ada@example.com")
+        defer { userManager.forgetLastLoginEmail() }
+        let api = APITestFactory.make { request in
+            let isDeleteRequest = request.url?.path.hasSuffix("/delete-request") == true
+            let body = isDeleteRequest
+                ? #"{"status":"success","data":{"deletion_token":"tok-1"}}"#
+                : #"{"status":"success","message":"Account deleted"}"#
+            let response = HTTPURLResponse(
+                url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1",
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(body.utf8))
+        }
+        let viewModel = DeleteAccountViewModel(
+            step: .feedback, selectedReason: .other, password: "hunter2!", api: api
+        )
+
+        await viewModel.confirmDeletion()
+
+        #expect(viewModel.step == .deleted)
+        #expect(userManager.lastLoginEmail == nil)
+        #expect(LoginViewModel().email == "")
+    }
+
+    @Test("a failed account deletion keeps the email")
+    func failedDeletionKeepsEmail() async {
+        userManager.rememberLoginEmail("ada@example.com")
+        defer { userManager.forgetLastLoginEmail() }
+        let api = APITestFactory.make { request in
+            let response = HTTPURLResponse(
+                url: request.url!, statusCode: 401, httpVersion: "HTTP/1.1",
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, Data(#"{"status":"error","message":"Password is incorrect."}"#.utf8))
+        }
+        let viewModel = DeleteAccountViewModel(
+            step: .feedback, selectedReason: .other, password: "wrong-pw", api: api
+        )
+
+        await viewModel.confirmDeletion()
+
+        #expect(viewModel.step != .deleted)
+        #expect(userManager.lastLoginEmail == "ada@example.com")
+    }
 }

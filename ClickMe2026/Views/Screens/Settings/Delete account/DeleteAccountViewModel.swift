@@ -32,6 +32,7 @@ final class DeleteAccountViewModel: ObservableObject {
     let reasons: [DeleteAccountReason]
 
     private let api: ClickMeAPI
+    private let userManager: UserManager
 
     init(
         step: DeleteAccountStep = .confirmation,
@@ -40,7 +41,8 @@ final class DeleteAccountViewModel: ObservableObject {
         password: String = "",
         isDeleting: Bool = false,
         reasons: [DeleteAccountReason] = DeleteAccountReason.allCases,
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        userManager: UserManager = .shared
     ) {
         self.step = step
         self.selectedReason = selectedReason
@@ -49,6 +51,7 @@ final class DeleteAccountViewModel: ObservableObject {
         self.isDeleting = isDeleting
         self.reasons = reasons
         self.api = api
+        self.userManager = userManager
     }
 
     // MARK: Derived
@@ -118,6 +121,9 @@ final class DeleteAccountViewModel: ObservableObject {
             return
         }
 
+        // The account no longer exists: Login after the farewell (or after
+        // a forced logout under it) must not pre-fill its email.
+        userManager.forgetLastLoginEmail()
         withAnimation { step = .deleted }
     }
 

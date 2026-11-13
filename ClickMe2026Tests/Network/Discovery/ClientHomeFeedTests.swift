@@ -464,6 +464,91 @@ struct ClientHomeFeedTests {
         #expect(viewModel.featuredTopics.map(\.title) == ["Filtered"])
     }
 
+    @Test("a cancelled reload over loaded data keeps every section loaded (G-04-3)")
+    func cancelledReloadKeepsLoadedSections() async throws {
+        let api = makeAPI(serving: HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic()]))
+        let viewModel = ExploreClientViewModel(api: api)
+        await viewModel.load()
+
+        MockURLProtocol.handler = { _ in throw URLError(.cancelled) }
+        await viewModel.reload()
+
+        #expect(viewModel.categoriesState == .loaded)
+        #expect(viewModel.expertsState == .loaded)
+        #expect(viewModel.featuredTopicsState == .loaded)
+        #expect(viewModel.categories.count == 1)
+        #expect(viewModel.experts.count == 1)
+        #expect(viewModel.featuredTopics.map(\.title) == ["Free chat"])
+    }
+
+    @Test("a cancelled reload after a failure keeps the failure and its Retry (G-04-3)")
+    func cancelledReloadAfterFailureKeepsFailure() async throws {
+        let api = makeAPI(serving: HomeFeedFixture.envelope(
+            featured: "[]",
+            experts: HomeFeedFixture.recommendedExpert(id: "not-a-uuid")
+        ))
+        let viewModel = ExploreClientViewModel(api: api)
+        await viewModel.load()
+
+        MockURLProtocol.handler = { _ in throw URLError(.cancelled) }
+        await viewModel.reload()
+
+        let failed = LoadState.failed(HomeFeedFixture.genericError)
+        #expect(viewModel.categoriesState == failed)
+        #expect(viewModel.expertsState == failed)
+        #expect(viewModel.featuredTopicsState == failed)
+        #expect(viewModel.featuredTopics.isEmpty)
+    }
+
+    @Test("a reload after a failure loads every section (G-04-3)")
+    func reloadAfterFailureLoads() async throws {
+        let api = makeAPI(serving: HomeFeedFixture.envelope(
+            featured: "[]",
+            experts: HomeFeedFixture.recommendedExpert(id: "not-a-uuid")
+        ))
+        let viewModel = ExploreClientViewModel(api: api)
+        await viewModel.load()
+
+        serve(HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "Back")]))
+        await viewModel.reload()
+
+        #expect(viewModel.categoriesState == .loaded)
+        #expect(viewModel.expertsState == .loaded)
+        #expect(viewModel.featuredTopicsState == .loaded)
+        #expect(viewModel.featuredTopics.map(\.title) == ["Back"])
+        #expect(viewModel.categories.count == 1)
+        #expect(viewModel.experts.count == 1)
+    }
+
+    @Test("a cancelled first load shows the generic failure, not a skeleton (G-04-3)")
+    func cancelledFirstLoadShowsFailure() async throws {
+        let api = APITestFactory.make { _ in throw URLError(.cancelled) }
+        let viewModel = ExploreClientViewModel(api: api)
+
+        await viewModel.load()
+
+        let failed = LoadState.failed(HomeFeedFixture.genericError)
+        #expect(viewModel.categoriesState == failed)
+        #expect(viewModel.expertsState == failed)
+        #expect(viewModel.featuredTopicsState == failed)
+        #expect(viewModel.featuredTopics.isEmpty)
+        if case .failed(let message) = viewModel.categoriesState {
+            #expect(!message.lowercased().contains("cancel"))
+        }
+    }
+
+    @Test("a cancelled fetch settles each section from the state before it (G-04-3)")
+    func cancelledFetchSettlesFromPriorState() {
+        typealias VM = ExploreClientViewModel
+        #expect(VM.stateAfterCancelledFetch(current: .loading, before: .loaded) == .loaded)
+        #expect(VM.stateAfterCancelledFetch(current: .loading, before: .failed("Offline")) == .failed("Offline"))
+        #expect(VM.stateAfterCancelledFetch(current: .loading, before: .idle) == .failed(VM.interruptedLoadMessage))
+        #expect(VM.stateAfterCancelledFetch(current: .loading, before: .loading) == .loading)
+        #expect(VM.stateAfterCancelledFetch(current: .loaded, before: .idle) == .loaded)
+        #expect(VM.stateAfterCancelledFetch(current: .failed("Later"), before: .loaded) == .failed("Later"))
+        #expect(VM.interruptedLoadMessage == HomeFeedFixture.genericError)
+    }
+
     // MARK: - Error text
 
     private static let everyNetworkError: [NetworkError] = [

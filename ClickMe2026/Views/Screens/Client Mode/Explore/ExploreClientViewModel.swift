@@ -89,6 +89,10 @@ final class ExploreClientViewModel: ObservableObject {
     ///   response replaces it. When `true` (a category change), every section shows
     ///   its skeleton, because the loaded experts no longer match the new filter.
     private func fetchHome(replacingLoadedContent: Bool) async {
+        // What each section showed before this fetch, for a cancelled fetch to restore.
+        let categoriesBefore = categoriesState
+        let expertsBefore = expertsState
+        let featuredBefore = featuredTopicsState
         // Assign only when the value changes, so a refresh over loaded content publishes nothing.
         func begin(_ state: LoadState) -> LoadState {
             (state == .loaded && !replacingLoadedContent) ? state : .loading
@@ -111,16 +115,19 @@ final class ExploreClientViewModel: ObservableObject {
             expertsState = .loaded
             featuredTopicsState = .loaded
         } catch {
-            // Pull-to-refresh / view-identity changes cancel the in-flight
-            // `URLSession.data(for:)`, which bubbles up as `URLError.cancelled`
-            // or `CancellationError`. That's not a real failure — a fresh
-            // load is almost always already on its way. Revert loading rows
-            // to idle (so the skeleton reappears instead of a red error
-            // card) and leave loaded sections untouched.
+            // A cancelled fetch (`URLError.cancelled` or `CancellationError`) is not a
+            // failure. Since `load()` shields the fetch, only the URL loading system can
+            // still cancel it, and no other fetch is guaranteed to follow. The old revert
+            // to idle left skeletons with nothing loading (G-04-3). Each section still
+            // loading returns to what it showed before this fetch, and a section another
+            // fetch has already settled is left alone.
             if Self.isCancellation(error) {
-                if categoriesState == .loading { categoriesState = .idle }
-                if expertsState == .loading { expertsState = .idle }
-                if featuredTopicsState == .loading { featuredTopicsState = .idle }
+                let settledCategories = Self.stateAfterCancelledFetch(current: categoriesState, before: categoriesBefore)
+                if categoriesState != settledCategories { categoriesState = settledCategories }
+                let settledExperts = Self.stateAfterCancelledFetch(current: expertsState, before: expertsBefore)
+                if expertsState != settledExperts { expertsState = settledExperts }
+                let settledFeatured = Self.stateAfterCancelledFetch(current: featuredTopicsState, before: featuredBefore)
+                if featuredTopicsState != settledFeatured { featuredTopicsState = settledFeatured }
             } else {
                 let msg = error.userMessage
                 // Don't leave stale Featured Topics beside the section errors.
@@ -313,6 +320,34 @@ final class ExploreClientViewModel: ObservableObject {
     }
 
     // MARK: - Error helpers
+
+    /// The app's one generic failure sentence (`NetworkError`'s fixed `errorDescription`).
+    /// Shown when a section's first load is cancelled, so the section offers Retry instead
+    /// of a skeleton with nothing loading. It adds no new copy.
+    static let interruptedLoadMessage = NetworkError.invalidResponse.userMessage
+
+    /// Where a section lands when its fetch is cancelled.
+    ///
+    /// Anything other than `.loading` stays as it is, because another fetch has already settled it.
+    /// For a section still `.loading`, `before` is what it showed ahead of the cancelled fetch:
+    /// - `.loaded` returns `.loaded`, since the content arrays were never cleared.
+    /// - `.failed` returns the same failure, with its Retry.
+    /// - `.idle` returns the generic failure with Retry, because a first load must not strand a skeleton.
+    /// - `.loading` stays `.loading`, because an earlier fetch set it and is still in flight and will settle it.
+    ///
+    /// The invariant: a section becomes `.loading` only at the start of a fetch whose own prior state was not
+    /// loading, so while a section is `.loading`, the fetch that set it is still in flight.
+    static func stateAfterCancelledFetch(current: LoadState, before: LoadState) -> LoadState {
+        guard current == .loading else { return current }
+        switch before {
+        case .loaded, .failed:
+            return before
+        case .idle:
+            return .failed(interruptedLoadMessage)
+        case .loading:
+            return .loading
+        }
+    }
 
     private static func isCancellation(_ error: Error) -> Bool {
         if error is CancellationError { return true }

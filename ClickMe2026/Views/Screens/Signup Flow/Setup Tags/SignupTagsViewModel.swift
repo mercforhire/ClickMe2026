@@ -17,8 +17,11 @@ final class SignupTagsViewModel: ObservableObject {
     @Published var searchText: String
     /// Server-provided tag catalog.
     @Published var allTags: [ExpertiseTagItem] = []
-    /// Selection tracked by id — O(1) toggle, no duplicate risk.
-    @Published var selectedIds: Set<UUID>
+    /// Selection tracked by id — O(1) membership, no duplicate risk. Order
+    /// lives in `selectionOrder`; mutate both together.
+    @Published private(set) var selectedIds: Set<UUID>
+    /// Selected ids in the order the user tapped them (first = primary tag).
+    @Published private(set) var selectionOrder: [UUID]
     @Published var loadState: LoadState = .idle
 
     // MARK: Save state
@@ -29,6 +32,9 @@ final class SignupTagsViewModel: ObservableObject {
 
     private let accumulator: SignupAccumulator?
     private let api: ClickMeAPI
+    /// Tags the selection started with, so a pre-selected tag still shows
+    /// before the catalog has loaded (or when the catalog omits it).
+    private let seedTagsById: [UUID: ExpertiseTagItem]
 
     // MARK: Init
 
@@ -46,6 +52,8 @@ final class SignupTagsViewModel: ObservableObject {
         // passed-in seed (preview path).
         let seed = accumulator?.expertiseTags ?? initialTags
         self.selectedIds = Set(seed.map(\.id))
+        self.selectionOrder = Self.uniqueIds(of: seed)
+        self.seedTagsById = Dictionary(seed.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         // Seed the visible catalog with the initial tags so previews
         // render something before load() runs.
         if accumulator == nil {
@@ -62,6 +70,7 @@ final class SignupTagsViewModel: ObservableObject {
         let vm = SignupTagsViewModel(initialTags: selected)
         vm.allTags = all
         vm.selectedIds = Set(selected.map(\.id))
+        vm.selectionOrder = uniqueIds(of: selected)
         vm.loadState = .loaded
         return vm
     }
@@ -98,10 +107,13 @@ final class SignupTagsViewModel: ObservableObject {
         return allTags.filter { $0.label.localizedCaseInsensitiveContains(searchText) }
     }
 
-    /// Currently-picked tags in catalog order — used by the "Selected
-    /// Tags" strip and the accumulator sync.
+    /// Currently-picked tags in the order the user tapped them (first =
+    /// the primary tag the server stores) — used by the "Selected Tags"
+    /// strip, the accumulator sync and `save()`. A tag missing from the
+    /// catalog falls back to the one the selection was seeded with.
     var selectedTags: [ExpertiseTagItem] {
-        allTags.filter { selectedIds.contains($0.id) }
+        let catalog = Dictionary(allTags.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        return selectionOrder.compactMap { catalog[$0] ?? seedTagsById[$0] }
     }
 
     // MARK: Mutations
@@ -109,19 +121,27 @@ final class SignupTagsViewModel: ObservableObject {
     func toggleTag(_ tag: ExpertiseTagItem) {
         if selectedIds.contains(tag.id) {
             selectedIds.remove(tag.id)
+            selectionOrder.removeAll { $0 == tag.id }
         } else {
             selectedIds.insert(tag.id)
+            selectionOrder.append(tag.id)
         }
         syncToAccumulator()
     }
 
     func removeTag(_ tag: ExpertiseTagItem) {
         selectedIds.remove(tag.id)
+        selectionOrder.removeAll { $0 == tag.id }
         syncToAccumulator()
     }
 
     func clearSearch() {
         searchText = ""
+    }
+
+    private static func uniqueIds(of tags: [ExpertiseTagItem]) -> [UUID] {
+        var seen = Set<UUID>()
+        return tags.map(\.id).filter { seen.insert($0).inserted }
     }
 
     private func syncToAccumulator() {

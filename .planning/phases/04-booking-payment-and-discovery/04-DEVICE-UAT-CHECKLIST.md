@@ -45,8 +45,10 @@ Steps:
 1. As A, open Explore and let it load. Pull to refresh and reopen the app at least ten times: Featured Topics are chosen at random on each request, so a free topic with no currency and a topic with a non-ASCII title (accents, a non-Latin script) only show up some of the time. If B has no such topics, B can create a free topic (price left empty) and one with an accented or non-Latin title; delete them afterward if you do not want them.
 2. Look at Trending Categories, Featured Experts and Featured Topics each time.
 3. Turn airplane mode on, pull to refresh Explore (or relaunch), read the text, then turn airplane mode off and pull to refresh again.
+4. Re-test for G-04-3 (plan 04-17), on a build that includes this plan: (a) on a loaded Explore, pull to refresh ten times in a row, letting each refresh finish; (b) turn airplane mode on and pull to refresh; (c) turn airplane mode off and pull to refresh again.
 
 Expected (quick 261109-323 and the EXPL-07 requirement text):
+- G-04-3 (plan 04-17): on each of the ten pulls, Trending Categories, Featured Experts and Featured Topics stay on screen while the spinner runs, and they are replaced in place when it ends. The airplane-mode pull shows the readable offline sentence with Retry in each section and no Featured Topics. The pull after airplane mode is off loads every section. A skeleton that stays after the spinner is gone is a FAIL.
 - Explore loads every time; a free topic with no currency never fails the whole load, and a non-ASCII title renders as written, with no garbled characters and no decode failure.
 - A bad featured topic is dropped alone: the rest of Featured Topics, Trending Categories and Featured Experts still show.
 - The airplane-mode failure shows a readable sentence (not a Swift type name or a raw error dump), and **no stale Featured Topics sit beside the section error**. After airplane mode is off, a pull to refresh loads normally.
@@ -596,7 +598,7 @@ Nothing here changes `REQUIREMENTS.md` or `WINDOWS.md` by itself; `/gsd-verify-w
 
 | Item or step | Requirement or decision | WINDOWS.md entries it answers |
 |--------------|-------------------------|-------------------------------|
-| 1 | EXPL-07 | none (quick 261109-323) |
+| 1 | EXPL-07 (incl. G-04-3, plan 04-17) | none (quick 261109-323) |
 | 2 | EXPL-03 | none (quick 261109-323) |
 | 3 | BOOK-01, BOOK-19 | #23 |
 | 4 | BOOK-05 | #24 |

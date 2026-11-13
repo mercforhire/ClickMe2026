@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-02-PLAN.md
-last_updated: "2026-11-13T17:38:28.821Z"
+stopped_at: Completed 05-03-PLAN.md
+last_updated: "2026-11-13T17:46:13.446Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: 7b29e419b82cc451d3ff1226ddf4acf0aaf09f39
+state_head: fb98d47f24b02e4cabdaa9801020ce88ece2e8b1
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 77
+  completed_plans: 78
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 3 of 17
+Plan: 4 of 17
 Status: Ready to execute
 Last activity: 2026-11-13 — Phase 05 execution started
 
@@ -133,6 +133,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P17 | 16 min | 3 tasks | 5 files |
 | Phase 05 P01 | 8 min | 2 tasks | 4 files |
 | Phase 05 P02 | 8 min | 2 tasks | 4 files |
+| Phase 05 P03 | 12 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -286,6 +287,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Remembered-email Keychain writes use do/catch with documented ignore, not try? (root CLAUDE.md); only init read uses try?
 - [Phase 05]: Tests for remembered email never call UserManager.logout() on the shared singleton
 - [Phase 05]: 05-02: selectedIds/selected made private(set); ordered id array beside the Set, seed dictionary as catalog fallback (SIGN-03)
+- [Phase 05]: 05-03: profile photo crop rectangle uses an integer side and floored origin (not CGRect.integral) so it is always square and deterministic
+- [Phase 05]: 05-03: zoom slider is enabled only for a newly picked photo (canZoom); a downloaded avatar is display-only and Save stays a no-op
 
 ### Pending Todos
 
@@ -370,6 +373,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T17:38:28.373Z
-Stopped at: Completed 05-02-PLAN.md
+Last session: 2026-11-13T17:46:12.950Z
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None

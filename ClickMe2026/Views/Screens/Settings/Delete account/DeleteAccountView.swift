@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - Delete Account Flow State
 
 enum DeleteAccountStep {
-    case confirmation // Image 3: warning + Pause Account card
+    case confirmation // Image 3: warning and what deletion does
     case feedback // Image 2: reason selection + comments
     case deleted // Image 1: "We're sorry to see you go"
 }
@@ -26,7 +26,6 @@ struct DeleteAccountView: View {
     @Environment(\.showMyBookings) private var showMyBookings
 
     var onBackToLogin: () -> Void
-    var onPauseAccount: () -> Void
 
     @FocusState private var commentsFocused: Bool
 
@@ -34,12 +33,10 @@ struct DeleteAccountView: View {
 
     init(
         viewModel: DeleteAccountViewModel = DeleteAccountViewModel(),
-        onBackToLogin: @escaping () -> Void = {},
-        onPauseAccount: @escaping () -> Void = {}
+        onBackToLogin: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBackToLogin = onBackToLogin
-        self.onPauseAccount = onPauseAccount
     }
 
     // MARK: Body
@@ -115,14 +112,6 @@ struct DeleteAccountView: View {
                     VStack(alignment: .leading, spacing: 28) {
                         DeleteAccountWarningHeader()
 
-                        VStack(alignment: .leading, spacing: 14) {
-                            Text("Before you go...")
-                                .font(.brand(.body, weight: .bold))
-                                .foregroundColor(DeleteAccountBrand.onSurface)
-
-                            DeleteAccountPauseCard(action: onPauseAccount)
-                        }
-
                         Spacer().frame(height: 80)
                     }
                     .padding(.horizontal, 20)
@@ -149,7 +138,7 @@ struct DeleteAccountView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 28) {
-                    DeleteAccountWarningHeader()
+                    DeleteAccountWarningHeader(showsDetails: false)
 
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Help us improve")

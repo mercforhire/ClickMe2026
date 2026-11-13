@@ -303,7 +303,7 @@ Plans:
   4. Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`. Feedback cannot be sent with fewer than 10 characters. Delete Account has no Pause Account card and accurately says what is deleted and what is kept or anonymized.
   5. `CancellationPoliciesView` and `ReadyToStartCallView` are either reachable in the app or removed from the codebase (per Q7).
 
-**Plans**: 13/17 plans executed in 6 waves (iOS only, no backend change; BACK-13 deferred per D-04)
+**Plans**: 14/17 plans executed in 6 waves (iOS only, no backend change; BACK-13 deferred per D-04)
 
 Plans:
 **Wave 1**
@@ -324,7 +324,7 @@ Plans:
 **Wave 3**
 - [x] 05-14-PLAN.md — SET-06 / D-10: View my bookings in Expert mode through the shared, now generic HomeShellExit plan (after 05-08)
 - [x] 05-15-PLAN.md — SET-06, SET-03: accurate Delete Account copy; pause card removed (after 05-08)
-- [ ] 05-16-PLAN.md — SIGN-06 / D-01: setup hub Not now and the per-login deferral; Publish and a new Expert request clear it (after 05-07, 05-11)
+- [x] 05-16-PLAN.md — SIGN-06 / D-01: setup hub Not now and the per-login deferral; Publish and a new Expert request clear it (after 05-07, 05-11)
 
 **Wave 4**
 - [ ] 05-10-PLAN.md — SIGN-06 / D-03: remaining Mode Switch screens, both push handlers, Splash and Login through the gate; a push during a call is held until the call ends; mode setter private (after 05-07, 05-14, 05-16)
@@ -412,7 +412,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
-| 5. Signup, Mode Switch and Account | 13/17 | In Progress | - |
+| 5. Signup, Mode Switch and Account | 14/17 | In Progress | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |

@@ -252,13 +252,12 @@ struct ExpertProfileHomeScreen: View {
             FeedbackView()
         case .modeSwitch:
             ModeSwitchView { mode in
-                // Block mode-switch mid-call — tearing down the expert
-                // socket + role context would kill the active session.
-                guard CallCenter.shared.attempt("switch modes") else { return }
-                // Flip the app's active home mode. ClickMe2026App
-                // observes `currentMode` and snaps to the corresponding
-                // home route immediately.
-                UserManager.shared.setMode(mode)
+                // One gate for every Mode Switch screen (D-03): it blocks the
+                // switch mid-call (tearing down the expert socket + role
+                // context would kill the active session), then applies the
+                // mode. ClickMe2026App observes `currentMode` and snaps to the
+                // matching home; an unfinished expert gets the setup hub.
+                Task { await ModeSwitchGate.request(mode) }
             }
         }
     }

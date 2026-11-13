@@ -81,6 +81,9 @@ struct ModeSwitchView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 20)
+            // A slow setup lookup must not let a second tap start a second
+            // switch. Disabled only: no spinner, text or toast (05-UI-SPEC A2).
+            .disabled(UserManager.shared.isSwitchingMode)
         }
         .navigationTitle("Mode Switcher")
         .navigationBarTitleDisplayMode(.inline)

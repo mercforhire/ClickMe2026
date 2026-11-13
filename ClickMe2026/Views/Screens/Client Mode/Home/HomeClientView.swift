@@ -29,6 +29,9 @@ struct HomeClientView: View {
     /// A tap held for unknown roles is planned again when the app returns
     /// to the foreground (for example after airplane mode is turned off).
     @Environment(\.scenePhase) private var scenePhase
+    /// Observed so a tap held during a call is replayed when the call ends
+    /// (the `CallOverlayHost` pattern).
+    @ObservedObject private var callCenter = CallCenter.shared
 
     // MARK: Per-tab nav paths
     //
@@ -144,7 +147,8 @@ struct HomeClientView: View {
         // shell is up, when the shell mounts with a tap already queued (cold
         // launch, or a mode switch made for that tap), when the account's
         // roles load, and when the app returns to the foreground, so a tap
-        // held for unknown roles is planned as soon as they are known.
+        // held for unknown roles is planned as soon as they are known. A tap
+        // held during a call opens when the call ends.
         .onChange(of: pushRouter.pending) { _, _ in
             consumePendingPush()
         }
@@ -156,6 +160,12 @@ struct HomeClientView: View {
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { consumePendingPush() }
+        }
+        // A tap held because a call blocked its mode switch opens now.
+        // Ending a call shows no post-call screen in the shell, so the
+        // switch tears nothing down.
+        .onChange(of: callCenter.isCallActive) { _, active in
+            if !active { consumePendingPush() }
         }
     }
 
@@ -169,8 +179,27 @@ struct HomeClientView: View {
         Task {
             guard let plan = await pushRouter.planPending(currentMode: .client) else { return }
             if let mode = plan.switchToMode {
-                userManager.setMode(mode)
-                return
+                // A push never opens the setup hub and never raises the
+                // "switch modes" call alert: a replay on every foreground
+                // would nag. The gate itself refuses the switch during a call.
+                switch await userManager.requestModeSwitch(mode, source: .push) {
+                case .switched:
+                    // The other shell mounts and consumes the tap.
+                    return
+                case .setupRequired:
+                    // Setup is unfinished: plan the tap again. The gate fetched
+                    // the incomplete profile, so the planner now opens the
+                    // notifications list instead of asking for a switch.
+                    consumePendingPush()
+                    return
+                case .blockedByCall:
+                    // A call is active, so the switch waits (single-call
+                    // invariant). The tap stays queued until the call ends and
+                    // the call-end observer replays it.
+                    return
+                case .sessionEnded, .superseded:
+                    return
+                }
             }
             handlePushDestination(plan.destination)
             pushRouter.pending = nil
@@ -329,7 +358,9 @@ struct HomeClientView: View {
             NotificationsListView()
         case .modeSwitch:
             ModeSwitchView { mode in
-                userManager.setMode(mode)
+                // Same gate as Profile > Mode Switch (D-03): adds the
+                // "End the call to switch modes." guard this route lacked.
+                Task { await ModeSwitchGate.request(mode) }
             }
         case let .chat(threadId, peerName, peerAvatarURL):
             ChatView(

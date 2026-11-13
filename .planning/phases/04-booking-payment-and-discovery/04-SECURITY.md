@@ -29,7 +29,7 @@ created: "2026-11-12"
 
 ## Threat Register
 
-50 distinct threats (T-04-SC appears in all 16 plans). Verified against current code: iOS `main`, backend `ios-p4-d12` at `28da165` (= production).
+53 distinct threats (T-04-SC appears in all 17 plans). Verified against current code: iOS `main`, backend `ios-p4-d12` at `28da165` (= production).
 
 | Threat ID | Category | Component | Severity | Disposition | Mitigation | Status |
 |-----------|----------|-----------|----------|-------------|------------|--------|
@@ -83,6 +83,9 @@ created: "2026-11-12"
 | T-04-47 | Tampering | The deploy shipping unreviewed backend master code | high | mitigate | Commit built on ios-p4-d12 from origin/main in the D12 worktree; Task 3's pre-push gate and the user's one-line command refuse anything but one commit with exactly the three files; master never pushed; never --force; post-deploy check of `ios-p4-cr02-rollback..origin/main` | closed |
 | T-04-48 | Information disclosure | PaymentMethod ids in the moved log lines | low | mitigate | The moved warn line logs the booking id only (unchanged); the existing D-12 row asserting no pm_ id in that output keeps passing | closed |
 | T-04-49 | Elevation of privilege | A profiles read fault, or a profile with no stripe_customer_id, skipping the D-12 ownership comparison so a card attached to another customer is cloned and charged off-session (checker iteration 2) | high | mitigate | The profiles read error is re-thrown before retrievePaymentMethod and stampAttempt with no null fallback; with a good read a missing stripe_customer_id counts as a mismatch, the same rule confirmLongLead applies at insert (booking.controller.js L1297); the profiles-error two-run it.each (attached, foreign, detached) and the no-stripe_customer_id row; Task 1's third gate checks the throw and the removed null skip | closed |
+| T-04-50 | Denial of service | Explore stranded on skeletons after a cancelled fetch (G-04-3), blocking discovery and booking from Explore | medium | mitigate | `load()` awaits an unstructured `Task` running `fetchHome` (`ExploreClientViewModel.swift:82`), so the caller's cancellation never reaches URLSession; loaded sections are not swapped during a refresh; a cancelled fetch settles every section through `stateAfterCancelledFetch(current:before:)` (L125-129, L340), never `.idle`; `ClientHomeFeedTests` G-04-3 rows | closed |
+| T-04-51 | Information disclosure | A raw system error ("cancelled") as section text, or stale Featured Topics beside section errors (EXPL-07) | low | mitigate | A cancelled first load shows `interruptedLoadMessage` = `NetworkError.invalidResponse.userMessage` (L327, L346); a test asserts no "cancel" text (`ClientHomeFeedTests.swift:536`); the failure branch still clears `featuredTopics` (L134) | closed |
+| T-04-52 | Denial of service | Shielded fetches outliving the screen or overlapping (last to finish wins) | low | accept | One read-only GET per appear, pull or Retry, written only to the view model's published state; the completion-order race predates 04-17 and is recorded out of scope in 04-17-SUMMARY | closed |
 
 *Status: open · closed · open — below high threshold (non-blocking)*
 *Severity: critical > high > medium > low — only open threats at or above workflow.security_block_on count toward threats_open*
@@ -103,7 +106,8 @@ Per-threat file:line evidence is in the gsd-security-auditor verdict of 2026-11-
 | AR-04-05 | T-04-31 | Ledger stores only expertId and start second | Plan 04-13 | 2026-11-11 |
 | AR-04-06 | T-04-44 | Limits (a)/(b): a persistent profiles or card-check error retries every 5 min with no bound; past the start it can be delivered uncharged; no client charged wrongly | User (04-16 checkpoint) | 2026-11-12 |
 | AR-04-07 | T-04-45 | Limit (c): errors after the stamp still cancel at ~6 h; tracked in todo 2026-11-12-long-lead-sweep-transient-errors-after-stamp | User (04-16 checkpoint) | 2026-11-12 |
-| AR-04-08 | T-04-SC | No dependency changes in this phase (Package.resolved last changed before Phase 4; no backend lockfile change) | Plans 04-01..04-16 | 2026-11-11 |
+| AR-04-08 | T-04-SC | No dependency changes in this phase (Package.resolved last changed before Phase 4; no backend lockfile change) | Plans 04-01..04-17 | 2026-11-11 |
+| AR-04-09 | T-04-52 | Overlapping or post-dismiss Explore GETs are read-only and only write the screen's own view-model state; the completion-order race predates 04-17 | Plan 04-17 | 2026-11-12 |
 
 ---
 
@@ -120,6 +124,7 @@ Per-threat file:line evidence is in the gsd-security-auditor verdict of 2026-11-
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-11-12 | 50 | 50 | 0 | gsd-security-auditor (ASVS 1, block_on high) |
+| 2026-11-12 | 53 | 53 | 0 | secure-phase L1 short-circuit after 04-17 (T-04-50..52 grep-verified; ASVS 1, block_on high) |
 
 ---
 

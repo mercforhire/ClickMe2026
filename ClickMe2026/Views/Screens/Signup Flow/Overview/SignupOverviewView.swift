@@ -107,6 +107,16 @@ struct SignupOverviewView: View {
                 animatedProgress = viewModel.progress
             }
         }
+        .task {
+            let before = viewModel.progress
+            await viewModel.refreshEmailVerified()
+            // The seed may have ticked a row after the appear animation
+            // started, so bring the bar up to the new progress.
+            guard viewModel.progress != before else { return }
+            withAnimation(.easeOut(duration: 0.4)) {
+                animatedProgress = viewModel.progress
+            }
+        }
     }
 }
 

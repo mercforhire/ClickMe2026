@@ -200,6 +200,27 @@ final class SignupAccumulator {
         }
     }
 
+    // MARK: - Email verification seed
+
+    /// Seeds `emailVerified` from `GET /auth/email/status` so a resumed
+    /// signup (launch resume, login resume, the hub the gate opens, the
+    /// return from the Verify email screen) does not show a verified email
+    /// as unfinished. That endpoint is the only source: `GET /expert/profile`
+    /// carries no `email_verified` field.
+    ///
+    /// Best-effort read: a failed call or a `verified: false` answer leaves
+    /// the flag as it was, and a flag that is already `true` is never
+    /// downgraded and costs no request.
+    ///
+    /// - Parameter api: The client to call; tests pass a stubbed one.
+    func refreshEmailVerified(using api: ClickMeAPI = .shared) async {
+        guard !emailVerified else { return }
+        guard let status = try? await api.checkEmailVerified() else { return }
+        if status.data.verified {
+            emailVerified = true
+        }
+    }
+
     // MARK: - Request builders
 
     /// Assembles the full payload for the final "publish" call — all

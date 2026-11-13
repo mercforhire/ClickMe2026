@@ -43,6 +43,14 @@ final class SignupOverviewViewModel: ObservableObject {
         self.tips = tips
     }
 
+    // MARK: - Email verification
+
+    /// Re-seeds the Verify email row from the server each time the hub
+    /// appears (SIGN-02). No-op for the preview init, which has no accumulator.
+    func refreshEmailVerified() async {
+        await accumulator?.refreshEmailVerified()
+    }
+
     // MARK: - Derived
 
     /// Checklist rendered by the view. If an override was provided

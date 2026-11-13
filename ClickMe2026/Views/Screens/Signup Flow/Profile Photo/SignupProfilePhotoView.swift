@@ -64,7 +64,7 @@ struct SignupProfilePhotoView: View {
 
                         ProfilePhotoZoomSlider(
                             zoomScale: $viewModel.zoomScale,
-                            isEnabled: viewModel.hasPhoto
+                            isEnabled: viewModel.canZoom
                         )
                         .padding(.horizontal, 24)
                         .padding(.bottom, 28)

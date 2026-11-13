@@ -153,4 +153,85 @@ struct ProfilePhotoCropperTests {
         #expect(Self.isClose(Self.pixel(in: data, x: 75, y: 75), (0, 255, 0)))
         #expect(Self.isClose(Self.pixel(in: data, x: 2, y: 2), (255, 0, 0)))
     }
+
+    // MARK: - Orientation
+
+    @Test("A photo with an EXIF orientation is cropped on its upright pixels")
+    func orientationIsApplied() throws {
+        // Stored 400x200: red band over x 100..200, blue band over x 200..300.
+        // With orientation .right the upright image is 200x400 and stored x
+        // runs down the screen, so the centre 200x200 crop has red on top and
+        // blue below. Cropping the raw pixels would put red left and blue right.
+        let stored = Self.makeImage(width: 400, height: 200) { context in
+            context.setFillColor(UIColor.gray.cgColor)
+            context.fill(CGRect(x: 0, y: 0, width: 400, height: 200))
+            context.setFillColor(UIColor.red.cgColor)
+            context.fill(CGRect(x: 100, y: 0, width: 100, height: 200))
+            context.setFillColor(UIColor.blue.cgColor)
+            context.fill(CGRect(x: 200, y: 0, width: 100, height: 200))
+        }
+        let storedCG = try #require(stored.cgImage)
+        let rotated = UIImage(cgImage: storedCG, scale: 1, orientation: .right)
+        #expect(rotated.size.width == 200)
+        #expect(rotated.size.height == 400)
+
+        let data = try #require(ProfilePhotoCropper.squareCrop(rotated, zoom: 0))
+        let size = try #require(Self.pixelSize(of: data))
+        #expect(size.width == 200)
+        #expect(size.height == 200)
+        #expect(Self.isClose(Self.pixel(in: data, x: 100, y: 25), (255, 0, 0)))
+        #expect(Self.isClose(Self.pixel(in: data, x: 100, y: 175), (0, 0, 255)))
+    }
+
+    // MARK: - Metadata
+
+    @Test("The original's GPS metadata is not in the cropped upload")
+    func gpsMetadataIsDropped() throws {
+        let source = Self.solidImage(width: 200, height: 200, color: .green)
+        let sourceCG = try #require(source.cgImage)
+
+        let jpeg = NSMutableData()
+        let destination = try #require(
+            CGImageDestinationCreateWithData(jpeg, "public.jpeg" as CFString, 1, nil)
+        )
+        let gps: [String: Any] = [
+            kCGImagePropertyGPSLatitude as String: 43.6532,
+            kCGImagePropertyGPSLatitudeRef as String: "N",
+            kCGImagePropertyGPSLongitude as String: 79.3832,
+            kCGImagePropertyGPSLongitudeRef as String: "W"
+        ]
+        let properties: [String: Any] = [kCGImagePropertyGPSDictionary as String: gps]
+        CGImageDestinationAddImage(destination, sourceCG, properties as CFDictionary)
+        #expect(CGImageDestinationFinalize(destination))
+
+        // The input really carries GPS, so the assertion below is not vacuous.
+        let inputSource = try #require(CGImageSourceCreateWithData(jpeg as CFData, nil))
+        let inputProperties = CGImageSourceCopyPropertiesAtIndex(inputSource, 0, nil) as? [String: Any]
+        #expect(inputProperties?[kCGImagePropertyGPSDictionary as String] != nil)
+
+        let picked = try #require(UIImage(data: jpeg as Data))
+        let output = try #require(ProfilePhotoCropper.squareCrop(picked, zoom: 0.5))
+        let outputSource = try #require(CGImageSourceCreateWithData(output as CFData, nil))
+        let outputProperties = CGImageSourceCopyPropertiesAtIndex(outputSource, 0, nil) as? [String: Any]
+        #expect(outputProperties?[kCGImagePropertyGPSDictionary as String] == nil)
+    }
+
+    // MARK: - Empty and determinism
+
+    @Test("An image with no pixel data has no crop")
+    func emptyImageIsNil() {
+        #expect(ProfilePhotoCropper.squareCrop(UIImage(), zoom: 0.5) == nil)
+    }
+
+    @Test("Repeated crops of an odd-sized image give the same size")
+    func oddSizeIsDeterministic() throws {
+        let image = Self.solidImage(width: 1001, height: 1001)
+        let first = try #require(ProfilePhotoCropper.squareCrop(image, zoom: 0.33))
+        let second = try #require(ProfilePhotoCropper.squareCrop(image, zoom: 0.33))
+        let firstSize = try #require(Self.pixelSize(of: first))
+        let secondSize = try #require(Self.pixelSize(of: second))
+        #expect(firstSize.width == secondSize.width)
+        #expect(firstSize.height == secondSize.height)
+        #expect(firstSize.width == firstSize.height)
+    }
 }

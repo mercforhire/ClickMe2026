@@ -276,4 +276,60 @@ struct ExpertModeGateTests {
         #expect(!ExpertModeGate.shouldLookUpTopics(hasStoredPreference: true, isExpert: false))
         #expect(!ExpertModeGate.shouldLookUpTopics(hasStoredPreference: false, isExpert: false))
     }
+
+    // MARK: - recheckDecision (D-02, D-04)
+
+    @Test("nothing pending means nothing to re-check")
+    func recheckNotPending() {
+        for deferred in Self.everyBool {
+            for mode in [AppMode.client, .expert] {
+                #expect(ExpertModeGate.recheckDecision(
+                    pending: false, deferred: deferred, roles: [.expert], mode: mode
+                ) == .none)
+            }
+        }
+    }
+
+    @Test("a deferred setup is never re-checked and the flag clears (D-01)")
+    func recheckDeferredClears() {
+        #expect(ExpertModeGate.recheckDecision(
+            pending: true, deferred: true, roles: [.expert], mode: .expert
+        ) == .clearPending)
+        #expect(ExpertModeGate.recheckDecision(
+            pending: true, deferred: true, roles: nil, mode: .client
+        ) == .clearPending)
+    }
+
+    @Test("unknown roles wait without a request")
+    func recheckUnknownRolesWait() {
+        #expect(ExpertModeGate.recheckDecision(
+            pending: true, deferred: false, roles: nil, mode: .client
+        ) == .wait)
+        #expect(ExpertModeGate.recheckDecision(
+            pending: true, deferred: false, roles: nil, mode: .expert
+        ) == .wait)
+    }
+
+    @Test("a client-only account outside Expert mode makes no request (D-04)")
+    func recheckClientOnlyClears() {
+        #expect(ExpertModeGate.recheckDecision(
+            pending: true, deferred: false, roles: [.client], mode: .client
+        ) == .clearPending)
+    }
+
+    @Test("a client-only account in Expert mode is re-checked (stored Expert counts as consent)")
+    func recheckClientOnlyInExpertChecks() {
+        #expect(ExpertModeGate.recheckDecision(
+            pending: true, deferred: false, roles: [.client], mode: .expert
+        ) == .check)
+    }
+
+    @Test("an expert is re-checked in either mode")
+    func recheckExpertChecks() {
+        for mode in [AppMode.client, .expert] {
+            #expect(ExpertModeGate.recheckDecision(
+                pending: true, deferred: false, roles: [.client, .expert], mode: mode
+            ) == .check)
+        }
+    }
 }

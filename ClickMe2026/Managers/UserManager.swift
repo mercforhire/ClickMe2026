@@ -482,6 +482,8 @@ final class UserManager {
         // "Not now" belongs to the account that chose it; it must not reach
         // the next sign-in on this device (T-05-15).
         setupDeferral.clear()
+        // A failed setup lookup belongs to the old account too (D-02).
+        setupCheckPending = false
         // A tap queued for the old account must never route after sign-out,
         // and a chat that was on screen must not suppress the next
         // account's message banners (Android `clearSessionData` parity).
@@ -643,6 +645,60 @@ final class UserManager {
         })
     }
 
+    // MARK: Foreground re-check (D-02)
+
+    /// Whether a setup lookup still owes an answer: the launch or login lookup
+    /// failed, or the roles were unknown at launch. Set by
+    /// `resolvePostAuthLanding(roles:)` and `markSetupCheckPending()`; cleared by
+    /// a successful lookup, a deferral, a client-only account, an explicit
+    /// Expert request and `clearLocalSession()`.
+    @ObservationIgnored private(set) var setupCheckPending = false
+
+    /// Keeps `recheckSetupIfPending()` to one run at a time.
+    @ObservationIgnored private var isRecheckingSetup = false
+
+    /// Records that the setup state is unknown, so the next foreground decides.
+    /// Makes no request.
+    func markSetupCheckPending() {
+        setupCheckPending = true
+    }
+
+    /// Retries a failed or skipped setup lookup when the app returns to the
+    /// foreground (D-02; Android `recheckSetupIfPending`). An unfinished
+    /// profile raises `setupHubRequested`, which `ClickMe2026App` routes to the
+    /// setup hub from a home route.
+    ///
+    /// `ExpertModeGate.recheckDecision` runs before any request: a client-only
+    /// account outside Expert mode never reaches the network (D-04), and a
+    /// deferred setup is dropped (D-01).
+    func recheckSetupIfPending() async {
+        guard !isRecheckingSetup else { return }
+        isRecheckingSetup = true
+        defer { isRecheckingSetup = false }
+        switch ExpertModeGate.recheckDecision(
+            pending: setupCheckPending,
+            deferred: isSetupDeferred,
+            roles: me?.roles,
+            mode: currentMode
+        ) {
+        case .none, .wait:
+            return
+        case .clearPending:
+            setupCheckPending = false
+        case .check:
+            // Nil means the lookup failed: stay pending for the next foreground (D-02).
+            guard let setupCompleted = await lookUpSetupCompleted() else { return }
+            // Single-call invariant: the hub would replace the shell that hosts the call
+            // screen, so the flag stays set and a later foreground re-checks.
+            guard !CallCenter.shared.isCallActive else { return }
+            setupCheckPending = false
+            guard isLoggedIn else { return }
+            if ExpertModeGate.decide(setupCompleted: setupCompleted) == .openSetupHub {
+                setupHubRequested = true
+            }
+        }
+    }
+
     /// The single entry point for switching the app between Client and Expert
     /// (D-03). The decisions are the pure `ExpertModeGate`; this method owns
     /// the state and the lookup.
@@ -691,12 +747,15 @@ final class UserManager {
             return .blockedByCall
         case .enterExpert:
             isSwitchingMode = false
+            // An answered lookup settles any pending foreground re-check.
+            if setupCompleted != nil { setupCheckPending = false }
             setMode(.expert)
             return .switched(.expert)
         case let .setupRequired(opensHub):
             // Expert is not persisted, so a cold launch cannot land on an
             // empty Expert dashboard.
             isSwitchingMode = false
+            if setupCompleted != nil { setupCheckPending = false }
             if opensHub { setupHubRequested = true }
             return .setupRequired
         }
@@ -767,6 +826,8 @@ final class UserManager {
             deferred: isSetupDeferred
         ) {
             let setupCompleted = await lookUpSetupCompleted()
+            // A failed lookup stays pending for the next foreground (D-02).
+            setupCheckPending = (setupCompleted == nil)
             if ExpertModeGate.decide(setupCompleted: setupCompleted) == .openSetupHub {
                 return .setupHub
             }

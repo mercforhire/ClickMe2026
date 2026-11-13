@@ -143,4 +143,39 @@ enum ExpertModeGate {
         if hasStoredPreference { return storedMode }
         return isExpert && hasTopics ? .expert : .client
     }
+
+    // MARK: - Foreground re-check
+
+    /// What the foreground re-check does with a pending setup check.
+    enum RecheckDecision: Equatable {
+        /// Nothing is pending.
+        case none
+        /// The roles are not known yet (the launch kept the token but `/me`
+        /// was unreachable). Keep the flag and make no request.
+        case wait
+        /// The check no longer applies. Drop the flag and make no request.
+        case clearPending
+        /// Look up the setup state now.
+        case check
+    }
+
+    /// Whether a pending setup check is retried when the app returns to the
+    /// foreground (D-02; Android `recheckSetupIfPending`).
+    ///
+    /// The retry is a `GET /expert/*` call, which the server answers by
+    /// promoting a client-only account through `ensureExpert`. Nothing in the
+    /// background may do that, so a client-only account outside Expert mode
+    /// clears the flag without a request (D-04, Android's role guard). A
+    /// deferred setup (Not now) is never re-checked (D-01).
+    /// - Parameters:
+    ///   - pending: Whether a launch or login lookup failed, or the roles were unknown.
+    ///   - deferred: Whether the user chose Not now on the hub.
+    ///   - roles: The account's roles, or nil when `/me` has not loaded.
+    ///   - mode: The current app mode.
+    static func recheckDecision(pending: Bool, deferred: Bool, roles: [UserRole]?, mode: AppMode) -> RecheckDecision {
+        guard pending else { return .none }
+        guard !deferred else { return .clearPending }
+        guard let roles else { return .wait }
+        return roles.contains(.expert) || mode == .expert ? .check : .clearPending
+    }
 }

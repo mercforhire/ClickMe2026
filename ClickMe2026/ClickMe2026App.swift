@@ -13,6 +13,7 @@ struct ClickMe2026App: App {
     @UIApplicationDelegateAdaptor var appDelegate: ClickMe2026AppDelegate
     @State private var userManager = UserManager.shared
     @State private var route: AppRoute = .splash
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -47,6 +48,18 @@ struct ClickMe2026App: App {
                     userManager.consumeSetupHubRequest()
                     guard route == .clientHome || route == .expertHome else { return }
                     route = .signupSetup
+                }
+                // D-02: a setup lookup that failed at launch or login is retried
+                // when the app comes back to the foreground, only on a home
+                // route. The re-check is role-guarded and makes no request
+                // for a client-only account. If a device check shows this
+                // App-level phase does not report `.active` (RESEARCH A6),
+                // move the call into the two home shells' existing
+                // `scenePhase` handlers instead.
+                .onChange(of: scenePhase) { _, phase in
+                    guard phase == .active else { return }
+                    guard route == .clientHome || route == .expertHome else { return }
+                    Task { await userManager.recheckSetupIfPending() }
                 }
         }
     }

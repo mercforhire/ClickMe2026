@@ -57,6 +57,7 @@ blocked: 1
   reason: "User reported: IOS, Pull to refresh on the exports screen is currently broken. Nothing will load."
   severity: blocker
   test: 3
+  screen_confirmed: "Explore (user confirmed 2026-11-12; 'exports' in the verbatim report is a typo for Explore)"
   root_cause: "ExploreClientViewModel.load() sets all three section states to .loading at the start of a pull to refresh, which swaps the loaded sections for skeletons inside the ScrollView that owns .refreshable. SwiftUI cancels the refreshable task when that view re-renders mid-refresh, so getClientHome throws URLError.cancelled. The cancellation branch (ExploreClientViewModel.swift:96-99) reverts every .loading section to .idle and starts no new load; .idle renders the same skeleton as .loading, so Explore is stuck on skeletons with nothing in flight. Diagnosed from code (inline, 2026-11-12); not yet reproduced under a debugger."
   artifacts:
     - path: "ClickMe2026/Views/Screens/Client Mode/Explore/ExploreClientView.swift"

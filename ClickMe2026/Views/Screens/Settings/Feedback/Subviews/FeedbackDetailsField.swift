@@ -47,7 +47,7 @@ struct FeedbackDetailsField: View {
 
             if showError {
                 Text("Please enter at least 10 characters.")
-                    .font(.brand(.caption, weight: .medium))
+                    .font(.brand(.caption))
                     .foregroundColor(FeedbackBrand.errorRed)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }

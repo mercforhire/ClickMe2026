@@ -53,6 +53,7 @@ enum ErrorCode: String, Decodable {
     case sessionNotActive        = "SESSION_NOT_ACTIVE"
     case sessionInProgress       = "SESSION_IN_PROGRESS"
     case expertHasUpcomingBookings = "EXPERT_HAS_UPCOMING_BOOKINGS"
+    case clientHasUpcomingBookings = "CLIENT_HAS_UPCOMING_BOOKINGS" // 409 — self-delete blocked: confirmed or pending_reschedule sessions booked as a client
     case callUnavailable         = "CALL_UNAVAILABLE"       // 503 — Agora not configured
     case cannotBookSelf          = "CANNOT_BOOK_SELF"       // 422 — client tried to book themselves
     case expertNotBookable       = "EXPERT_NOT_BOOKABLE"    // 422 — expert not `charges_enabled` yet

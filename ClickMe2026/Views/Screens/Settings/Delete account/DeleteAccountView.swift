@@ -21,6 +21,9 @@ enum DeleteAccountStep {
 struct DeleteAccountView: View {
     @StateObject private var viewModel: DeleteAccountViewModel
     @Environment(\.dismiss) private var dismiss
+    /// Installed by the shell that hosts Settings; nil outside a shell (previews)
+    /// and on a shell that does not install it.
+    @Environment(\.showMyBookings) private var showMyBookings
 
     var onBackToLogin: () -> Void
     var onPauseAccount: () -> Void
@@ -81,6 +84,25 @@ struct DeleteAccountView: View {
             Button("OK", role: .cancel) {}
         } message: { message in
             Text(message)
+        }
+        .alert(
+            AccountDeletionBlocker.title,
+            isPresented: Binding(
+                get: { viewModel.blocker != nil },
+                set: { if !$0 { viewModel.blocker = nil } }
+            ),
+            presenting: viewModel.blocker
+        ) { blocker in
+            // Offered only when the blocking bookings are in the active mode's
+            // list and the shell can open it (SET-06, D-10).
+            if blocker.offersBookingsAction(in: UserManager.shared.currentMode),
+               let showMyBookings
+            {
+                Button(AccountDeletionBlocker.bookingsActionLabel) { showMyBookings() }
+            }
+            Button("OK", role: .cancel) {}
+        } message: { blocker in
+            Text(blocker.message(in: UserManager.shared.currentMode))
         }
     }
 

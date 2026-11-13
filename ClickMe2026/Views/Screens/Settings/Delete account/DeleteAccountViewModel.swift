@@ -28,6 +28,10 @@ final class DeleteAccountViewModel: ObservableObject {
     @Published var passwordError: String?
     /// Top-level alert message for non-field failures (network / server / 429).
     @Published var deletionError: String?
+    /// Set when either step returns a 409 for upcoming bookings or a live
+    /// session (SET-06, D-10). Shown as its own alert; the flow stays on the
+    /// feedback step and the next confirm asks for a fresh token.
+    @Published var blocker: AccountDeletionBlocker?
 
     let reasons: [DeleteAccountReason]
 
@@ -86,6 +90,7 @@ final class DeleteAccountViewModel: ObservableObject {
     func confirmDeletion() async {
         deletionError = nil
         passwordError = nil
+        blocker = nil
 
         guard let reason = selectedReason else {
             deletionError = "Please choose a reason before continuing."
@@ -131,7 +136,7 @@ final class DeleteAccountViewModel: ObservableObject {
 
     private func handle(requestError error: Error) {
         guard case let NetworkError.httpError(statusCode, data) = error else {
-            deletionError = Self.message(for: error)
+            deletionError = error.userMessage
             return
         }
 
@@ -139,6 +144,12 @@ final class DeleteAccountViewModel: ObservableObject {
         case 401, 403:
             passwordError = Self.decodeStandardMessage(from: data)
                 ?? "Password is incorrect."
+        case 409:
+            blocker = AccountDeletionBlocker(code: BookingErrorMapper.code(for: error))
+            if blocker == nil {
+                deletionError = Self.decodeStandardMessage(from: data)
+                    ?? "Couldn't verify your password. Please try again."
+            }
         case 429:
             deletionError = "Too many attempts. Please try again in a moment."
         default:
@@ -149,7 +160,7 @@ final class DeleteAccountViewModel: ObservableObject {
 
     private func handle(deleteError error: Error) {
         guard case let NetworkError.httpError(statusCode, data) = error else {
-            deletionError = Self.message(for: error)
+            deletionError = error.userMessage
             return
         }
 
@@ -160,6 +171,12 @@ final class DeleteAccountViewModel: ObservableObject {
             // happens the user needs to re-enter their password to mint a
             // fresh one.
             passwordError = "That took too long. Please enter your password and try again."
+        case 409:
+            blocker = AccountDeletionBlocker(code: BookingErrorMapper.code(for: error))
+            if blocker == nil {
+                deletionError = Self.decodeStandardMessage(from: data)
+                    ?? "Couldn't delete your account. Please try again."
+            }
         case 429:
             deletionError = "Too many attempts. Please try again in a moment."
         default:
@@ -170,9 +187,5 @@ final class DeleteAccountViewModel: ObservableObject {
 
     private static func decodeStandardMessage(from data: Data) -> String? {
         (try? JSONDecoder().decode(StandardErrorResponse.self, from: data))?.message
-    }
-
-    private static func message(for error: Error) -> String {
-        (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 }

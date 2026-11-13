@@ -32,27 +32,27 @@ struct HomeShellExitTests {
 
     @Test("View My Bookings from Explore resets Explore and Bookings")
     func viewMyBookingsFromExplore() {
-        let exit = HomeShellExit.plan(.viewMyBookings, selectedTab: .explore)
+        let exit = HomeShellExit<HomeClientTab>.plan(.viewMyBookings, selectedTab: .explore)
         #expect(exit.resetTabs == [.explore, .bookings])
     }
 
     @Test("View My Bookings from Bookings resets Bookings once")
     func viewMyBookingsFromBookings() {
-        let exit = HomeShellExit.plan(.viewMyBookings, selectedTab: .bookings)
+        let exit = HomeShellExit<HomeClientTab>.plan(.viewMyBookings, selectedTab: .bookings)
         #expect(exit.resetTabs == [.bookings])
         #expect(exit.resetTabs.count == 1)
     }
 
     @Test("View My Bookings from Profile resets Profile and Bookings")
     func viewMyBookingsFromProfile() {
-        let exit = HomeShellExit.plan(.viewMyBookings, selectedTab: .profile)
+        let exit = HomeShellExit<HomeClientTab>.plan(.viewMyBookings, selectedTab: .profile)
         #expect(exit.resetTabs == [.profile, .bookings])
         #expect(exit.showTab == .bookings)
     }
 
     @Test("Back to Home from Explore resets Explore once")
     func backToHomeFromExplore() {
-        let exit = HomeShellExit.plan(.backToHome, selectedTab: .explore)
+        let exit = HomeShellExit<HomeClientTab>.plan(.backToHome, selectedTab: .explore)
         #expect(exit.resetTabs == [.explore])
         #expect(exit.showTab == .explore)
     }
@@ -67,7 +67,7 @@ struct HomeShellExitTests {
 
     @Test("View My History from Profile resets Profile and Bookings")
     func viewMyHistoryFromProfile() {
-        let exit = HomeShellExit.plan(.viewMyHistory, selectedTab: .profile)
+        let exit = HomeShellExit<HomeClientTab>.plan(.viewMyHistory, selectedTab: .profile)
         #expect(exit.resetTabs == [.profile, .bookings])
         #expect(exit.showTab == .bookings)
         #expect(exit.showsPastBookings)
@@ -75,7 +75,7 @@ struct HomeShellExitTests {
 
     @Test("View My History from Bookings resets Bookings once")
     func viewMyHistoryFromBookings() {
-        let exit = HomeShellExit.plan(.viewMyHistory, selectedTab: .bookings)
+        let exit = HomeShellExit<HomeClientTab>.plan(.viewMyHistory, selectedTab: .bookings)
         #expect(exit.resetTabs == [.bookings])
         #expect(exit.showTab == .bookings)
         #expect(exit.showsPastBookings)
@@ -83,7 +83,7 @@ struct HomeShellExitTests {
 
     @Test("Explore Experts from Profile resets Profile only, leaving Explore's stack")
     func exploreExpertsFromProfile() {
-        let exit = HomeShellExit.plan(.backToHome, selectedTab: .profile)
+        let exit = HomeShellExit<HomeClientTab>.plan(.backToHome, selectedTab: .profile)
         #expect(exit.resetTabs == [.profile])
         #expect(exit.resetTabs.contains(.explore) == false)
         #expect(exit.showTab == .explore)
@@ -94,7 +94,7 @@ struct HomeShellExitTests {
     /// history exit may ask for the Past segment.
     @Test("Every action from every tab keeps the exit invariants")
     func invariants() {
-        let actions: [HomeShellExit.Action] = [.backToHome, .viewMyBookings, .viewMyHistory]
+        let actions: [HomeShellExit<HomeClientTab>.Action] = [.backToHome, .viewMyBookings, .viewMyHistory]
         for action in actions {
             for source in HomeClientTab.allCases {
                 let exit = HomeShellExit.plan(action, selectedTab: source)
@@ -115,5 +115,37 @@ struct HomeShellExitTests {
             HomeShellExit.plan(.viewMyBookings, selectedTab: source)
                 == HomeShellExit.plan(.viewMyBookings, selectedTab: source)
         )
+    }
+
+    // MARK: - Expert shell (SET-06 / D-10)
+
+    @Test("Expert View My Bookings resets the source tab and Bookings and shows Bookings", arguments: HomeExpertTab.allCases)
+    func expertViewMyBookings(source: HomeExpertTab) {
+        let exit = HomeShellExit<HomeExpertTab>.plan(.viewMyBookings, selectedTab: source)
+        #expect(exit.resetTabs == [source, .bookings])
+        #expect(exit.showTab == .bookings)
+        #expect(exit.showsPastBookings == false)
+    }
+
+    @Test("Expert View My Bookings from Profile resets Profile and Bookings")
+    func expertViewMyBookingsFromProfile() {
+        let exit = HomeShellExit<HomeExpertTab>.plan(.viewMyBookings, selectedTab: .profile)
+        #expect(exit.resetTabs == [.profile, .bookings])
+        #expect(exit.showTab == .bookings)
+    }
+
+    @Test("Expert View My Bookings from Bookings resets Bookings once")
+    func expertViewMyBookingsFromBookings() {
+        let exit = HomeShellExit<HomeExpertTab>.plan(.viewMyBookings, selectedTab: .bookings)
+        #expect(exit.resetTabs == [.bookings])
+        #expect(exit.resetTabs.count == 1)
+    }
+
+    @Test("Expert Back to Home resets only the source tab and shows Dashboard", arguments: HomeExpertTab.allCases)
+    func expertBackToHome(source: HomeExpertTab) {
+        let exit = HomeShellExit<HomeExpertTab>.plan(.backToHome, selectedTab: source)
+        #expect(exit.resetTabs == [source])
+        #expect(exit.showTab == .dashboard)
+        #expect(exit.showsPastBookings == false)
     }
 }

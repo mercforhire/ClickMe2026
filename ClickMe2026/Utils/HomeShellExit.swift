@@ -29,7 +29,12 @@ import Foundation
 /// and shows Explore without touching Explore's stack. "View My History" is
 /// `viewMyHistory`: it resets the source tab and Bookings, shows Bookings and
 /// asks for its Past segment.
-struct HomeShellExit: Equatable {
+///
+/// Both shells use the plan, generic over their tab enum. The client shell
+/// installs all three exits. The expert shell installs only
+/// `viewMyBookings`, for Delete Account's blocker alert (D-10), so it never
+/// asks for the Past segment.
+struct HomeShellExit<Tab: HomeShellTab>: Equatable {
 
     /// The shell actions that leave the booking flow.
     enum Action: Equatable {
@@ -39,10 +44,10 @@ struct HomeShellExit: Equatable {
     }
 
     /// Tabs whose stacks are emptied.
-    let resetTabs: Set<HomeClientTab>
+    let resetTabs: Set<Tab>
 
     /// Tab selected after the reset.
-    let showTab: HomeClientTab
+    let showTab: Tab
 
     /// Whether the Bookings tab opens on its Past segment. Only
     /// `viewMyHistory` sets it.
@@ -53,26 +58,48 @@ struct HomeShellExit: Equatable {
     /// - Parameters:
     ///   - action: The exit the user tapped.
     ///   - selectedTab: The tab selected at tap time, the source of the flow.
-    static func plan(_ action: Action, selectedTab: HomeClientTab) -> HomeShellExit {
+    static func plan(_ action: Action, selectedTab: Tab) -> HomeShellExit {
         switch action {
         case .backToHome:
             return HomeShellExit(
                 resetTabs: [selectedTab],
-                showTab: .explore,
+                showTab: Tab.homeTab,
                 showsPastBookings: false
             )
         case .viewMyBookings:
             return HomeShellExit(
-                resetTabs: [selectedTab, .bookings],
-                showTab: .bookings,
+                resetTabs: [selectedTab, Tab.bookingsTab],
+                showTab: Tab.bookingsTab,
                 showsPastBookings: false
             )
         case .viewMyHistory:
             return HomeShellExit(
-                resetTabs: [selectedTab, .bookings],
-                showTab: .bookings,
+                resetTabs: [selectedTab, Tab.bookingsTab],
+                showTab: Tab.bookingsTab,
                 showsPastBookings: true
             )
         }
     }
+}
+
+// MARK: - Shell tab conformances
+
+/// What a shell's tab enum supplies to the shared exit plan: the tab a
+/// "back to home" exit shows and the tab that lists the user's bookings.
+protocol HomeShellTab: Hashable {
+    /// The shell's landing tab.
+    static var homeTab: Self { get }
+
+    /// The shell's Bookings tab.
+    static var bookingsTab: Self { get }
+}
+
+extension HomeClientTab: HomeShellTab {
+    static var homeTab: HomeClientTab { .explore }
+    static var bookingsTab: HomeClientTab { .bookings }
+}
+
+extension HomeExpertTab: HomeShellTab {
+    static var homeTab: HomeExpertTab { .dashboard }
+    static var bookingsTab: HomeExpertTab { .bookings }
 }

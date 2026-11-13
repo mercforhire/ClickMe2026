@@ -232,7 +232,7 @@ struct HomeClientView: View {
     /// Apply a planned exit: empty every stack in `resetTabs`, then show
     /// `showTab`. `HomeNavigationPath.reset()` is a no-op on an empty path, so
     /// a repeated exit changes nothing (BOOK-19, D-06).
-    private func applyExit(_ exit: HomeShellExit) {
+    private func applyExit(_ exit: HomeShellExit<HomeClientTab>) {
         for tab in exit.resetTabs {
             path(for: tab).reset()
         }

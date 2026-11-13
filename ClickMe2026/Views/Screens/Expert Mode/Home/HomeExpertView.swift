@@ -69,6 +69,12 @@ struct HomeExpertView: View {
                 peerAvatarURL: peerAvatarURL
             ))
         })
+        // Delete Account's blocker alert (plan 05-08) offers "View my bookings"
+        // when this is set. Same plan the client shell uses: reset the tab
+        // the flow started on and Bookings, then show Bookings (D-10).
+        .environment(\.showMyBookings, HomeShellAction {
+            applyExit(HomeShellExit.plan(.viewMyBookings, selectedTab: selectedTab))
+        })
         // Global call surface + floating pill overlays.
         .modifier(CallOverlayHost { threadId, peerName, peerAvatarURL in
             selectedTab = .chats
@@ -171,6 +177,29 @@ struct HomeExpertView: View {
         case .notificationsList:
             selectedTab = .dashboard
             dashboardPath.replace(with: HomeRoute.notifications)
+        }
+    }
+
+    // MARK: - Shell exits
+
+    /// Apply a planned exit: empty every stack in `resetTabs`, then show
+    /// `showTab`. `HomeNavigationPath.reset()` is a no-op on an empty path, so
+    /// a repeated exit changes nothing. `showsPastBookings` is never set by
+    /// the one exit this shell installs, so it is not read here.
+    private func applyExit(_ exit: HomeShellExit<HomeExpertTab>) {
+        for tab in exit.resetTabs {
+            path(for: tab).reset()
+        }
+        selectedTab = exit.showTab
+    }
+
+    private func path(for tab: HomeExpertTab) -> HomeNavigationPath {
+        switch tab {
+        case .dashboard: return dashboardPath
+        case .bookings: return bookingsPath
+        case .topics: return topicsPath
+        case .chats: return chatsPath
+        case .profile: return profilePath
         }
     }
 

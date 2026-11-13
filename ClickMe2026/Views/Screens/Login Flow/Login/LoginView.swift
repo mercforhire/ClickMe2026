@@ -170,6 +170,14 @@ struct LoginView: View {
                                 case .expertise:
                                     path.append(SignupRoute.tags)
                                 }
+                            },
+                            // Every hub entry (resume, after login, after a
+                            // fresh signup, opened by the Mode Switch gate)
+                            // gets the same exit: remember the deferral, go
+                            // to client home (D-01).
+                            onNotNow: {
+                                UserManager.shared.deferSetup()
+                                onSuccess(.client)
                             }
                         )
                     case .profilePhoto:

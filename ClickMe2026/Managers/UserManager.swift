@@ -479,6 +479,9 @@ final class UserManager {
         modeSwitchGeneration += 1
         setupHubRequested = false
         isSwitchingMode = false
+        // "Not now" belongs to the account that chose it; it must not reach
+        // the next sign-in on this device (T-05-15).
+        setupDeferral.clear()
         // A tap queued for the old account must never route after sign-out,
         // and a chat that was on screen must not suppress the next
         // account's message banners (Android `clearSessionData` parity).
@@ -693,6 +696,25 @@ final class UserManager {
 
     /// Called by the app shell once it has acted on `setupHubRequested`.
     func consumeSetupHubRequest() {
+        setupHubRequested = false
+    }
+
+    // MARK: Setup deferral (Not now, D-01)
+
+    /// The persisted "Not now" from the setup hub. Cleared on every sign-out,
+    /// by `completeSetup()` and when the user asks for Expert again.
+    @ObservationIgnored private let setupDeferral = SetupDeferralStore()
+
+    /// Whether the user chose Not now on the setup hub and has not since
+    /// published, asked for Expert again or signed out.
+    var isSetupDeferred: Bool { setupDeferral.isDeferred }
+
+    /// The hub's Not now (Android `deferSetup`): remembers the choice, sets
+    /// Client mode and drops any pending hub request so the shell does not
+    /// reopen the hub.
+    func deferSetup() {
+        setupDeferral.set()
+        setMode(.client)
         setupHubRequested = false
     }
 

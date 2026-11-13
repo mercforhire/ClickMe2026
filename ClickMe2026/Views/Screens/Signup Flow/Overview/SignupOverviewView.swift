@@ -42,17 +42,24 @@ struct SignupOverviewView: View {
     var onNext: () -> Void
     var onChecklistItemTap: (ChecklistItem) -> Void
 
+    /// The hub's exit (D-01, SIGN-06). When set, the back chevron and the
+    /// swipe-back are removed and a leading "Not now" button takes their
+    /// place, so the hub never traps the user. Previews leave it nil.
+    var onNotNow: (() -> Void)?
+
     // UI-only animation state
     @State private var animatedProgress = 0.0
 
     init(
         viewModel: SignupOverviewViewModel = SignupOverviewViewModel(),
         onNext: @escaping () -> Void = {},
-        onChecklistItemTap: @escaping (ChecklistItem) -> Void = { _ in }
+        onChecklistItemTap: @escaping (ChecklistItem) -> Void = { _ in },
+        onNotNow: (() -> Void)? = nil
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onNext = onNext
         self.onChecklistItemTap = onChecklistItemTap
+        self.onNotNow = onNotNow
     }
 
     /// Runtime init — the checklist tracks the accumulator's progress
@@ -60,12 +67,14 @@ struct SignupOverviewView: View {
     init(
         accumulator: SignupAccumulator,
         onNext: @escaping () -> Void = {},
-        onChecklistItemTap: @escaping (ChecklistItem) -> Void = { _ in }
+        onChecklistItemTap: @escaping (ChecklistItem) -> Void = { _ in },
+        onNotNow: (() -> Void)? = nil
     ) {
         self.init(
             viewModel: SignupOverviewViewModel(accumulator: accumulator),
             onNext: onNext,
-            onChecklistItemTap: onChecklistItemTap
+            onChecklistItemTap: onChecklistItemTap,
+            onNotNow: onNotNow
         )
     }
 
@@ -102,6 +111,7 @@ struct SignupOverviewView: View {
         .safeAreaInset(edge: .bottom) {
             OverviewNextBar(action: onNext)
         }
+        .modifier(OverviewNotNowChrome(onNotNow: onNotNow))
         .onAppear {
             withAnimation(.easeOut(duration: 0.8).delay(0.15)) {
                 animatedProgress = viewModel.progress
@@ -116,6 +126,37 @@ struct SignupOverviewView: View {
             withAnimation(.easeOut(duration: 0.4)) {
                 animatedProgress = viewModel.progress
             }
+        }
+    }
+}
+
+// MARK: - Not now chrome
+
+/// The hub's exit (D-01). With an exit the back chevron and the swipe-back
+/// are removed, because a hub with neither would strand the user; without
+/// one (previews) the screen keeps its system back button.
+///
+/// `BookingRequestSentPopGestureLock` is reused as is: it restores
+/// swipe-back while a checklist step is pushed on top. "Not now" is a
+/// secondary action, so it uses `Brand.onSurfaceVariant`, not the accent
+/// (UI-SPEC A1).
+private struct OverviewNotNowChrome: ViewModifier {
+    let onNotNow: (() -> Void)?
+
+    func body(content: Content) -> some View {
+        if let onNotNow {
+            content
+                .navigationBarBackButtonHidden(true)
+                .background(BookingRequestSentPopGestureLock())
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Not now") { onNotNow() }
+                            .font(.brand(.body))
+                            .foregroundStyle(Brand.onSurfaceVariant)
+                    }
+                }
+        } else {
+            content
         }
     }
 }

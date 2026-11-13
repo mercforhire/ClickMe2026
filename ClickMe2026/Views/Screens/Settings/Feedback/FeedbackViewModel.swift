@@ -131,15 +131,30 @@ final class FeedbackViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Validation
+
+    /// The server rejects `details` shorter than this (`feedback.schema.js`,
+    /// `z.string().min(10)`).
+    static let minimumDetailsLength = 10
+
+    /// True when the trimmed text reaches `minimumDetailsLength`. Counts
+    /// UTF-16 units: the same unit as the server's JavaScript string length
+    /// and Android's `String.length`, so all three agree on emoji. iOS sends
+    /// and measures the trimmed text, which is never longer than what the
+    /// server would measure, so anything accepted here the server accepts.
+    static func meetsMinimumLength(_ text: String) -> Bool {
+        text.trimmingCharacters(in: .whitespacesAndNewlines).utf16.count >= minimumDetailsLength
+    }
+
     // MARK: - Actions
 
     func selectType(_ type: FeedbackTypeItem) {
         withAnimation(.easeInOut(duration: 0.2)) { selectedType = type }
     }
 
-    /// Clear the details validation error if the user has started typing.
+    /// Clear the details validation error once the text is long enough to send.
     func detailsDidChange() {
-        if showDetailsError, !details.isEmpty {
+        if showDetailsError, Self.meetsMinimumLength(details) {
             withAnimation { showDetailsError = false }
         }
     }
@@ -155,7 +170,9 @@ final class FeedbackViewModel: ObservableObject {
         let trimmedDetails = details.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !trimmedDetails.isEmpty else {
+        // Too short: show the error and leave `details` as typed, so the user
+        // can extend it rather than retype it.
+        guard Self.meetsMinimumLength(details) else {
             withAnimation { showDetailsError = true }
             return
         }

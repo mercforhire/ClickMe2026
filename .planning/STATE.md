@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 04
 current_phase_name: Booking, Payment and Discovery
 status: verifying
-stopped_at: Completed 04-16-PLAN.md
-last_updated: "2026-11-12T19:11:13.970Z"
+stopped_at: Completed 04-17-PLAN.md
+last_updated: "2026-11-13T04:32:22.444Z"
 last_activity: 2026-11-12
 last_activity_desc: Phase 04 execution started
-state_head: 15e7a9b7e49046ad9bb4e1fabad4fd698501104f
+state_head: a06dd8996e970d7324dc79ec07adb38e16d41048
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 74
-  completed_plans: 74
+  total_plans: 75
+  completed_plans: 75
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 04 (Booking, Payment and Discovery) — EXECUTING
-Plan: 16 of 16
+Plan: 17 of 17
 Status: Phase complete — ready for verification
 Last activity: 2026-11-12 — Phase 04 execution started
 
@@ -130,6 +130,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 04 P14 | 12 min | 3 tasks | 2 files |
 | Phase 04 P15 | 11 min | 3 tasks | 8 files |
 | Phase 04 P16 | multi-session (user deploy wait) | 3 tasks | 5 files |
+| Phase 04 P17 | 16 min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -278,6 +279,7 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-15: PaidAttempt snapshot (topic, slot, PaymentIntent, meeting type, notes) is taken when the PaymentIntent is created; every confirm and the D-04 ledger key read only it (CR-01)
 - [Phase 04]: 04-15: loadAvailability keeps the slot while isSubmitting (not moved into the month arrows) so WR-04 is unchanged; booking input cards are disabled while isSubmitting
 - [Phase 04]: 04-16 CR-02: backend 28da165 live; the profiles read and platform-card check run before the T-24h stamp, so a transient error is retried on the next run. Truth 17 is partially closed: errors after the stamp still reach the 6 h window (todo 2026-11-12). User accepted the unbounded-retry limit and Q-CR02 returned 0 rows.
+- [Phase 04]: 04-17: Explore fetch is shielded in load() via an unstructured Task; a cancelled fetch settles each section from its prior state (first load shows the generic failure with Retry), never idle
 
 ### Pending Todos
 
@@ -362,6 +364,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-12T19:11:06.909Z
-Stopped at: Completed 04-16-PLAN.md
+Last session: 2026-11-13T04:32:21.795Z
+Stopped at: Completed 04-17-PLAN.md
 Resume file: None

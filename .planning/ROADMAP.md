@@ -250,7 +250,7 @@ Plans:
   4. An unavailable (404) expert profile shows "This profile isn't available", and network errors offer a retry. Empty Expertise, Topics and Reviews sections are hidden. Free featured topics show "Free". Search tag pills show their full text.
   5. Favorites shows every favorite (paged), with working empty-state buttons and correct copy. A profile's favorite state matches its `is_favorite`. The full reviews list loads beyond 20 reviews.
 
-**Plans**: 16/17 plans executed (14/14 executed in 4 waves: iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02. Plus 2 gap closure plans, 04-15 iOS and 04-16 backend with a user deploy checkpoint, and 1 UAT gap closure plan, 04-17 iOS)
+**Plans**: 17/17 plans executed (14/14 executed in 4 waves: iOS, plus one backend plan for D-12 with a user deploy checkpoint; 04-12 has a user decision checkpoint for the LIKELY item EXPL-02. Plus 2 gap closure plans, 04-15 iOS and 04-16 backend with a user deploy checkpoint, and 1 UAT gap closure plan, 04-17 iOS)
 
 Plans:
 **Wave 1**
@@ -280,7 +280,7 @@ Plans:
 - [x] 04-16-PLAN.md — CR-02 / D-12 backend: platform-card check before the stamp so a transient Stripe error is retried, not cancelled at 6 h; comments and contract note corrected; user deploys the one commit (checkpoint)
 
 **Gap closure, UAT** *(from 04-UAT.md G-04-3; wave 1, iOS only)*
-- [ ] 04-17-PLAN.md — G-04-3 / EXPL-07: pull to refresh on Explore finishes its load (fetch in an unstructured Task, loaded sections stay on screen); a cancelled load restores each section instead of stranding skeletons; device re-test in checklist item 1
+- [x] 04-17-PLAN.md — G-04-3 / EXPL-07: pull to refresh on Explore finishes its load (fetch in an unstructured Task, loaded sections stay on screen); a cancelled load restores each section instead of stranding skeletons; device re-test in checklist item 1
 
 **UI hint**: yes
 **Notes**:
@@ -380,7 +380,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
-| 4. Booking, Payment and Discovery | 16/16 | In Progress | - |
+| 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 0/TBD | Not started | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |

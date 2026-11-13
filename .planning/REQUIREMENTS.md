@@ -137,7 +137,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BACK-10** [K10]: `POST /bookings/request` validates `duration_minutes` and rejects a past `scheduled_start`
 - [x] **BACK-11** [K11]: `price_amount` and the tag-replace list have upper bounds
 - [x] **BACK-12** [K12]: Client cancel is rejected after the session's end time
-- [ ] **BACK-13** [K13] **[major]**: A client is promoted to expert only by an explicit setup call, not any `/expert/*` call *(Pending, not delivered: wave 3c dropped by user decision 2026-11-08. Code parked on backend branch `wave-3c`. Needs a new decision.)*
+- [ ] **BACK-13** [K13] **[major]**: A client is promoted to expert only by an explicit setup call, not any `/expert/*` call *(Deferred past this release by Phase 5 decision D-04, 2026-11-13; wave 3c was dropped by user decision 2026-11-08. The iOS Expert-mode gate (SIGN-06, plans 05-07, 05-10, 05-12 and 05-16) fixes the user-facing bug. The code stays parked on backend branch `wave-3c`. It can ship once App Store build 6 and the current Android build no longer rely on implicit promotion; the reason is recorded under REL-02. Checkbox stays unticked.)*
 - [x] **BACK-14** [K14]: The cancel `reason` is stored
 - [ ] **BACK-15** [K15]: A confirm retry with the same `booking_attempt_id` replays the original result *(Pending on purpose: deployed and verified with mocked tests; the device retry check with a real hold was deferred to Phase 4 payment UAT, backlog 999.2)*
 - [x] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
@@ -148,7 +148,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 ### Release
 
 - [ ] **REL-01**: Every phase's fixes pass a device UAT checklist on a real iPhone
-- [ ] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first *(Note 2026-11-08: BACK-08 and BACK-13 are not deployed, because wave 3c was dropped by user decision. Scope unchanged. They need a new decision before release: ship them, or defer them with a reason.)*
+- [ ] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first *(Note 2026-11-08: BACK-08 and BACK-13 are not deployed, because wave 3c was dropped by user decision. Scope unchanged. Update 2026-11-13: BACK-13 is deferred past this release (Phase 5 decision D-04). Reason: App Store build 6 and the current Android build rely on `ensureExpert`'s implicit client-to-expert promotion, so the explicit-promotion change would leave those clients unable to become experts. BACK-08 still needs a new decision before release: ship it, or defer it with a reason.)*
 
 ## v2 Requirements
 
@@ -169,7 +169,7 @@ Deferred. Tracked but not in the current roadmap.
 | D5, D6, D7, D9 Android deviations | Overlap other fixes (B19) or are intentional product choices already settled |
 | P7, E9, E10, T9 | Already fixed |
 | P8, P9 | By design (debug-only token; production environment is intended for release) |
-| S2 optional province, S8 password digit, T8 remember-login-email | By-design differences; move in only if decisions Q1/Q5 say so |
+| S2 optional province, S8 password digit, T8 remember-login-email | By-design differences; move in only if decisions Q1/Q5 say so. Moved in by Phase 5: S2 (D-05 to D-07) and T8 (D-14). S8 stays out by design |
 | Hotfix build before the final release | User decision 2026-11-07: one release at the end |
 
 ## Traceability
@@ -293,4 +293,4 @@ Which phases cover which requirements. Filled in during roadmap creation.
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-09 — added EXPL-07 (Explore home feed decode, quick 261109-323); stays Pending until a device check*
+*Last updated: 2026-11-13 — Phase 5: BACK-13 deferred past this release (D-04, reason under REL-02); S2 and T8 moved in (D-05 to D-07, D-14)*

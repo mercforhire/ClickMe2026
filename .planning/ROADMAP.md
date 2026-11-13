@@ -294,7 +294,7 @@ Plans:
 ### Phase 5: Signup, Mode Switch and Account
 
 **Goal**: Users can finish signup, enter Expert mode only with a complete setup, and edit or close their account with saves that stick and copy that tells the truth
-**Depends on**: Phase 2 (and Phase 1 for BACK-13) — needs a decision: BACK-13 is not delivered (wave 3c dropped 2026-11-08)
+**Depends on**: Phase 2 (and Phase 1 for BACK-13) — BACK-13 deferred past this release (D-04, 2026-11-13; reason under REL-02 in REQUIREMENTS.md)
 **Requirements**: SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-05, SIGN-06, SET-01, SET-02, SET-03, SET-04, SET-05, SET-06, SET-07
 **Success Criteria** (what must be TRUE):
   1. An expert cannot publish without a photo, and the uploaded photo matches the crop they set. Expertise tags and languages are saved in tap order, so the first pick is primary. The country code is normalized on publish.
@@ -341,7 +341,7 @@ Plans:
   - Q5: the SIGN-06 gate, and whether S2's optional province moves in.
   - Q7: SET-07.
   - Q1: remember-login-email (T8), which stays out of scope unless Q1 moves it in.
-- SIGN-06 pairs with BACK-13 (Phase 1). **Needs a decision:** BACK-13 is not delivered (wave 3c dropped by user decision 2026-11-08; code parked on backend branch `wave-3c`), so this pairing has to be decided again. This note does not change this phase's plans or scope.
+- SIGN-06 pairs with BACK-13 (Phase 1). **Decided:** BACK-13 is deferred past this release (D-04, 2026-11-13), with the reason recorded under REL-02 in REQUIREMENTS.md. The iOS gate (SIGN-06) fixes the user-facing bug, and the code stays parked on backend branch `wave-3c`.
 - The SET-06 copy must match what `services/accountCascade.js` keeps or anonymizes. Log the matching Android copy change as a follow-up.
 - SET-01: check the expert profile settings view model for the same missing languages save.
 

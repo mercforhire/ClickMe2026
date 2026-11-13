@@ -16,8 +16,7 @@ struct LanguageSelectionView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    /// Returns the picked language items in the order they appear in the
-    /// server's canonical list.
+    /// Returns the picked language items in the order the user picked them.
     var onDone: ([LanguageItem]) -> Void
     var onCancel: () -> Void
 

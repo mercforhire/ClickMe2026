@@ -135,4 +135,63 @@ struct SelectionOrderTests {
         let tags = try #require(body["expertise_tags"] as? [String])
         #expect(tags == [Self.data.id.uuidString, Self.brand.id.uuidString])
     }
+
+    // MARK: - Languages
+
+    private static let english = LanguageItem(id: "en", label: "English")
+    private static let french = LanguageItem(id: "fr", label: "French")
+    private static let spanish = LanguageItem(id: "es", label: "Spanish")
+    /// Alphabetical, like the sorted `getLanguages` response.
+    private static let languageCatalog = [english, french, spanish]
+
+    @Test("An initial language selection keeps its order before the catalog loads")
+    func languageSeedKeepsOrderWithoutCatalog() {
+        let vm = LanguageSelectionViewModel(initialSelection: [Self.spanish, Self.english])
+
+        #expect(vm.allLanguages.isEmpty)
+        #expect(vm.orderedSelection.map(\.id) == ["es", "en"])
+    }
+
+    @Test("A seeded language order survives the catalog loading alphabetically")
+    func languageSeedOrderSurvivesCatalog() {
+        let vm = LanguageSelectionViewModel(initialSelection: [Self.spanish, Self.english])
+
+        vm.allLanguages = Self.languageCatalog
+
+        #expect(vm.orderedSelection.map(\.id) == ["es", "en"])
+    }
+
+    @Test("Languages toggle in tap order and deselecting removes from the order")
+    func languageToggleFollowsTapOrder() {
+        let vm = LanguageSelectionViewModel(initialSelection: [Self.spanish, Self.english])
+        vm.allLanguages = Self.languageCatalog
+
+        vm.toggle(Self.french)
+        #expect(vm.orderedSelection.map(\.id) == ["es", "en", "fr"])
+
+        vm.toggle(Self.english)
+        #expect(vm.orderedSelection.map(\.id) == ["es", "fr"])
+        #expect(vm.selected == ["es", "fr"])
+
+        vm.toggle(Self.english)
+        #expect(vm.orderedSelection.map(\.id) == ["es", "fr", "en"])
+    }
+
+    @Test("Basic Info save() sends languages in the order they were set")
+    func basicInfoSaveSendsLanguageOrder() async throws {
+        let api = Self.makeAPI()
+        let vm = SignupBasicInfoViewModel(accumulator: SignupAccumulator(), api: api)
+        vm.firstName = "Ana"
+        vm.city = "Toronto"
+        vm.countryCode = "CAN"
+
+        vm.setLanguages([Self.spanish, Self.english])
+        let saved = await vm.save()
+
+        #expect(saved)
+        let request = try #require(MockURLProtocol.recordedRequests.last)
+        let body = try #require(request.jsonBodyForTest())
+        let languages = try #require(body["languages"] as? [String])
+        #expect(languages == ["es", "en"])
+    }
 }

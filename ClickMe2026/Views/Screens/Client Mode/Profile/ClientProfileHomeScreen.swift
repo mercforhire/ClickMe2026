@@ -240,13 +240,12 @@ struct ClientProfileHomeScreen: View {
             FeedbackView()
         case .modeSwitch:
             ModeSwitchView { mode in
-                // Block mode-switch mid-call — tearing down the client
-                // socket + role context would kill the active session.
-                guard CallCenter.shared.attempt("switch modes") else { return }
-                // The gate applies the mode (ClickMe2026App observes
-                // `currentMode` and snaps to the matching home) or, for an
-                // expert with unfinished setup, opens the setup hub.
-                Task { await UserManager.shared.requestModeSwitch(mode) }
+                // The gate refuses a switch mid-call (tearing down the client
+                // socket + role context would kill the active session),
+                // applies the mode (ClickMe2026App observes `currentMode` and
+                // snaps to the matching home) or, for an expert with
+                // unfinished setup, opens the setup hub.
+                Task { await ModeSwitchGate.request(mode) }
             }
         }
     }

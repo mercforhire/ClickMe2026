@@ -115,11 +115,14 @@ final class SignupInitialViewModel: ObservableObject {
         Task { [self] in
             defer { isLoading = false }
             do {
-                _ = try await userManager.signup(
+                let response = try await userManager.signup(
                     email: email,
                     password: password,
                     role: .expert
                 )
+                // Start from what the server says; a true is never turned
+                // into false (SIGN-02).
+                accumulator?.emailVerified = (accumulator?.emailVerified ?? false) || response.emailVerified
                 isComplete = true
             } catch {
                 handle(signupError: error)

@@ -55,11 +55,11 @@ final class SignupReviewViewModel: ObservableObject {
         guard let accumulator else { return SignupReviewViewModel.defaultProfile }
         return ProfileReviewData(
             firstName: accumulator.firstName,
-            location: Self.formatLocation(
+            location: LocationFormatter.format(
                 city: accumulator.city,
                 province: accumulator.provinceState,
-                countryCode: accumulator.countryCode
-            ),
+                country: accumulator.countryCode
+            ) ?? "",
             spokenLanguages: accumulator.languages.map(\.label).joined(separator: ", "),
             avatarURL: accumulator.avatarUrl ?? "",
             skills: accumulator.expertiseTags.map(\.label)
@@ -110,15 +110,6 @@ final class SignupReviewViewModel: ObservableObject {
         }
         return "Finish these first: " + titles.joined(separator: ", ") + "."
     }
-
-    private static func formatLocation(city: String, province: String, countryCode: String) -> String {
-        let country = Countries.find(byCode: countryCode)?.name ?? countryCode
-        return [city, province, country]
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-            .joined(separator: ", ")
-    }
-
 
     // MARK: Defaults
 

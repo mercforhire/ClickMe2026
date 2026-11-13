@@ -51,10 +51,7 @@ struct ClientProfilePersonalInfo: View {
     // MARK: - Derived labels
 
     private var locationLabel: String? {
-        let parts = [city, stateProvince, country]
-            .compactMap { $0 }
-            .filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+        LocationFormatter.format(city: city, province: stateProvince, country: country)
     }
 
     private var memberSinceLabel: String? {

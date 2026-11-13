@@ -36,7 +36,12 @@ final class NotificationSettingsViewModel: ObservableObject {
     /// Debounce window between the last toggle change and the actual PATCH.
     /// Long enough that rapid multi-toggle flips coalesce into one request,
     /// short enough that a single tap feels near-instant.
-    private let autoSaveDebounce: UInt64 = 800_000_000 // 0.8 s
+    private let autoSaveDebounce: UInt64
+
+    /// The toggle state the server is known to hold: what the last load
+    /// applied, or what the last successful save wrote. `scheduleAutoSave()`
+    /// does nothing while the toggles equal it (SET-04).
+    private var lastAppliedSnapshot: String
 
     // MARK: Dependencies
 
@@ -45,11 +50,14 @@ final class NotificationSettingsViewModel: ObservableObject {
     init(
         sections: [NotificationSection] = NotificationSettingsViewModel.defaultSections,
         state: LoadState = .idle,
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        autoSaveDebounce: UInt64 = 800_000_000 // 0.8 s
     ) {
         self.sections = sections
         self.state = state
         self.api = api
+        self.autoSaveDebounce = autoSaveDebounce
+        self.lastAppliedSnapshot = Self.snapshot(of: sections)
     }
 
     /// Preview seam — installs canned data as if a load had already succeeded.
@@ -101,6 +109,10 @@ final class NotificationSettingsViewModel: ObservableObject {
                 }
             }
         }
+        // Applying a server row that differs from the all-on defaults changes
+        // `sections`, which fires the view's change observer. Record the
+        // applied state so that observer's `scheduleAutoSave()` is a no-op.
+        lastAppliedSnapshot = currentSnapshot()
     }
 
     // MARK: - Auto-save
@@ -110,6 +122,9 @@ final class NotificationSettingsViewModel: ObservableObject {
     /// multi-toggle flips coalesce into a single trailing request.
     func scheduleAutoSave() {
         autoSaveTask?.cancel()
+        // Nothing differs from what the server holds: this is the load path,
+        // or a toggle flipped back to where it was. Write nothing.
+        if currentSnapshot() == lastAppliedSnapshot { return }
         // Hide the "saved" checkmark while the user is actively editing.
         if didAutoSave { didAutoSave = false }
 
@@ -125,14 +140,28 @@ final class NotificationSettingsViewModel: ObservableObject {
         isAutoSaving = true
         defer { isAutoSaving = false }
         do {
+            let savedSnapshot = currentSnapshot()
             let inputs = buildPreferenceInputs()
             _ = try await api.updateNotificationPreferences(
                 UpdateNotificationPreferencesRequest(preferences: inputs)
             )
+            lastAppliedSnapshot = savedSnapshot
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
             autoSaveError = error.userMessage
         }
+    }
+
+    /// Every row as `category.subCategory=isOn`, in section order, so two
+    /// equal toggle states always serialize identically.
+    private func currentSnapshot() -> String {
+        Self.snapshot(of: sections)
+    }
+
+    private static func snapshot(of sections: [NotificationSection]) -> String {
+        sections.flatMap { section in
+            section.settings.map { "\(section.categoryKey).\($0.subCategoryKey)=\($0.isOn)" }
+        }.joined(separator: "|")
     }
 
     private func buildPreferenceInputs() -> [NotificationPreferenceInput] {

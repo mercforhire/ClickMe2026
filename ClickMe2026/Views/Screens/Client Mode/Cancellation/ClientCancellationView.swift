@@ -37,6 +37,9 @@ struct ClientCancellationView: View {
 
     @FocusState private var commentFocused: Bool
 
+    /// Pushes `CancellationPoliciesView` onto the tab stack that owns this flow.
+    @State private var showPolicy = false
+
     // MARK: Init
 
     /// Runtime init — fetches the booking's display fields from
@@ -74,6 +77,9 @@ struct ClientCancellationView: View {
         }
         .animation(.easeInOut(duration: 0.28), value: viewModel.step)
         .task { await viewModel.load() }
+        .navigationDestination(isPresented: $showPolicy) {
+            CancellationPoliciesView()
+        }
         .alert(
             "Couldn't cancel booking",
             isPresented: Binding(
@@ -214,6 +220,16 @@ struct ClientCancellationView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 20)
                 }
+
+                Button {
+                    showPolicy = true
+                } label: {
+                    Text("Cancellation policy")
+                        .font(.brand(.subheadline, weight: .regular))
+                        .foregroundColor(CancellationBrand.brandGreen)
+                        .underline()
+                }
+                .buttonStyle(.plain)
 
                 CancellationActionButtons(
                     isConfirming: viewModel.isConfirming,

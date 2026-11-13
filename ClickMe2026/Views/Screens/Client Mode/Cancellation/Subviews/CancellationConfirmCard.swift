@@ -31,7 +31,7 @@ struct CancellationConfirmCard: View {
             CancellationBookingSummary(booking: booking)
 
             if CancelRefundPreview.showsRefundFootnote(booking.refundCase) {
-                Text("Refunds typically appear in your account within 3–5 business days.")
+                Text("Your bank decides how long a refund takes to appear.")
                     .font(.brand(.caption, weight: .regular))
                     .foregroundColor(CancellationBrand.outlineVar)
                     .italic()

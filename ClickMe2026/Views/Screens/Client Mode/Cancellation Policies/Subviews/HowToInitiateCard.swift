@@ -14,7 +14,7 @@ struct HowToInitiateCard: View {
     private let steps = [
         "Go to the 'Bookings' section of the app.",
         "Find the booking you wish to cancel.",
-        "Click on the 'Cancel Booking' button.",
+        "Tap 'Cancel'.",
         "Follow the on-screen instructions.",
     ]
 
@@ -31,7 +31,7 @@ struct HowToInitiateCard: View {
         VStack(alignment: .leading, spacing: 8) {
             PolicyCardTitle("How to Initiate a Cancellation")
 
-            Text("To cancel a booking, follow the steps below. You can initiate a cancellation directly from the Bookings tab at any time before the session starts.")
+            Text("To cancel a booking, follow the steps below. You can start a cancellation from the Bookings tab until the session ends.")
                 .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(CancellationPoliciesBrand.onSurfaceVar)
                 .lineSpacing(4)

@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-10-PLAN.md
-last_updated: "2026-11-13T22:31:59.609Z"
+stopped_at: Completed 05-12-PLAN.md
+last_updated: "2026-11-13T22:42:19.114Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: 8069d42ec208ff05519a72d77df6f1561321ed47
+state_head: 40feb1b23aab15da9ade445d938927b48a01ce21
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 90
+  completed_plans: 91
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 16 of 17
+Plan: 17 of 17
 Status: Ready to execute
 Last activity: 2026-11-13 — Phase 05 execution started
 
@@ -146,6 +146,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P15 | 12 min | 2 tasks | 5 files |
 | Phase 05 P16 | 13 min | 2 tasks | 5 files |
 | Phase 05 P10 | 16 min | 2 tasks | 9 files |
+| Phase 05 P12 | 20 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -316,6 +317,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-16: Not now wired once in LoginView .overview destination (covers resume, post-login, post-signup and gate-opened hub); asking for Expert clears the deferral after the call guard and before the setup lookup
 - [Phase 05]: 05-10: push handlers call requestModeSwitch(source: .push) directly (no call alert); a call-blocked tap stays queued and is replayed on CallCenter.isCallActive turning false
 - [Phase 05]: 05-10: resolvePostAuthLanding is the one Splash/Login landing decision; setup lookup only behind shouldCheckSetupAtLaunch, topics lookup only behind shouldLookUpTopics (D-04); UserManager.setMode is private
+- [Phase 05]: 05-12: foreground setup re-check is decided by ExpertModeGate.recheckDecision before any request; client-only accounts outside Expert mode clear the pending flag with no /expert/* call, and a live call keeps the flag set so the setup hub never replaces the call shell
 
 ### Pending Todos
 
@@ -400,6 +402,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T22:31:58.939Z
-Stopped at: Completed 05-10-PLAN.md
+Last session: 2026-11-13T22:42:18.468Z
+Stopped at: Completed 05-12-PLAN.md
 Resume file: None

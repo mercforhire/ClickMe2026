@@ -55,7 +55,7 @@ Expected (quick 261109-323 and the EXPL-07 requirement text):
 - Empty edge (unit-tested only: `ClientHomeFeedTests` rows "an absent featured_topics decodes to nil", "a null featured_topics decodes to nil", "an array where every topic is bad gives an empty, loaded section"): a home feed with no featured topics loads Explore with an empty, loaded Featured Topics section, not an error. You cannot force this on production data; leave it unmarked unless you see it.
 - *Optional, only if you want the before picture:* the App Store build 6 on another phone stops failing once the migration is applied and shows "—" instead of "Free" for these topics (it gains the label only with the new build).
 
-Result: FAIL (2026-11-12): pull to refresh on Explore loads nothing (gap G-04-3 in 04-UAT.md). Precondition query returned true. Initial load passed: a free no-currency topic shows Free, a Chinese-script title renders correctly. Airplane mode shows 'The Internet connection appears to be offline.' with Retry per section and no stale Featured Topics.
+Result: PASS (2026-11-13, step 4 re-test after plan 04-17: a, b and c all pass; UAT test 5). Earlier FAIL (2026-11-12): pull to refresh on Explore loads nothing (gap G-04-3 in 04-UAT.md, now resolved). Precondition query returned true. Initial load passed: a free no-currency topic shows Free, a Chinese-script title renders correctly. Airplane mode shows 'The Internet connection appears to be offline.' with Retry per section and no stale Featured Topics.
 
 ### 2. EXPL-03 — Free label on featured topic cards (quick 261109-323)
 

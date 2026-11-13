@@ -474,6 +474,11 @@ final class UserManager {
         UserDefaults.standard.removeObject(forKey: profileCacheKey)
         UserDefaults.standard.removeObject(forKey: pushDeviceTokenKey)
         currentMode = .client
+        // A mode request still waiting on its lookup belongs to the old
+        // session: replace it so a quick sign-in cannot receive its result.
+        modeSwitchGeneration += 1
+        setupHubRequested = false
+        isSwitchingMode = false
         // A tap queued for the old account must never route after sign-out,
         // and a chat that was on screen must not suppress the next
         // account's message banners (Android `clearSessionData` parity).
@@ -578,6 +583,117 @@ final class UserManager {
     /// login always sees `false` on first boot.
     var hasStoredModePreference: Bool {
         UserDefaults.standard.string(forKey: currentModeKey) != nil
+    }
+
+    // MARK: - Expert-mode gate (SIGN-06)
+
+    /// Who asked for a mode switch. A push never opens the setup hub (the
+    /// push planner already fails closed on incomplete setup).
+    enum ModeSwitchSource {
+        case user
+        case push
+    }
+
+    /// How a `requestModeSwitch` call ended.
+    enum ModeSwitchResult: Equatable {
+        /// The mode was applied (and persisted).
+        case switched(AppMode)
+        /// Expert setup is unfinished; Expert was not entered. When the user
+        /// asked, `setupHubRequested` is raised for the app shell.
+        case setupRequired
+        /// The user signed out while the lookup ran; nothing was written.
+        case sessionEnded
+        /// A newer request replaced this one; nothing was written.
+        case superseded
+        /// A call is active; nothing was written and no alert was raised.
+        case blockedByCall
+    }
+
+    /// Set when an Expert switch found the expert's setup unfinished and the
+    /// user asked for it. `ClickMe2026App` consumes it (`consumeSetupHubRequest()`)
+    /// and routes to the setup hub. Reset by `clearLocalSession()`.
+    private(set) var setupHubRequested = false
+
+    /// `true` while an Expert switch waits on its setup lookup. Reset by
+    /// `clearLocalSession()`.
+    private(set) var isSwitchingMode = false
+
+    /// Identifies the newest mode request so an older one still waiting on
+    /// its lookup can tell it was replaced.
+    @ObservationIgnored private var modeSwitchGeneration = 0
+
+    /// Whether the expert's setup is finished, or nil when the lookup failed
+    /// (offline, server error). Launch, login, the mode switch and the
+    /// foreground re-check all use this one helper (plans 05-10 and 05-12), so
+    /// they fail open the same way (D-02). The value is read only after the
+    /// network call returns; see `ExpertModeGate.setupCompleted(from:)`.
+    private func lookUpSetupCompleted() async -> Bool? {
+        await ExpertModeGate.setupCompleted(from: {
+            try await self.refreshExpertProfile()
+            return self.expertProfile?.setupCompleted
+        })
+    }
+
+    /// The single entry point for switching the app between Client and Expert
+    /// (D-03). The decisions are the pure `ExpertModeGate`; this method owns
+    /// the state and the lookup.
+    ///
+    /// An Expert switch is an explicit user choice, so the lookup it makes may
+    /// promote a client-only account through the server's `ensureExpert`; that
+    /// is accepted as consent (D-04, Android D-23). The setup state comes only
+    /// from the lookup: a failed lookup must not fall back to a profile cached
+    /// earlier, because Publish leaves that cache saying "unfinished" and the
+    /// finished expert would be sent back to the hub (D-02).
+    ///
+    /// - Parameters:
+    ///   - target: The mode to enter.
+    ///   - source: Who asked. A push never opens the setup hub.
+    @discardableResult
+    func requestModeSwitch(_ target: AppMode, source: ModeSwitchSource = .user) async -> ModeSwitchResult {
+        // Single-call invariant: no switch, from a user or a push, while a call is active.
+        guard !CallCenter.shared.isCallActive else { return .blockedByCall }
+        modeSwitchGeneration += 1
+        let token = modeSwitchGeneration
+        guard target == .expert else {
+            isSwitchingMode = false
+            setMode(.client)
+            return .switched(.client)
+        }
+        isSwitchingMode = true
+        let setupCompleted = await lookUpSetupCompleted()
+        let resolution = ExpertModeGate.resolveSwitch(
+            isLatestRequest: token == modeSwitchGeneration,
+            isLoggedIn: isLoggedIn,
+            isCallActive: CallCenter.shared.isCallActive,
+            setupCompleted: setupCompleted,
+            fromPush: source == .push
+        )
+        switch resolution {
+        case .superseded:
+            // The newer request owns `isSwitchingMode`.
+            return .superseded
+        case .sessionEnded:
+            isSwitchingMode = false
+            return .sessionEnded
+        case .blockedByCall:
+            isSwitchingMode = false
+            return .blockedByCall
+        case .enterExpert:
+            isSwitchingMode = false
+            setMode(.expert)
+            return .switched(.expert)
+        case let .setupRequired(opensHub):
+            // Expert is not persisted, so a cold launch cannot land on an
+            // empty Expert dashboard.
+            isSwitchingMode = false
+            if opensHub { setupHubRequested = true }
+            return .setupRequired
+        }
+    }
+
+    /// Called by the app shell once it has acted on `setupHubRequested`.
+    func consumeSetupHubRequest() {
+        setupHubRequested = false
     }
 
     /// True when the expert has at least one topic. Drives the "first

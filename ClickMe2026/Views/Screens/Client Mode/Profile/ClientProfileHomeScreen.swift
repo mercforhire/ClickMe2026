@@ -243,10 +243,10 @@ struct ClientProfileHomeScreen: View {
                 // Block mode-switch mid-call — tearing down the client
                 // socket + role context would kill the active session.
                 guard CallCenter.shared.attempt("switch modes") else { return }
-                // Flip the app's active home mode. ClickMe2026App
-                // observes `currentMode` and snaps to the corresponding
-                // home route immediately.
-                UserManager.shared.setMode(mode)
+                // The gate applies the mode (ClickMe2026App observes
+                // `currentMode` and snaps to the matching home) or, for an
+                // expert with unfinished setup, opens the setup hub.
+                Task { await UserManager.shared.requestModeSwitch(mode) }
             }
         }
     }

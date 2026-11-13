@@ -36,6 +36,18 @@ struct ClickMe2026App: App {
                     guard route == .clientHome || route == .expertHome else { return }
                     route = newMode == .expert ? .expertHome : .clientHome
                 }
+                // The Expert gate found the expert's setup unfinished: open
+                // the setup hub. `currentMode` is unchanged, so the mirror
+                // above does not fight this, and only a home route hands
+                // off (never from splash, login or the hub itself). The hub
+                // hydrates from the profile the gate just fetched; the
+                // request is only raised after a successful lookup.
+                .onChange(of: userManager.setupHubRequested) { _, requested in
+                    guard requested else { return }
+                    userManager.consumeSetupHubRequest()
+                    guard route == .clientHome || route == .expertHome else { return }
+                    route = .signupSetup
+                }
         }
     }
 

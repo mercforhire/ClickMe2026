@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-17-PLAN.md
-last_updated: "2026-11-13T18:17:24.740Z"
+stopped_at: Completed 05-07-PLAN.md
+last_updated: "2026-11-13T21:36:22.184Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: 830c1ef8c2d1f00c60e4a7c3708608b0008a8d10
+state_head: b3e5f156cc9c6fa2f77eae2009a586009ba3e9f5
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 82
+  completed_plans: 83
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 8 of 17
+Plan: 9 of 17
 Status: Ready to execute
 Last activity: 2026-11-13 — Phase 05 execution started
 
@@ -138,6 +138,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P05 | 20 min | 3 tasks | 9 files |
 | Phase 05 P06 | 8 min | 1 tasks | 3 files |
 | Phase 05 P17 | 5 min | 1 tasks | 9 files |
+| Phase 05 P07 | 14 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -299,6 +300,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-05: Feedback minimum counts the trimmed text's UTF-16 units (server JS length, Android String.length); NotificationSettingsViewModel dedupes saves with lastAppliedSnapshot; one SupportContact constant for the support address
 - [Phase 05]: 05-06: Cancellation policy link sits between the 24-hour notice and the action buttons as an underlined green text button; Deadlines and Refund Eligibility cards left unchanged after re-checking refund.js and the FAQ migration
 - [Phase 05]: 05-17: ReadyToStartCallView and its eight companion files deleted (D-13); stale strings left in Localizable.xcstrings (catalog not hand-edited)
+- [Phase 05]: 05-07: requestModeSwitch refuses any switch during a call as its first statement; setup state only from lookUpSetupCompleted(), a failed lookup is nil and fails open, never the cached profile
 
 ### Pending Todos
 
@@ -383,6 +385,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T18:17:24.257Z
-Stopped at: Completed 05-17-PLAN.md
+Last session: 2026-11-13T21:36:21.706Z
+Stopped at: Completed 05-07-PLAN.md
 Resume file: None

@@ -63,6 +63,9 @@ final class SplashViewModel {
         // couldn't fetch `/me`. Honor the last-known mode preference
         // and skip the landing decision (which needs the account's roles).
         guard let roles = userManager.me?.roles else {
+            // The roles are unknown, so the foreground re-check decides later;
+            // it waits without a request until the roles load (D-02).
+            userManager.markSetupCheckPending()
             destination = .dashboard(userManager.currentMode)
             return
         }

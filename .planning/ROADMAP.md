@@ -303,7 +303,7 @@ Plans:
   4. Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`. Feedback cannot be sent with fewer than 10 characters. Delete Account has no Pause Account card and accurately says what is deleted and what is kept or anonymized.
   5. `CancellationPoliciesView` and `ReadyToStartCallView` are either reachable in the app or removed from the codebase (per Q7).
 
-**Plans**: 6/17 plans executed in 6 waves (iOS only, no backend change; BACK-13 deferred per D-04)
+**Plans**: 7/17 plans executed in 6 waves (iOS only, no backend change; BACK-13 deferred per D-04)
 
 Plans:
 **Wave 1**
@@ -313,7 +313,7 @@ Plans:
 - [x] 05-04-PLAN.md — SIGN-01, SIGN-04, D-05 to D-07: photo required, country normalized, province optional and clearable, one LocationFormatter
 - [x] 05-05-PLAN.md — SET-04 notification preferences save nothing on open; SET-05 feedback 10 characters; SET-02 one support address
 - [x] 05-06-PLAN.md — SET-07 / D-12: cancellation policy linked from the cancel confirmation, with corrected copy
-- [ ] 05-17-PLAN.md — SET-07 / D-13: ReadyToStartCallView deleted (split from 05-06)
+- [x] 05-17-PLAN.md — SET-07 / D-13: ReadyToStartCallView deleted (split from 05-06)
 
 **Wave 2** *(each plan waits for the earlier plan it names)*
 - [ ] 05-07-PLAN.md — SIGN-06 tracer: one Expert-mode gate from Profile > Mode Switch to the setup hub; a failed lookup fails open and never falls back to the cached profile; no switch, from a user or a push, is applied during a call (D-01 to D-04) (after 05-01)
@@ -412,7 +412,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
-| 5. Signup, Mode Switch and Account | 6/17 | In Progress | - |
+| 5. Signup, Mode Switch and Account | 7/17 | In Progress | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |

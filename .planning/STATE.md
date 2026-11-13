@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
-status: executing
-stopped_at: Completed 05-12-PLAN.md
-last_updated: "2026-11-13T22:42:19.114Z"
+status: verifying
+stopped_at: Completed 05-13-PLAN.md
+last_updated: "2026-11-13T22:52:08.305Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: 40feb1b23aab15da9ade445d938927b48a01ce21
+state_head: 986e07c946a277a7329654e1bab45aa5758c7c96
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 91
+  completed_plans: 92
   percent: 13
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
 Plan: 17 of 17
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-13 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -147,6 +147,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P16 | 13 min | 2 tasks | 5 files |
 | Phase 05 P10 | 16 min | 2 tasks | 9 files |
 | Phase 05 P12 | 20 min | 2 tasks | 5 files |
+| Phase 05 P13 | 17 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -318,6 +319,8 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-10: push handlers call requestModeSwitch(source: .push) directly (no call alert); a call-blocked tap stays queued and is replayed on CallCenter.isCallActive turning false
 - [Phase 05]: 05-10: resolvePostAuthLanding is the one Splash/Login landing decision; setup lookup only behind shouldCheckSetupAtLaunch, topics lookup only behind shouldLookUpTopics (D-04); UserManager.setMode is private
 - [Phase 05]: 05-12: foreground setup re-check is decided by ExpertModeGate.recheckDecision before any request; client-only accounts outside Expert mode clear the pending flag with no /expert/* call, and a live call keeps the flag set so the setup hub never replaces the call shell
+- [Phase 05]: 05-13: BACK-13 deferred past this release (D-04); REL-02 records the ensureExpert reason (build 6 and current Android rely on implicit promotion); S2 and T8 recorded as moved into Phase 5
+- [Phase 05]: 05-13: this plan ticks no requirement box; SIGN-06, SET-02, SET-06 and SET-07 stay Pending until /gsd-verify-work 05 reads the device checklist results
 
 ### Pending Todos
 
@@ -411,6 +414,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T22:42:18.468Z
-Stopped at: Completed 05-12-PLAN.md
+Last session: 2026-11-13T22:52:07.669Z
+Stopped at: Completed 05-13-PLAN.md
 Resume file: None

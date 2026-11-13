@@ -115,7 +115,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Settings, Profile, Account
 
-- [ ] **SET-01** [T1] **[major]**: Language edits on the client (and expert) profile save to the server
+- [x] **SET-01** [T1] **[major]**: Language edits on the client (and expert) profile save to the server
 - [ ] **SET-02** [T2] **[major]**: Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`
 - [ ] **SET-03** [T3]: The non-functional Pause Account card is removed from Delete Account
 - [x] **SET-04** [T4]: Opening Notification preferences doesn't send a save before the user changes anything
@@ -257,7 +257,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | PUSH-02 | Phase 2 | Complete |
 | PUSH-03 | Phase 2 | Complete |
 | PUSH-04 | Phase 2 | Complete |
-| SET-01 | Phase 5 | Pending |
+| SET-01 | Phase 5 | Complete |
 | SET-02 | Phase 5 | Pending |
 | SET-03 | Phase 5 | Pending |
 | SET-04 | Phase 5 | Complete |

@@ -77,7 +77,7 @@ struct SignupBasicInfoView: View {
                                 )
                                 HStack(spacing: 12) {
                                     BasicInfoTextField(
-                                        placeholder: "Province/State",
+                                        placeholder: "Province/State (optional)",
                                         text: $viewModel.province
                                     )
                                     BasicInfoCountryPicker(

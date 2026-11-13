@@ -29,6 +29,9 @@ final class SignupBasicInfoViewModel: ObservableObject {
 
     private let accumulator: SignupAccumulator?
     private let api: ClickMeAPI
+    /// The accumulator's trimmed province when the screen opened (empty for
+    /// the preview init). Only a province that had a value can be cleared.
+    private let provinceAtOpen: String
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: Init
@@ -43,6 +46,7 @@ final class SignupBasicInfoViewModel: ObservableObject {
         api: ClickMeAPI = .shared
     ) {
         self.accumulator = nil
+        self.provinceAtOpen = ""
         self.firstName = firstName
         self.city = city
         self.province = province
@@ -57,6 +61,7 @@ final class SignupBasicInfoViewModel: ObservableObject {
     init(accumulator: SignupAccumulator, api: ClickMeAPI = .shared) {
         self.accumulator = accumulator
         self.api = api
+        self.provinceAtOpen = accumulator.provinceState.trimmingCharacters(in: .whitespacesAndNewlines)
         self.firstName = accumulator.firstName
         self.city = accumulator.city
         self.province = accumulator.provinceState
@@ -114,13 +119,24 @@ final class SignupBasicInfoViewModel: ObservableObject {
 
         let trimmedFirstName = firstName.trimmingCharacters(in: .whitespaces)
         let trimmedCity = city.trimmingCharacters(in: .whitespaces)
-        let trimmedProvince = province.trimmingCharacters(in: .whitespaces)
+        let trimmedProvince = province.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Province is optional (D-05). The server accepts "" for
+        // `province_state` and stores it, which is how a cleared province
+        // reaches it (Android `SignupSetupRepository` clearProvince). An
+        // empty field that never had a value sends no key at all.
+        let provinceToSend: String? = if !trimmedProvince.isEmpty {
+            trimmedProvince
+        } else if !provinceAtOpen.isEmpty {
+            ""
+        } else {
+            nil
+        }
 
         let body = SetupExpertProfileRequest(
             firstName: trimmedFirstName.isEmpty ? nil : trimmedFirstName,
             location: SetupExpertProfileRequest.Location(
                 city: trimmedCity.isEmpty ? nil : trimmedCity,
-                provinceState: trimmedProvince.isEmpty ? nil : trimmedProvince,
+                provinceState: provinceToSend,
                 // Normalize before send: trims whitespace and coerces
                 // legacy alpha-2 values (e.g. "CA ") into the alpha-3
                 // form ("CAN") the backend validates against.

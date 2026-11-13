@@ -93,18 +93,23 @@ final class SignupAccumulator {
     /// server does not require a verified email to publish.
     var missingForPublish: [ChecklistItemKind] {
         var missing: [ChecklistItemKind] = []
-        if firstName.isEmpty
-            || city.isEmpty
-            || provinceState.isEmpty
-            || countryCode.isEmpty
-            || languages.isEmpty
-        {
-            missing.append(.basicInfo)
-        }
+        if !hasBasicInfo { missing.append(.basicInfo) }
         if timezone.isEmpty { missing.append(.timezone) }
         if avatarUrl?.isEmpty ?? true { missing.append(.profilePicture) }
         if expertiseTags.isEmpty { missing.append(.expertise) }
         return missing
+    }
+
+    /// First name, city, a recognised country and at least one language.
+    /// Province/state is optional (D-05): the server accepts a profile
+    /// without one and Android `SignupDraft.kt` does not require it. An
+    /// unrecognised country counts as incomplete (SIGN-04) because the
+    /// server only accepts an uppercase alpha-3 code.
+    private var hasBasicInfo: Bool {
+        !firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && Countries.normalize(countryCode) != nil
+            && !languages.isEmpty
     }
 
     /// True once every field required for `PATCH /expert/profile/setup`
@@ -125,18 +130,14 @@ final class SignupAccumulator {
     /// in. Kept as a computed property so the checklist stays in sync
     /// as the user moves between steps.
     ///
-    /// Basic Info requires every identity field (first name, city,
-    /// province/state, country, languages) — anything less and the
-    /// server can't render a useful expert card. Timezone always has
+    /// Basic Info requires first name, city, a recognised country and
+    /// languages. Province/state is optional (D-05), matching the server and
+    /// Android `SignupDraft.kt`. Timezone always has
     /// a value (auto-seeded from `TimeZone.current`), so its row is
     /// considered complete as long as the string is non-empty.
     var checklist: SignupChecklist {
         SignupChecklist(
-            basicInfo: !firstName.isEmpty
-                && !city.isEmpty
-                && !provinceState.isEmpty
-                && !countryCode.isEmpty
-                && !languages.isEmpty,
+            basicInfo: hasBasicInfo,
             timezone: !timezone.isEmpty,
             profilePhoto: avatarUrl != nil,
             emailVerified: emailVerified,
@@ -204,15 +205,19 @@ final class SignupAccumulator {
     /// Assembles the full payload for the final "publish" call — all
     /// required fields plus `setup_completed: true`. Callers must guard
     /// on `isReadyToPublish`; returns nil when any required field is
-    /// empty so the caller can route the user back.
+    /// missing so the caller can route the user back.
+    ///
+    /// `country_code` goes out normalized (`"ca "` becomes `"CAN"`), and
+    /// `province_state` is left out when empty rather than sent blank.
     func buildPublishRequest() -> SetupExpertProfileRequest? {
         guard isReadyToPublish else { return nil }
+        let trimmedProvince = provinceState.trimmingCharacters(in: .whitespacesAndNewlines)
         return SetupExpertProfileRequest(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             location: .init(
                 city: city.trimmingCharacters(in: .whitespaces),
-                provinceState: provinceState.trimmingCharacters(in: .whitespaces),
-                countryCode: countryCode
+                provinceState: trimmedProvince.isEmpty ? nil : trimmedProvince,
+                countryCode: Countries.normalize(countryCode)
             ),
             timezone: timezone,
             languages: languages.map(\.id),

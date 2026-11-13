@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-14-PLAN.md
-last_updated: "2026-11-13T22:05:15.243Z"
+stopped_at: Completed 05-15-PLAN.md
+last_updated: "2026-11-13T22:10:54.649Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: 19a7f0a7931badb3dee028ebaf33af09ba6137f4
+state_head: 13674b1b66c41e0a2eaf548fd311258e4070fc11
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 87
+  completed_plans: 88
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 13 of 17
+Plan: 14 of 17
 Status: Ready to execute
 Last activity: 2026-11-13 — Phase 05 execution started
 
@@ -143,6 +143,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P09 | 35 min | 2 tasks | 7 files |
 | Phase 05 P11 | 10 min | 2 tasks | 5 files |
 | Phase 05 P14 | 8 min | 2 tasks | 5 files |
+| Phase 05 P15 | 12 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -309,6 +310,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-09: Profile settings (client and expert) use the catalog LanguageSelectionView; customs are always sent with language_ids; a zero-language Done is never applied or sent (keeps previous list, 'Keep at least one language.')
 - [Phase 05]: 05-11: GET /auth/email/status is the only source for seeding the signup hub's emailVerified; read is best-effort (try?) and a local true is never downgraded
 - [Phase 05]: 05-14: HomeShellExit is generic over HomeShellTab; expert shell installs only showMyBookings through the shared plan (D-10)
+- [Phase 05]: 05-15: Delete Account detail groups show on the confirmation step only; feedback step keeps headline and permanence line; no saved-card claim
 
 ### Pending Todos
 
@@ -393,6 +395,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T22:05:14.622Z
-Stopped at: Completed 05-14-PLAN.md
+Last session: 2026-11-13T22:10:54.025Z
+Stopped at: Completed 05-15-PLAN.md
 Resume file: None

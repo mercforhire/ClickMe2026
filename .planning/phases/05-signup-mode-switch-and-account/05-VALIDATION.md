@@ -48,8 +48,9 @@ A run counts only with a non-zero test count. `MockURLProtocol` suites are `.ser
 | SIGN-03 | Language and tag picker output and publish payload keep tap order | unit | `SelectionOrderTests` | ❌ W0 |
 | SIGN-04 | `"ca "` → `CAN` in publish body; unknown code = not ready | unit | `SignupAccumulatorTests` | ❌ W0 |
 | SIGN-05 | Crop size and centre pixel for zoom 0/0.5/1; rotated source; max side; no EXIF GPS | unit | `ProfilePhotoCropperTests` | ❌ W0 |
-| SIGN-06 | Gate truth table (incomplete → hub, failed → enter, complete → enter, deferred, role guard); deferral store set/clear/logout | unit | `ExpertModeGateTests`, `SetupDeferralStoreTests` | ❌ W0 |
+| SIGN-06 | Gate truth table (incomplete → hub, failed → enter, complete → enter, call active → blocked for user and push, deferred, role guard); deferral store set/clear/logout | unit | `ExpertModeGateTests`, `SetupDeferralStoreTests` | ❌ W0 |
 | SIGN-06 | No `setMode(` outside `UserManager.swift` | grep gate | `! grep -rn 'setMode(' ClickMe2026 \| grep -v Managers/UserManager.swift` | n/a |
+| SIGN-06 | Single-call invariant: `requestModeSwitch` call guard ahead of every write; push `.blockedByCall` case keeps the tap and the shells replay it on call end; foreground re-check holds the hub during a call | region grep gates | 05-07 Task 1, 05-10 Task 1, 05-12 Task 1 | n/a |
 | D-05/06/07 | Province optional; `LocationFormatter` cases; `""` sent on clear | unit | `SignupAccumulatorTests`, `LocationFormatterTests`, `ProfileLanguagesSaveTests` | ❌ W0 |
 | SET-01 | Client and expert bodies carry `languages.language_ids` + `custom_languages`; omitted when unchanged; customs preserved | unit (stubbed) | `ProfileLanguagesSaveTests` | ❌ W0 |
 | SET-02 | Help support address equals `clickmeapp@uptrendinvestments.net` (shared constant) | unit + grep | `SupportContactTests`; `! grep -rn 'support@clickme' ClickMe2026` | ❌ W0 |

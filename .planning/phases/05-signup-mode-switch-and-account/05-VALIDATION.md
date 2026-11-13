@@ -3,9 +3,9 @@ phase: "05"
 slug: "signup-mode-switch-and-account"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: validated
+nyquist_compliant: true
+wave_0_complete: true
 created: "2026-11-13"
 ---
 
@@ -41,25 +41,25 @@ A run counts only with a non-zero test count. `MockURLProtocol` suites are `.ser
 
 ## Requirement → Test Map
 
-| Req ID | Behavior | Test Type | Suite / Command | File Exists |
-|--------|----------|-----------|-----------------|-------------|
-| SIGN-01 | Not ready without avatar; ready with; `missingForPublish` lists photo | unit | `SignupAccumulatorTests` | ❌ W0 |
-| SIGN-02 | Status `verified:true` seeds `emailVerified`; failure leaves it; never downgrades | unit (stubbed) | `SignupEmailVerifiedSeedTests` | ❌ W0 |
-| SIGN-03 | Language and tag picker output and publish payload keep tap order | unit | `SelectionOrderTests` | ❌ W0 |
-| SIGN-04 | `"ca "` → `CAN` in publish body; unknown code = not ready | unit | `SignupAccumulatorTests` | ❌ W0 |
-| SIGN-05 | Crop size and centre pixel for zoom 0/0.5/1; rotated source; max side; no EXIF GPS | unit | `ProfilePhotoCropperTests` | ❌ W0 |
-| SIGN-06 | Gate truth table (incomplete → hub, failed → enter, complete → enter, call active → blocked for user and push, deferred, role guard); deferral store set/clear/logout | unit | `ExpertModeGateTests`, `SetupDeferralStoreTests` | ❌ W0 |
-| SIGN-06 | No `setMode(` outside `UserManager.swift` | grep gate | `! grep -rn 'setMode(' ClickMe2026 \| grep -v Managers/UserManager.swift` | n/a |
-| SIGN-06 | Single-call invariant: `requestModeSwitch` call guard ahead of every write; push `.blockedByCall` case keeps the tap and the shells replay it on call end; foreground re-check holds the hub during a call | region grep gates | 05-07 Task 1, 05-10 Task 1, 05-12 Task 1 | n/a |
-| D-05/06/07 | Province optional; `LocationFormatter` cases; `""` sent on clear | unit | `SignupAccumulatorTests`, `LocationFormatterTests`, `ProfileLanguagesSaveTests` | ❌ W0 |
-| SET-01 | Client and expert bodies carry `languages.language_ids` + `custom_languages`; omitted when unchanged; customs preserved | unit (stubbed) | `ProfileLanguagesSaveTests` | ❌ W0 |
-| SET-02 | Help support address equals `clickmeapp@uptrendinvestments.net` (shared constant) | unit + grep | `SupportContactTests`; `! grep -rn 'support@clickme' ClickMe2026` | ❌ W0 |
-| SET-03 | No Pause Account code or copy | grep gate | `! grep -rniE 'PauseCard\|onPauseAccount\|Pause Account' ClickMe2026` | n/a |
-| SET-04 | Load → 0 PATCH; toggle → exactly 1 | unit (stubbed) | `NotificationSettingsAutoSaveTests` | ❌ W0 |
-| SET-05 | 0, 9, whitespace-padded 9 chars → no request; 10 → request | unit (stubbed) | `FeedbackValidationTests` | ❌ W0 |
-| SET-06 | `ErrorCode` decodes `CLIENT_HAS_UPCOMING_BOOKINGS`; blocker mapping; copy has no false claims; 409 shows message | unit | `AccountDeletionBlockerTests`, `DeleteAccountViewModelTests` | ❌ W0 |
-| SET-07 | Policy view linked from `ClientCancellationView`; `ReadyToStart*` gone | grep + build | `grep -c 'CancellationPoliciesView()' …/ClientCancellationView.swift` ≥ 1; `grep -rn ReadyToStart ClickMe2026 ClickMe2026Tests` = 0 | n/a |
-| T8 | remember/trim/prefill/explicit wins/deletion forgets/failed deletion keeps | unit (stubbed, `.serialized`) | `RememberedLoginEmailTests` | ported from `b0629d9` |
+| Req ID | Behavior | Test Type | Suite / Command | File Exists | Status |
+|--------|----------|-----------|-----------------|-------------|--------|
+| SIGN-01 | Not ready without avatar; ready with; `missingForPublish` lists photo | unit | `SignupAccumulatorTests` | ✅ | ✅ green |
+| SIGN-02 | Status `verified:true` seeds `emailVerified`; failure leaves it; never downgrades | unit (stubbed) | `SignupEmailVerifiedSeedTests` | ✅ | ✅ green |
+| SIGN-03 | Language and tag picker output and publish payload keep tap order | unit | `SelectionOrderTests` | ✅ | ✅ green |
+| SIGN-04 | `"ca "` → `CAN` in publish body; unknown code = not ready | unit | `SignupAccumulatorTests` | ✅ | ✅ green |
+| SIGN-05 | Crop size and centre pixel for zoom 0/0.5/1; rotated source; max side; no EXIF GPS | unit | `ProfilePhotoCropperTests` | ✅ | ✅ green |
+| SIGN-06 | Gate truth table (incomplete → hub, failed → enter, complete → enter, call active → blocked for user and push, deferred, role guard); deferral store set/clear/logout | unit | `ExpertModeGateTests`, `SetupDeferralStoreTests` | ✅ | ✅ green |
+| SIGN-06 | No `setMode(` outside `UserManager.swift` | grep gate | `! grep -rn 'setMode(' ClickMe2026 \| grep -v Managers/UserManager.swift` | n/a | ✅ green |
+| SIGN-06 | Single-call invariant: `requestModeSwitch` call guard ahead of every write; push `.blockedByCall` case keeps the tap and the shells replay it on call end; foreground re-check holds the hub during a call | region grep gates | 05-07 Task 1, 05-10 Task 1, 05-12 Task 1 | n/a | ✅ green at plan execution (05-07/10/12 SUMMARY); behavior also covered by `ExpertModeGateTests` call-active cases |
+| D-05/06/07 | Province optional; `LocationFormatter` cases; `""` sent on clear | unit | `SignupAccumulatorTests`, `LocationFormatterTests`, `ProfileLanguagesSaveTests` | ✅ | ✅ green |
+| SET-01 | Client and expert bodies carry `languages.language_ids` + `custom_languages`; omitted when unchanged; customs preserved | unit (stubbed) | `ProfileLanguagesSaveTests` | ✅ | ✅ green |
+| SET-02 | Help support address equals `clickmeapp@uptrendinvestments.net` (shared constant) | unit + grep | `SupportContactTests`; `! grep -rn 'support@clickme' ClickMe2026` | ✅ | ✅ green |
+| SET-03 | No Pause Account code or copy | grep gate | `! grep -rniE 'PauseCard\|onPauseAccount\|Pause Account' ClickMe2026` | n/a | ✅ green |
+| SET-04 | Load → 0 PATCH; toggle → exactly 1 | unit (stubbed) | `NotificationSettingsAutoSaveTests` | ✅ | ✅ green (hardened 2026-11-13: suite-private URLProtocol, was ⚠️ flaky in multi-suite runs) |
+| SET-05 | 0, 9, whitespace-padded 9 chars → no request; 10 → request | unit (stubbed) | `FeedbackValidationTests` | ✅ | ✅ green |
+| SET-06 | `ErrorCode` decodes `CLIENT_HAS_UPCOMING_BOOKINGS`; blocker mapping; copy has no false claims; 409 shows message | unit | `AccountDeletionBlockerTests`, `DeleteAccountViewModelTests` | ✅ | ✅ green |
+| SET-07 | Policy view linked from `ClientCancellationView`; `ReadyToStart*` gone | grep + build | `grep -c 'CancellationPoliciesView()' …/ClientCancellationView.swift` ≥ 1; `grep -rn ReadyToStart ClickMe2026 ClickMe2026Tests` = 0 | n/a | ✅ green |
+| T8 | remember/trim/prefill/explicit wins/deletion forgets/failed deletion keeps | unit (stubbed, `.serialized`) | `RememberedLoginEmailTests` | ported from `b0629d9` | ✅ green |
 
 *Per-task rows are filled from PLAN.md `<automated>` blocks during execution / `/gsd-validate-phase`.*
 
@@ -69,9 +69,9 @@ A run counts only with a non-zero test count. `MockURLProtocol` suites are `.ser
 
 ## Wave 0 Requirements
 
-- [ ] New test suites listed above under `ClickMe2026Tests/` (synchronized groups; no pbxproj edit)
-- [ ] Seams: injectable debounce (`NotificationSettingsViewModel`, both profile VMs), `api:` on `ClientProfileSettingsViewModel.previewSeed`, a hook to run `performAutoSave` in tests, `userManager:` param on `DeleteAccountViewModel`
-- [ ] `05-DEVICE-UAT-CHECKLIST.md`
+- [x] New test suites listed above under `ClickMe2026Tests/` (synchronized groups; no pbxproj edit)
+- [x] Seams: injectable debounce (`NotificationSettingsViewModel`, both profile VMs), `api:` on `ClientProfileSettingsViewModel.previewSeed`, a hook to run `performAutoSave` in tests, `userManager:` param on `DeleteAccountViewModel`
+- [x] `05-DEVICE-UAT-CHECKLIST.md`
 
 ---
 
@@ -85,15 +85,25 @@ A run counts only with a non-zero test count. `MockURLProtocol` suites are `.ser
 | Delete copy readable; 409 → My Bookings | SET-06 | Visual copy review, tab routing | Device checklist |
 | Cancellation policy link opens from cancel confirmation | SET-07 | Navigation on `NavigationPath` stack | Device checklist |
 
+**Test-infra note:** `MockURLProtocol` handler and log are process-global, and Swift Testing runs suites in parallel in-process (`.serialized` is per suite only), so any stubbed suite can be contaminated by another. Fixed locally for `NotificationSettingsAutoSaveTests`; the other ~33 users of the shared mock remain exposed (likely also behind the known `MakeABookingAvailabilityTests` flake). This is a follow-up, not a Phase 5 gap.
+
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 180s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 180s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-11-13 (gsd-validate-phase; 227 tests in 25 suites green twice; grep gates for SIGN-06, SET-02, SET-03, SET-07 pass)
+
+## Validation Audit 2026-11-13
+
+| Metric | Count |
+|---|---|
+| Gaps found | 1 |
+| Resolved | 1 |
+| Escalated | 0 |

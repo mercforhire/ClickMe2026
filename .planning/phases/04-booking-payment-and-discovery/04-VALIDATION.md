@@ -67,6 +67,7 @@ Task IDs are filled in by the planner; the requirement-to-suite mapping is fixed
 | D-12 | `payment_method.detached` evicts clones; sweep refuses a detached card | backend jest | backend command | ✅ | ✅ green |
 | PAY-02 / CR-01 (04-15) | Confirm retry (Try again, 3DS) sends the snapshotted topic and slot; `loadAvailability` keeps the slot while submitting | unit (stubbed) | `MakeABookingPaidFlowTests` (`retryKeepsOriginalSelection`, 3DS-retry row), `MakeABookingAvailabilityTests` | ✅ | ✅ green |
 | D-12 / CR-02 (04-16) | A transient profiles or platform-card error before the stamp leaves the row unstamped; the 6 h window never selects it; the next run charges once | backend jest | `tests/cron/longLeadChargeSweep.test.js` (two-run row, call-order rows) | ✅ | ✅ green |
+| EXPL-07 / G-04-3 (04-17) | A pull to refresh whose calling task SwiftUI cancels still loads; loaded sections stay on screen during a refresh; a cancelled fetch restores each section's prior state (content, failure with Retry, or the generic failure on a first load) and never leaves `.idle`; a category change still shows skeletons | unit (stubbed, held responses) | `ClientHomeFeedTests` (nine G-04-3 rows plus the cancelled/failed reload rows; `MockURLProtocol.requestLog` behind `NSLock`) | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -98,6 +99,7 @@ Task IDs are filled in by the planner; the requirement-to-suite mapping is fixed
 | Free label; topic load failure | EXPL-03 / EXPL-07 | Built in quick 261109-323 | Device |
 | Android push prompt after reinstall | D-14 | Check only | Android device |
 | Booking form locked while a paid booking is in flight (`.disabled(isSubmitting)` on five cards) | PAY-02 / CR-01 | View modifier, no unit seam | D-11 session, step d |
+| Pull to refresh on Explore loads, including after airplane mode is turned off | EXPL-07 / G-04-3 | SwiftUI `.refreshable` task cancellation; diagnosis not debugger-confirmed | Device: checklist item 1 step 4 (UAT test 3) |
 | Production sweep after the CR-02 deploy (`28da165`) | D-12 / CR-02 | Live cron + Stripe | Railway logs: no new `[cron:longLeadChargeSweep]` error spike |
 
 ---

@@ -27,8 +27,11 @@ final class LoginViewModel: ObservableObject {
 
     private let userManager: UserManager
 
+    /// `email: nil` (the default) pre-fills the last signed-in email
+    /// (`UserManager.lastLoginEmail`), so Login opens with it after any
+    /// sign-out; the password always starts empty. An explicit email wins.
     init(
-        email: String = "",
+        email: String? = nil,
         password: String = "",
         emailError: String? = nil,
         passwordError: String? = nil,
@@ -36,7 +39,7 @@ final class LoginViewModel: ObservableObject {
         isLoading: Bool = false,
         userManager: UserManager = .shared
     ) {
-        self.email = email
+        self.email = email ?? userManager.lastLoginEmail ?? ""
         self.password = password
         self.emailError = emailError
         self.passwordError = passwordError

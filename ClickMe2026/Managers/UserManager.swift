@@ -50,6 +50,16 @@ final class UserManager {
 
     var isLoggedIn: Bool { me != nil || authUser != nil }
 
+    /// Email of the last successful login or signup (trimmed). The
+    /// Login screen pre-fills it after any sign-out: Log Out, a forced
+    /// logout from a rejected refresh, a suspension, a failed auto-login.
+    /// `clearLocalSession()` deliberately keeps it; only account deletion
+    /// forgets it (`forgetLastLoginEmail()`). Not a secret but PII, so it
+    /// lives in the Keychain (Valet) next to the tokens and never in
+    /// UserDefaults or a log. Not observed: Login reads it once when its
+    /// view model is created.
+    @ObservationIgnored private(set) var lastLoginEmail: String?
+
     // MARK: Storage
 
     private let valet = Valet.valet(
@@ -67,6 +77,8 @@ final class UserManager {
     private let tokenExpiresAtKey = "tokenExpiresAt"
     private let onboardingShownKey = "hasSeenOnboarding"
     private let currentModeKey = "currentMode"
+    /// Valet key for `lastLoginEmail`.
+    private let lastLoginEmailKey = "lastLoginEmail"
     /// UserDefaults key for the most recently registered FCM token.
     /// Diagnostic record of what the server has on file for this device;
     /// removed by `clearLocalSession()` so nothing of the old account's
@@ -139,6 +151,10 @@ final class UserManager {
             self.profile = cached
         }
 
+        // Best-effort read: a missing or unreadable value just means Login
+        // opens with an empty email.
+        self.lastLoginEmail = try? valet.string(forKey: lastLoginEmailKey)
+
         if let token = try? valet.string(forKey: tokenKey) {
             api.bearerToken = token
             RealtimeService.shared.connect(token: token)
@@ -192,6 +208,7 @@ final class UserManager {
         // delete the token this account is about to bind (D-17).
         await retryPushCleanupIfNeeded().value
         apply(loginData: response.data)
+        rememberLoginEmail(email)
         return response.data.user
     }
 
@@ -231,6 +248,7 @@ final class UserManager {
         // this account's token is registered (D-17).
         await retryPushCleanupIfNeeded().value
         apply(signupData: response.data)
+        rememberLoginEmail(email)
         return response.data
     }
 
@@ -461,6 +479,37 @@ final class UserManager {
         // account's message banners (Android `clearSessionData` parity).
         PushRouter.shared.pending = nil
         ChatPresence.shared.clearSessionData()
+    }
+
+    // MARK: - Remembered login email
+
+    /// Stores the trimmed `email` of a successful login / signup. An empty
+    /// value is ignored.
+    func rememberLoginEmail(_ email: String) {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        lastLoginEmail = trimmed
+        do {
+            try valet.setString(trimmed, forKey: lastLoginEmailKey)
+        } catch {
+            // Intentionally ignored and not logged (the value is PII): a
+            // failed Keychain write only loses the pre-fill after the next
+            // launch; this session still has it in memory.
+        }
+    }
+
+    /// The account is gone (deleted): Login must no longer offer its email.
+    func forgetLastLoginEmail() {
+        lastLoginEmail = nil
+        do {
+            try valet.removeObject(forKey: lastLoginEmailKey)
+        } catch {
+            // Intentionally ignored and not logged. The in-memory value is
+            // already nil, so this session never pre-fills the deleted
+            // account's email. With `.whenUnlocked` accessibility the call
+            // fails in practice only while the device is locked, and the
+            // user is on screen confirming the deletion.
+        }
     }
 
     // MARK: - Onboarding flag

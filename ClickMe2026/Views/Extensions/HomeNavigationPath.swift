@@ -198,10 +198,13 @@ struct HomeShellAction {
 }
 
 extension EnvironmentValues {
-    /// Switch to the client shell's Bookings tab, landing on the My
-    /// Bookings list root. Installed by `HomeClientView` only —
-    /// consumers on the expert shell get `nil` (they don't create
-    /// bookings). Fires cleanly outside a shell (previews) as a no-op.
+    /// Switch to the shell's Bookings tab, landing on the Bookings list
+    /// root. Both shells install it through
+    /// `HomeShellExit.plan(.viewMyBookings, selectedTab:)`, which resets the
+    /// source tab and Bookings: `HomeClientView` for Request Sent and Delete
+    /// Account's blocker alert, `HomeExpertView` for Delete Account's blocker
+    /// alert (opening the expert Bookings tab, D-10). It is `nil` outside a
+    /// shell (previews).
     @Entry var showMyBookings: HomeShellAction? = nil
 
     /// Switch to the client shell's Explore tab and reset the current

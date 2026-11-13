@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-11-13T17:46:13.446Z"
+stopped_at: Completed 05-04-PLAN.md
+last_updated: "2026-11-13T18:00:43.203Z"
 last_activity: 2026-11-13
 last_activity_desc: Phase 05 execution started
-state_head: fb98d47f24b02e4cabdaa9801020ce88ece2e8b1
+state_head: 0a24d98e09d4d8adf757f418f53df4f1ffce7600
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 92
-  completed_plans: 78
+  completed_plans: 79
   percent: 13
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 4 of 17
+Plan: 5 of 17
 Status: Ready to execute
 Last activity: 2026-11-13 — Phase 05 execution started
 
@@ -134,6 +134,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P01 | 8 min | 2 tasks | 4 files |
 | Phase 05 P02 | 8 min | 2 tasks | 4 files |
 | Phase 05 P03 | 12 min | 2 tasks | 5 files |
+| Phase 05 P04 | 13 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -289,6 +290,9 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-02: selectedIds/selected made private(set); ordered id array beside the Set, seed dictionary as catalog fallback (SIGN-03)
 - [Phase 05]: 05-03: profile photo crop rectangle uses an integer side and floored origin (not CGRect.integral) so it is always square and deterministic
 - [Phase 05]: 05-03: zoom slider is enabled only for a newly picked photo (canZoom); a downloaded avatar is display-only and Save stays a no-op
+- [Phase 05]: 05-04: Publish photo check is a client pre-check only; server 422 stays the enforcer
+- [Phase 05]: 05-04: A cleared signup province is sent as empty string only when a province existed at open (provinceAtOpen); never-set empty sends no key
+- [Phase 05]: 05-04: All location labels go through LocationFormatter.format; unknown country code shown as given
 
 ### Pending Todos
 
@@ -373,6 +377,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T17:46:12.950Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-11-13T18:00:42.708Z
+Stopped at: Completed 05-04-PLAN.md
 Resume file: None

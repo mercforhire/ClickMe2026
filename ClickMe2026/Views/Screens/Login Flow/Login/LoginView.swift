@@ -269,31 +269,19 @@ struct LoginView: View {
                     LoginButton(isLoading: viewModel.isLoading) {
                         Task {
                             if let roles = await viewModel.attemptLogin() {
-                                let isExpert = roles.contains(.expert)
-                                if isExpert, await isExpertProfileIncomplete() {
-                                    // The account has the expert role but never
-                                    // completed expert-profile setup. Hydrate the
-                                    // accumulator from whatever the server has so
-                                    // far and drop the user on the Overview
-                                    // checklist so they can pick any remaining
-                                    // item to finish setup.
+                                // The shared landing decision (also used by Splash).
+                                switch await UserManager.shared.resolvePostAuthLanding(roles: roles) {
+                                case .setupHub:
+                                    // An expert who never completed setup.
+                                    // Hydrate the accumulator from whatever the
+                                    // server has so far and drop the user on the
+                                    // Overview checklist so they can pick any
+                                    // remaining item to finish setup.
                                     if let expertProfile = UserManager.shared.expertProfile {
                                         signupAccumulator.hydrate(from: expertProfile)
                                     }
                                     path.append(SignupRoute.overview)
-                                } else {
-                                    // Landing decision: expert home only when
-                                    // roles.contains(.expert) AND ≥1 topic exists
-                                    // — a fresh expert with no topics lands on
-                                    // client home so they don't see an empty
-                                    // expert dashboard.
-                                    let mode: AppMode
-                                    if isExpert, await UserManager.shared.expertHasTopics() {
-                                        mode = .expert
-                                    } else {
-                                        mode = .client
-                                    }
-                                    UserManager.shared.setMode(mode)
+                                case let .home(mode):
                                     onSuccess(mode)
                                 }
                             }
@@ -339,20 +327,6 @@ struct LoginView: View {
         } message: { message in
             Text(message)
         }
-    }
-
-    /// True when the freshly-authed expert has never completed the setup
-    /// flow. Reads the authoritative `setup_completed` flag from
-    /// `GET /expert/profile`. On a transient network failure we default
-    /// to `false` (i.e. treat as "complete") so we don't punt completed
-    /// users back into signup because of one flaky request.
-    private func isExpertProfileIncomplete() async -> Bool {
-        do {
-            try await UserManager.shared.refreshExpertProfile()
-        } catch {
-            return false
-        }
-        return UserManager.shared.expertProfile?.setupCompleted == false
     }
 
     /// Binding that's `true` while the given optional property is non-nil, and

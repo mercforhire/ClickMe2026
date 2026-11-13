@@ -199,4 +199,81 @@ struct ExpertModeGateTests {
         )
         #expect(resolution == .setupRequired(opensHub: false))
     }
+
+    // MARK: - shouldCheckSetupAtLaunch (D-01, D-04)
+
+    @Test("an expert that has not deferred is checked at launch, in either stored mode")
+    func expertIsChecked() {
+        for storedExpert in Self.everyBool {
+            #expect(ExpertModeGate.shouldCheckSetupAtLaunch(
+                isExpert: true, storedModeIsExpert: storedExpert, deferred: false
+            ))
+        }
+    }
+
+    @Test("a stored Expert mode is checked even without the expert role")
+    func storedExpertModeIsChecked() {
+        #expect(ExpertModeGate.shouldCheckSetupAtLaunch(
+            isExpert: false, storedModeIsExpert: true, deferred: false
+        ))
+    }
+
+    @Test("a client-only account in Client mode is never checked (D-04)")
+    func clientOnlyIsNotChecked() {
+        #expect(!ExpertModeGate.shouldCheckSetupAtLaunch(
+            isExpert: false, storedModeIsExpert: false, deferred: false
+        ))
+    }
+
+    @Test("a deferred setup is never checked (D-01)")
+    func deferredIsNotChecked() {
+        for isExpert in Self.everyBool {
+            for storedExpert in Self.everyBool {
+                #expect(!ExpertModeGate.shouldCheckSetupAtLaunch(
+                    isExpert: isExpert, storedModeIsExpert: storedExpert, deferred: true
+                ))
+            }
+        }
+    }
+
+    // MARK: - landingMode
+
+    @Test("a stored mode is restored whatever the role and topics")
+    func storedModeWins() {
+        for mode in AppMode.allCases {
+            for isExpert in Self.everyBool {
+                for hasTopics in Self.everyBool {
+                    #expect(ExpertModeGate.landingMode(
+                        hasStoredPreference: true, storedMode: mode, isExpert: isExpert, hasTopics: hasTopics
+                    ) == mode)
+                }
+            }
+        }
+    }
+
+    @Test("first boot lands on Expert only for an expert with a topic")
+    func firstBootLanding() {
+        #expect(ExpertModeGate.landingMode(
+            hasStoredPreference: false, storedMode: .client, isExpert: true, hasTopics: true
+        ) == .expert)
+        #expect(ExpertModeGate.landingMode(
+            hasStoredPreference: false, storedMode: .client, isExpert: true, hasTopics: false
+        ) == .client)
+        #expect(ExpertModeGate.landingMode(
+            hasStoredPreference: false, storedMode: .client, isExpert: false, hasTopics: true
+        ) == .client)
+        #expect(ExpertModeGate.landingMode(
+            hasStoredPreference: false, storedMode: .expert, isExpert: false, hasTopics: false
+        ) == .client)
+    }
+
+    // MARK: - shouldLookUpTopics (D-04)
+
+    @Test("the topics lookup is for an expert on first boot only")
+    func topicsLookupRule() {
+        #expect(ExpertModeGate.shouldLookUpTopics(hasStoredPreference: false, isExpert: true))
+        #expect(!ExpertModeGate.shouldLookUpTopics(hasStoredPreference: true, isExpert: true))
+        #expect(!ExpertModeGate.shouldLookUpTopics(hasStoredPreference: true, isExpert: false))
+        #expect(!ExpertModeGate.shouldLookUpTopics(hasStoredPreference: false, isExpert: false))
+    }
 }

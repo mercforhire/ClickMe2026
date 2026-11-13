@@ -92,4 +92,55 @@ enum ExpertModeGate {
             return .setupRequired(opensHub: !fromPush)
         }
     }
+
+    // MARK: - Launch and login landing
+
+    /// Whether launch or login should look up the expert's setup state
+    /// (D-01, D-04; Android `isExpert && !setupDeferred`, plus the stored
+    /// Expert case).
+    ///
+    /// The lookup is a `GET /expert/*` call, which the server answers by
+    /// promoting a client-only account through `ensureExpert`. So a client-only
+    /// account that is not in Expert mode must not trigger it. A stored Expert
+    /// mode counts as consent: the user chose Expert earlier (build 6 let
+    /// anyone), so an unfinished profile opens the hub, not an empty dashboard.
+    /// - Parameters:
+    ///   - isExpert: Whether the account's roles include expert.
+    ///   - storedModeIsExpert: Whether a persisted mode exists and is Expert.
+    ///   - deferred: Whether the user chose Not now on the hub (D-01).
+    static func shouldCheckSetupAtLaunch(isExpert: Bool, storedModeIsExpert: Bool, deferred: Bool) -> Bool {
+        !deferred && (isExpert || storedModeIsExpert)
+    }
+
+    /// Whether the landing decision needs the expert's topic count (D-04).
+    ///
+    /// `expertHasTopics()` is a `GET /expert/*` call, so it is made only on a
+    /// first boot (no stored mode) and only for an expert; a client-only
+    /// account is never sent to the expert endpoints.
+    /// - Parameters:
+    ///   - hasStoredPreference: Whether a mode was persisted for this login.
+    ///   - isExpert: Whether the account's roles include expert.
+    static func shouldLookUpTopics(hasStoredPreference: Bool, isExpert: Bool) -> Bool {
+        !hasStoredPreference && isExpert
+    }
+
+    /// The home mode Splash and Login land on once setup is not in the way.
+    ///
+    /// A stored mode is restored as is (Mode Switch allows either mode
+    /// whatever the role). With no stored mode, Expert only for an expert with
+    /// at least one topic: an empty Expert dashboard is worse than client home.
+    /// - Parameters:
+    ///   - hasStoredPreference: Whether a mode was persisted for this login.
+    ///   - storedMode: The persisted mode, read only when `hasStoredPreference`.
+    ///   - isExpert: Whether the account's roles include expert.
+    ///   - hasTopics: Whether the expert has a topic; false when not looked up.
+    static func landingMode(
+        hasStoredPreference: Bool,
+        storedMode: AppMode,
+        isExpert: Bool,
+        hasTopics: Bool
+    ) -> AppMode {
+        if hasStoredPreference { return storedMode }
+        return isExpert && hasTopics ? .expert : .client
+    }
 }

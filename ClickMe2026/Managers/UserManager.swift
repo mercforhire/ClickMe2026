@@ -573,7 +573,13 @@ final class UserManager {
     /// Sets the active home mode and persists so it survives cold
     /// launches. Reactive callers observe `currentMode` to snap between
     /// the client and expert home routes.
-    func setMode(_ mode: AppMode) {
+    ///
+    /// Private on purpose (D-03): every route into Expert mode goes through
+    /// the gate, so no view can bypass the setup check or the call guard.
+    /// Callers use `requestModeSwitch(_:source:)` (Mode Switch screens, pushes),
+    /// `resolvePostAuthLanding(roles:)` (Splash, Login), `deferSetup()` and
+    /// `completeSetup()` (the setup hub).
+    private func setMode(_ mode: AppMode) {
         currentMode = mode
         UserDefaults.standard.set(mode == .expert ? "expert" : "client", forKey: currentModeKey)
     }
@@ -726,6 +732,57 @@ final class UserManager {
     func completeSetup() {
         setupDeferral.clear()
         setMode(.client)
+    }
+
+    // MARK: Post-auth landing (Splash, Login)
+
+    /// Where Splash and Login send an account whose session was just restored
+    /// or created.
+    enum PostAuthLanding: Equatable {
+        /// An expert whose setup is unfinished: open the setup hub. The mode
+        /// is not persisted.
+        case setupHub
+        /// Land on this home. The mode has been persisted.
+        case home(AppMode)
+    }
+
+    /// The one landing decision for launch and login (SIGN-06, D-01 to D-04),
+    /// so the two screens cannot drift apart.
+    ///
+    /// An expert, or a stored Expert mode, that has not deferred is checked:
+    /// unfinished setup opens the hub, and a failed lookup fails open to home
+    /// (D-02) through the shared helper, never a cached profile. A deferred
+    /// setup (Not now) skips the check and restores the stored landing (D-01).
+    /// A client-only account whose stored mode is not Expert makes no
+    /// `/expert/*` call at all (D-04). This is not a user or push switch and
+    /// runs outside a home shell, so it has no call check.
+    /// - Parameter roles: The account's roles from `/me` or the login response.
+    func resolvePostAuthLanding(roles: [UserRole]) async -> PostAuthLanding {
+        let isExpert = roles.contains(.expert)
+        let hasStoredPreference = hasStoredModePreference
+        let storedModeIsExpert = hasStoredPreference && currentMode == .expert
+        if ExpertModeGate.shouldCheckSetupAtLaunch(
+            isExpert: isExpert,
+            storedModeIsExpert: storedModeIsExpert,
+            deferred: isSetupDeferred
+        ) {
+            let setupCompleted = await lookUpSetupCompleted()
+            if ExpertModeGate.decide(setupCompleted: setupCompleted) == .openSetupHub {
+                return .setupHub
+            }
+        }
+        var hasTopics = false
+        if ExpertModeGate.shouldLookUpTopics(hasStoredPreference: hasStoredPreference, isExpert: isExpert) {
+            hasTopics = await expertHasTopics()
+        }
+        let mode = ExpertModeGate.landingMode(
+            hasStoredPreference: hasStoredPreference,
+            storedMode: currentMode,
+            isExpert: isExpert,
+            hasTopics: hasTopics
+        )
+        setMode(mode)
+        return .home(mode)
     }
 
     /// True when the expert has at least one topic. Drives the "first

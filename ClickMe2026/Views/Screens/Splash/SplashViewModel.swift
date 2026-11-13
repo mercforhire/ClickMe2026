@@ -61,67 +61,20 @@ final class SplashViewModel {
 
         // Transient-failure branch: `tryAutoLogin` kept the token but
         // couldn't fetch `/me`. Honor the last-known mode preference
-        // and skip the expert-setup-check (which needs server data).
+        // and skip the landing decision (which needs the account's roles).
         guard let roles = userManager.me?.roles else {
             destination = .dashboard(userManager.currentMode)
             return
         }
 
-        let isExpert = roles.contains(.expert)
-
-        // For experts we need the authoritative `setup_completed` flag
-        // to decide dashboard vs setup-resume. On error we default to
-        // `false` so a transient network failure doesn't push
-        // completed users back into signup.
-        if isExpert {
-            let incomplete = await isExpertProfileIncomplete()
-            if incomplete {
-                destination = .setupIncomplete
-                return
-            }
+        // The shared landing decision (also used by Login): an expert with
+        // unfinished setup resumes it, anything else lands on a home. It
+        // makes no expert lookup for a client-only account in Client mode.
+        switch await userManager.resolvePostAuthLanding(roles: roles) {
+        case .setupHub:
+            destination = .setupIncomplete
+        case let .home(mode):
+            destination = .dashboard(mode)
         }
-
-        destination = .dashboard(await resolveLandingMode(isExpert: isExpert))
-    }
-
-    /// Landing decision.
-    ///
-    /// - **Restore branch.** If any mode was persisted from a prior
-    ///   session — whether explicitly via `ModeSwitchView` or as the
-    ///   first-boot compute below — we restore it as-is. No role or
-    ///   topic guards here: `ModeSwitchView` allows either mode
-    ///   regardless of role, so honoring persistence must too.
-    ///   Cleared on `logout()`, so a fresh login always falls into the
-    ///   smart-landing branch below.
-    /// - **Smart-landing branch.** On the very first boot after login
-    ///   (no stored preference), pick expert home only if the user is
-    ///   an expert AND has ≥1 topic — otherwise client home. This
-    ///   preserves the "empty expert dashboard is worse than client
-    ///   home" safety guarantee for cold-launch first-time users.
-    ///
-    /// Either path calls `setMode` so the `ClickMe2026App` route
-    /// observer stays in sync AND the choice is persisted for next
-    /// cold launch.
-    private func resolveLandingMode(isExpert: Bool) async -> AppMode {
-        let mode: AppMode
-
-        if userManager.hasStoredModePreference {
-            mode = userManager.currentMode
-        } else {
-            let hasTopics = isExpert ? await userManager.expertHasTopics() : false
-            mode = hasTopics ? .expert : .client
-        }
-
-        userManager.setMode(mode)
-        return mode
-    }
-
-    private func isExpertProfileIncomplete() async -> Bool {
-        do {
-            try await userManager.refreshExpertProfile()
-        } catch {
-            return false
-        }
-        return userManager.expertProfile?.setupCompleted == false
     }
 }

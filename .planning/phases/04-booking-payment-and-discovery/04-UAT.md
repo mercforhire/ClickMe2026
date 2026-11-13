@@ -1,5 +1,5 @@
 ---
-status: partial
+status: diagnosed
 phase: 04-booking-payment-and-discovery
 source: [04-VERIFICATION.md]
 started: 2026-11-12T19:43:46Z
@@ -57,8 +57,17 @@ blocked: 1
   reason: "User reported: IOS, Pull to refresh on the exports screen is currently broken. Nothing will load."
   severity: blocker
   test: 3
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "ExploreClientViewModel.load() sets all three section states to .loading at the start of a pull to refresh, which swaps the loaded sections for skeletons inside the ScrollView that owns .refreshable. SwiftUI cancels the refreshable task when that view re-renders mid-refresh, so getClientHome throws URLError.cancelled. The cancellation branch (ExploreClientViewModel.swift:96-99) reverts every .loading section to .idle and starts no new load; .idle renders the same skeleton as .loading, so Explore is stuck on skeletons with nothing in flight. Diagnosed from code (inline, 2026-11-12); not yet reproduced under a debugger."
+  artifacts:
+    - path: "ClickMe2026/Views/Screens/Client Mode/Explore/ExploreClientView.swift"
+      issue: ".refreshable { await viewModel.reload() } runs the load in the refresh task, which SwiftUI cancels when the ScrollView content re-renders (lines 140-142)"
+    - path: "ClickMe2026/Views/Screens/Client Mode/Explore/ExploreClientViewModel.swift"
+      issue: "load() flips loaded sections to .loading on every reload (75-77); the cancellation branch strands sections at .idle with no reload (96-99)"
+  missing:
+    - "Run the pull-to-refresh load so it survives the view update (e.g. await an unstructured Task's value from .refreshable, or keep loaded sections visible during a refresh instead of flipping them to .loading)"
+    - "A cancelled load must never leave a section at .idle/skeleton with no load in flight: restore the prior state (loaded content or the failed message) or retry"
+    - "Unit tests: a reload over loaded data keeps the content when cancelled; a reload after a failure that is cancelled does not strand the skeleton; a successful reload after failure loads normally"
+  debug_session: ""
 
 ## Deferred Follow-Ups
 

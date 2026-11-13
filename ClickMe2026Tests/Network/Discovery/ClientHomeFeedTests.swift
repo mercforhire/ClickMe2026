@@ -101,6 +101,33 @@ private func serve(_ body: Data) {
     }
 }
 
+/// Like `serve(_:)`, but the `/client/home` response waits on `gate` (up to 10 s)
+/// so a test can act while the request is in flight.
+@MainActor
+private func serveHeld(_ body: Data, until gate: DispatchSemaphore) {
+    MockURLProtocol.handler = { request in
+        if request.url?.path.hasSuffix("/client/home") == true {
+            _ = gate.wait(timeout: .now() + 10)
+            return HomeFeedFixture.response(for: request, body: body)
+        }
+        return HomeFeedFixture.response(for: request, status: 404, body: Data(#"{"status":"error","message":"nope"}"#.utf8))
+    }
+}
+
+/// How many `/client/home` requests the mock has recorded so far.
+nonisolated private func homeRequestCount() -> Int {
+    MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix("/client/home") == true }.count
+}
+
+/// Polls every 20 ms, for up to 5 s, until more than `count` `/client/home` requests have arrived.
+private func homeRequestArrived(after count: Int) async -> Bool {
+    for _ in 0..<250 {
+        if homeRequestCount() > count { return true }
+        try? await Task.sleep(for: .milliseconds(20))
+    }
+    return homeRequestCount() > count
+}
+
 @Suite("ClickMeAPI+Discovery · client home feed", .serialized)
 @MainActor
 struct ClientHomeFeedTests {
@@ -311,6 +338,130 @@ struct ClientHomeFeedTests {
                 Issue.record("a cancelled reload must not set a failed state")
             }
         }
+    }
+
+    // MARK: - Refresh (G-04-3)
+
+    @Test("a refresh whose calling task is cancelled still loads the new feed (G-04-3)")
+    func refreshSurvivesCallerCancellation() async throws {
+        let api = makeAPI(serving: HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "First")]))
+        let viewModel = ExploreClientViewModel(api: api)
+        await viewModel.load()
+        #expect(viewModel.featuredTopics.map(\.title) == ["First"])
+
+        let gate = DispatchSemaphore(value: 0)
+        defer { gate.signal() }
+        serveHeld(HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "Second")]), until: gate)
+        let before = homeRequestCount()
+        let refresh = Task { await viewModel.reload() }
+        let arrived = await homeRequestArrived(after: before)
+        try #require(arrived)
+
+        // SwiftUI cancels the .refreshable task mid-refresh.
+        refresh.cancel()
+        gate.signal()
+        await refresh.value
+
+        #expect(viewModel.categoriesState == .loaded)
+        #expect(viewModel.expertsState == .loaded)
+        #expect(viewModel.featuredTopicsState == .loaded)
+        #expect(viewModel.featuredTopics.map(\.title) == ["Second"])
+    }
+
+    @Test("a refresh after a failure whose calling task is cancelled still loads every section (G-04-3)")
+    func refreshAfterFailureSurvivesCallerCancellation() async throws {
+        let api = makeAPI(serving: HomeFeedFixture.envelope(
+            featured: "[]",
+            experts: HomeFeedFixture.recommendedExpert(id: "not-a-uuid")
+        ))
+        let viewModel = ExploreClientViewModel(api: api)
+        await viewModel.load()
+        let failed = LoadState.failed(HomeFeedFixture.genericError)
+        #expect(viewModel.categoriesState == failed)
+
+        let gate = DispatchSemaphore(value: 0)
+        defer { gate.signal() }
+        serveHeld(HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "Back")]), until: gate)
+        let before = homeRequestCount()
+        let refresh = Task { await viewModel.reload() }
+        let arrived = await homeRequestArrived(after: before)
+        try #require(arrived)
+
+        #expect(viewModel.categoriesState == .loading)
+        #expect(viewModel.expertsState == .loading)
+        #expect(viewModel.featuredTopicsState == .loading)
+
+        refresh.cancel()
+        gate.signal()
+        await refresh.value
+
+        #expect(viewModel.categoriesState == .loaded)
+        #expect(viewModel.expertsState == .loaded)
+        #expect(viewModel.featuredTopicsState == .loaded)
+        #expect(viewModel.featuredTopics.map(\.title) == ["Back"])
+        #expect(viewModel.categories.count == 1)
+        #expect(viewModel.experts.count == 1)
+    }
+
+    @Test("loaded sections stay on screen while a refresh is in flight (G-04-3)")
+    func refreshKeepsLoadedSectionsVisible() async throws {
+        let api = makeAPI(serving: HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "First")]))
+        let viewModel = ExploreClientViewModel(api: api)
+        await viewModel.load()
+
+        let gate = DispatchSemaphore(value: 0)
+        defer { gate.signal() }
+        serveHeld(HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "Second")]), until: gate)
+        let before = homeRequestCount()
+        let refresh = Task { await viewModel.reload() }
+        let arrived = await homeRequestArrived(after: before)
+        try #require(arrived)
+
+        #expect(viewModel.categoriesState == .loaded)
+        #expect(viewModel.expertsState == .loaded)
+        #expect(viewModel.featuredTopicsState == .loaded)
+        #expect(viewModel.featuredTopics.map(\.title) == ["First"])
+        #expect(viewModel.categories.count == 1)
+        #expect(viewModel.experts.count == 1)
+
+        gate.signal()
+        await refresh.value
+
+        #expect(viewModel.featuredTopics.map(\.title) == ["Second"])
+    }
+
+    @Test("a category change still shows skeletons while the filtered feed loads (G-04-3)")
+    func categoryChangeStillShowsSkeletons() async throws {
+        let api = makeAPI(serving: HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "First")]))
+        let viewModel = ExploreClientViewModel(api: api)
+        await viewModel.load()
+
+        let gate = DispatchSemaphore(value: 0)
+        defer { gate.signal() }
+        serveHeld(HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic(title: "Filtered")]), until: gate)
+        let before = homeRequestCount()
+        viewModel.applySelectedCategories(["technology"])
+        let arrived = await homeRequestArrived(after: before)
+        try #require(arrived)
+
+        let homeRequests = MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix("/client/home") == true }
+        #expect(homeRequests.last?.url?.query?.contains("category=technology") == true)
+        #expect(viewModel.categoriesState == .loading)
+        #expect(viewModel.expertsState == .loading)
+        #expect(viewModel.featuredTopicsState == .loading)
+
+        gate.signal()
+        for _ in 0..<250 {
+            if viewModel.categoriesState == .loaded,
+               viewModel.expertsState == .loaded,
+               viewModel.featuredTopicsState == .loaded { break }
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.categoriesState == .loaded)
+        #expect(viewModel.expertsState == .loaded)
+        #expect(viewModel.featuredTopicsState == .loaded)
+        #expect(viewModel.featuredTopics.map(\.title) == ["Filtered"])
     }
 
     // MARK: - Error text

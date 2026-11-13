@@ -137,6 +137,8 @@ struct ExploreClientView: View {
                         .padding(.bottom, 32)
                 }
             }
+            // reload() runs the fetch in a task this refresh's cancellation cannot reach and keeps
+            // loaded sections on screen, so the refresh always completes (G-04-3).
             .refreshable {
                 await viewModel.reload()
             }

@@ -16,19 +16,28 @@ final class MockURLProtocol: URLProtocol {
     /// transport-layer error.
     nonisolated(unsafe) static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
 
+    /// Guards `requestLog`. The URL loading thread appends while a test may be polling `recordedRequests`.
+    private static let requestLock = NSLock()
+    nonisolated(unsafe) private static var requestLog: [URLRequest] = []
+
     /// Records every request that flows through the mock. Reset per-test.
-    nonisolated(unsafe) static var recordedRequests: [URLRequest] = []
+    /// Reads and writes go through one lock, so a test can poll it while the URL loading thread appends.
+    static var recordedRequests: [URLRequest] {
+        get { requestLock.withLock { requestLog } }
+        set { requestLock.withLock { requestLog = newValue } }
+    }
 
     static func reset() {
         handler = nil
-        recordedRequests = []
+        requestLock.withLock { requestLog = [] }
     }
 
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
     override func startLoading() {
-        Self.recordedRequests.append(request)
+        let recorded = request
+        Self.requestLock.withLock { Self.requestLog.append(recorded) }
         guard let handler = Self.handler else {
             client?.urlProtocol(self, didFailWithError: URLError(.cannotFindHost))
             return

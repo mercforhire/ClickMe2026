@@ -71,10 +71,34 @@ final class ExploreClientViewModel: ObservableObject {
     /// "Today's Sessions" strip at the top of the screen has data. That
     /// fetch is a soft dependency — a failure there just hides the strip
     /// (matches the "empty means hidden" behavior).
+    ///
+    /// SwiftUI cancels the `.refreshable` task when the ScrollView re-renders
+    /// mid-refresh, and the `.task` task when the screen disappears. The fetch
+    /// runs in an unstructured `Task`, which is not a child of its caller, so
+    /// that cancellation never reaches URLSession (G-04-3). Awaiting its value
+    /// keeps the refresh spinner up until the fetch ends. Sections that already
+    /// show content keep it until the response replaces it.
     func load() async {
-        categoriesState = .loading
-        expertsState = .loading
-        featuredTopicsState = .loading
+        await Task { await self.fetchHome(replacingLoadedContent: false) }.value
+    }
+
+    /// One `/client/home` round trip, then Today's Sessions.
+    ///
+    /// - Parameter replacingLoadedContent: When `false` (a refresh, a retry or a
+    ///   reappear), a section that is already `.loaded` stays on screen until the
+    ///   response replaces it. When `true` (a category change), every section shows
+    ///   its skeleton, because the loaded experts no longer match the new filter.
+    private func fetchHome(replacingLoadedContent: Bool) async {
+        // Assign only when the value changes, so a refresh over loaded content publishes nothing.
+        func begin(_ state: LoadState) -> LoadState {
+            (state == .loaded && !replacingLoadedContent) ? state : .loading
+        }
+        let nextCategories = begin(categoriesState)
+        if categoriesState != nextCategories { categoriesState = nextCategories }
+        let nextExperts = begin(expertsState)
+        if expertsState != nextExperts { expertsState = nextExperts }
+        let nextFeatured = begin(featuredTopicsState)
+        if featuredTopicsState != nextFeatured { featuredTopicsState = nextFeatured }
         do {
             let response = try await api.getClientHome(
                 categorySlugs: selectedCategorySlugs.isEmpty ? nil : selectedCategorySlugs.sorted()
@@ -198,7 +222,7 @@ final class ExploreClientViewModel: ObservableObject {
         }
     }
 
-    /// Pull-to-refresh handler.
+    /// Pull-to-refresh and section Retry handler; same as `load()`.
     func reload() async {
         await load()
     }
@@ -233,7 +257,9 @@ final class ExploreClientViewModel: ObservableObject {
     func applySelectedCategories(_ slugs: Set<String>) {
         guard slugs != selectedCategorySlugs else { return }
         selectedCategorySlugs = slugs
-        Task { await reload() }
+        // The loaded experts no longer match the new filter, so this path keeps its skeletons (unchanged).
+        // This Task is already unstructured and nobody cancels it.
+        Task { await fetchHome(replacingLoadedContent: true) }
     }
 
     // MARK: - Mapping helpers

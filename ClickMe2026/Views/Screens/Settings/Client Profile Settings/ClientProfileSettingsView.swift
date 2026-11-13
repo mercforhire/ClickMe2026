@@ -105,10 +105,10 @@ struct ClientProfileSettingsView: View {
             .presentationBackground(ProfileSettingsBrand.sheetBg)
         }
         .sheet(isPresented: $viewModel.showLangSheet) {
-            LanguageEditorSheet(languages: $viewModel.languages)
-                .presentationDetents([.fraction(0.72)])
-                .presentationDragIndicator(.visible)
-                .presentationBackground(ProfileSettingsBrand.sheetBg)
+            LanguageSelectionView(
+                initialSelection: viewModel.languageItems,
+                onDone: { viewModel.applyLanguageSelection($0) }
+            )
         }
         .onChange(of: viewModel.selectedPhoto) {
             Task { await viewModel.loadSelectedPhoto() }
@@ -179,7 +179,8 @@ struct ClientProfileSettingsView: View {
         [
             viewModel.firstName, viewModel.lastName, viewModel.bio,
             viewModel.jobTitle, viewModel.company,
-            viewModel.city, viewModel.state, viewModel.country
+            viewModel.city, viewModel.state, viewModel.country,
+            viewModel.languageItems.map(\.id).joined(separator: ",")
         ].joined(separator: "|")
     }
 
@@ -223,10 +224,6 @@ struct ClientProfileSettingsView: View {
     ProfSheetPreview().preferredColorScheme(.dark)
 }
 
-#Preview("Language Editor Sheet") {
-    LangSheetPreview().preferredColorScheme(.dark)
-}
-
 private struct ProfSheetPreview: View {
     @State private var jt = "Digital Marketing Expert"
     @State private var co = "Self-Employed"
@@ -234,16 +231,6 @@ private struct ProfSheetPreview: View {
         ZStack {
             ProfileSettingsBrand.sheetBg.ignoresSafeArea()
             ProfessionalDetailsSheet(jobTitle: $jt, company: $co)
-        }
-    }
-}
-
-private struct LangSheetPreview: View {
-    @State private var langs = ["English", "Spanish"]
-    var body: some View {
-        ZStack {
-            ProfileSettingsBrand.sheetBg.ignoresSafeArea()
-            LanguageEditorSheet(languages: $langs)
         }
     }
 }

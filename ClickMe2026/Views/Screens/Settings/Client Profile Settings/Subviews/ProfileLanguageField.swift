@@ -25,18 +25,26 @@ struct ProfileLanguageField: View {
                     Text("Spoken Languages")
                         .font(.brand(.caption2, weight: .semibold))
                         .foregroundColor(ProfileSettingsBrand.labelColor)
-                    HStack(spacing: 8) {
-                        ForEach(languages, id: \.self) { lang in
-                            Text(lang)
-                                .font(.brand(.caption, weight: .medium))
-                                .foregroundColor(ProfileSettingsBrand.onSurface)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(
-                                    Capsule()
-                                        .fill(ProfileSettingsBrand.chipBg)
-                                        .overlay(Capsule().stroke(ProfileSettingsBrand.chipBorder, lineWidth: 1))
-                                )
+                    if languages.isEmpty {
+                        // A profile with no language yet (UI-SPEC EM4).
+                        Text("Add languages")
+                            .font(.brand(.subheadline, weight: .regular))
+                            .foregroundColor(ProfileSettingsBrand.onSurfaceVar)
+                    } else {
+                        // Wraps: the catalog picker allows far more than the old 12 labels.
+                        ProfileFlowLayout(spacing: 8) {
+                            ForEach(Array(languages.enumerated()), id: \.offset) { _, lang in
+                                Text(lang)
+                                    .font(.brand(.caption, weight: .medium))
+                                    .foregroundColor(ProfileSettingsBrand.onSurface)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        Capsule()
+                                            .fill(ProfileSettingsBrand.chipBg)
+                                            .overlay(Capsule().stroke(ProfileSettingsBrand.chipBorder, lineWidth: 1))
+                                    )
+                            }
                         }
                     }
                 }

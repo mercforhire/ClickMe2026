@@ -27,7 +27,16 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     @Published var state: String
     /// ISO-3166-1 alpha-3 code (e.g. "USA") — matches server contract.
     @Published var country: String
-    @Published var languages: [String]
+    /// Catalog languages (id + label) in the order the user picked them.
+    /// Only these ids are sent as `language_ids`.
+    @Published var languageItems: [LanguageItem]
+    /// Id-less (custom) languages the server already holds. The picker cannot
+    /// add or remove them, but a languages save is a full replace, so they are
+    /// always sent back as `custom_languages` or the save would delete them.
+    @Published private(set) var customLanguages: [String]
+
+    /// Display labels for the language row: catalog languages, then customs.
+    var languages: [String] { languageItems.map(\.label) + customLanguages }
 
     // MARK: Photo
     @Published var selectedPhoto: PhotosPickerItem?
@@ -64,7 +73,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     /// Debounce window between the last field edit and the actual API call.
     /// Long enough that continued typing keeps rescheduling, short enough
     /// that a picker tap or paused typing saves quickly.
-    private let autoSaveDebounce: UInt64 = 1_200_000_000 // 1.2 s
+    private let autoSaveDebounce: UInt64
 
     /// Snapshot of the fields at the moment we last hydrated from the
     /// server (or last successfully saved). `scheduleAutoSave()` compares
@@ -72,6 +81,10 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     /// how we avoid firing a redundant save immediately after
     /// `UserManager.refreshProfile()` publishes new values into the sink.
     private var lastAppliedSnapshot: String = ""
+
+    /// Language ids the server holds as of the last hydration or successful
+    /// save. The `languages` group is sent only when the picked ids differ.
+    private var persistedLanguageIds: [String] = []
 
     // MARK: Dependencies
 
@@ -86,7 +99,8 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     /// the auto-save debounce as usual.
     init(
         userManager: UserManager = .shared,
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        autoSaveDebounce: UInt64 = 1_200_000_000 // 1.2 s
     ) {
         self.firstName = ""
         self.lastName = ""
@@ -96,17 +110,19 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         self.city = ""
         self.state = ""
         self.country = ""
-        self.languages = []
+        self.languageItems = []
+        self.customLanguages = []
         self.selectedPhoto = nil
         self.profileImage = nil
         self.showProfSheet = false
         self.showLangSheet = false
         self.userManager = userManager
         self.api = api
+        self.autoSaveDebounce = autoSaveDebounce
 
         // Seed immediately from the on-disk cache (if any), then
         // observe so revalidation writes propagate.
-        apply(profile: userManager.profile)
+        if let profile = userManager.profile { hydrate(from: profile) }
         observeProfileChanges()
     }
 
@@ -121,7 +137,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         } onChange: { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                apply(profile: userManager.profile)
+                if let profile = userManager.profile { hydrate(from: profile) }
                 observeProfileChanges()
             }
         }
@@ -138,7 +154,10 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         city: String = "San Francisco",
         state: String = "CA",
         country: String = "USA",
-        languages: [String] = ["English", "Spanish"]
+        languageItems: [LanguageItem] = [
+            LanguageItem(id: "en", label: "English"),
+            LanguageItem(id: "es", label: "Spanish")
+        ]
     ) -> ClientProfileSettingsViewModel {
         let vm = ClientProfileSettingsViewModel()
         vm.firstName = firstName
@@ -149,7 +168,8 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         vm.city = city
         vm.state = state
         vm.country = country
-        vm.languages = languages
+        vm.languageItems = languageItems
+        vm.persistedLanguageIds = languageItems.map(\.id)
         vm.lastAppliedSnapshot = vm.currentSnapshot()
         return vm
     }
@@ -161,8 +181,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     /// `lastAppliedSnapshot` so the immediately-following autosave check
     /// short-circuits. Non-existent server fields default to empty so
     /// the field UI shows a placeholder rather than a stale local value.
-    private func apply(profile: UserProfileData?) {
-        guard let profile else { return }
+    func hydrate(from profile: UserProfileData) {
         let personal = profile.personalDetails
         let location = profile.location
         let professional = profile.professionalDetails
@@ -178,7 +197,16 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         state = location.stateProvince ?? ""
         country = location.country ?? ""
 
-        languages = profile.languages.compactMap { $0.label }
+        // An entry with an id is a catalog language; an id-less entry carries
+        // its `custom_label` as the label (userProfile.controller.js).
+        languageItems = profile.languages.compactMap { entry in
+            guard let id = entry.id, let label = entry.label else { return nil }
+            return LanguageItem(id: id, label: label)
+        }
+        customLanguages = profile.languages.compactMap { entry in
+            entry.id == nil ? entry.label : nil
+        }
+        persistedLanguageIds = languageItems.map(\.id)
 
         lastAppliedSnapshot = currentSnapshot()
     }
@@ -191,7 +219,8 @@ final class ClientProfileSettingsViewModel: ObservableObject {
             firstName, lastName, bio,
             jobTitle, company,
             city, state, country,
-            languages.joined(separator: ","),
+            languageItems.map(\.id).joined(separator: ","),
+            customLanguages.joined(separator: ","),
         ].joined(separator: "|")
     }
 
@@ -255,18 +284,35 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         }
     }
 
-    private func performAutoSave() async {
-        // Build a payload that only carries fields we can actually round-trip
-        // safely. Notably: `email` is 403 on this endpoint, so it's omitted.
-        // `languages` is skipped because the VM stores display strings and
-        // the server needs `language_ids` — wire that once we have a real
-        // language picker sourcing IDs from GET /meta/languages.
+    /// Applies the picker's Done result. A selection that would leave the
+    /// profile with no language at all (no catalog id and no custom label) is
+    /// never applied: the backend would accept the empty list and delete every
+    /// row, so this guard is the only protection (UI-SPEC EM4, A9). A profile
+    /// that already had none gets a silent no-op.
+    func applyLanguageSelection(_ picked: [LanguageItem]) {
+        if picked.isEmpty && customLanguages.isEmpty {
+            if !languageItems.isEmpty {
+                autoSaveError = "Keep at least one language."
+            }
+            return
+        }
+        languageItems = picked
+    }
+
+    /// Builds the `PATCH /user/profile` body from the current fields.
+    ///
+    /// Carries only fields that round-trip safely: `email` is 403 on this
+    /// endpoint, so it is omitted. The `languages` group is a full replace on
+    /// the server, so it is sent only when the picked ids changed, always with
+    /// the custom languages, and never when it would leave zero languages.
+    func makeProfileUpdateBody() -> UpdateUserProfileRequest {
         var body = UpdateUserProfileRequest()
         body.basic = .init(
             firstName: firstName.trimmingCharacters(in: .whitespaces),
             lastName: lastName.trimmingCharacters(in: .whitespaces),
             bio: bio.trimmingCharacters(in: .whitespaces)
         )
+        // An emptied State/Province goes out as "" (the schema rejects null).
         body.location = .init(
             city: city.trimmingCharacters(in: .whitespaces),
             stateProvince: state.trimmingCharacters(in: .whitespaces),
@@ -277,13 +323,28 @@ final class ClientProfileSettingsViewModel: ObservableObject {
             company: company.trimmingCharacters(in: .whitespaces)
         )
 
+        let ids = languageItems.map(\.id)
+        if ids != persistedLanguageIds && !(ids.isEmpty && customLanguages.isEmpty) {
+            body.languages = .init(languageIds: ids, customLanguages: customLanguages)
+        }
+        return body
+    }
+
+    func performAutoSave() async {
+        let body = makeProfileUpdateBody()
+        // Read before the request so an edit made while it is in flight is
+        // not recorded as saved.
+        let snapshotAtSaveTime = currentSnapshot()
+        let sentLanguageIds = body.languages?.languageIds
+
         isAutoSaving = true
         defer { isAutoSaving = false }
         do {
             _ = try await api.updateUserProfile(body)
             // Record what we just persisted so a subsequent server sink
             // publishing the same values doesn't trigger a redundant save.
-            lastAppliedSnapshot = currentSnapshot()
+            lastAppliedSnapshot = snapshotAtSaveTime
+            if let sentLanguageIds { persistedLanguageIds = sentLanguageIds }
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
             autoSaveError = error.userMessage

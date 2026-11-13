@@ -53,7 +53,7 @@ Expected (quick 261109-323 and the EXPL-07 requirement text):
 - Empty edge (unit-tested only: `ClientHomeFeedTests` rows "an absent featured_topics decodes to nil", "a null featured_topics decodes to nil", "an array where every topic is bad gives an empty, loaded section"): a home feed with no featured topics loads Explore with an empty, loaded Featured Topics section, not an error. You cannot force this on production data; leave it unmarked unless you see it.
 - *Optional, only if you want the before picture:* the App Store build 6 on another phone stops failing once the migration is applied and shows "—" instead of "Free" for these topics (it gains the label only with the new build).
 
-Result:
+Result: FAIL (2026-11-12): pull to refresh on Explore loads nothing (gap G-04-3 in 04-UAT.md). Precondition query returned true. Initial load passed: a free no-currency topic shows Free, a Chinese-script title renders correctly. Airplane mode shows 'The Internet connection appears to be offline.' with Retry per section and no stale Featured Topics.
 
 ### 2. EXPL-03 — Free label on featured topic cards (quick 261109-323)
 
@@ -68,7 +68,7 @@ Expected:
 - The paid card shows the price through `Money` formatting with its cents, for example `CA$12.50`; never `CA$12`, `$12` or `CAD 12`.
 - A paid topic with a missing currency shows "—" and never an invented currency (unit-tested row in `ClientHomeFeedTests`; you cannot create one from the app, so leave it unmarked unless you see it).
 
-Result:
+Result: PASS (2026-11-12): free featured card reads Free; a paid card reads CA$120.00 (cents shown).
 
 ### 3. BOOK-01 / BOOK-19 / D2 — Request Sent has no Back and no swipe, and both exits reset the source tab (04-03, 04-10)
 
@@ -173,7 +173,7 @@ Expected (UI-SPEC variant A):
 - No amount on the card. A free booking shows **no** payment card.
 - Variants B (charge scheduled) and C (already charged), and the hidden "held with no live expiry" row, are reachable only for older or converted rows. They are covered by unit tests and previews, not by a device step.
 
-Result:
+Result: PENDING. Paid half seen in D-11 step b on 2026-11-12 (variant A hold card shown); free booking (card absent) not yet checked.
 
 ### 9. EXPL-01 / L3 / E3 — expert profile load errors: network failure retries, a missing expert says so (04-05)
 
@@ -381,7 +381,7 @@ Expected:
 - Link is not offered (D-16, Android parity).
 - Only **Continue** in the sheet proceeds (step b).
 
-Expected end state: no hold. Result:
+Expected end state: no hold. Result: PASS (2026-11-12): both closes (swipe down, X) returned to the form with selection kept, no toast or alert, no Link option, no hold.
 
 #### b. BOOK-01 / BOOK-05 / PAY-03 / D3 — complete a paid booking: Loading booking…, the hold card, no Back
 
@@ -400,7 +400,7 @@ Expected:
 - Q1 shows `pending_approval` and `requires_capture`. Q2 returns a row (a real clone exists). If Q2 returns no rows, tell Claude: steps f and g then do not test a real clone.
 - After cancel, the PaymentIntent is Canceled and Q1 shows `cancelled` / `canceled` with `refund_failed` not true.
 
-Expected end state: booking cancelled, hold released. Result:
+Expected end state: booking cancelled, hold released. Result: PASS (2026-11-12): Loading booking…, Awaiting Approval pill, variant A hold card, no Back, edge swipe inert. Q1 `pending_approval` / `requires_capture`; Q2 returned a clone row on B's account (values in user's notes). After cancel: Q1 `cancelled` / `canceled`, `refund_failed` false; Dashboard shows Canceled.
 
 #### c. PAY-02 / 999.2 / D1 — a forced timeout, and a retry that succeeds on its own (BACK-15 replay)
 
@@ -419,7 +419,7 @@ Expected:
 - **Caveat on what this proves.** The backend replay path writes no log line and the app cannot tell a replay from a first success (checked in the backend source). The replay happens only if the first confirm reached the server and its reply was lost, which depends on your timing. The result you can observe is "one booking, one hold, Request Sent for that booking", which a normal retry would also give (backlog 999.2's own note). Write in Result when you turned airplane mode on, and whether you believe the first request had already left the phone.
 - If airplane mode landed before the card authorization finished, you will see a payment error from Stripe instead. That is not this test: check for an orphan hold (S-A), then repeat.
 
-Expected end state: one booking, cancelled, hold released. Result:
+Expected end state: one booking, cancelled, hold released. Result: SKIPPED (2026-11-12, user decision). The first attempt kept the network off too long and fell through to step d's alert (recorded under d). Backlog 999.2 stays open: no run showed a short outage recovering inside the retries.
 
 #### d. PAY-02 / D-03 / D1 — retries exhausted, then Try again: one booking, one hold
 
@@ -438,7 +438,7 @@ Expected:
 - **Try again** shows **Confirming your booking…** again with the same payment, then opens Request Sent for the existing booking. **One** booking in My Bookings and **one** hold in Stripe, not two.
 - None of the taps in step 1 changes the form while **Confirming your booking…** shows (CR-01, plan 04-15), and after **Try again** Request Sent shows the slot you first chose.
 
-Expected end state: one booking, cancelled, hold released. Result:
+Expected end state: one booking, cancelled, hold released. Result: PASS (2026-11-12), with the CR-01 form-lock taps NOT RUN (nothing tapped while Confirming… showed; cover on the step e run). Alert copy, Payment reference and the three buttons matched. Try again opened Request Sent for the originally chosen 10:00 AM slot; one booking in My Bookings, one uncaptured PaymentIntent (Q1 `pending_approval` / `requires_capture`, same pi as the alert). After cancel the Dashboard shows Canceled. Note: this booking used a different saved card from step b, so A has at least two saved cards (relevant to step f).
 
 #### e. D-15 — Not now, then Book Now again for the same slot opens Request Sent for that booking
 
@@ -458,7 +458,7 @@ Expected:
 - (Optional) a slot someone else holds still shows the plain `That time slot was just taken. Please pick another.` with **OK**.
 - The `Couldn't book` / `You may already have this booking. Check My Bookings.` alert (buttons **Check My Bookings**, **Close Alert**) is the K4 case in item 18; its layout has not been seen on a device.
 
-Expected end state: one booking, cancelled, hold released. Result:
+Expected end state: one booking, cancelled, hold released. Result: SKIPPED (2026-11-12, user decision: airplane-mode forced-failure tests not run). D-15 rests on unit tests (04-13) only; the CR-01 form-lock taps were not run on a device either.
 
 #### f. D-12 — removing a card inside the payment sheet: the webhook arrives and the clone rows are gone
 
@@ -480,7 +480,7 @@ Expected:
 - S is gone from the sheet, so the app cannot book or reschedule with it. No charge attempt is made on live Stripe (01-17: "charging a removed card" is deliberately not attempted); the detach and the unit-tested sweep guard are the evidence.
 - If S was A's only card, A now has **no saved card**, which is the starting state 01-17 step 2 requires. If A has other cards, remove them before step g.
 
-Expected end state: no hold, no charge. Result:
+Expected end state: no hold, no charge. Result: PASS (2026-11-12). Removed the step b card inside the PaymentSheet (Edit > remove); live platform endpoint delivered `payment_method.detached` with 200 (first proof of the Dashboard subscription); `connected_pm_clones` count for that card is 0; the clone no longer lists on B's connected customer; the card is gone from the sheet. Optional live-hold removal (step 6) not run. A still has one other saved card (the one used in step d).
 
 #### g. 01-17 / 01-19 / 999.1 — the deferred Phase 1 real-Stripe checklists, as written
 
@@ -499,9 +499,9 @@ Notes:
 
 Expected: the 01-17 and 01-19 "Expected" and "Required end state" sections, as written.
 
-Result, 01-17 (per client run: "all passed" or the failed step; "step 9 not run" if so; end state holds yes or no):
+Result, 01-17 (per client run: "all passed" or the failed step; "step 9 not run" if so; end state holds yes or no): DEFERRED (2026-11-12, user decision). Not run. Partly overlapped by D-11 step b (book, clone found, client cancel releases the hold) and step f (clone detach, via the sheet rather than Settings). Steps 2, 5, 7 and 9 (lone-card default, in-use block, Settings removal, default after removal) have no live result; BACK-06 and BACK-07 stay Pending.
 
-Result, 01-19 (level run; "all passed" or the failed step; end state holds yes or no):
+Result, 01-19 (level run; "all passed" or the failed step; end state holds yes or no): DEFERRED (2026-11-12, user decision). Not run. Expert accept and expert cancel releasing a live hold have no live result; BACK-19 stays Pending.
 
 #### h. D-11 — end state: every hold released or refunded, nothing charged
 
@@ -511,14 +511,14 @@ Fill one row per PaymentIntent placed in the whole session (steps b to g, includ
 
 | Step | Booking (short id) | pi (last 6) | How it ended | Stripe state checked | Date |
 |------|--------------------|-------------|--------------|----------------------|------|
-| b | | | released / refunded | Canceled / Refunded | |
-| c | | | | | |
-| d | | | | | |
-| e | | | | | |
-| f (optional) | | | | | |
-| g, 01-17 client run | | | | | |
-| g, 01-19 booking P | | | | | |
-| Orphan or stray hold (if any) | | | | | |
+| b | 4293ce0f | hpXgFY | released (client cancel) | Canceled | 2026-11-12 |
+| c | skipped | - | no hold placed | - | 2026-11-12 |
+| d | a67f0c28 | zvYETS | released (client cancel) | Canceled | 2026-11-12 |
+| e | skipped | - | no hold placed | - | 2026-11-12 |
+| f (optional) | not run | - | no hold placed | - | 2026-11-12 |
+| g, 01-17 client run | deferred | - | no hold placed | - | 2026-11-12 |
+| g, 01-19 booking P | deferred | - | no hold placed | - | 2026-11-12 |
+| Stray hold (booking from an abandoned c/e attempt, found by the end-state query) | e3dacc55 | 7PPHvt | released (client cancel) | Canceled | 2026-11-12 |
 
 Then, from the Supabase SQL editor, both of these must return **no rows** and **0** (they cover the whole account, so a row may be an older booking; say which in Result):
 
@@ -539,7 +539,7 @@ Expected end state:
 - Saved cards are how you want them. Removed cards are gone for good; re-adding one creates a new `pm` id with no clone until its next paid booking.
 - The free bookings from items 1 to 7 are cancelled if you do not want them.
 
-Result:
+Result: PASS (2026-11-12). Every PaymentIntent in the table shows Canceled on the Dashboard. The first end-state query returned 1 (booking e3dacc55, `pending_approval` / `requires_capture`, a live booking left from an abandoned step c/e attempt, not an orphan); it was cancelled as A, the Dashboard shows Canceled, and the count is now 0. No orphan hold (payment with no booking) was found. No charge seen.
 
 *D-17, 409 PAYMENT_IN_PROGRESS, cannot be forced from the app.* It is unit-tested (04-08 `ConfirmOutcomeTests` and `MakeABookingPaidFlowTests`, 04-13 ledger rows). If it shows during this session, record it under item 22 in the "Log if seen" section.
 

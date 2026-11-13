@@ -83,7 +83,7 @@ final class SignupReviewViewModel: ObservableObject {
             return true
         }
         guard let body = accumulator.buildPublishRequest() else {
-            publishError = "Please complete every profile section before publishing."
+            publishError = Self.missingMessage(for: accumulator.missingForPublish)
             return false
         }
 
@@ -101,6 +101,15 @@ final class SignupReviewViewModel: ObservableObject {
     }
 
     // MARK: - Helpers
+
+    /// "Finish these first: Add profile picture." — the checklist titles the
+    /// user already sees on the Overview screen, for the steps still missing.
+    private static func missingMessage(for missing: [ChecklistItemKind]) -> String {
+        let titles = missing.compactMap { kind in
+            SignupOverviewViewModel.defaultChecklist.first { $0.kind == kind }?.title
+        }
+        return "Finish these first: " + titles.joined(separator: ", ") + "."
+    }
 
     private static func formatLocation(city: String, province: String, countryCode: String) -> String {
         let country = Countries.find(byCode: countryCode)?.name ?? countryCode

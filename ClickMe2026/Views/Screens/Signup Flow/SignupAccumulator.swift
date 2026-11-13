@@ -83,21 +83,39 @@ final class SignupAccumulator {
 
     // MARK: - Derived
 
+    /// The checklist steps still blocking "Publish Profile", in checklist
+    /// order. Mirrors Android `SignupDraft.missingForPublish`.
+    ///
+    /// A profile photo is required: the server answers a publish without
+    /// `profile_image_url` with a 422 (`onboarding.controller.js`), so the
+    /// server stays the enforcer and iOS only avoids sending a request it
+    /// knows will be refused. `.verifyEmail` is never listed, because the
+    /// server does not require a verified email to publish.
+    var missingForPublish: [ChecklistItemKind] {
+        var missing: [ChecklistItemKind] = []
+        if firstName.isEmpty
+            || city.isEmpty
+            || provinceState.isEmpty
+            || countryCode.isEmpty
+            || languages.isEmpty
+        {
+            missing.append(.basicInfo)
+        }
+        if timezone.isEmpty { missing.append(.timezone) }
+        if avatarUrl?.isEmpty ?? true { missing.append(.profilePicture) }
+        if expertiseTags.isEmpty { missing.append(.expertise) }
+        return missing
+    }
+
     /// True once every field required for `PATCH /expert/profile/setup`
-    /// with `setup_completed: true` is present. Drives the "Publish
-    /// Profile" button on the review screen.
+    /// with `setup_completed: true` is present, photo included. Drives the
+    /// "Publish Profile" button on the review screen.
     ///
     /// Hourly rate is intentionally NOT part of setup — clients aren't
     /// experts yet, and any per-topic pricing is captured later on the
     /// expert-side Topics screen.
     var isReadyToPublish: Bool {
-        !firstName.isEmpty
-            && !city.isEmpty
-            && !provinceState.isEmpty
-            && !countryCode.isEmpty
-            && !timezone.isEmpty
-            && !languages.isEmpty
-            && !expertiseTags.isEmpty
+        missingForPublish.isEmpty
     }
 
     // MARK: - Checklist state

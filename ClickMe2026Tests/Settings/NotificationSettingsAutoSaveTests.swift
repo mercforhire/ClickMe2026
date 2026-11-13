@@ -7,10 +7,67 @@
 //  (`scheduleAutoSave()`); the view model must recognise that the toggles
 //  equal what it just applied and send no PATCH. One real flip sends one.
 //
+//  This suite does not use `MockURLProtocol`: its handler and request log are
+//  process-global, and other suites reset them while this one runs. The
+//  private protocol below owns its state, so only this suite's traffic lands
+//  in its log.
+//
 
 import Foundation
 import Testing
 @testable import ClickMe2026
+
+/// Answers `GET`/`PATCH /notifications/preferences` from state installed by the
+/// suite, and records every request it sees. Only this suite registers it.
+private final class PreferencesStubProtocol: URLProtocol {
+
+    private struct State {
+        var preferencesBody = Data()
+        var successBody = Data()
+        var requests: [URLRequest] = []
+    }
+
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var state = State()
+
+    /// Replaces the stub bodies and clears the request log.
+    static func install(preferencesBody: Data, successBody: Data) {
+        lock.withLock {
+            state = State(preferencesBody: preferencesBody, successBody: successBody, requests: [])
+        }
+    }
+
+    /// PATCHes sent to the notification preferences path since `install`.
+    static var preferencePatches: [URLRequest] {
+        lock.withLock {
+            state.requests.filter {
+                $0.httpMethod == "PATCH" && $0.url?.path.hasSuffix("/notifications/preferences") == true
+            }
+        }
+    }
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        let request = self.request
+        let body: Data = Self.lock.withLock {
+            Self.state.requests.append(request)
+            return request.httpMethod == "PATCH" ? Self.state.successBody : Self.state.preferencesBody
+        }
+        let response = HTTPURLResponse(
+            url: request.url!,
+            statusCode: 200,
+            httpVersion: "HTTP/1.1",
+            headerFields: ["Content-Type": "application/json"]
+        )!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: body)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
+}
 
 @MainActor
 @Suite("Notification settings auto-save", .serialized)
@@ -21,6 +78,8 @@ struct NotificationSettingsAutoSaveTests {
     /// Short debounce so the suite runs fast; the waits below are 10x this.
     private static let debounce: UInt64 = 20_000_000
     private static let settleNanoseconds: UInt64 = 200_000_000
+    /// Upper bound for a PATCH to appear before the settle window starts.
+    private static let patchWaitSeconds: Int64 = 2
 
     /// A client that answers GET with the grid where `booking/requests` is
     /// OFF (every other row on), and PATCH with a success body. The first
@@ -40,16 +99,12 @@ struct NotificationSettingsAutoSaveTests {
             "{\"status\":\"success\",\"data\":{\"preferences\":[\(rows.joined(separator: ","))]}}".utf8
         )
         let successBody = Data("{\"status\":\"success\",\"message\":\"ok\"}".utf8)
+        PreferencesStubProtocol.install(preferencesBody: preferencesBody, successBody: successBody)
 
-        return APITestFactory.make { request in
-            let response = HTTPURLResponse(
-                url: request.url!,
-                statusCode: 200,
-                httpVersion: "HTTP/1.1",
-                headerFields: ["Content-Type": "application/json"]
-            )!
-            return (response, request.httpMethod == "PATCH" ? successBody : preferencesBody)
-        }
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [PreferencesStubProtocol.self]
+        let service = NetworkService(session: URLSession(configuration: config))
+        return ClickMeAPI(baseURL: APITestFactory.baseURL, service: service)
     }
 
     private static func makeViewModel() -> NotificationSettingsViewModel {
@@ -57,10 +112,20 @@ struct NotificationSettingsAutoSaveTests {
     }
 
     private static func patchCount() -> Int {
-        MockURLProtocol.recordedRequests.filter { $0.httpMethod == "PATCH" }.count
+        PreferencesStubProtocol.preferencePatches.count
     }
 
-    private static func settle() async {
+    /// Polls (up to `patchWaitSeconds`) until at least `expected` PATCHes have arrived.
+    private static func awaitPatchCount(atLeast expected: Int) async {
+        let deadline = ContinuousClock.now + .seconds(patchWaitSeconds)
+        while patchCount() < expected, ContinuousClock.now < deadline {
+            try? await Task.sleep(nanoseconds: 10_000_000)
+        }
+    }
+
+    /// Waits for the expected PATCHes, then a fixed settle window so any extra PATCH would also land.
+    private static func settle(expectingPatches expected: Int = 0) async {
+        await awaitPatchCount(atLeast: expected)
         try? await Task.sleep(nanoseconds: settleNanoseconds)
     }
 
@@ -87,11 +152,11 @@ struct NotificationSettingsAutoSaveTests {
 
         viewModel.sections[0].settings[1].isOn.toggle()
         viewModel.scheduleAutoSave()
-        await Self.settle()
+        await Self.settle(expectingPatches: 1)
         #expect(Self.patchCount() == 1)
 
         viewModel.scheduleAutoSave()
-        await Self.settle()
+        await Self.settle(expectingPatches: 1)
         #expect(Self.patchCount() == 1)
     }
 

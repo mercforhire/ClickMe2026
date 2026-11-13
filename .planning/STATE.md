@@ -354,12 +354,21 @@ Android follow-ups from Phase 4 (logged, not built; nothing verified on an Andro
 - D-13 (04-07's finding): Android already routes a suspended cold launch to Login and shows the dialog, so no behavior change. Differences logged, not aligned: the button reads `OK` (iOS `Close Alert`), the dialog also offers contact support, and it is hosted at the app level
 - DUPLICATE_BOOKING routing to `detail.booking_id` is already listed under Phase 1 (BACK-15); 04-13 adds nothing new, so there is one entry
 
+Android follow-ups from Phase 5 (logged, not built; nothing verified on an Android device, evidence is Android code and strings read 2026-11-13):
+
+- Delete Account copy and the three 409 blocker alerts, final strings copied word for word (D-11): [todo file](.planning/todos/pending/2026-11-13-android-delete-account-copy-and-blockers.md)
+- Remember-login-email: port Android branch `0c9ecc55` the way iOS ported `b0629d9` in 05-01 (D-16): [todo file](.planning/todos/pending/2026-11-13-android-remember-login-email.md)
+- Cancellation policy link and corrected policy copy; Android has no policy screen (D-12): [todo file](.planning/todos/pending/2026-11-13-android-cancellation-policy-link.md)
+- Other Phase 5 behavior changes to check for parity (tap order, crop, publish rules, province, notification save-on-open, feedback minimum, one support address, settings language save, verified email on resume, gate push path): [todo file](.planning/todos/pending/2026-11-13-android-phase-5-parity-check.md)
+
 Captured todos:
 
 - [2026-11-09] [general] Check the Android push prompt after a reinstall — [todo file](.planning/todos/pending/2026-11-08-check-the-android-push-prompt-after-a-reinstall.md)
 - [2026-11-09] [auth] Show the suspension message on a cold launch — [todo file](.planning/todos/pending/2026-11-08-show-the-suspension-message-on-a-cold-launch.md)
 - [2026-11-12] [payments] Merge D-12 (origin/main) into backend master before its next deploy — [todo file](.planning/todos/pending/2026-11-11-merge-d12-into-backend-master.md)
 - [2026-11-12] [payments] Long-lead T-24h sweep: transient errors after the stamp still cancel at 6 h — [todo file](.planning/todos/pending/2026-11-12-long-lead-sweep-transient-errors-after-stamp.md)
+- [2026-11-13] [account] Decide what to do about saved cards when an account is deleted (RESEARCH Open Question 1) — [todo file](.planning/todos/pending/2026-11-13-decide-saved-cards-on-account-deletion.md)
+- [2026-11-13] [testing] Flaky test: MakeABookingAvailabilityTests "An older load that lands last writes nothing" — [todo file](.planning/todos/pending/2026-11-13-flaky-make-a-booking-availability-test.md)
 
 ### Blockers/Concerns
 

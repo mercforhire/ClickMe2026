@@ -87,6 +87,13 @@ struct ProfileSettingsSaveTests {
     ) -> (ClickMeAPI, PatchRecorder) {
         let recorder = PatchRecorder()
         let ok = Data(profileBody(firstName: firstName, lastName: lastName, bio: bio, city: city, state: state).utf8)
+        // `PATCH /expert/profile` 200: the UpdateExpertProfileData shape (expert.controller.js).
+        let expertOk = Data(
+            """
+            {"status":"success","data":{"profile_id":"6F9619FF-8B86-D011-B42D-00C04FC964FF",\
+            "updated_fields":["professional_details"]}}
+            """.utf8
+        )
         let api = APITestFactory.make { request in
             func reply(_ status: Int, _ data: Data) -> (HTTPURLResponse, Data) {
                 let response = HTTPURLResponse(
@@ -99,6 +106,7 @@ struct ProfileSettingsSaveTests {
 
             let data = request.bodyDataForTest() ?? Data()
             recorder.record(data)
+            if request.url?.path.hasSuffix("/expert/profile") == true { return reply(200, expertOk) }
             let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             let basic = json?["basic"] as? [String: Any]
             let empty = ["first_name", "last_name"].filter { (basic?[$0] as? String) == "" }
@@ -309,6 +317,29 @@ struct ProfileSettingsSaveTests {
         #expect(vm.makeProfileUpdateBody() == nil)
         let expertBody = try #require(vm.makeExpertProfileUpdateBody())
         #expect(expertBody.professionalDetails?.meetingUrl == link)
+    }
+
+    /// CR-01: clearing a link the server holds goes out as `meeting_url: ""`
+    /// (BACK-04), never as an empty `professional_details`. Builds no view model:
+    /// its init prefers a link held by the shared manager, and a held "" would
+    /// leave nothing to clear, so only an explicit baseline makes the row
+    /// deterministic.
+    @Test("CR-01: clearing a set meeting link sends an empty meeting_url")
+    func expertClearedMeetingLinkSendsEmptyString() async throws {
+        let (api, recorder) = Self.makeAPI(firstName: "Ada", lastName: "Lovelace")
+
+        let body = try #require(
+            ExpertProfileSettingsViewModel.meetingLinkBody(current: "", baseline: "https://zoom.us/j/123")
+        )
+        #expect(body.professionalDetails?.meetingUrl == "")
+        _ = try await api.updateExpertProfile(body)
+
+        #expect(recorder.count == 1)
+        let sent = try #require(recorder.first)
+        #expect(Set(sent.keys) == ["professional_details"])
+        let details = try #require(sent["professional_details"] as? [String: Any])
+        #expect(Set(details.keys) == ["meeting_url"])
+        #expect(details["meeting_url"] as? String == "")
     }
 
     @Test("Expert: a cleared first name is held and flagged")

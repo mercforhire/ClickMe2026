@@ -65,12 +65,12 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Signup and Mode Switch
 
-- [x] **SIGN-01** [S1] **[major]**: Expert cannot publish the profile without a photo
-- [x] **SIGN-02** [S3] **[major]**: Resuming signup keeps the already-verified email state
-- [x] **SIGN-03** [S4]: Expertise tags (and languages) are saved in the order the user tapped them, so the first pick is primary
-- [x] **SIGN-04** [S5]: The country code is normalized on publish
-- [x] **SIGN-05** [S6]: The uploaded photo matches the zoom/crop the user set
-- [x] **SIGN-06** [S7] **[major]**: Switching to Expert mode with incomplete setup opens the setup hub (per decision Q5; pairs with BACK-13)
+- [ ] **SIGN-01** [S1] **[major]**: Expert cannot publish the profile without a photo
+- [ ] **SIGN-02** [S3] **[major]**: Resuming signup keeps the already-verified email state
+- [ ] **SIGN-03** [S4]: Expertise tags (and languages) are saved in the order the user tapped them, so the first pick is primary
+- [ ] **SIGN-04** [S5]: The country code is normalized on publish
+- [ ] **SIGN-05** [S6]: The uploaded photo matches the zoom/crop the user set
+- [ ] **SIGN-06** [S7] **[major]**: Switching to Expert mode with incomplete setup opens the setup hub (per decision Q5; pairs with BACK-13)
 
 ### Expert Mode
 
@@ -115,11 +115,11 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Settings, Profile, Account
 
-- [x] **SET-01** [T1] **[major]**: Language edits on the client (and expert) profile save to the server
+- [ ] **SET-01** [T1] **[major]**: Language edits on the client (and expert) profile save to the server
 - [ ] **SET-02** [T2] **[major]**: Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`
-- [x] **SET-03** [T3]: The non-functional Pause Account card is removed from Delete Account
-- [x] **SET-04** [T4]: Opening Notification preferences doesn't send a save before the user changes anything
-- [x] **SET-05** [T5]: Feedback requires at least 10 characters before it can be sent
+- [ ] **SET-03** [T3]: The non-functional Pause Account card is removed from Delete Account
+- [ ] **SET-04** [T4]: Opening Notification preferences doesn't send a save before the user changes anything
+- [ ] **SET-05** [T5]: Feedback requires at least 10 characters before it can be sent
 - [ ] **SET-06** [T6] **[major]**: The Delete Account copy accurately describes what is deleted and what is kept or anonymized
 - [ ] **SET-07** [T7]: `CancellationPoliciesView` and `ReadyToStartCallView` are deleted or wired in, per decision Q7
 
@@ -220,12 +220,12 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXPL-05 | Phase 4 | Gaps Found |
 | EXPL-06 | Phase 4 | Gaps Found |
 | EXPL-07 | Phase 4 | Pending |
-| SIGN-01 | Phase 5 | Complete |
-| SIGN-02 | Phase 5 | Complete |
-| SIGN-03 | Phase 5 | Complete |
-| SIGN-04 | Phase 5 | Complete |
-| SIGN-05 | Phase 5 | Complete |
-| SIGN-06 | Phase 5 | Complete |
+| SIGN-01 | Phase 5 | Gaps Found |
+| SIGN-02 | Phase 5 | Gaps Found |
+| SIGN-03 | Phase 5 | Gaps Found |
+| SIGN-04 | Phase 5 | Gaps Found |
+| SIGN-05 | Phase 5 | Gaps Found |
+| SIGN-06 | Phase 5 | Gaps Found |
 | EXP-01 | Phase 6 | Pending |
 | EXP-02 | Phase 6 | Pending |
 | EXP-03 | Phase 6 | Pending |
@@ -257,11 +257,11 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | PUSH-02 | Phase 2 | Complete |
 | PUSH-03 | Phase 2 | Complete |
 | PUSH-04 | Phase 2 | Complete |
-| SET-01 | Phase 5 | Complete |
+| SET-01 | Phase 5 | Gaps Found |
 | SET-02 | Phase 5 | Pending |
-| SET-03 | Phase 5 | Complete |
-| SET-04 | Phase 5 | Complete |
-| SET-05 | Phase 5 | Complete |
+| SET-03 | Phase 5 | Gaps Found |
+| SET-04 | Phase 5 | Gaps Found |
+| SET-05 | Phase 5 | Gaps Found |
 | SET-06 | Phase 5 | Pending |
 | SET-07 | Phase 5 | Pending |
 | BACK-01 | Phase 1 | Complete |

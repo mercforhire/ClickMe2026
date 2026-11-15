@@ -28,6 +28,24 @@ extension Error {
         }
         return (self as? LocalizedError)?.errorDescription ?? localizedDescription
     }
+
+    /// The per-field failures of a `422 VALIDATION_ERROR`, or `[]` for any
+    /// other error.
+    ///
+    /// The backend's `validate` middleware answers a rejected body with a
+    /// `FieldValidationErrorResponse` whose `errors[].field` is a dotted path
+    /// such as `basic.first_name`. Branches on `ErrorCode`, never on message
+    /// text. The body is a best-effort read, so one that does not decode gives
+    /// `[]` and the caller falls back to `userMessage`.
+    var validationFieldErrors: [FieldError] {
+        guard let netError = self as? NetworkError,
+              case let .httpError(statusCode, data) = netError,
+              statusCode == 422,
+              let response = try? JSONDecoder().decode(FieldValidationErrorResponse.self, from: data),
+              response.code == .validationError
+        else { return [] }
+        return response.errors
+    }
 }
 
 /// One fixed string, so no case can leak the wrapped error (decoder paths,

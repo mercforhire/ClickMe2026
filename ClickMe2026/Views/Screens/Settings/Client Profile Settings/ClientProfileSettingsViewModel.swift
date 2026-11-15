@@ -75,16 +75,12 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     /// that a picker tap or paused typing saves quickly.
     private let autoSaveDebounce: UInt64
 
-    /// Snapshot of the fields at the moment we last hydrated from the
-    /// server (or last successfully saved). `scheduleAutoSave()` compares
-    /// the current fields against this and skips when they match — that's
-    /// how we avoid firing a redundant save immediately after
-    /// `UserManager.refreshProfile()` publishes new values into the sink.
-    private var lastAppliedSnapshot: String = ""
-
-    /// Language ids the server holds as of the last hydration or successful
-    /// save. The `languages` group is sent only when the picked ids differ.
-    private var persistedLanguageIds: [String] = []
+    /// What the server holds as of the last hydration or successful save.
+    /// `scheduleAutoSave()` compares the current fields against this and skips
+    /// when they match — that's how we avoid firing a redundant save immediately
+    /// after `UserManager.refreshProfile()` publishes new values into the sink.
+    /// `makeProfileUpdateBody()` sends only what differs from it (G-05-6).
+    private var baseline = ProfileSettingsSnapshot()
 
     // MARK: Dependencies
 
@@ -169,8 +165,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         vm.state = state
         vm.country = country
         vm.languageItems = languageItems
-        vm.persistedLanguageIds = languageItems.map(\.id)
-        vm.lastAppliedSnapshot = vm.currentSnapshot()
+        vm.baseline = vm.currentSnapshot()
         return vm
     }
 
@@ -178,7 +173,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
 
     /// Copies server-known values from a `UserProfileData` into the local
     /// @Published fields, then records the resulting snapshot as
-    /// `lastAppliedSnapshot` so the immediately-following autosave check
+    /// `baseline` so the immediately-following autosave check
     /// short-circuits. Non-existent server fields default to empty so
     /// the field UI shows a placeholder rather than a stale local value.
     func hydrate(from profile: UserProfileData) {
@@ -206,23 +201,29 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         customLanguages = profile.languages.compactMap { entry in
             entry.id == nil ? entry.label : nil
         }
-        persistedLanguageIds = languageItems.map(\.id)
 
-        lastAppliedSnapshot = currentSnapshot()
+        baseline = currentSnapshot()
     }
 
-    /// Serialized view of the auto-saveable fields. Order + separator
-    /// must stay stable — this is only used for equality checks, not
-    /// display.
-    private func currentSnapshot() -> String {
-        [
-            firstName, lastName, bio,
-            jobTitle, company,
-            city, state, country,
-            languageItems.map(\.id).joined(separator: ","),
-            customLanguages.joined(separator: ","),
-        ].joined(separator: "|")
+    /// The auto-saveable fields as a trimmed snapshot, for the equality check
+    /// and for building the changed-groups body.
+    private func currentSnapshot() -> ProfileSettingsSnapshot {
+        ProfileSettingsSnapshot(
+            firstName: firstName, lastName: lastName, bio: bio,
+            jobTitle: jobTitle, company: company,
+            city: city, stateProvince: state, country: country,
+            languageIds: languageItems.map(\.id),
+            customLanguages: customLanguages
+        )
     }
+
+    /// Set when the user has cleared a first name the profile already holds.
+    /// The empty name is never sent (the server keeps the saved one), so this
+    /// is what tells the user why. Plan 05-20 shows it under the field.
+    var firstNameError: String? { currentSnapshot().firstNameError(from: baseline) }
+
+    /// Same as `firstNameError`, for the last name.
+    var lastNameError: String? { currentSnapshot().lastNameError(from: baseline) }
 
     // MARK: Photo loading + upload
 
@@ -270,7 +271,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
     /// save that would otherwise fire immediately after
     /// `UserManager.$profile` publishes new values into our sink.
     func scheduleAutoSave() {
-        if currentSnapshot() == lastAppliedSnapshot { return }
+        if currentSnapshot() == baseline { return }
 
         autoSaveTask?.cancel()
         // Hide the "saved" checkmark while the user is actively editing.
@@ -299,43 +300,26 @@ final class ClientProfileSettingsViewModel: ObservableObject {
         languageItems = picked
     }
 
-    /// Builds the `PATCH /user/profile` body from the current fields.
+    /// Builds the `PATCH /user/profile` body for what changed since the last
+    /// hydration or save, or nil when nothing can be sent.
     ///
-    /// Carries only fields that round-trip safely: `email` is 403 on this
-    /// endpoint, so it is omitted. The `languages` group is a full replace on
-    /// the server, so it is sent only when the picked ids changed, always with
-    /// the custom languages, and never when it would leave zero languages.
-    func makeProfileUpdateBody() -> UpdateUserProfileRequest {
-        var body = UpdateUserProfileRequest()
-        body.basic = .init(
-            firstName: firstName.trimmingCharacters(in: .whitespaces),
-            lastName: lastName.trimmingCharacters(in: .whitespaces),
-            bio: bio.trimmingCharacters(in: .whitespaces)
-        )
-        // An emptied State/Province goes out as "" (the schema rejects null).
-        body.location = .init(
-            city: city.trimmingCharacters(in: .whitespaces),
-            stateProvince: state.trimmingCharacters(in: .whitespaces),
-            countryCode: Countries.normalize(country)
-        )
-        body.professional = .init(
-            jobTitle: jobTitle.trimmingCharacters(in: .whitespaces),
-            company: company.trimmingCharacters(in: .whitespaces)
-        )
-
-        let ids = languageItems.map(\.id)
-        if ids != persistedLanguageIds && !(ids.isEmpty && customLanguages.isEmpty) {
-            body.languages = .init(languageIds: ids, customLanguages: customLanguages)
-        }
-        return body
+    /// Only changed groups go out, each whole and trimmed (Android parity). An
+    /// empty name is never sent: the backend's `min(1)` rule would 422 the whole
+    /// save (G-05-6), and a set name the user cleared is held so the server
+    /// keeps it. The `languages` group is a full replace on the server, so it is
+    /// sent only when the picked ids changed, always with the custom languages,
+    /// and never when it would leave zero languages (A9). An emptied
+    /// State/Province goes out as "" (D-07). `email` is 403 on this endpoint, so
+    /// it is never sent.
+    func makeProfileUpdateBody() -> UpdateUserProfileRequest? {
+        currentSnapshot().patch(from: baseline)
     }
 
     func performAutoSave() async {
-        let body = makeProfileUpdateBody()
-        // Read before the request so an edit made while it is in flight is
-        // not recorded as saved.
-        let snapshotAtSaveTime = currentSnapshot()
-        let sentLanguageIds = body.languages?.languageIds
+        // Built before the request, so an edit made while it is in flight is
+        // not recorded as saved. Nothing to send means no request and no
+        // checkmark.
+        guard let body = makeProfileUpdateBody() else { return }
 
         isAutoSaving = true
         defer { isAutoSaving = false }
@@ -343,8 +327,7 @@ final class ClientProfileSettingsViewModel: ObservableObject {
             _ = try await api.updateUserProfile(body)
             // Record what we just persisted so a subsequent server sink
             // publishing the same values doesn't trigger a redundant save.
-            lastAppliedSnapshot = snapshotAtSaveTime
-            if let sentLanguageIds { persistedLanguageIds = sentLanguageIds }
+            baseline = baseline.merging(body)
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
             autoSaveError = error.userMessage

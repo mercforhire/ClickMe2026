@@ -283,6 +283,30 @@ Expected: the field is still empty after reopening. No error. (The wire rule, `"
 
 Result:
 
+**Re-test for G-05-6 (plans 05-19, 05-20)**
+
+**Status:** PENDING.
+
+Why: the UAT found every Profile Settings save failing with "Please check the information you entered and try again.", because the screen sent empty first and last names, which the server rejects. The new build sends only the changed groups and never an empty name. A name the user clears is held back and flagged under its field.
+
+Needs: a build at or after `a0310ca` (plan 05-20, Task 2). An account with an empty first and last name (the unfinished expert, or a fresh throwaway signup that has never typed a name in Profile Settings). An expert whose Last Name is empty (any expert created on iOS who never typed one). An account with a first name set.
+
+Steps:
+
+1. On the empty-name account, open client Profile Settings, clear State/Province (set one first if it is empty), wait for the checkmark, leave, and reopen.
+2. Edit Bio, wait for the checkmark, and reopen.
+3. Change the spoken languages and save.
+4. On the expert with an empty Last Name, open Expert Settings, edit City and the Skype / Zoom link, wait for the checkmark, and reopen.
+5. On the account with a first name, clear First Name, then edit City while it is empty, wait for the checkmark, leave, and reopen. Then type the name back.
+
+Expected:
+
+- Steps 1 to 4 show no "Couldn't save changes" alert, and each edit is still there after reopening.
+- In step 5, "Please enter your first name." shows in red under First Name with no alert, and City saves. After reopening, First Name shows the old name and City the new value. Typing the name back removes the error.
+- A9 is unchanged: Done in the language picker with nothing selected still shows "Keep at least one language."
+
+Result:
+
 ### 23. D-06 — locations read "City, Country" or "City, Province, Country" with no stray comma (05-04)
 
 **Status:** PENDING.

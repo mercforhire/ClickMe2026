@@ -368,6 +368,7 @@ Android follow-ups from Phase 5 (logged, not built; nothing verified on an Andro
 - Remember-login-email: port Android branch `0c9ecc55` the way iOS ported `b0629d9` in 05-01 (D-16): [todo file](.planning/todos/pending/2026-11-13-android-remember-login-email.md)
 - Cancellation policy link and corrected policy copy; Android has no policy screen (D-12): [todo file](.planning/todos/pending/2026-11-13-android-cancellation-policy-link.md)
 - Other Phase 5 behavior changes to check for parity (tap order, crop, publish rules, province, notification save-on-open, feedback minimum, one support address, settings language save, verified email on resume, gate push path): [todo file](.planning/todos/pending/2026-11-13-android-phase-5-parity-check.md)
+- Profile settings: never send an empty name, the required-name error and the named-field 422 copy (G-05-6): [todo file](.planning/todos/pending/2026-11-14-android-profile-settings-empty-name-save.md)
 
 Captured todos:
 
@@ -378,6 +379,7 @@ Captured todos:
 - [2026-11-13] [account] Decide what to do about saved cards when an account is deleted (RESEARCH Open Question 1) — [todo file](.planning/todos/pending/2026-11-13-decide-saved-cards-on-account-deletion.md)
 - [2026-11-13] [testing] Flaky test: MakeABookingAvailabilityTests "An older load that lands last writes nothing" — [todo file](.planning/todos/pending/2026-11-13-flaky-make-a-booking-availability-test.md)
 - [2026-11-14] [ui] Availability settings: pin the nav bar dark so the Save button stays legible (G-05-1 pattern) — [todo file](.planning/todos/pending/2026-11-14-availability-settings-toolbar-dark-pin.md)
+- [2026-11-14] [api] Backend: PATCH /user/profile name validation and the empty last name decision (G-05-6) — [todo file](.planning/todos/pending/2026-11-14-backend-profile-name-validation.md)
 
 ### Blockers/Concerns
 

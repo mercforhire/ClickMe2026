@@ -70,7 +70,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **SIGN-03** [S4]: Expertise tags (and languages) are saved in the order the user tapped them, so the first pick is primary
 - [x] **SIGN-04** [S5]: The country code is normalized on publish
 - [x] **SIGN-05** [S6]: The uploaded photo matches the zoom/crop the user set
-- [ ] **SIGN-06** [S7] **[major]**: Switching to Expert mode with incomplete setup opens the setup hub (per decision Q5; pairs with BACK-13)
+- [x] **SIGN-06** [S7] **[major]**: Switching to Expert mode with incomplete setup opens the setup hub (per decision Q5; pairs with BACK-13)
 
 ### Expert Mode
 
@@ -225,7 +225,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | SIGN-03 | Phase 5 | Complete |
 | SIGN-04 | Phase 5 | Complete |
 | SIGN-05 | Phase 5 | Complete |
-| SIGN-06 | Phase 5 | Pending |
+| SIGN-06 | Phase 5 | Complete |
 | EXP-01 | Phase 6 | Pending |
 | EXP-02 | Phase 6 | Pending |
 | EXP-03 | Phase 6 | Pending |

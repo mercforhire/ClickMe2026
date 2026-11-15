@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-13-PLAN.md
-last_updated: "2026-11-15T04:47:26.309Z"
+stopped_at: Completed 05-18-PLAN.md
+last_updated: "2026-11-15T04:50:47.323Z"
 last_activity: 2026-11-14
 last_activity_desc: Phase 05 execution started
-state_head: f732a749dc10a78e6efc33e04c7c76f14fe8177d
+state_head: de8a0eee992957920f72036ab346efeb6a8fa760
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 95
-  completed_plans: 92
+  completed_plans: 93
   percent: 13
 ---
 
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 18 of 20
-Status: Executing Phase 05
+Plan: 19 of 20
+Status: Ready to execute
 Last activity: 2026-11-14 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -148,6 +148,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P10 | 16 min | 2 tasks | 9 files |
 | Phase 05 P12 | 20 min | 2 tasks | 5 files |
 | Phase 05 P13 | 17 min | 3 tasks | 10 files |
+| Phase 05 P18 | 6 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -321,6 +322,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-12: foreground setup re-check is decided by ExpertModeGate.recheckDecision before any request; client-only accounts outside Expert mode clear the pending flag with no /expert/* call, and a live call keeps the flag set so the setup hub never replaces the call shell
 - [Phase 05]: 05-13: BACK-13 deferred past this release (D-04); REL-02 records the ensureExpert reason (build 6 and current Android rely on implicit promotion); S2 and T8 recorded as moved into Phase 5
 - [Phase 05]: 05-13: this plan ticks no requirement box; SIGN-06, SET-02, SET-06 and SET-07 stay Pending until /gsd-verify-work 05 reads the device checklist results
+- [Phase 05]: 05-18: setup hub nav bar pins live on SignupOverviewView.body (not inside OverviewNotNowChrome), full three-modifier sibling pattern; A1 quiet Not now style kept
 
 ### Pending Todos
 
@@ -415,6 +417,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-13T22:52:07.669Z
-Stopped at: Completed 05-13-PLAN.md
+Last session: 2026-11-15T04:50:46.568Z
+Stopped at: Completed 05-18-PLAN.md
 Resume file: None

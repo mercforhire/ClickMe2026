@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
-status: executing
-stopped_at: Completed 05-19-PLAN.md
-last_updated: "2026-11-15T04:59:55.517Z"
+status: verifying
+stopped_at: Completed 05-20-PLAN.md
+last_updated: "2026-11-15T05:07:11.611Z"
 last_activity: 2026-11-14
 last_activity_desc: Phase 05 execution started
-state_head: 52d678eb01d7c7dd476afe2876cde596c926c0dc
+state_head: 0d14b3e40d2a5af2c51a2d8eef44cfe1217d69d0
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 95
-  completed_plans: 94
+  completed_plans: 95
   percent: 13
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
 Plan: 20 of 20
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-14 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -150,6 +150,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P13 | 17 min | 3 tasks | 10 files |
 | Phase 05 P18 | 6 min | 2 tasks | 4 files |
 | Phase 05 P19 | 10 min | 2 tasks | 6 files |
+| Phase 05 P20 | 5 min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -326,6 +327,8 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-18: setup hub nav bar pins live on SignupOverviewView.body (not inside OverviewNotNowChrome), full three-modifier sibling pattern; A1 quiet Not now style kept
 - [Phase 05]: 05-19: an empty first or last name is never sent in a profile save; a set name the user clears is held (server keeps it) and exposed via firstNameError / lastNameError
 - [Phase 05]: 05-19: Profile Settings saves send only changed groups via ProfileSettingsSnapshot.patch(from:); the expert meeting link has its own baseline and PATCH /expert/profile fires only when it changed
+- [Phase 05]: 05-20: ProfileSaveErrorMapper shows only iOS labels from a fixed table for a 422 VALIDATION_ERROR and never the server's field paths or validator text; Error.userMessage unchanged
+- [Phase 05]: 05-20: empty last name on PATCH /user/profile stays an open user decision (backend todo 2026-11-14-backend-profile-name-validation.md); the new iOS build does not depend on it
 
 ### Pending Todos
 
@@ -422,6 +425,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-15T04:59:54.753Z
-Stopped at: Completed 05-19-PLAN.md
+Last session: 2026-11-15T05:07:10.705Z
+Stopped at: Completed 05-20-PLAN.md
 Resume file: None

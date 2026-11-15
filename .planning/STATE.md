@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
-stopped_at: Completed 05-20-PLAN.md
-last_updated: "2026-11-15T06:13:24.073Z"
+stopped_at: Completed 05-21-PLAN.md
+last_updated: "2026-11-15T06:28:42.747Z"
 last_activity: 2026-11-15
 last_activity_desc: Phase 05 execution started
-state_head: c19913dd0b82d9365a852463634039fe07ccdb53
+state_head: 5c3b9d0ce55ca0c605310e9e4da080402e8b450e
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 97
-  completed_plans: 95
+  completed_plans: 96
   percent: 13
 ---
 
@@ -28,8 +28,8 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 21 of 22
-Status: Executing Phase 05
+Plan: 22 of 22
+Status: Ready to execute
 Last activity: 2026-11-15 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -151,6 +151,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P18 | 6 min | 2 tasks | 4 files |
 | Phase 05 P19 | 10 min | 2 tasks | 6 files |
 | Phase 05 P20 | 5 min | 3 tasks | 15 files |
+| Phase 05 P21 | 13 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -329,6 +330,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-19: Profile Settings saves send only changed groups via ProfileSettingsSnapshot.patch(from:); the expert meeting link has its own baseline and PATCH /expert/profile fires only when it changed
 - [Phase 05]: 05-20: ProfileSaveErrorMapper shows only iOS labels from a fixed table for a 422 VALIDATION_ERROR and never the server's field paths or validator text; Error.userMessage unchanged
 - [Phase 05]: 05-20: empty last name on PATCH /user/profile stays an open user decision (backend todo 2026-11-14-backend-profile-name-validation.md); the new iOS build does not depend on it
+- [Phase 05]: 05-21: a cleared expert meeting link is sent as meeting_url "" (BACK-04); a reload takes the server's link with nil read as "", each rule a static tested with literal inputs
 
 ### Pending Todos
 
@@ -427,6 +429,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-15T05:07:10.705Z
-Stopped at: Completed 05-20-PLAN.md
+Last session: 2026-11-15T06:28:42.095Z
+Stopped at: Completed 05-21-PLAN.md
 Resume file: None

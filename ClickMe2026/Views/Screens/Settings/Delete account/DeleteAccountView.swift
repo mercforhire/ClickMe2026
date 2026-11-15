@@ -106,19 +106,18 @@ struct DeleteAccountView: View {
     // MARK: ── Step 1: Confirmation ─────────────────────────────────────────
 
     private var confirmationView: some View {
-        ZStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 28) {
-                        DeleteAccountWarningHeader()
-
-                        Spacer().frame(height: 80)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 24)
-                }
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 28) {
+                DeleteAccountWarningHeader()
             }
-
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 24)
+        }
+        // The inset makes the scroll view stop above the opaque bar, so the last
+        // disclosure line is never covered at any text size (SET-06, UI-SPEC LT1).
+        // A fixed spacer under an overlaid bar was shorter than the bar (05-UI-REVIEW.md).
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             DeleteAccountBottomButtons(
                 primaryLabel: "Delete Account",
                 primaryEnabled: true,

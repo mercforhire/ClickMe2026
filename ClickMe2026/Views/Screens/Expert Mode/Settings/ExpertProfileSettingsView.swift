@@ -123,9 +123,9 @@ struct ExpertProfileSettingsView: View {
                         if let email = UserManager.shared.me?.email, !email.isEmpty {
                             ProfileReadOnlyField(label: "Email", value: email)
                         }
-                        HStack(spacing: 10) {
-                            ProfileLabeledField(label: "First Name", text: $vm.firstName)
-                            ProfileLabeledField(label: "Last Name", text: $vm.lastName)
+                        HStack(alignment: .top, spacing: 10) {
+                            ProfileLabeledField(label: "First Name", text: $vm.firstName, error: vm.firstNameError)
+                            ProfileLabeledField(label: "Last Name", text: $vm.lastName, error: vm.lastNameError)
                         }
 
                         ProfileBioField(text: $vm.bio)

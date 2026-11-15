@@ -373,7 +373,7 @@ final class ExpertProfileSettingsViewModel {
 
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
-            autoSaveError = error.userMessage
+            autoSaveError = ProfileSaveErrorMapper.message(for: error)
         }
     }
 

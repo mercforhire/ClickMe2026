@@ -126,9 +126,9 @@ struct ClientProfileSettingsView: View {
             if let email = userManager.me?.email, !email.isEmpty {
                 ProfileReadOnlyField(label: "Email", value: email)
             }
-            HStack(spacing: 10) {
-                ProfileLabeledField(label: "First Name", text: $viewModel.firstName)
-                ProfileLabeledField(label: "Last Name", text: $viewModel.lastName)
+            HStack(alignment: .top, spacing: 10) {
+                ProfileLabeledField(label: "First Name", text: $viewModel.firstName, error: viewModel.firstNameError)
+                ProfileLabeledField(label: "Last Name", text: $viewModel.lastName, error: viewModel.lastNameError)
             }
 
             ProfileBioField(text: $viewModel.bio)

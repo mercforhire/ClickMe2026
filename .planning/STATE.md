@@ -2,17 +2,17 @@
 gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
-status: executing
-stopped_at: Completed 05-21-PLAN.md
-last_updated: "2026-11-15T06:28:42.747Z"
+status: verifying
+stopped_at: Completed 05-22-PLAN.md
+last_updated: "2026-11-15T06:32:17.094Z"
 last_activity: 2026-11-15
 last_activity_desc: Phase 05 execution started
-state_head: 5c3b9d0ce55ca0c605310e9e4da080402e8b450e
+state_head: 5c9cc95b45175b7a2cb7aed98caa02945454c58f
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 97
-  completed_plans: 96
+  completed_plans: 97
   percent: 13
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
 Plan: 22 of 22
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-15 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
@@ -152,6 +152,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase 05 P19 | 10 min | 2 tasks | 6 files |
 | Phase 05 P20 | 5 min | 3 tasks | 15 files |
 | Phase 05 P21 | 13 min | 3 tasks | 7 files |
+| Phase 05 P22 | 4 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -331,6 +332,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-20: ProfileSaveErrorMapper shows only iOS labels from a fixed table for a 422 VALIDATION_ERROR and never the server's field paths or validator text; Error.userMessage unchanged
 - [Phase 05]: 05-20: empty last name on PATCH /user/profile stays an open user decision (backend todo 2026-11-14-backend-profile-name-validation.md); the new iOS build does not depend on it
 - [Phase 05]: 05-21: a cleared expert meeting link is sent as meeting_url "" (BACK-04); a reload takes the server's link with nil read as "", each rule a static tested with literal inputs
+- [Phase 05]: Plan 05-22: UI-SPEC LT1 mechanism changed from the bottom spacer to the bottom safe-area inset on the Delete Account confirmation step; outcome unchanged, 05-UI-SPEC.md not edited
 
 ### Pending Todos
 
@@ -429,6 +431,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-15T06:28:42.095Z
-Stopped at: Completed 05-21-PLAN.md
+Last session: 2026-11-15T06:32:16.415Z
+Stopped at: Completed 05-22-PLAN.md
 Resume file: None

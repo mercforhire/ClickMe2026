@@ -431,6 +431,34 @@ Expected:
 
 Result:
 
+**Re-test for SET-06 legibility (plan 05-22)**
+
+**Status:** PENDING.
+
+Why: UAT test 2 was skipped. 05-UI-REVIEW.md found that the confirmation step's last lines sit behind the pinned Delete Account and Cancel buttons whenever the step scrolls: the 80 pt space under the content was shorter than the bar of about 163 pt. The new build makes the bar a bottom safe-area inset, so the scroll view stops above it.
+
+Needs:
+
+- a build at or after plan 05-22's Task 1 commit `01e55f4`;
+- a throwaway account (do not delete anything);
+- the smallest iPhone you have (an SE or mini size if possible).
+
+Steps:
+
+1. Settings > Account > Delete Account at the default text size. Scroll to the bottom.
+2. Set Settings > Accessibility > Display & Text Size > Larger Text to the largest size. Reopen the screen and scroll to the bottom.
+3. Tap Cancel: the screen closes. Reopen it and tap Delete Account: the feedback step opens. Leave without deleting.
+4. Restore your text size.
+
+Expected:
+
+- In steps 1 and 2, at maximum scroll, the last line of the `Kept` group is fully visible above the buttons, and no group is cut off.
+- The buttons look as before: the red `Delete Account` with `Cancel` under it, on the same dark background, at the bottom of the screen.
+- In step 3, Cancel closes the screen and Delete Account opens the feedback step.
+- During a call, Delete Account still shows `End the call to delete your account.` (optional; item 47 covers it).
+
+Result:
+
 ### 35. SET-06 — Delete Account, feedback step: headline and permanence line only (05-15)
 
 **Status:** PENDING.

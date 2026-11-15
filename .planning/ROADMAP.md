@@ -303,7 +303,7 @@ Plans:
   4. Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`. Feedback cannot be sent with fewer than 10 characters. Delete Account has no Pause Account card and accurately says what is deleted and what is kept or anonymized.
   5. `CancellationPoliciesView` and `ReadyToStartCallView` are either reachable in the app or removed from the codebase (per Q7).
 
-**Plans**: 20/20 plans executed (17/17 in 6 waves: iOS only, no backend change; BACK-13 deferred per D-04. Plus 3 UAT gap closure plans, 05-18 to 05-20, iOS only, no backend deploy)
+**Plans**: 20/22 plans executed (17/17 in 6 waves: iOS only, no backend change; BACK-13 deferred per D-04. Plus 3 UAT gap closure plans, 05-18 to 05-20, iOS only, no backend deploy. Plus 2 verification gap closure plans, 05-21 and 05-22, iOS only, no backend deploy)
 
 Plans:
 **Wave 1**
@@ -339,6 +339,10 @@ Plans:
 - [x] 05-18-PLAN.md — G-05-1 / SIGN-06: setup hub nav bar pinned dark so Not now stays legible (A1 quiet style kept); device re-test in checklist item 46; Availability toolbar todo (wave 1)
 - [x] 05-19-PLAN.md — G-05-6 / SET-01: client and expert profile settings send only changed groups and never an empty name; a cleared set name is held; the meeting link is sent only when it changed (wave 2, after 05-18)
 - [x] 05-20-PLAN.md — G-05-6 / SET-01: a 422 names the fields to check; required-name error under the field; device re-test in checklist item 22; backend and Android follow-up todos (wave 3, after 05-18, 05-19)
+
+**Gap closure, verification** *(from 05-VERIFICATION.md and 05-UI-REVIEW.md; iOS only, no backend deploy; sequential, because both plans edit the device checklist and share the simulator, DerivedData and git index)*
+- [ ] 05-21-PLAN.md — CR-01 / SET-01: clearing the expert meeting link sends meeting_url "" (BACK-04, read-only check that it is live in production), and a reload shows the server's link (a nil becomes ""); both rules become pure, fully tabled functions; device re-test in its own checklist section after item 47; Android todo (wave 1)
+- [ ] 05-22-PLAN.md — SET-06 / UI-SPEC LT1 (separable): the Delete Account confirmation bar becomes a bottom safe-area inset so the whole disclosure scrolls clear; device re-test in checklist item 34 (wave 2, after 05-21)
 
 **UI hint**: yes
 **Notes**:
@@ -418,7 +422,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
-| 5. Signup, Mode Switch and Account | 20/20 | In Progress | - |
+| 5. Signup, Mode Switch and Account | 20/22 | In Progress | - |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |

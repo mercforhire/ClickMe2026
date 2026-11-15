@@ -245,8 +245,22 @@ final class ExpertProfileSettingsViewModel {
         baselineMeetingUrl = trimmedMeetingUrl
     }
 
+    /// The meeting-link field text after a load or pull to refresh.
+    ///
+    /// A held expert profile is the server's word, because
+    /// `UserManager.refreshExpertProfile()` replaces it with the
+    /// `GET /expert/profile` response. A link cleared on another device or
+    /// server-side arrives as nil and shows as an empty field. Keeping the old
+    /// text would show, and baseline, a link the server no longer holds and
+    /// clients never receive (CR-01, reload half). Only with no profile held is
+    /// there nothing to take, so the field keeps its text.
+    ///
+    /// - Parameters:
+    ///   - details: The held expert profile's professional details, nil when none is held.
+    ///   - current: The field text.
     static func loadedMeetingLink(from details: ExpertProfileData.ProfessionalDetails?, current: String) -> String {
-        details?.meetingUrl ?? current
+        guard let details else { return current }
+        return details.meetingUrl ?? ""
     }
 
     func hydrate(from data: UserProfileData) {

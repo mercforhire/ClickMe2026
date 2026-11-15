@@ -209,4 +209,81 @@ struct ProfileSettingsSaveTests {
         vm.firstName = "Ada"
         #expect(vm.firstNameError == nil)
     }
+
+    // MARK: - Expert
+
+    /// Never call `load()`, `reload()`, `scheduleAutoSave()` or the private save
+    /// on the expert view model here: they refresh the expert profile through the
+    /// shared manager's real API. The body builders plus the mock API are the seam.
+    private static func makeExpert(
+        firstName: String, lastName: String, bio: String = "Hello",
+        city: String = "Toronto", state: String = "ON"
+    ) async throws -> (ExpertProfileSettingsViewModel, ClickMeAPI, PatchRecorder) {
+        let (api, recorder) = makeAPI(firstName: firstName, lastName: lastName, bio: bio, city: city, state: state)
+        let vm = ExpertProfileSettingsViewModel(api: api)
+        vm.hydrate(from: try await api.getUserProfile().data)
+        return (vm, api, recorder)
+    }
+
+    @Test("Expert: on an empty-name profile, clearing the province builds a location-only body that saves")
+    func expertProvinceEditOnEmptyNameProfileSaves() async throws {
+        let (vm, api, recorder) = try await Self.makeExpert(firstName: "", lastName: "")
+
+        vm.state = ""
+        let body = try #require(vm.makeProfileUpdateBody())
+        #expect(body.basic == nil)
+        #expect(body.location != nil)
+        _ = try await api.updateUserProfile(body)
+
+        #expect(recorder.count == 1)
+        let sent = try #require(recorder.first)
+        #expect(sent["basic"] == nil)
+        #expect((sent["location"] as? [String: Any])?["state_province"] as? String == "")
+    }
+
+    @Test("Expert: a bio edit on a first-name-only profile sends first_name and no last_name")
+    func expertBioEditOnFirstNameOnlyProfileSaves() async throws {
+        let (vm, api, recorder) = try await Self.makeExpert(firstName: "Ada", lastName: "")
+
+        vm.bio = "A different bio"
+        _ = try await api.updateUserProfile(try #require(vm.makeProfileUpdateBody()))
+
+        let basic = try #require(recorder.first?["basic"] as? [String: Any])
+        #expect(basic["first_name"] as? String == "Ada")
+        #expect(basic["last_name"] == nil)
+        #expect(basic["bio"] as? String == "A different bio")
+    }
+
+    @Test("Expert: a city-only edit sends no meeting-link body")
+    func expertCityEditSendsNoMeetingLink() async throws {
+        let (vm, _, _) = try await Self.makeExpert(firstName: "Ada", lastName: "Lovelace")
+
+        vm.city = "Ottawa"
+
+        #expect(vm.makeProfileUpdateBody() != nil)
+        #expect(vm.makeExpertProfileUpdateBody() == nil)
+    }
+
+    @Test("Expert: a changed meeting link alone sends the trimmed link and no profile body")
+    func expertMeetingLinkOnlyEdit() async throws {
+        let (vm, _, _) = try await Self.makeExpert(firstName: "Ada", lastName: "Lovelace")
+        let link = "https://zoom.us/j/\(UUID().uuidString)"
+
+        vm.meetingUrl = "  \(link) "
+
+        #expect(vm.makeProfileUpdateBody() == nil)
+        let expertBody = try #require(vm.makeExpertProfileUpdateBody())
+        #expect(expertBody.professionalDetails?.meetingUrl == link)
+    }
+
+    @Test("Expert: a cleared first name is held and flagged")
+    func expertClearedFirstNameIsHeld() async throws {
+        let (vm, _, _) = try await Self.makeExpert(firstName: "Ada", lastName: "Lovelace")
+
+        vm.firstName = ""
+
+        #expect(vm.firstNameError == Self.nameRequired)
+        #expect(vm.lastNameError == nil)
+        #expect(vm.makeProfileUpdateBody() == nil)
+    }
 }

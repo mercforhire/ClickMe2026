@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 05-signup-mode-switch-and-account
 source: [05-VERIFICATION.md]
 started: 2026-11-13T23:40:00Z
-updated: 2026-11-15T03:49:38.756Z
+updated: 2026-11-15T04:04:11Z
 ---
 
 ## Current Test
@@ -61,8 +61,21 @@ blocked: 0
   reason: "User reported: 1. Upon logging in to the unfinished setup account, the top-left button test is hard to see. The contrast is wrong."
   severity: cosmetic
   test: 1
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "OverviewNotNowChrome (SignupOverviewView.swift:143-162, plan 05-16) puts `Not now` in a .topBarLeading ToolbarItem with fixed Brand.onSurfaceVariant (#bacbbc) text but never pins the navigation bar's color scheme, unlike every sibling signup screen (e.g. SignupReviewView.swift:100-102) and the Settings screens. The app has no app-wide dark scheme (no UIUserInterfaceStyle, no root .preferredColorScheme), and the AppDelegate's opaque #131313 bar appearance paints only the background. On a device in Light appearance with opaque glass (Reduce Transparency; likely iOS 26.1 Liquid Glass 'Tinted'), the iOS 26 toolbar capsule resolves to #f2f2f2, giving 1.52:1 contrast. Default clear glass samples the dark content (9.25:1), which hid it in development. Simulator repro on iOS 26.5 SDK; tester's device appearance settings not confirmed."
+  artifacts:
+    - path: "ClickMe2026/Views/Screens/Signup Flow/Overview/SignupOverviewView.swift"
+      issue: "OverviewNotNowChrome toolbar lacks .toolbarColorScheme(.dark) / .toolbarBackground pins; fixed light text relies on a dark capsule"
+    - path: "ClickMe2026/Theme/Brand.swift"
+      issue: "onSurfaceVariant #bacbbc is correct for the kept quiet style (A1 KEEP) but only legible on dark"
+    - path: "ClickMe2026/ClickMe2026AppDelegate.swift"
+      issue: "Global nav bar appearance pins background, not trait/color scheme (context, no change required)"
+    - path: "ClickMe2026/Views/Screens/Expert Mode/Availability/AvailabilitySettingsView.swift"
+      issue: "Same latent pattern: Brand.primary Save button in an unpinned toolbar (lines 61-65, 244-266) — out of gap scope, note for planner"
+  missing:
+    - "Add the sibling-screen bar pins in OverviewNotNowChrome: .toolbarBackground(Brand.surface, for: .navigationBar), .toolbarBackground(.visible, for: .navigationBar), .toolbarColorScheme(.dark, for: .navigationBar)"
+    - "Keep Brand.onSurfaceVariant and body font (A1 KEEP: quiet style unchanged)"
+    - "Device re-check on an iPhone in Light appearance with Reduce Transparency or Liquid Glass Tinted"
+  debug_session: ".planning/debug/not-now-button-low-contrast.md"
 
 - gap_id: G-05-6
   truth: "Profile settings saves an edit (including clearing State/Province) and it persists after reopening, with no error, even when the profile is not yet complete"
@@ -70,5 +83,23 @@ blocked: 0
   reason: "User reported: 22 fail Because the profile has not been completed yet, all saving actions fail on the screen."
   severity: blocker
   test: 6
-  artifacts: []  # Filled by diagnosis
-  missing: []    # Filled by diagnosis
+  root_cause: "Two conditions together. (1) iOS: makeProfileUpdateBody in ClientProfileSettingsViewModel.swift:308-331 (and ExpertProfileSettingsViewModel.swift:314-337) sends one whole-form PATCH on every edit and always includes basic.first_name and basic.last_name, so empty names go out as \"\" even for a province-only edit. (2) Backend: src/schemas/userProfile.schema.js has first_name/last_name z.string().min(1) (contradicting openapi/clickme-api.yaml, which has no minLength, and signup, which stores '' at auth.controller.js:604-605), so validation returns 422 VALIDATION_ERROR with errors[] on basic.first_name/basic.last_name and the generic summary message 'Please check the information you entered and try again.' (src/utils/errors.js:5). iOS Error.userMessage (Error+UserMessage.swift:22-30) shows only the top-level message and ignores errors[], so no field is named. Wider impact: no iOS signup step writes last_name (SetupExpertProfileRequest has no lastName), so every iOS-created account keeps last_name '' and any Profile Settings save fails until the user types a last name. Not a Phase 5 regression (since baseline df8d99e, present in App Store build 6). Reproduced locally against the backend's real validate middleware; production origin/main 28da165 matches."
+  artifacts:
+    - path: "ClickMe2026/Views/Screens/Settings/Client Profile Settings/ClientProfileSettingsViewModel.swift"
+      issue: "Whole-form body (308-331) always sends empty first/last name; catch (~350) shows only userMessage"
+    - path: "ClickMe2026/Views/Screens/Expert Mode/Settings/ExpertProfileSettingsViewModel.swift"
+      issue: "Same whole-form body (314-337); meeting_url already uses the omit-empty fix (345-351) but names do not"
+    - path: "ClickMe2026/Network/Error+UserMessage.swift"
+      issue: "Ignores errors[] field list in 422 VALIDATION_ERROR, so the alert names no field"
+    - path: "ClickMe2026/Model/Requests/SetupExpertProfileRequest.swift"
+      issue: "No lastName, so iOS signups leave last_name '' (context)"
+    - path: "ClickMe2026 Backend/src/schemas/userProfile.schema.js"
+      issue: "min(1) on first_name/last_name with no custom message; out of sync with OpenAPI and signup default (optional additive backend change)"
+  missing:
+    - "iOS: send only changed groups (Android parity), and omit first_name/last_name when empty and unchanged from load"
+    - "iOS: if the user clears a previously set name, show a local required-field error instead of sending"
+    - "iOS: surface 422 errors[] field names (e.g. FieldValidationErrorResponse) instead of only the generic summary"
+    - "Apply to both client and expert profile settings view models"
+    - "Unit test: hydrate an empty-name profile, edit province/bio, mock returns 422 for empty names; assert the request omits empty names and the save succeeds"
+    - "Optional backend (additive, Android-safe): custom min(1) messages; product decision on accepting '' for last_name; Android follow-up todo if backend changes"
+  debug_session: ".planning/debug/profile-settings-save-fails-incomplete-profile.md"

@@ -527,6 +527,28 @@ Expected: the checklist and progress ring are the focal point; `Not now` is visi
 
 Result: (KEEP, or CHANGE (what))
 
+**Re-test for G-05-1 (plan 05-18)**
+
+**Status:** PENDING.
+
+Why: the UAT found `Not now` illegible (pale text on a light grey capsule). The fix pins the hub's nav bar dark, like every sibling signup screen. A1's quiet style is kept.
+
+Needs: an iPhone on iOS 26 with a build at or after `0d44688` (plan 05-18, Task 1), and a way to reach the hub (an expert with unfinished setup, or a fresh signup on a throwaway account, which lands on the hub).
+
+Steps:
+
+1. Settings > Display & Brightness > Light.
+2. Settings > Accessibility > Display & Text Size > Reduce Transparency on.
+3. Open the hub and read `Not now`.
+4. Turn Reduce Transparency off, set Settings > Display & Brightness > Liquid Glass to Tinted (iOS 26.1 or later; if your iOS has no such setting, write that down), and read it again.
+5. Read it once more in Dark appearance.
+6. Tap `Not now`.
+7. Restore your settings.
+
+Expected: in every combination `Not now` is pale text on a dark capsule (never a light grey capsule) and reads clearly. It sits at the top left at body size, is not accent green, and has no back chevron beside it. Tapping it lands on client home.
+
+Result:
+
 ### 47. SET-06 — Delete during a call, and the session-in-progress blocker (05-08) *optional*
 
 **Status:** PENDING. *Optional*; both paths are unit-tested.

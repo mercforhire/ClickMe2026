@@ -2,16 +2,16 @@
 gsd_state_version: "1.0"
 current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
-status: verifying
+status: executing
 stopped_at: Completed 05-13-PLAN.md
-last_updated: "2026-11-13T22:52:08.305Z"
-last_activity: 2026-11-13
+last_updated: "2026-11-15T04:47:26.309Z"
+last_activity: 2026-11-14
 last_activity_desc: Phase 05 execution started
-state_head: 986e07c946a277a7329654e1bab45aa5758c7c96
+state_head: f732a749dc10a78e6efc33e04c7c76f14fe8177d
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 92
+  total_plans: 95
   completed_plans: 92
   percent: 13
 ---
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 ## Current Position
 
 Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 17 of 17
-Status: Phase complete — ready for verification
-Last activity: 2026-11-13 — Phase 05 execution started
+Plan: 18 of 20
+Status: Executing Phase 05
+Last activity: 2026-11-14 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -372,6 +372,7 @@ Captured todos:
 - [2026-11-12] [payments] Long-lead T-24h sweep: transient errors after the stamp still cancel at 6 h — [todo file](.planning/todos/pending/2026-11-12-long-lead-sweep-transient-errors-after-stamp.md)
 - [2026-11-13] [account] Decide what to do about saved cards when an account is deleted (RESEARCH Open Question 1) — [todo file](.planning/todos/pending/2026-11-13-decide-saved-cards-on-account-deletion.md)
 - [2026-11-13] [testing] Flaky test: MakeABookingAvailabilityTests "An older load that lands last writes nothing" — [todo file](.planning/todos/pending/2026-11-13-flaky-make-a-booking-availability-test.md)
+- [2026-11-14] [ui] Availability settings: pin the nav bar dark so the Save button stays legible (G-05-1 pattern) — [todo file](.planning/todos/pending/2026-11-14-availability-settings-toolbar-dark-pin.md)
 
 ### Blockers/Concerns
 

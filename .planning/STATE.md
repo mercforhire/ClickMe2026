@@ -4,10 +4,10 @@ current_phase: 05
 current_phase_name: Signup, Mode Switch and Account
 status: executing
 stopped_at: Completed 05-20-PLAN.md
-last_updated: "2026-11-15T06:11:44.947Z"
-last_activity: 2026-11-14
+last_updated: "2026-11-15T06:13:24.073Z"
+last_activity: 2026-11-15
 last_activity_desc: Phase 05 execution started
-state_head: 2a93fdf97104c07a63fc9dda3dcb81325f65c34c
+state_head: c19913dd0b82d9365a852463634039fe07ccdb53
 progress:
   total_phases: 8
   completed_phases: 1
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-11-09)
 
 ## Current Position
 
-Phase: 05 (Signup, Mode Switch and Account) — READY TO EXECUTE
-Plan: 20 of 20
-Status: Ready to execute
-Last activity: 2026-11-14 — Phase 05 execution started
+Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
+Plan: 21 of 22
+Status: Executing Phase 05
+Last activity: 2026-11-15 — Phase 05 execution started
 
 Progress: [█░░░░░░░░░] 13%
 
@@ -372,6 +372,7 @@ Android follow-ups from Phase 5 (logged, not built; nothing verified on an Andro
 - Cancellation policy link and corrected policy copy; Android has no policy screen (D-12): [todo file](.planning/todos/pending/2026-11-13-android-cancellation-policy-link.md)
 - Other Phase 5 behavior changes to check for parity (tap order, crop, publish rules, province, notification save-on-open, feedback minimum, one support address, settings language save, verified email on resume, gate push path): [todo file](.planning/todos/pending/2026-11-13-android-phase-5-parity-check.md)
 - Profile settings: never send an empty name, the required-name error and the named-field 422 copy (G-05-6): [todo file](.planning/todos/pending/2026-11-14-android-profile-settings-empty-name-save.md)
+- Expert settings: clearing the Skype / Zoom link sends meeting_url "" (CR-01, BACK-04): [todo file](.planning/todos/pending/2026-11-15-android-expert-settings-clear-meeting-link.md)
 
 Captured todos:
 
@@ -388,6 +389,7 @@ Captured todos:
 
 - [Before release]: T-01-32 (card removal inside Stripe's PaymentSheet skipping BACK-07) is fixed in production by plan 04-01 (D-12, backend `ae3ec1a`, 2026-11-12), mocked Stripe only; the live proof is the 04-14 D-11 session. CR-02 follows as backend `28da165` (user push 2026-11-12; production `/health` = 28da165, rollback base ae3ec1a). Backend `master` contains neither commit: it must MERGE origin/main before its next deploy (`.planning/todos/pending/2026-11-11-merge-d12-into-backend-master.md`).
 - [Before release]: iOS tests: `LoginTests.swift`, `AuthSmokeTests.swift` and `SignupSmokeTests.swift` don't compile, so Cmd+U fails; `.github/workflows/test.yml` and `scripts/run-smoke-tests.sh` still name `ClickMe2026.xcodeproj` (quick 261109-323).
+- [Before release]: plan 05-21 clears the expert meeting link by sending meeting_url "" (CR-01), which needs BACK-04 (backend df7fb18) in production. /health was 28da165 on 2026-11-15 and contains it, as does every rollback base named above. Before the release build, re-check read-only that /health reports a commit containing df7fb18.
 - [Phase 1]: User accepted verification overrides for BACK-08 and BACK-13 (2026-11-09 UTC): not delivered, wave 3c stays dropped. The refund retry gap was fixed and deployed by plans 01-24 to 01-26 (backend `d86bf97`, 2026-11-09); it is proven on mocked Stripe only and BACK-19 stays Pending.
 - [Phase 1]: CR-01 fixed 2026-11-08 (backend `215adcb`, live, user device check passed): build 6 booking push taps open the app without navigating, in client and expert mode, until the new iOS build. Production is at `215adcb`; `master` matches it; `wave-3c` remains parked and unshipped.
 - [Phase 1]: Q6 must be settled before BACK-17 is planned. It decides whether PUSH-01 (Phase 2) uses a backend `category` or a wider iOS parser.

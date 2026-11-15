@@ -583,6 +583,40 @@ Expected: during a call, the alert `End the call to delete your account.` on bot
 
 Result:
 
+## Re-test for CR-01 (plan 05-21) — a cleared Skype / Zoom link stays cleared, and a reload shows the server's link
+
+**Status:** PENDING.
+
+Why: clearing the Skype / Zoom link on Expert Settings showed the saved checkmark but sent nothing, so the server kept the old link and it came back on reopen. And when the link was cleared somewhere else, opening Expert Settings or pulling it down to refresh kept the old text on screen and treated it as saved. The new build sends an empty `meeting_url`, which the backend accepts and stores as no link (BACK-04, backend `df7fb18`). After a load it shows what the server holds, and an empty field when the server holds no link.
+
+Needs:
+
+- a build at or after this plan's last Task 2 commit, `baad5a0`;
+- an expert with a Skype / Zoom link set (set one first if it is empty);
+- an expert with no link;
+- for steps 4 and 5, a second iPhone or the iOS Simulator running a build at or after the same commit, signed in to the same expert as this iPhone. Android cannot clear the link yet (see the Android todo);
+- production `/health` reporting a commit that contains `df7fb18`. This plan saw `28da165` on 2026-11-15 (from `/tmp/05-21-health-commit.txt`). Re-check it read-only before the session.
+
+Steps:
+
+1. On the expert with a link, open Expert Settings, clear the Skype / Zoom link field, wait for the checkmark, leave, and reopen.
+2. Type a link back (a `https://zoom.us/j/...` link), wait for the checkmark, leave, and reopen.
+3. On the expert with no link, edit City only and wait for the checkmark.
+4. Back on the expert from steps 1 and 2 (its link is set), keep Expert Settings open on this iPhone. On the second device, open Expert Settings for the same expert, clear the link and wait for the checkmark. On this iPhone, pull the screen down to refresh, wait a few seconds, then leave and reopen.
+5. On this iPhone, edit City, wait for the checkmark, leave, and reopen.
+
+Expected:
+
+- Step 1: no "Couldn't save changes" alert, and after reopening the link field is empty.
+- Step 2: no alert, and after reopening the link shows.
+- Step 3: no alert.
+- Step 4: after the pull to refresh the link field is empty, and no checkmark appears on its own, because nothing is sent. After reopening it is still empty.
+- Step 5: no alert, City shows the new value, and the link field is still empty.
+- With no second device or Simulator, write `SKIPPED (no second device)` for steps 4 and 5. The reload rule is unit-tested (ExpertMeetingLinkReloadTests).
+- Bookings made before the clear keep the link they were booked with, because the backend copies it at booking time. That is expected, not a failure.
+
+Result:
+
 ---
 
 ## Summary

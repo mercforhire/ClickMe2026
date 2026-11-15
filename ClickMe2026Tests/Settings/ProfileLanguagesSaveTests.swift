@@ -232,7 +232,7 @@ struct ProfileLanguagesSaveTests {
         let (vm, api) = try await Self.makeExpert()
 
         vm.languageItems = [Self.french, Self.english]
-        _ = try await api.updateUserProfile(vm.makeProfileUpdateBody())
+        _ = try await api.updateUserProfile(try #require(vm.makeProfileUpdateBody()))
 
         let sent = Self.patches()
         #expect(sent.count == 1)
@@ -246,7 +246,7 @@ struct ProfileLanguagesSaveTests {
         let (vm, api) = try await Self.makeExpert()
 
         vm.city = "Ottawa"
-        _ = try await api.updateUserProfile(vm.makeProfileUpdateBody())
+        _ = try await api.updateUserProfile(try #require(vm.makeProfileUpdateBody()))
 
         let body = try #require(Self.patches().first?.jsonBodyForTest())
         #expect(body["languages"] == nil)
@@ -258,7 +258,7 @@ struct ProfileLanguagesSaveTests {
         let (vm, api) = try await Self.makeExpert()
 
         vm.state = ""
-        _ = try await api.updateUserProfile(vm.makeProfileUpdateBody())
+        _ = try await api.updateUserProfile(try #require(vm.makeProfileUpdateBody()))
 
         let request = try #require(Self.patches().first)
         let location = try #require(request.jsonBodyForTest()?["location"] as? [String: Any])
@@ -275,7 +275,7 @@ struct ProfileLanguagesSaveTests {
 
         #expect(vm.languageItems == [Self.english])
         #expect(vm.autoSaveError == "Keep at least one language.")
-        #expect(vm.makeProfileUpdateBody().languages == nil)
+        #expect(vm.makeProfileUpdateBody()?.languages == nil)
     }
 
     @Test("Expert: Done with nothing selected on a profile that has none is a silent no-op")
@@ -286,7 +286,7 @@ struct ProfileLanguagesSaveTests {
 
         #expect(vm.languages.isEmpty)
         #expect(vm.autoSaveError == nil)
-        #expect(vm.makeProfileUpdateBody().languages == nil)
+        #expect(vm.makeProfileUpdateBody()?.languages == nil)
     }
 
     @Test("Expert: Done with a selection applies it in picked order, customs kept after the catalog languages")

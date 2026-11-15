@@ -83,18 +83,19 @@ final class ExpertProfileSettingsViewModel {
     @ObservationIgnored
     private let autoSaveDebounce: UInt64 = 1_200_000_000 // 1.2s
 
-    /// Snapshot of the fields as they last were on the server. Set after
-    /// `load()` hydrates from `GET /user/profile` and after each successful
-    /// PATCH. Used by `scheduleAutoSave` to skip no-op saves — critical
-    /// during the initial-load render when `.onChange` would otherwise
-    /// PATCH the just-fetched values right back.
+    /// The fields as they last were on the server. Set after `load()` hydrates
+    /// from `GET /user/profile` and after each successful PATCH. Used by
+    /// `scheduleAutoSave` to skip no-op saves — critical during the
+    /// initial-load render when `.onChange` would otherwise PATCH the
+    /// just-fetched values right back — and by `makeProfileUpdateBody()` to send
+    /// only what changed (G-05-6).
     @ObservationIgnored
-    private var lastPersistedSnapshot: String?
+    private var baseline = ProfileSettingsSnapshot()
 
-    /// Language ids the server holds as of the last hydration or successful
-    /// save. The `languages` group is sent only when the picked ids differ.
+    /// The meeting link the server holds, trimmed. It lives on the expert-scoped
+    /// record, so it has its own baseline apart from `baseline`.
     @ObservationIgnored
-    private var persistedLanguageIds: [String]
+    private var baselineMeetingUrl = ""
 
     // MARK: Load state
 
@@ -148,20 +149,20 @@ final class ExpertProfileSettingsViewModel {
         self.state = state
         self.country = country
         self.languageItems = languageItems
-        self.persistedLanguageIds = languageItems.map(\.id)
         self.selectedPhoto = selectedPhoto
         self.profileImage = profileImage
         self.api = api
         self.userManager = userManager
         self.expertiseEntries = userManager.expertProfile?.expertiseTags ?? []
         self.meetingUrl = userManager.expertProfile?.professionalDetails.meetingUrl ?? meetingUrl
+        self.baseline = currentSnapshot
+        self.baselineMeetingUrl = trimmedMeetingUrl
     }
 
     /// Preview seam — installs canned data as if the fetch had succeeded.
     static func previewSeed() -> ExpertProfileSettingsViewModel {
         let vm = ExpertProfileSettingsViewModel()
         vm.loadState = .loaded
-        vm.lastPersistedSnapshot = vm.currentSnapshot
         return vm
     }
 
@@ -227,7 +228,6 @@ final class ExpertProfileSettingsViewModel {
         do {
             let response = try await api.getUserProfile()
             hydrate(from: response.data)
-            lastPersistedSnapshot = currentSnapshot
             loadState = .loaded
         } catch {
             loadState = .failed(error.userMessage)
@@ -236,12 +236,12 @@ final class ExpertProfileSettingsViewModel {
         // Refresh the expert-scoped profile so `expertiseEntries` +
         // `meetingUrl` reflect the latest server state. Silent on
         // failure — the cached copy (if any) stays displayed. Re-baseline
-        // the snapshot AFTER the meeting-url hydration so `.onChange`
-        // firing on the just-loaded value doesn't trip a no-op PATCH.
+        // the meeting link AFTER its hydration so `.onChange` firing on the
+        // just-loaded value doesn't trip a no-op PATCH.
         try? await userManager.refreshExpertProfile()
         expertiseEntries = userManager.expertProfile?.expertiseTags ?? expertiseEntries
         meetingUrl = userManager.expertProfile?.professionalDetails.meetingUrl ?? meetingUrl
-        lastPersistedSnapshot = currentSnapshot
+        baselineMeetingUrl = trimmedMeetingUrl
     }
 
     func hydrate(from data: UserProfileData) {
@@ -266,7 +266,7 @@ final class ExpertProfileSettingsViewModel {
         customLanguages = data.languages.compactMap { entry in
             entry.id == nil ? entry.label : nil
         }
-        persistedLanguageIds = languageItems.map(\.id)
+        baseline = currentSnapshot
     }
 
     // MARK: - Auto-save (client fields → PATCH /user/profile)
@@ -280,7 +280,7 @@ final class ExpertProfileSettingsViewModel {
         autoSaveTask?.cancel()
         if didAutoSave { didAutoSave = false }
 
-        guard currentSnapshot != lastPersistedSnapshot else { return }
+        guard currentSnapshot != baseline || trimmedMeetingUrl != baselineMeetingUrl else { return }
 
         autoSaveTask = Task { [weak self] in
             guard let debounce = self?.autoSaveDebounce else { return }
@@ -305,43 +305,26 @@ final class ExpertProfileSettingsViewModel {
         languageItems = picked
     }
 
-    /// Builds the `PATCH /user/profile` body from the current fields.
+    /// Builds the `PATCH /user/profile` body for what changed since the last
+    /// hydration or save, or nil when nothing can be sent.
     ///
-    /// `email` is 403 on this endpoint, so it is omitted. The `languages`
-    /// group is a full replace on the server, so it is sent only when the
-    /// picked ids changed, always with the custom languages, and never when it
-    /// would leave zero languages.
-    func makeProfileUpdateBody() -> UpdateUserProfileRequest {
-        var body = UpdateUserProfileRequest()
-        body.basic = .init(
-            firstName: firstName.trimmingCharacters(in: .whitespaces),
-            lastName: lastName.trimmingCharacters(in: .whitespaces),
-            bio: bio.trimmingCharacters(in: .whitespaces)
-        )
-        // An emptied State/Province goes out as "" (the schema rejects null).
-        body.location = .init(
-            city: city.trimmingCharacters(in: .whitespaces),
-            stateProvince: state.trimmingCharacters(in: .whitespaces),
-            countryCode: Countries.normalize(country)
-        )
-        body.professional = .init(
-            jobTitle: jobTitle.trimmingCharacters(in: .whitespaces),
-            company: company.trimmingCharacters(in: .whitespaces)
-        )
-
-        let ids = languageItems.map(\.id)
-        if ids != persistedLanguageIds && !(ids.isEmpty && customLanguages.isEmpty) {
-            body.languages = .init(languageIds: ids, customLanguages: customLanguages)
-        }
-        return body
+    /// Only changed groups go out, each whole and trimmed (Android parity). An
+    /// empty name is never sent: the backend's `min(1)` rule would 422 the whole
+    /// save (G-05-6), and a set name the user cleared is held so the server
+    /// keeps it. The `languages` group is a full replace on the server, so it is
+    /// sent only when the picked ids changed, always with the custom languages,
+    /// and never when it would leave zero languages (A9). An emptied
+    /// State/Province goes out as "" (D-07). `email` is 403 on this endpoint, so
+    /// it is never sent.
+    func makeProfileUpdateBody() -> UpdateUserProfileRequest? {
+        currentSnapshot.patch(from: baseline)
     }
 
-    private func performAutoSave() async {
-        let body = makeProfileUpdateBody()
-        let sentLanguageIds = body.languages?.languageIds
-
-        let snapshotAtSaveTime = currentSnapshot
-        let trimmedMeetingUrl = meetingUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+    /// Builds the `PATCH /expert/profile` body for the meeting link, or nil when
+    /// the trimmed link equals what the server holds.
+    func makeExpertProfileUpdateBody() -> UpdateExpertProfileRequest? {
+        let link = trimmedMeetingUrl
+        guard link != baselineMeetingUrl else { return nil }
         // Coerce empty → nil so the key is dropped from the JSON body.
         // The server URL-validates this field and 422s on `""` — every
         // expert who hasn't yet set a Skype/Zoom link (which is most of
@@ -349,49 +332,75 @@ final class ExpertProfileSettingsViewModel {
         // very first field edit because the expert PATCH always
         // carried `meeting_url: ""`. Omitting the key relies on the
         // partial-merge contract ("missing key = leave untouched").
-        let meetingUrlForPatch: String? = trimmedMeetingUrl.isEmpty ? nil : trimmedMeetingUrl
+        let meetingUrlForPatch: String? = link.isEmpty ? nil : link
+        return UpdateExpertProfileRequest(
+            personalInfo: nil,
+            professionalDetails: .init(
+                jobTitle: nil,
+                company: nil,
+                education: nil,
+                meetingUrl: meetingUrlForPatch
+            ),
+            locationDetails: nil,
+            languages: nil,
+            expertiseTags: nil
+        )
+    }
+
+    private func performAutoSave() async {
+        // Both bodies are built before any request, so an edit made while a
+        // request is in flight is not recorded as saved.
+        let body = makeProfileUpdateBody()
+        let expertBody = makeExpertProfileUpdateBody()
+        guard body != nil || expertBody != nil else { return }
+        let sentMeetingUrl = trimmedMeetingUrl
 
         isAutoSaving = true
         defer { isAutoSaving = false }
         do {
-            _ = try await api.updateUserProfile(body)
-
+            if let body {
+                _ = try await api.updateUserProfile(body)
+                baseline = baseline.merging(body)
+            }
             // Meeting URL lives on the expert-scoped record — `PATCH /user/profile`
-            // doesn't carry it, so it needs a second call. Fired unconditionally
-            // whenever the snapshot changed; the server treats an unchanged
-            // meeting_url as a no-op merge.
-            let expertBody = UpdateExpertProfileRequest(
-                personalInfo: nil,
-                professionalDetails: .init(
-                    jobTitle: nil,
-                    company: nil,
-                    education: nil,
-                    meetingUrl: meetingUrlForPatch
-                ),
-                locationDetails: nil,
-                languages: nil,
-                expertiseTags: nil
-            )
-            _ = try await api.updateExpertProfile(expertBody)
+            // doesn't carry it, so it needs its own call, sent only when the
+            // link changed.
+            if let expertBody {
+                _ = try await api.updateExpertProfile(expertBody)
+                baselineMeetingUrl = sentMeetingUrl
+            }
             try? await userManager.refreshExpertProfile()
 
-            lastPersistedSnapshot = snapshotAtSaveTime
-            if let sentLanguageIds { persistedLanguageIds = sentLanguageIds }
             withAnimation(.easeOut(duration: 0.25)) { didAutoSave = true }
         } catch {
             autoSaveError = error.userMessage
         }
     }
 
-    /// Concatenated view of the auto-save-tracked fields. Used to dedup
-    /// the debounced save against the server's known state.
-    private var currentSnapshot: String {
-        [
-            firstName, lastName, bio, jobTitle, company, meetingUrl, city, state, country,
-            languageItems.map(\.id).joined(separator: ","),
-            customLanguages.joined(separator: ","),
-        ].joined(separator: "|")
+    /// The auto-saved fields as a trimmed snapshot, for the equality check and
+    /// for building the changed-groups body. The meeting link is left out; it
+    /// has its own baseline.
+    private var currentSnapshot: ProfileSettingsSnapshot {
+        ProfileSettingsSnapshot(
+            firstName: firstName, lastName: lastName, bio: bio,
+            jobTitle: jobTitle, company: company,
+            city: city, stateProvince: state, country: country,
+            languageIds: languageItems.map(\.id),
+            customLanguages: customLanguages
+        )
     }
+
+    private var trimmedMeetingUrl: String {
+        meetingUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Set when the user has cleared a first name the profile already holds.
+    /// The empty name is never sent (the server keeps the saved one), so this
+    /// is what tells the user why. Plan 05-20 shows it under the field.
+    var firstNameError: String? { currentSnapshot.firstNameError(from: baseline) }
+
+    /// Same as `firstNameError`, for the last name.
+    var lastNameError: String? { currentSnapshot.lastNameError(from: baseline) }
 
     // MARK: - Error mapping
 

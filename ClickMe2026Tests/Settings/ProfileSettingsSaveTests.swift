@@ -110,6 +110,27 @@ struct ProfileSettingsSaveTests {
         return (api, recorder)
     }
 
+    /// GET answers 200 with the fixture; every PATCH answers 422 VALIDATION_ERROR
+    /// naming `field` with the raw validator text a name over 100 characters gets.
+    private static func makeAlways422API(field: String, firstName: String, lastName: String) -> ClickMeAPI {
+        let ok = Data(profileBody(firstName: firstName, lastName: lastName).utf8)
+        let rejected = Data(
+            """
+            {"status":"error","message":"Please check the information you entered and try again.",\
+            "errors":[{"field":"\(field)","message":"Too big: expected string to have <=100 characters"}],\
+            "code":"VALIDATION_ERROR"}
+            """.utf8
+        )
+        return APITestFactory.make { request in
+            let status = request.httpMethod == "PATCH" ? 422 : 200
+            let response = HTTPURLResponse(
+                url: request.url!, statusCode: status, httpVersion: "HTTP/1.1",
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            return (response, status == 422 ? rejected : ok)
+        }
+    }
+
     private static func makeClient(
         firstName: String, lastName: String, bio: String = "Hello",
         city: String = "Toronto", state: String = "ON"
@@ -208,6 +229,20 @@ struct ProfileSettingsSaveTests {
 
         vm.firstName = "Ada"
         #expect(vm.firstNameError == nil)
+    }
+
+    @Test("Client: a 422 on save names the field, in iOS copy")
+    func clientA422NamesTheField() async throws {
+        let api = Self.makeAlways422API(field: "basic.first_name", firstName: "Ada", lastName: "Lovelace")
+        let vm = ClientProfileSettingsViewModel(api: api, autoSaveDebounce: Self.debounce)
+        vm.hydrate(from: try await api.getUserProfile().data)
+
+        vm.firstName = String(repeating: "A", count: 101)
+        await vm.performAutoSave()
+
+        #expect(vm.autoSaveError == "Check First Name, then try again.")
+        #expect(vm.autoSaveError?.contains("Too big") == false)
+        #expect(!vm.didAutoSave)
     }
 
     // MARK: - Expert

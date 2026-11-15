@@ -303,7 +303,7 @@ Plans:
   4. Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`. Feedback cannot be sent with fewer than 10 characters. Delete Account has no Pause Account card and accurately says what is deleted and what is kept or anonymized.
   5. `CancellationPoliciesView` and `ReadyToStartCallView` are either reachable in the app or removed from the codebase (per Q7).
 
-**Plans**: 17/17 plans executed in 6 waves (iOS only, no backend change; BACK-13 deferred per D-04)
+**Plans**: 17/20 plans executed (17/17 in 6 waves: iOS only, no backend change; BACK-13 deferred per D-04. Plus 3 UAT gap closure plans, 05-18 to 05-20, iOS only, no backend deploy)
 
 Plans:
 **Wave 1**
@@ -334,6 +334,11 @@ Plans:
 
 **Wave 6**
 - [x] 05-13-PLAN.md — full suite and phase gates, device UAT checklist, Android and saved-card todos (D-11, D-12, D-16), BACK-13 deferral in REQUIREMENTS.md and the roadmap note (after all)
+
+**Gap closure, UAT** *(from 05-UAT.md G-05-1 and G-05-6; iOS only, no backend deploy)*
+- [ ] 05-18-PLAN.md — G-05-1 / SIGN-06: setup hub nav bar pinned dark so Not now stays legible (A1 quiet style kept); device re-test in checklist item 46; Availability toolbar todo (wave 1)
+- [ ] 05-19-PLAN.md — G-05-6 / SET-01: client and expert profile settings send only changed groups and never an empty name; a cleared set name is held; the meeting link is sent only when it changed (wave 1)
+- [ ] 05-20-PLAN.md — G-05-6 / SET-01: a 422 names the fields to check; required-name error under the field; device re-test in checklist item 22; backend and Android follow-up todos (wave 2, after 05-18, 05-19)
 
 **UI hint**: yes
 **Notes**:

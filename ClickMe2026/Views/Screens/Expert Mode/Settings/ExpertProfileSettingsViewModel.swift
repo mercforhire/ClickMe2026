@@ -323,8 +323,12 @@ final class ExpertProfileSettingsViewModel {
     /// Builds the `PATCH /expert/profile` body for the meeting link, or nil when
     /// the trimmed link equals what the server holds.
     func makeExpertProfileUpdateBody() -> UpdateExpertProfileRequest? {
-        let link = trimmedMeetingUrl
-        guard link != baselineMeetingUrl else { return nil }
+        Self.meetingLinkBody(current: meetingUrl, baseline: baselineMeetingUrl)
+    }
+
+    static func meetingLinkBody(current: String, baseline: String) -> UpdateExpertProfileRequest? {
+        let link = current.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard link != baseline.trimmingCharacters(in: .whitespacesAndNewlines) else { return nil }
         // Coerce empty → nil so the key is dropped from the JSON body.
         // The server URL-validates this field and 422s on `""` — every
         // expert who hasn't yet set a Skype/Zoom link (which is most of

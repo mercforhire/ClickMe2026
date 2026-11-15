@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 05-signup-mode-switch-and-account
 source: [05-VERIFICATION.md]
 started: 2026-11-13T23:40:00Z
-updated: 2026-11-15T04:04:11Z
+updated: 2026-11-15T19:56:01.903Z
 ---
 
 ## Current Test
@@ -21,8 +21,8 @@ note: Checklist item 1 / item 5 (hub after a login). Screenshot shows the hub op
 
 ### 2. SET-06 legibility: Settings > Delete Account on a small iPhone and at the largest Dynamic Type size, scrolled to the bottom of the confirmation step
 expected: All three groups, including the last "Kept" group (messages, reviews, payment records), can be read in full and are not covered by the pinned Delete and Cancel buttons. If the "Kept" group is hidden, record it as a gap; the fix is a bottom `safeAreaInset` (05-UI-REVIEW.md).
-result: skipped
-reason: "skip" (no reason given)
+result: pass
+note: Skipped on first run ("skip", no reason given). The same check was re-run as test 8 on the plan 05-22 build and passed on 2026-11-15; this result rests on that run.
 
 ### 3. SET-02: Help > Email Us on a device with Mail set up
 expected: The default mail app opens addressed to clickmeapp@uptrendinvestments.net.
@@ -44,20 +44,57 @@ severity: blocker
 note: Checklist item 22 (D-07 clear province in profile settings). Screenshot - client Profile Settings for a fresh, unfinished expert signup (First/Last Name, City, Country, languages empty; State/Province "Ontario"). Any save shows the alert "Couldn't save changes / Please check the information you entered and try again." with no field named. Province clearing could not be tested.
 progress: Items 18, 20, 21 PASS (2026-11-14). Item 22 ISSUE (G-05-6) on an incomplete profile; item 22 PASS when retested on a complete profile (province clear persists). Items 23, 25, 26 PASS. Item 28 A9 decision: KEEP (settings never saves an empty language list). Item 27 (optional) not reported. Items 29, 30, 32, 34 (copy; Dynamic Type part was test 2, skipped), 35 PASS. Item 36 U3 decision: KEEP (no saved-card claim this release). Items 37, 38, 39, 43 PASS. Item 44 U2 decision: KEEP (text-height tap target). Item 46 A1 decision: KEEP (quiet secondary style; G-05-1 fixes only legibility). Items 40, 33, 47 PASS (throwaway deleted; Login email cleared). Item 27 (optional) not run. Test 6 closed: only issue is G-05-6. Items 24, 45 SKIPPED (no reason given; would need another unpublished expert signup; U4 decision left open). Remaining: 22, 23, 25-30, 32-40, 43, 44, 46, 47 (27, 29, 47 optional; 28, 36, 44, 46 are KEEP/CHANGE decisions).
 
+### 7. G-05-1 re-test: the setup hub's `Not now` is legible (checklist item 46, re-test block; plan 05-18)
+expected: On an iPhone on iOS 26 (build at or after 0d44688), open the setup hub for an unfinished expert in Light + Reduce Transparency, then Liquid Glass Tinted, then Dark. In every case `Not now` is pale text on a dark capsule (never light grey), reads clearly, sits top left at body size, is not accent green, has no back chevron. Tapping it lands on client home.
+result: pass
+
+### 8. SET-06 legibility re-test: Delete Account confirmation clears the pinned buttons (checklist item 34, re-test block; plan 05-22; replaces skipped test 2)
+expected: On the smallest iPhone available (build at or after 01e55f4), Settings > Account > Delete Account with a throwaway account, at default and at the largest Dynamic Type size, scrolled to the bottom: the last line of the `Kept` group is fully visible above the red `Delete Account` and `Cancel` buttons, and no group is cut off. Cancel closes the screen; Delete Account opens the feedback step. Nothing is deleted.
+result: pass
+
+### 9. G-05-6 re-test: Profile Settings saves on an empty-name profile (checklist item 22, re-test block; plans 05-19, 05-20)
+expected: On a build at or after a0310ca, with an empty-name account: clearing State/Province, editing Bio and changing languages in client Profile Settings each save with no "Couldn't save changes" alert and persist after reopening. On an expert with an empty Last Name, City and Skype / Zoom link edits save and persist. Clearing a set First Name shows "Please enter your first name." in red under the field with no alert, City still saves, and reopening shows the old first name. A9 unchanged (empty language Done shows "Keep at least one language.").
+result: pass
+
+### 10. CR-01 re-test: a cleared Skype / Zoom link stays cleared, and a reload shows the server's link (checklist section after item 47; plan 05-21)
+expected: On a build at or after baad5a0 (production /health on a commit containing df7fb18): clearing the link saves with no alert and stays empty after reopening; typing a link back persists; on an expert with no link a City-only edit saves with no alert. With a second device: after the link is cleared there, pull to refresh here empties the field with no checkmark, and a later City edit keeps the link empty. Without a second device, steps 4 and 5 are SKIPPED (no second device).
+result: pass
+
 ## Summary
 
-total: 6
-passed: 3
+total: 10
+passed: 8
 issues: 2
 pending: 0
-skipped: 1
+skipped: 0
 blocked: 0
+
+## Deferred Follow-Ups
+
+<!-- Device checklist items (05-DEVICE-UAT-CHECKLIST.md) deferred by the user on 2026-11-15 -->
+- test: checklist-12
+  idea: "Mode Switch cards dimmed during a slow lookup (needs Network Link Conditioner; optional, unit-tested)"
+  deferred_at: 2026-11-15
+- test: checklist-17
+  idea: "Foreground re-check never opens the hub over a live call (needs a booked live call on an unfinished expert; optional)"
+  deferred_at: 2026-11-15
+- test: checklist-24
+  idea: "Resuming signup keeps the verified email ticked (needs another unpublished expert signup)"
+  deferred_at: 2026-11-15
+- test: checklist-27
+  idea: "Profile with no languages shows Add languages and chips wrap (optional, unit-tested)"
+  deferred_at: 2026-11-15
+- test: checklist-45
+  idea: "U4 Verify email flash on resume: decision KEEP for now; observe on a device with a fresh unpublished signup"
+  deferred_at: 2026-11-15
 
 ## Gaps
 
 - gap_id: G-05-1
   truth: "The setup hub's `Not now` button at the top left is clearly legible (UI-SPEC A1: quiet secondary style, but visible and tappable)"
-  status: failed
+  status: resolved
+  resolved_by: 05-18-PLAN.md
+  resolved_at: 2026-11-15
   reason: "User reported: 1. Upon logging in to the unfinished setup account, the top-left button test is hard to see. The contrast is wrong."
   severity: cosmetic
   test: 1
@@ -79,7 +116,9 @@ blocked: 0
 
 - gap_id: G-05-6
   truth: "Profile settings saves an edit (including clearing State/Province) and it persists after reopening, with no error, even when the profile is not yet complete"
-  status: failed
+  status: resolved
+  resolved_by: 05-20-PLAN.md
+  resolved_at: 2026-11-15
   reason: "User reported: 22 fail Because the profile has not been completed yet, all saving actions fail on the screen."
   severity: blocker
   test: 6

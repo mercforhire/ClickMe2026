@@ -335,10 +335,10 @@ Plans:
 **Wave 6**
 - [x] 05-13-PLAN.md — full suite and phase gates, device UAT checklist, Android and saved-card todos (D-11, D-12, D-16), BACK-13 deferral in REQUIREMENTS.md and the roadmap note (after all)
 
-**Gap closure, UAT** *(from 05-UAT.md G-05-1 and G-05-6; iOS only, no backend deploy)*
+**Gap closure, UAT** *(from 05-UAT.md G-05-1 and G-05-6; iOS only, no backend deploy; sequential, because the three plans share one working tree, DerivedData, simulator and git index)*
 - [ ] 05-18-PLAN.md — G-05-1 / SIGN-06: setup hub nav bar pinned dark so Not now stays legible (A1 quiet style kept); device re-test in checklist item 46; Availability toolbar todo (wave 1)
-- [ ] 05-19-PLAN.md — G-05-6 / SET-01: client and expert profile settings send only changed groups and never an empty name; a cleared set name is held; the meeting link is sent only when it changed (wave 1)
-- [ ] 05-20-PLAN.md — G-05-6 / SET-01: a 422 names the fields to check; required-name error under the field; device re-test in checklist item 22; backend and Android follow-up todos (wave 2, after 05-18, 05-19)
+- [ ] 05-19-PLAN.md — G-05-6 / SET-01: client and expert profile settings send only changed groups and never an empty name; a cleared set name is held; the meeting link is sent only when it changed (wave 2, after 05-18)
+- [ ] 05-20-PLAN.md — G-05-6 / SET-01: a 422 names the fields to check; required-name error under the field; device re-test in checklist item 22; backend and Android follow-up todos (wave 3, after 05-18, 05-19)
 
 **UI hint**: yes
 **Notes**:
@@ -349,6 +349,7 @@ Plans:
 - SIGN-06 pairs with BACK-13 (Phase 1). **Decided:** BACK-13 is deferred past this release (D-04, 2026-11-13), with the reason recorded under REL-02 in REQUIREMENTS.md. The iOS gate (SIGN-06) fixes the user-facing bug, and the code stays parked on backend branch `wave-3c`.
 - The SET-06 copy must match what `services/accountCascade.js` keeps or anonymizes. Log the matching Android copy change as a follow-up.
 - SET-01: check the expert profile settings view model for the same missing languages save.
+- SET-01 reopened 2026-11-14 by UAT gap G-05-6 (05-UAT.md): on a profile with an empty first or last name, every Profile Settings save fails, language edits included. SET-01 is still marked Complete above and in REQUIREMENTS.md from plan 05-09. It counts as closed again only when 05-19 and 05-20 pass and the G-05-6 re-test in checklist item 22 passes on a device.
 
 ### Phase 6: Expert Mode
 

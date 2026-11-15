@@ -321,29 +321,36 @@ final class ExpertProfileSettingsViewModel {
     }
 
     /// Builds the `PATCH /expert/profile` body for the meeting link, or nil when
-    /// the trimmed link equals what the server holds.
+    /// the link is unchanged. See `meetingLinkBody(current:baseline:)`.
     func makeExpertProfileUpdateBody() -> UpdateExpertProfileRequest? {
         Self.meetingLinkBody(current: meetingUrl, baseline: baselineMeetingUrl)
     }
 
+    /// The meeting-link rule for `PATCH /expert/profile`: nil when the trimmed
+    /// link equals what the server holds, otherwise the trimmed link.
+    ///
+    /// An expert with no link never sends the key (the case the old
+    /// empty-link rule protected). A link the user cleared goes out as `""`,
+    /// which BACK-04 (backend `df7fb18`) accepts in
+    /// `src/schemas/expertProfile.schema.js` (the `meeting_url` refine) and
+    /// stores as NULL in `src/controllers/expert.controller.js`
+    /// (`meeting_url || null`). Every non-nil body carries `meeting_url`,
+    /// because `{"professional_details":{}}` is a server no-op that still
+    /// answers 200, which the screen would report as saved (CR-01).
+    ///
+    /// - Parameters:
+    ///   - current: The field text as typed.
+    ///   - baseline: The trimmed link the server holds.
     static func meetingLinkBody(current: String, baseline: String) -> UpdateExpertProfileRequest? {
         let link = current.trimmingCharacters(in: .whitespacesAndNewlines)
         guard link != baseline.trimmingCharacters(in: .whitespacesAndNewlines) else { return nil }
-        // Coerce empty → nil so the key is dropped from the JSON body.
-        // The server URL-validates this field and 422s on `""` — every
-        // expert who hasn't yet set a Skype/Zoom link (which is most of
-        // them) previously saw a "Couldn't save changes" alert on the
-        // very first field edit because the expert PATCH always
-        // carried `meeting_url: ""`. Omitting the key relies on the
-        // partial-merge contract ("missing key = leave untouched").
-        let meetingUrlForPatch: String? = link.isEmpty ? nil : link
         return UpdateExpertProfileRequest(
             personalInfo: nil,
             professionalDetails: .init(
                 jobTitle: nil,
                 company: nil,
                 education: nil,
-                meetingUrl: meetingUrlForPatch
+                meetingUrl: link
             ),
             locationDetails: nil,
             languages: nil,

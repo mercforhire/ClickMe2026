@@ -1,57 +1,128 @@
 ---
 phase: 05-signup-mode-switch-and-account
-verified: 2026-11-13T23:30:00Z
-status: human_needed
-score: 11/13 must-haves verified
+verified: 2026-11-15T06:00:00Z
+status: gaps_found
+score: 12/16 must-haves verified
 covered_files: [
+    ".planning/phases/05-signup-mode-switch-and-account/05-01-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-01-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-02-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-02-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-03-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-03-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-04-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-04-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-05-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-05-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-06-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-06-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-07-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-07-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-08-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-08-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-09-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-09-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-10-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-10-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-11-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-11-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-12-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-12-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-13-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-13-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-14-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-14-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-15-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-15-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-16-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-16-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-17-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-17-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-18-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-18-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-19-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-19-SUMMARY.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-20-PLAN.md",
+    ".planning/phases/05-signup-mode-switch-and-account/05-20-SUMMARY.md",
     "ClickMe2026/Managers/ModeSwitchGate.swift",
     "ClickMe2026/Managers/UserManager.swift",
+    "ClickMe2026/Network/Error+UserMessage.swift",
     "ClickMe2026/Utils/AccountDeletionBlocker.swift",
     "ClickMe2026/Utils/AccountDeletionCopy.swift",
     "ClickMe2026/Utils/ExpertModeGate.swift",
     "ClickMe2026/Utils/LocationFormatter.swift",
     "ClickMe2026/Utils/ProfilePhotoCropper.swift",
+    "ClickMe2026/Utils/ProfileSaveErrorMapper.swift",
+    "ClickMe2026/Utils/ProfileSettingsSnapshot.swift",
     "ClickMe2026/Utils/SupportContact.swift",
+    "ClickMe2026/Views/Screens/Expert Mode/Settings/ExpertProfileSettingsViewModel.swift",
+    "ClickMe2026/Views/Screens/Settings/Client Profile Settings/ClientProfileSettingsViewModel.swift",
+    "ClickMe2026/Views/Screens/Settings/Client Profile Settings/Subviews/ProfileLabeledField.swift",
+    "ClickMe2026/Views/Screens/Signup Flow/Overview/SignupOverviewView.swift",
     "ClickMe2026/Views/Screens/Signup Flow/SignupAccumulator.swift"
   ]
-covered_digest: "v3:sha256:68473654cec7b81bab6dcc9e436f77613a5e71226afda40d9c851256344be064"
+covered_digest: "v3:sha256:887c3e04d340dfe707b1b3ac334838da6105f3d08ddd8731fd4fda2274f0ee73"
 behavior_unverified: 1
 overrides_applied: 0
+re_verification:
+  previous_status: human_needed
+  previous_score: 11/13
+  gaps_closed:
+    - "G-05-6 (code): an empty-name profile can save a State/Province, bio or language edit; a 422 names the fields (plans 05-19, 05-20)"
+    - "G-05-1 (code): the setup hub nav bar is pinned dark with the sibling-screen pattern (plan 05-18)"
+  gaps_remaining:
+    - "Clearing the expert meeting link is dropped and reported as saved (CR-01)"
+  regressions: []
+gaps:
+  - truth: "A Profile Settings edit that the screen reports as saved is sent to the server and persists after reopening (G-05-6 truth wording), including clearing the expert meeting link"
+    status: failed
+    reason: "ExpertProfileSettingsViewModel.makeExpertProfileUpdateBody() turns an emptied link into meetingUrl nil, which the Encodable body omits, so the request is {\"professional_details\":{}}. The server keeps the old link. performAutoSave then sets baselineMeetingUrl to \"\", refreshes the profile and shows the saved checkmark. The old link returns on the next load(). The stale in-code comment says the server 422s on \"\", but BACK-04 (backend df7fb18, contained in origin/main) now accepts \"\" and null and stores NULL. The pre-05-19 code dropped the clear the same way, so this is pre-existing, not a regression, but plan 05-19 kept the rule knowingly and now treats the empty request as a successful save."
+    artifacts:
+      - path: "ClickMe2026/Views/Screens/Expert Mode/Settings/ExpertProfileSettingsViewModel.swift"
+        issue: "Lines 327-345: link.isEmpty ? nil : link; stale comment about a 422 on empty; performAutoSave rebaselines after the dropped clear"
+    missing:
+      - "Send meeting_url \"\" when the baseline held a link and the trimmed field is now empty (BACK-04 contract); keep omitting it when the baseline was already empty"
+      - "Delete the stale 'server 422s on empty' comment"
+      - "Unit test: clearing a previously set link produces a body whose professional_details.meeting_url is \"\" (makeExpertProfileUpdateBody is internal, so this is testable without UserManager)"
+      - "Confirm BACK-04 is live on the production deploy before the release build (it is on origin/main of the backend repo)"
 behavior_unverified_items:
   - truth: "SIGN-06: switching to Expert with incomplete setup opens the setup hub, and no switch is applied during a call, a superseded request writes nothing, and sign-out mid-lookup writes nothing"
-    test: "On a real iPhone: (a) unfinished expert in Client mode, Profile > Mode Switch > Expert; (b) finished expert; (c) airplane mode, including right after Publish in the same session; (d) tap Expert while a call is active; (e) dual-role account, push for the other mode tapped during a call; (f) airplane-mode launch of an unfinished expert, then network on and foreground. Items 1 to 17 of 05-DEVICE-UAT-CHECKLIST.md."
-    expected: "(a) hub opens, mode stays Client; (b) Expert home; (c) Expert home (fail open); (d) nothing changes and the call screen stays; (e) mode and call unchanged until the call ends, then the push destination opens; (f) hub opens on foreground."
-    why_human: "The pure ExpertModeGate decisions are unit-tested (ExpertModeGateTests), but UserManager.requestModeSwitch, lookUpSetupCompleted, recheckSetupIfPending, clearLocalSession resets and the shells' call-end replay have no behavioral test: UserManager's init is private and no test constructs it. They are verified present and wired by reading the code, not by running the transition."
+    test: "05-DEVICE-UAT-CHECKLIST.md items 1 to 17"
+    expected: "Hub opens for an unfinished expert, finished expert enters Expert, airplane mode fails open, no switch during a call, a push waits until the call ends, foreground re-check opens the hub"
+    why_human: "ExpertModeGate decisions are unit-tested, but UserManager.requestModeSwitch, lookUpSetupCompleted, recheckSetupIfPending and the shells' call-end replay have no behavioral test. 05-UAT.md test 1 records items 1-3, 4, 5-11, 13-16 as PASS on a device (12 and 17 skipped as optional), so the evidence exists in the UAT record but not as an automated test."
 coincidental_reliance_items: []
 human_verification:
-  - test: "SIGN-06 end to end on a device (see behavior_unverified_items; checklist items 1 to 17)"
-    expected: "As listed above"
-    why_human: "State transitions and a call-active invariant that no test exercises"
-  - test: "SET-06 legibility: open Settings > Delete Account on a small iPhone and at the largest Dynamic Type size, scroll to the bottom of the confirmation step"
-    expected: "All three groups, including the last 'Kept' group (messages, reviews, payment records), are fully readable and not covered by the pinned Delete and Cancel buttons"
-    why_human: "DeleteAccountView.swift:115 gives the scroll content an 80 pt spacer under a bar of about 163 pt (divider 1, top 12, button 56, gap 10, cancel 48, bottom 36), so up to about 83 pt of the last group can sit behind the opaque bar at maximum scroll. 05-UI-REVIEW.md flags this and the layout cannot be measured from code. UI-SPEC LT1 and OV1 are device backstops."
-  - test: "SET-02: Help > Email Us on a device with Mail set up"
-    expected: "The default mail app opens addressed to clickmeapp@uptrendinvestments.net"
-    why_human: "openURL on a mailto: URL needs a real mail handler; the simulator has none. SupportContactTests pins the address and the URL."
-  - test: "SIGN-05: pick a camera-roll photo, zoom in on the slider, Save, view the public avatar"
-    expected: "The uploaded avatar looks like the preview circle"
-    why_human: "The crop maths is unit-tested and matches ProfileAvatarRing (scaledToFill, scaleEffect 1 + zoom, no pan), but visual equality needs eyes"
-  - test: "SET-07: from both the Bookings tab and a Home-route cancel, tap 'Cancellation policy' on the cancel confirmation, then Back"
-    expected: "The policy opens and Back returns to the confirmation with its state intact"
-    why_human: "RESEARCH A5: pushing a destination from inside a NavigationPath stack needs a device check; fallback is a sheet with its own NavigationStack"
-  - test: "Remaining unticked items in 05-DEVICE-UAT-CHECKLIST.md (SIGN-02 quit and relaunch, SET-01 reopen after language edit, SET-06 409 blocker alerts, T8 prefilled email)"
+  - test: "G-05-1 re-test (checklist item 46): iPhone on iOS 26, Light appearance with Reduce Transparency on, then Liquid Glass set to Tinted, then Dark; open the setup hub with an unfinished expert"
+    expected: "Not now reads as pale text on a dark capsule, never on a light grey one; still the quiet style; tapping it lands on client home"
+    why_human: "The contrast of the iOS 26 glass capsule cannot be asserted in code or unit tests. The three pins are present, but only a device shows the render. Result line is PENDING in the checklist."
+  - test: "G-05-6 re-test (checklist item 22): account with empty names, client Profile Settings: clear State/Province, edit Bio, edit a language. Expert Profile Settings: edit City and the meeting link for an expert with an empty last name. Clear a set first name."
+    expected: "No alert on any of the saves. Clearing a set first name shows 'Please enter your first name.' under the field, keeps the old name on the server, and still saves a City edit. The reopened screen shows the saved values."
+    why_human: "Unit rows run against a mock that copies the backend's min(1) 422, and the private expert performAutoSave cannot be driven without UserManager.shared. Result line is PENDING in the checklist."
+  - test: "SET-06 legibility (UAT test 2, skipped): Settings > Delete Account on a small iPhone and at the largest Dynamic Type size, scroll to the bottom of the confirmation step"
+    expected: "The last 'Kept' group is fully readable and not behind the pinned Delete and Cancel buttons"
+    why_human: "DeleteAccountView.swift gives the scroll content an 80 pt spacer under a bar of about 163 pt, so up to about 83 pt of the last group may sit behind the bar. The geometry is code-derived, UAT test 2 was skipped with no reason, and 05-UI-REVIEW.md flags it as an open warning."
+  - test: "Optional checklist items still unrun: 12 (slow network), 17 (live call on an unfinished account), 24 and 45 (resume signup email flash), 27 (language custom edit)"
     expected: "Each item's Expected block"
-    why_human: "Project definition of done requires a device check on a real iPhone; every Result line in the checklist is still empty"
+    why_human: "Skipped in UAT as optional or as needing another unpublished account"
 ---
 
 # Phase 5: Signup, Mode Switch and Account Verification Report
 
 **Phase Goal:** Users can finish signup, enter Expert mode only with a complete setup, and edit or close their account with saves that stick and copy that tells the truth
-**Verified:** 2026-11-13T23:30:00Z
-**Status:** human_needed
-**Re-verification:** No, initial verification
+**Verified:** 2026-11-15T06:00:00Z
+**Status:** gaps_found
+**Re-verification:** Yes, after UAT and gap-closure plans 05-18, 05-19 and 05-20
 
-All code paths for the 13 requirements exist, are wired and are not stubs. 149 unit tests in 17 phase suites passed in this run. Nothing FAILED. The status is `human_needed` for two reasons: one truth (SIGN-06 gate orchestration) is present and wired but its state transitions are not exercised by any test, and the Delete Account disclosure may be partly covered by the pinned buttons. The project's definition of done also requires a real-iPhone check, and every `Result:` line in `05-DEVICE-UAT-CHECKLIST.md` is empty.
+All 13 requirement IDs have code that exists, is wired and is not a stub, and both UAT gaps (G-05-1, G-05-6) are closed in code. One new gap stands: clearing the expert meeting link is silently dropped while the screen shows a saved checkmark. This is the review's CR-01. I confirmed it independently from the code and the backend schema. It is small, fixable in one view-model method plus a test, and the backend side is already live. It does not touch any of the 13 requirement IDs or the five roadmap success criteria, but it contradicts the phase goal's "saves that stick" and the project's core value of not silently dropping user actions, so I record it as a gap, not a warning.
+
+## Assessment of CR-01 against the phase goal
+
+- **Confirmed in code.** `makeExpertProfileUpdateBody()` (ExpertProfileSettingsViewModel.swift:327-345) returns `meetingUrl: link.isEmpty ? nil : link`. `UpdateExpertProfileRequest` is a synthesized `Encodable`, so `nil` is omitted and the body is `{"professional_details":{}}`. `performAutoSave` (351-376) then sets `baselineMeetingUrl = sentMeetingUrl`, runs `refreshExpertProfile()` and sets `didAutoSave = true`.
+- **Confirmed against the backend.** `expertProfile.schema.js:44-53` accepts `""` and `null` (BACK-04). `expert.controller.js:158-160` stores `meeting_url || null`. Backend commit `df7fb18` ("allow experts to clear meeting_url") is contained in `origin/main`, and Phase 1 recorded BACK-04 complete. The iOS comment claiming a 422 on `""` is stale.
+- **Pre-existing, not introduced by the gap plans.** The code at `23da555` also coerced an empty link to nil and dropped the clear. 05-19 kept that rule on purpose ("existing empty-link-to-omitted-key rule") while it was written for a backend that has since changed. So this is not a Phase 5 regression, but it is the exact "saves that don't stick" failure the phase targets, now with a backend that can accept the fix.
+- **Scope.** Expert-only, clear-only (setting or changing a link works), and the link is optional. No SIGN or SET requirement names it. That is why the other 12 verified truths stand, and why the severity is "one narrow gap" and not "phase goal not met".
+
+I also checked the review's WR-01 claim and found it overstated for the stated case. An invalid meeting link 422 carries the hand-written message "Meeting link must be a valid URL." The backend's `validationSummaryMessage` (`utils/errors.js`) promotes any non-blank message that is not a raw Zod default to the top-level `message`. The mapper finds no mapped label and falls back to `userMessage`, so the alert does show that sentence. What remains of WR-01 is the mixed case (one 422 listing a mapped and an unmapped field names only the mapped one). That is minor.
 
 ## Goal Achievement
 
@@ -59,147 +130,143 @@ All code paths for the 13 requirements exist, are wired and are not stubs. 149 u
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | SIGN-01: an expert cannot publish without a photo | VERIFIED | `SignupAccumulator.missingForPublish` appends `.profilePicture` when `avatarUrl` is nil or empty. `isReadyToPublish == missingForPublish.isEmpty`. `buildPublishRequest()` returns nil when not ready. `SignupReviewViewModel.publish()` sets "Finish these first: ..." and sends no PATCH. `SignupAccumulatorTests` passed. |
-| 2 | SIGN-05: the uploaded photo matches the crop the user set | VERIFIED | `SignupProfilePhotoViewModel.save()` calls `ProfilePhotoCropper.squareCrop(pickedImage, zoom: zoomScale)` then `api.uploadAvatar(imageData:)`. The crop side is `min(w,h)/(1+zoom)`, centred, orientation baked in, 1024 px cap, fresh render so EXIF/GPS is dropped. This matches `ProfileAvatarRing` (`scaledToFill()` plus `scaleEffect(1 + zoomScale)`, no pan). `ProfilePhotoCropperTests` and `SignupProfilePhotoSaveTests` passed. Visual equality is a device item. |
-| 3 | SIGN-03: expertise tags and languages are saved in tap order, first pick primary | VERIFIED | `SignupTagsViewModel.selectionOrder` is appended on select and removed on deselect, and feeds `selectedTags`, `syncToAccumulator()` and the `expertise_tags` body. `LanguageSelectionViewModel.orderedSelection` feeds `onDone(...)` and `setLanguages`. `SelectionOrderTests` passed. |
-| 4 | SIGN-04: the country code is normalized on publish | VERIFIED | `buildPublishRequest()` sends `Countries.normalize(countryCode)`. `hasBasicInfo` requires a non-nil normalized country, so an unrecognised code makes the profile not ready. `normalize` trims, uppercases and maps alpha-2 to alpha-3. Tests passed. |
-| 5 | SIGN-02: resuming signup keeps an already-verified email verified | VERIFIED | `SignupOverviewView .task` calls `refreshEmailVerified()`, which calls `GET /auth/email/status` once (route exists in backend `auth.js:53`) and never downgrades a true. A fresh signup seeds from `response.emailVerified`. `SignupEmailVerifiedSeedTests` passed. Quit-and-relaunch is a device item. |
-| 6 | SIGN-06: switching to Expert with incomplete setup opens the setup hub; Expert is entered only through the gate | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | Present and wired. `ModeSwitchGate.request` calls `UserManager.requestModeSwitch`, which calls `ExpertModeGate.resolveSwitch` after `lookUpSetupCompleted()`. `.setupRequired(opensHub:)` raises `setupHubRequested`, and `ClickMe2026App.onChange` routes to `.signupSetup` only from a home route. `setMode` is `private`, and a grep finds no `setMode(` or `currentMode =` write outside `UserManager.swift`. All four Mode Switch entry points, both push handlers, Splash and Login go through the gate (`resolvePostAuthLanding`). A failed lookup becomes nil and fails open, and the cached profile is never consulted. A call-active guard is the first statement, and `clearLocalSession` resets the flags. The pure rules are tested (`ExpertModeGateTests`, `SetupDeferralStoreTests`). The orchestration (supersede, sign-out mid-lookup, call guard, foreground re-check, push replay after a call) has no behavioral test. See Human Verification. |
-| 7 | SET-01: language edits on the client and expert profiles save to the server | VERIFIED | Both settings screens use `LanguageSelectionView`, and `makeProfileUpdateBody()` sets `body.languages = .init(languageIds:customLanguages:)` only when ids changed. Custom languages are always sent back, an empty result is blocked ("Keep at least one language."), and `persistedLanguageIds` updates only after a successful PATCH. `LanguageEditorSheet` is deleted. `ProfileLanguagesSaveTests` passed. |
-| 8 | SET-04: opening Notification preferences sends no save until the user changes something | VERIFIED | `apply(preferences:)` records `lastAppliedSnapshot`, and `scheduleAutoSave()` returns when the current snapshot equals it. `NotificationSettingsAutoSaveTests` (load sends nothing, one toggle sends one PATCH, a reload sends nothing) passed. |
-| 9 | SET-02: Help > Email Us opens a mail to clickmeapp@uptrendinvestments.net | VERIFIED | `HelpView.openSupportEmail()` calls `openURL(SupportContact.mailtoURL)`. The address is spelled in exactly one Swift file (`SupportContact.swift`), and `SuspensionNotice` reads it from there. `SupportContactTests` passed. No other address variant exists in Swift sources, `Localizable.xcstrings` or `Info.plist`. Opening the mail app is a device item. |
-| 10 | SET-05: Feedback cannot be sent with fewer than 10 characters | VERIFIED | `FeedbackViewModel.submit()` guards on `meetsMinimumLength` (trimmed UTF-16 count at least 10), shows "Please enter at least 10 characters." and sends no request. The text stays in the field. `FeedbackValidationTests` passed. |
-| 11 | SET-03 and SET-06: Delete Account has no Pause Account card, and the copy matches what the backend deletes and keeps | VERIFIED | No pause view, callback or card remains. The only leftover is the unused token `DeleteAccountBrand.pauseIconBg`, which is info-level dead code. `AccountDeletionCopy` was compared line by line with the backend `purgeAndLockAccount`. Deleted (F1 profile tombstone, F6 devices, F7 notifications, F8 preferences, step I uploaded photos) matches. Kept without personal details (bookings kept, F3 and F4 erase private notes) matches. Kept (reviews and messages have no DML, payment records untouched) matches. Unanswered `pending_approval` requests are cancelled and their holds voided (`ACTIVE_STATUSES`, `isVoidFallback`), as the copy says. The 409 blockers `EXPERT_HAS_UPCOMING_BOOKINGS`, `CLIENT_HAS_UPCOMING_BOOKINGS` and `SESSION_IN_PROGRESS` exist in `account.controller.js` and are branched on `ErrorCode`. `View My Bookings` is installed on both shells' `showMyBookings`. `AccountDeletionBlockerTests`, `DeleteAccountViewModelTests` and `AccountDeletionCopyTests` passed. |
-| 12 | SET-06: the user can read the full Delete Account disclosure (every group clear of the pinned buttons) | ? UNCERTAIN | `DeleteAccountView.confirmationView` overlays a bar of about 163 pt on a `ScrollView` whose content ends in an 80 pt spacer. At maximum scroll the last group can be partly behind the opaque bar. This is the open WARNING in `05-UI-REVIEW.md` and its geometry is code-derived, not measured. It depends on device height and Dynamic Type. It is routed to human verification, not marked FAILED. |
-| 13 | SET-07: `CancellationPoliciesView` and `ReadyToStartCallView` are reachable or removed | VERIFIED | `ReadyToStartCallView` is deleted, and no reference remains in `ClickMe2026`, tests or `project.pbxproj`. `CancellationPoliciesView` is pushed from `ClientCancellationView` through `@State showPolicy` and `.navigationDestination(isPresented:)`. The "How to Initiate" copy and the "Your bank decides how long a refund takes to appear." footnote are present. |
+| 1 | SIGN-01: an expert cannot publish without a photo | VERIFIED (regression check) | `SignupAccumulator.missingForPublish` still present (line 94) and `isReadyToPublish` derives from it. Unchanged since the last verification. |
+| 2 | SIGN-05: the uploaded photo matches the crop the user set | VERIFIED (regression check) | `ProfilePhotoCropper.swift` exists. Device UAT test 4 PASS. |
+| 3 | SIGN-03: tags and languages saved in tap order | VERIFIED (regression check) | Unchanged files. |
+| 4 | SIGN-04: country code normalized on publish | VERIFIED (regression check) | Unchanged. `Countries.normalize` is also used by the new snapshot patch. |
+| 5 | SIGN-02: resuming signup keeps a verified email | VERIFIED (regression check) | Unchanged. |
+| 6 | SIGN-06: Expert entered only through the gate; incomplete setup opens the hub | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | Present and wired; `grep` for `setMode(` / `.currentMode =` outside `UserManager.swift` finds 0 matches. `UserManager` orchestration still has no automated behavioral test. UAT test 1 records the device runs (items 1-11, 13-16 PASS, 12 and 17 skipped). Counts as human-verified evidence, not as an automated one. |
+| 7 | SET-01: language edits save to the server on both profile screens | VERIFIED | `ProfileSettingsSnapshot.patch(from:)` sends `languages` only when ids changed, with custom languages, never leaving zero (A9). `ProfileLanguagesSaveTests` passed in this run. UAT items 23, 25, 26, 28 PASS. |
+| 8 | SET-04: opening Notification preferences sends no save | VERIFIED (regression check) | Unchanged. |
+| 9 | SET-02: Help > Email Us opens mail to the support address | VERIFIED | Address is spelled in one Swift file (`SupportContact.swift:17`). UAT test 3 PASS on a device. |
+| 10 | SET-05: Feedback needs at least 10 characters | VERIFIED (regression check) | Unchanged. |
+| 11 | SET-03 and SET-06: no Pause card; Delete Account copy matches what the backend deletes and keeps | VERIFIED | `DeleteAccountPauseCard.swift` absent. `AccountDeletionBlocker.swift` and `AccountDeletionCopy.swift` present. Compared line by line in the first verification. UAT items 29, 30, 32, 35, 37-39, 43 PASS. |
+| 12 | SET-06: the full Delete Account disclosure is readable above the pinned buttons | ? UNCERTAIN | Not resolved. UAT test 2 was skipped with no reason. The 80 pt spacer under a 163 pt bar is unchanged. Routed to human verification. |
+| 13 | SET-07: `CancellationPoliciesView` reachable, `ReadyToStartCallView` removed | VERIFIED | `find` returns no `ReadyToStartCallView`, `LanguageEditorSheet` or `DeleteAccountPauseCard` file. UAT test 5 PASS on a device. |
+| 14 | G-05-1: the setup hub's `Not now` button is legible (A1 quiet style kept) | ? UNCERTAIN (code closed, render unproven) | `SignupOverviewView.swift:117-119` has `toolbarBackground(Brand.surface, for: .navigationBar)`, `toolbarBackground(.visible, for: .navigationBar)` and `toolbarColorScheme(.dark, for: .navigationBar)`, identical to `SignupReviewView.swift:100-102`. `OverviewNotNowChrome` still has `navigationBarBackButtonHidden(true)` and `BookingRequestSentPopGestureLock()` once each (lines 155-156), body font and `Brand.onSurfaceVariant` unchanged, no `preferredColorScheme`. The 10.84:1 vs 1.52:1 contrast figures are the debug session's simulator measurement, not mine. Device re-test is PENDING. |
+| 15 | G-05-6: on an empty-name profile a State/Province, bio or language edit saves with no alert; a 422 names the fields in iOS copy; a cleared set name shows an inline error and is not sent | VERIFIED (device re-test pending) | `ProfileSettingsSnapshot.patch(from:)` sends a name key only when non-empty and only changed groups; `merging(_:)` takes exactly the sent keys. Both view models build the body from it (`ClientProfileSettingsViewModel.swift:314-315, 322, 330`; `ExpertProfileSettingsViewModel.swift` `makeProfileUpdateBody`). Both `performAutoSave` catch blocks call `ProfileSaveErrorMapper.message(for:)`. `Error.validationFieldErrors` branches on status 422 and `ErrorCode.validationError`. `ProfileLabeledField(error:)` is wired for First and Last Name on both screens (Client view lines 130-131; Expert view lines 127-128); other call sites keep the nil default. I ran `ProfileSettingsSnapshotTests`, `ProfileSettingsSaveTests`, `ProfileSaveErrorMapperTests` and `ProfileLanguagesSaveTests`: 64 tests in 4 suites passed. I read the backend schema: `first_name` and `last_name` are `min(1)` and the group is `.strict()`, so the fix matches the real rule. UAT confirmed item 22 passes on a complete profile; the empty-profile re-test is PENDING. |
+| 16 | A Profile Settings edit the screen reports as saved is sent and persists, including clearing the expert meeting link | ✗ FAILED | See the CR-01 assessment above and the `gaps:` entry. |
 
-**Score:** 11/13 truths verified (1 present, behavior-unverified; 1 uncertain, routed to human)
+**Score:** 12/16 truths verified (1 present, behavior-unverified; 2 uncertain, routed to human; 1 failed)
 
 ### Deferred Items
 
 | # | Item | Addressed In | Evidence |
 |---|------|--------------|----------|
-| 1 | BACK-13: a client is promoted to expert only by an explicit setup call | Not scheduled (deferred past this release, D-04) | `REQUIREMENTS.md` BACK-13 and REL-02 record the reason. The iOS Expert-mode gate is the user-facing fix. This is an accepted descope, not a gap. |
+| 1 | BACK-13: a client is promoted to expert only by an explicit setup call | Not scheduled (deferred past this release, D-04) | `REQUIREMENTS.md` BACK-13 and REL-02 record the reason. The iOS Expert-mode gate is the user-facing fix. Accepted descope, not a gap. |
+| 2 | Backend `min(1)` on names versus OpenAPI and signup `''`; product decision on accepting an empty last name; Android parity for the empty-name save | Logged as todos by plan 05-20 | `.planning/todos/pending/2026-11-14-backend-profile-name-validation.md` and `...-android-profile-settings-empty-name-save.md`. Other repos, no code changed there, by design. |
+| 3 | Availability settings toolbar Save button has the same unpinned-bar pattern | Logged as a todo by plan 05-18 | `.planning/todos/pending/2026-11-14-availability-settings-toolbar-dark-pin.md`. Out of the G-05-1 scope. |
 
 ### Advisory (New Scope, Unevidenced)
 
-None. This is an initial verification.
+| # | Finding | Category | Why Advisory |
+|---|---------|----------|--------------|
+| 1 | WR-02: overlapping auto-saves are not serialised, so the baseline can go stale when responses arrive out of order | other | Real but an edge race on a slow network. No deterministic failing test exists. Not blocking. |
+| 2 | WR-01 (remaining part): a 422 that lists one mapped and one unmapped field names only the mapped one | other | The stated meeting-link case is not a defect (see above). Mixed case only. |
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `Utils/ProfilePhotoCropper.swift` | Pure square crop at the preview zoom | VERIFIED | 80 lines, used by `save()` |
-| `Utils/LocationFormatter.swift` | One location formatter | VERIFIED | Used by the signup review and `ClientProfilePersonalInfo` |
-| `Utils/SupportContact.swift` | One support address | VERIFIED | Used by `HelpView` and `SuspensionNotice` |
-| `Utils/ExpertModeGate.swift` | Pure gate decisions | VERIFIED | Called from `UserManager` at four sites |
-| `Managers/ModeSwitchGate.swift` | Call-guarded entry point | VERIFIED | Four Mode Switch call sites |
-| `Utils/AccountDeletionBlocker.swift` and `AccountDeletionCopy.swift` | Blocker alert and disclosure copy | VERIFIED | Used by `DeleteAccountViewModel` and `DeleteAccountWarningHeader` |
-| `Signup Flow/SignupAccumulator.swift` | Server-aligned publish rules | VERIFIED | `missingForPublish`, `buildPublishRequest`, `refreshEmailVerified` |
-| Phase test files (17 suites) | Unit coverage | VERIFIED | 149 tests passed in this run |
-| `CancellationPoliciesView.swift` | Reachable | VERIFIED | Linked from the cancel confirmation |
-| `ReadyToStartCallView.swift`, `LanguageEditorSheet.swift`, `DeleteAccountPauseCard.swift` | Deleted | VERIFIED | Absent from the tree and `project.pbxproj` |
+| `Utils/ProfileSettingsSnapshot.swift` | Trimmed snapshot, `patch(from:)`, `merging(_:)`, name errors | VERIFIED | Read in full. Used by both view models. |
+| `Utils/ProfileSaveErrorMapper.swift` | Field labels for a 422, else `userMessage` | VERIFIED | Called from both catch blocks. |
+| `Network/Error+UserMessage.swift` | `validationFieldErrors`, `userMessage` unchanged | VERIFIED | Branches on 422 and `ErrorCode`. |
+| `ProfileLabeledField.swift` | Optional `error`, default nil | VERIFIED | All other call sites unchanged. |
+| `SignupOverviewView.swift` | Hub bar pinned dark | VERIFIED (render needs device) | Three pins present. |
+| Test files `ProfileSettingsSnapshotTests`, `ProfileSettingsSaveTests`, `ProfileSaveErrorMapperTests` | Pure and save-path rows | VERIFIED | Passed in this run. |
+| Backend and Android todos, Availability todo | Follow-ups logged | VERIFIED | Present under `.planning/todos/pending/`. |
+| Phase 5 first-round artifacts (cropper, support contact, gates, deletion copy and blocker, accumulator) | As before | VERIFIED | All files still present. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| Mode Switch (4 entry points) | `ModeSwitchGate.request` | `Task { await ModeSwitchGate.request(mode) }` | WIRED | `HomeClientView:363`, `HomeExpertView:308`, `ExpertProfileHomeScreen:260`, `ClientProfileHomeScreen:248` |
-| Push plans | `requestModeSwitch(_:source: .push)` | `consumePendingPush()` | WIRED | Both shells; `.blockedByCall` leaves the tap queued; `onChange(of: callCenter.isCallActive)` replays |
-| `requestModeSwitch` | `ExpertModeGate.resolveSwitch` | After `lookUpSetupCompleted()` | WIRED | Generation, `isLoggedIn` and a fresh `isCallActive` are passed in |
-| `setupHubRequested` | `route = .signupSetup` | `ClickMe2026App.onChange` | WIRED | Only from a home route |
-| `scenePhase == .active` | `recheckSetupIfPending()` | `ClickMe2026App.onChange` | WIRED | Only on a home route |
-| Splash and Login | `resolvePostAuthLanding(roles:)` | Both call sites | WIRED | `SplashViewModel:76`, `LoginView:273` |
-| Hub Not now and Publish | `deferSetup()` and `completeSetup()` | `LoginView:179` and `:230` | WIRED | |
-| `SignupOverviewView .task` | `refreshEmailVerified` | `GET /auth/email/status` | WIRED | Endpoint exists in the backend |
-| `HelpView` | `SupportContact.mailtoURL` | `openURL` | WIRED | |
-| `DeleteAccountView` alert | `showMyBookings` environment | Both shells install it | WIRED | |
-| `ClientCancellationView` | `CancellationPoliciesView` | `navigationDestination(isPresented:)` | WIRED | |
+| `makeProfileUpdateBody()` (both VMs) | `ProfileSettingsSnapshot.patch(from:)` | current snapshot vs baseline | WIRED | |
+| `performAutoSave()` success (both VMs) | `baseline.merging(body)` | sent keys only | WIRED | |
+| `performAutoSave()` catch (both VMs) | `ProfileSaveErrorMapper.message(for:)` | `autoSaveError` alert | WIRED | |
+| `ProfileSaveErrorMapper` | `Error.validationFieldErrors` | 422 `VALIDATION_ERROR` | WIRED | |
+| First/Last Name fields (both screens) | `firstNameError` / `lastNameError` | `ProfileLabeledField(error:)` | WIRED | |
+| Expert meeting-link clear | `PATCH /expert/profile` `meeting_url: ""` | `makeExpertProfileUpdateBody()` | NOT_WIRED | Empty link becomes an omitted key (gap) |
+| Hub body | navigation bar dark pins | three modifiers | WIRED | |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data Variable | Source | Produces Real Data | Status |
 |----------|---------------|--------|--------------------|--------|
-| Setup hub checklist | `emailVerified` | `GET /auth/email/status` | Yes | FLOWING |
-| Setup hub gate | `setupCompleted` | `GET /expert/profile` via `refreshExpertProfile()` (fresh read after the call) | Yes | FLOWING |
-| Language settings | `languageItems`, `persistedLanguageIds` | `GET` profile, then `PATCH /user/profile` | Yes | FLOWING |
-| Notification toggles | `sections` | Notification preferences endpoint | Yes | FLOWING |
-| Delete Account alert | `blocker` | Decoded `ErrorCode` of a 409 | Yes | FLOWING |
+| Profile settings baseline | `baseline` | `GET /user/profile` hydrate, then `merging` the sent body | Yes | FLOWING |
+| Expert meeting link field | `meetingUrl`, `baselineMeetingUrl` | `refreshExpertProfile()` | Yes for set and change; a clear never reaches the server | ⚠️ HOLLOW for clear |
+| Save error alert | `autoSaveError` | Decoded 422 `errors[]` through the mapper | Yes | FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| 17 phase suites | `xcodebuild test -only-testing` for ExpertModeGate, AccountDeletionBlocker, AccountDeletionCopy, DeleteAccountViewModel, SignupAccumulator, ProfilePhotoCropper, FeedbackValidation, NotificationSettingsAutoSave, SupportContact, ProfileLanguagesSave, SelectionOrder, SignupEmailVerifiedSeed, RememberedLoginEmail, LocationFormatter, SignupBasicInfoProvince, SignupProfilePhotoSave and SetupDeferralStore (destination `id=E8F9FD72-...`, UI tests skipped) | `Test run with 149 tests in 17 suites passed`, `** TEST SUCCEEDED **` | PASS |
-| `setMode` is not reachable outside `UserManager` | grep `setMode(\|\.currentMode *=` outside `UserManager.swift` | 0 matches | PASS |
-| Support address in one file | grep of the address in `ClickMe2026` Swift files | Only `SupportContact.swift` | PASS |
+| Gap-closure suites | `xcodebuild test -only-testing` for ProfileSettingsSnapshotTests, ProfileSettingsSaveTests, ProfileSaveErrorMapperTests, ProfileLanguagesSaveTests (iPhone 17 Pro simulator) | `Test run with 64 tests in 4 suites passed`, `** TEST SUCCEEDED **` | PASS |
+| `setMode` not reachable outside `UserManager` | grep `setMode(\|\.currentMode *=` outside `UserManager.swift` | 0 matches | PASS |
+| Dead screens removed | `find` for `ReadyToStartCallView*`, `LanguageEditorSheet*`, `DeleteAccountPauseCard*` | none found | PASS |
+| Support address in one Swift file | grep `clickmeapp@` | only `SupportContact.swift:17` | PASS |
+| Meeting-link clear is sent | read `makeExpertProfileUpdateBody()` and the request type | empty link becomes nil, key omitted | FAIL |
 
-The full suite was not re-run. The orchestrator reported 820/820 passing.
+The full suite was not re-run by me. The orchestrator reported 869 tests in 88 suites passing at HEAD, with only the pre-existing template UI test `ExampleUITests.testExample` failing; that failure is not a phase regression.
 
 ### Probe Execution
 
-Step 7c: SKIPPED. No probes are declared in any PLAN or SUMMARY, and the phase is not a migration or tooling phase.
+Step 7c: SKIPPED. No probes are declared in any PLAN or SUMMARY, and this is not a migration or tooling phase.
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
 | SIGN-01 | 05-04 | Expert cannot publish without a photo | SATISFIED | Truth 1 |
-| SIGN-02 | 05-11 | Resuming signup keeps the verified email | SATISFIED (device check pending) | Truth 5 |
+| SIGN-02 | 05-11 | Resuming signup keeps the verified email | SATISFIED | Truth 5 |
 | SIGN-03 | 05-02 | Tags and languages keep tap order | SATISFIED | Truth 3 |
-| SIGN-04 | 05-04 | Country code normalized on publish | SATISFIED | Truth 4 |
-| SIGN-05 | 05-03 | Uploaded photo matches the crop | SATISFIED (device check pending) | Truth 2 |
-| SIGN-06 | 05-07, 05-10, 05-12, 05-16 | Expert switch with incomplete setup opens the hub | NEEDS HUMAN | Truth 6 |
-| SET-01 | 05-09 | Language edits save | SATISFIED | Truth 7 |
-| SET-02 | 05-05 | Email Us opens mail to the support address | SATISFIED (device check pending) | Truth 9 |
-| SET-03 | 05-15 | Pause Account card removed | SATISFIED | Truth 11 |
+| SIGN-04 | 05-04 | Country code normalized | SATISFIED | Truth 4 |
+| SIGN-05 | 05-03 | Photo matches the crop | SATISFIED (UAT PASS) | Truth 2 |
+| SIGN-06 | 05-07, 05-10, 05-12, 05-16, 05-18 | Expert switch with incomplete setup opens the hub | SATISFIED on device (UAT test 1), no automated orchestration test; G-05-1 render pending | Truths 6, 14 |
+| SET-01 | 05-09, 05-19, 05-20 | Language edits save | SATISFIED in code and unit tests; device re-test of item 22 pending. The adjacent meeting-link clear is a separate gap (truth 16) | Truths 7, 15, 16 |
+| SET-02 | 05-05 | Email Us opens mail to the support address | SATISFIED (UAT PASS) | Truth 9 |
+| SET-03 | 05-15 | Pause card removed | SATISFIED | Truth 11 |
 | SET-04 | 05-05 | No save on opening notification preferences | SATISFIED | Truth 8 |
-| SET-05 | 05-05 | Feedback needs at least 10 characters | SATISFIED | Truth 10 |
-| SET-06 | 05-08, 05-14, 05-15 | Accurate Delete Account copy and 409 blockers | NEEDS HUMAN (legibility) | Truths 11 and 12 |
-| SET-07 | 05-06, 05-17 | Dead screens wired in or deleted | SATISFIED (device check pending) | Truth 13 |
+| SET-05 | 05-05 | Feedback needs 10 characters | SATISFIED | Truth 10 |
+| SET-06 | 05-08, 05-14, 05-15 | Accurate Delete Account copy and 409 blockers | SATISFIED for copy; legibility unresolved | Truths 11, 12 |
+| SET-07 | 05-06, 05-17 | Dead screens wired in or deleted | SATISFIED (UAT PASS) | Truth 13 |
 
-All 13 IDs from the roadmap appear in at least one plan's `requirements` field. REQUIREMENTS.md maps no other ID to Phase 5, so there are no orphans. Plans 05-01 and 05-13 also claim `T8`, `D-02`, `D-04`, `D-11`, `D-12`, `D-14` and `D-16`. These are decision references (T8 was moved into the phase per the REQUIREMENTS.md note), not requirement IDs, and they are not an orphan problem.
+All 13 IDs from the roadmap appear in at least one plan's `requirements` field (05-18 lists SIGN-06; 05-19 and 05-20 list SET-01). `REQUIREMENTS.md` maps no other ID to Phase 5, so there are no orphans.
 
-Traceability bookkeeping: `REQUIREMENTS.md` still shows SIGN-06, SET-02, SET-06 and SET-07 unticked and "Pending", and the ROADMAP Phase 5 box is unchecked. SET-02 and SET-07 are code-complete by this verification. Tick them only after their device items pass. SIGN-06 and SET-06 are held back by Truths 6 and 12.
+Bookkeeping: `REQUIREMENTS.md` shows SIGN-01 to SIGN-06, SET-01, SET-03, SET-04 and SET-05 Complete, and SET-02, SET-06 and SET-07 Pending. SET-02 and SET-07 now have device PASS (UAT tests 3 and 5) and can be ticked. SET-06 should stay pending until the Delete Account legibility check runs. The 05-19 plan notes that SET-01 counts as closed again only after the item 22 device re-test and the CR-01 fix; the file still shows it Complete.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| 61 changed Swift files | - | TBD, FIXME, XXX, TODO, HACK, PLACEHOLDER | none | No markers in any file changed in this phase |
-| `Views/Screens/Settings/Delete account/DeleteAccountView.swift` | 115 | 80 pt spacer under a 163 pt pinned bar | Warning | Last disclosure group may be covered (Truth 12) |
-| `Views/Screens/Settings/Delete account/Subviews/DeleteAccountBrand.swift` | 24 | Unused `pauseIconBg` token | Info | Dead code left after the Pause card removal |
-| `SignupAccumulator.swift` | `checklist` | `profilePhoto: avatarUrl != nil` against `avatarUrl?.isEmpty ?? true` in `missingForPublish` | Info | Same as IN-01: an empty-string URL ticks the row but blocks Publish. Not reachable today because hydrate guards non-empty and the upload response is non-empty. |
-| `UserManager.swift` | 718-730 | `setupDeferral.clear()` runs for a push-sourced request | Warning | Same as WR-03: a push-initiated switch clears the user's "Not now" |
-| `UserManager.swift` | `refreshExpertProfile` | Can repopulate `expertProfile` after logout | Warning | Same as WR-02 and WR-01, open in `05-REVIEW-DISPOSITION.md` |
+| `Expert Mode/Settings/ExpertProfileSettingsViewModel.swift` | 327-345 | Empty meeting link coerced to nil, request sent with empty `professional_details`, then rebaselined | 🛑 Blocker (for truth 16) | Clear is silently lost, UI shows saved |
+| `Expert Mode/Settings/ExpertProfileSettingsViewModel.swift` | 331-338 | Stale comment: "server 422s on empty" | ℹ️ Info | Misleads the next editor, contradicts BACK-04 |
+| `Expert Mode/Settings/ExpertProfileSettingsViewModel.swift` | 406 | Empty trailing `// MARK: - Error mapping` section | ℹ️ Info | Dead scaffolding |
+| `ProfileSettingsSnapshot.swift` | 52-59 | Names trimmed with `.whitespaces`, not newlines | ℹ️ Info | IN-01, a newline-only name would pass the iOS guard and 422, now named by the mapper |
+| 13 changed Swift files in the gap plans | - | TBD, FIXME, XXX | none | No unreferenced debt markers |
+| `DeleteAccountView.swift` | 115 | 80 pt spacer under a 163 pt pinned bar | ⚠️ Warning | Truth 12, unchanged |
+| `UserManager.swift` | - | WR-03 to WR-06 from the first review | ⚠️ Warning | Still `open` in `05-REVIEW-DISPOSITION.md`. None contradicts a roadmap success criterion. |
 
-The six warnings in `05-REVIEW.md` (WR-01 to WR-06) and four info items (IN-01 to IN-04) are all recorded as `open` in `05-REVIEW-DISPOSITION.md`. None contradicts a roadmap success criterion. WR-03 and the WR-01 and WR-02 stale-write cases are edge races. They are worth a decision before the release build.
-
-Other checks:
-- `git status` shows an uncommitted `ClickMe2026/Localizable.xcstrings` change (75 insertions, 30 deletions of auto-extracted string-catalog entries). It is not part of any Phase 5 plan, and the UAT checklist already warns about it. Commit or discard it before building the release.
-- 05-UI-SPEC.md was force-approved after two revisions. This does not affect the code verdict.
+All 11 findings in `05-REVIEW-DISPOSITION.md` are `open`. CR-01 is the only one I treat as a gap. WR-01 is mostly a false alarm. WR-02 is an edge race. The rest stay warnings for a decision before the release build.
 
 ### Human Verification Required
 
-See the `human_verification` frontmatter list. In short:
+See the `human_verification` frontmatter list. These do not change the status while a gap exists, but they remain required for the project's definition of done (device check on a real iPhone):
 
-1. **SIGN-06 on a device** (checklist items 1 to 17): the hub opens for an unfinished expert, a finished expert enters Expert, airplane mode fails open (including right after Publish), no switch happens during a call, a push for the other mode waits until the call ends, and the foreground re-check opens the hub.
-2. **Delete Account legibility:** scroll to the bottom of the confirmation step on a small iPhone and at the largest Dynamic Type size. If the "Kept" group is hidden, replace the fixed spacer with a bottom `safeAreaInset` (the fix proposed in `05-UI-REVIEW.md`). This would then become a gap for SET-06.
-3. **Help > Email Us** opens Mail addressed to `clickmeapp@uptrendinvestments.net`.
-4. **Avatar crop:** the public avatar looks like the preview circle at a non-default zoom.
-5. **Cancellation policy link** from both the Bookings tab and a Home-route cancel, and Back.
-6. **Remaining checklist items:** SIGN-02 relaunch, SET-01 reopen, 409 blocker alerts and the remembered email.
+1. **G-05-1 re-test** (checklist item 46): `Not now` legible in Light plus Reduce Transparency, Liquid Glass Tinted and Dark.
+2. **G-05-6 re-test** (checklist item 22): empty-name account saves with no alert, inline name error, expert City and meeting-link edits.
+3. **Delete Account legibility** (UAT test 2, skipped): last "Kept" group readable on a small iPhone and at the largest Dynamic Type size.
+4. **Optional unrun items**: 12, 17, 24, 27, 45.
 
 ### Gaps Summary
 
-No gaps are confirmed. No truth FAILED, and no artifact is missing, a stub or unwired. Two items stop this from being `passed`:
+One gap, small and well bounded:
 
-- **SIGN-06 (Truth 6):** the decision logic is tested, but the `UserManager` orchestration is not. It covers the call guard, the supersede and sign-out-mid-lookup cases, the re-check and the push replay. A device run is the only evidence available.
-- **Delete Account disclosure legibility (Truth 12):** the copy is accurate against the backend cascade, but the pinned button bar may hide the last group on some devices. If the device check confirms it, record it as a gap and fix it before the iOS release.
+- **Meeting-link clear is dropped (truth 16).** Fix `makeExpertProfileUpdateBody()` to send `""` when the baseline held a link and the field is now empty, remove the stale 422 comment, and add a unit test on the body builder. Confirm BACK-04 is live in production first (the commit is on the backend's `origin/main`, and Phase 1 recorded it complete). If it turns out not to be live, show an explicit "can't clear the link yet" message instead of a checkmark. Run `/gsd-plan-phase 5 --gaps` for a one-task closure plan.
 
-Phase 5 should not be marked complete in ROADMAP.md or REQUIREMENTS.md until the device checklist results are recorded.
+Everything else in the gap-closure scope holds up: the changed-group patch matches the backend's `.strict()` and `min(1)` schema, the 422 mapper branches on `ErrorCode` and never shows raw validator text, the name errors are wired on both screens, and the hub bar pins match the sibling screens. The G-05-1 render and the G-05-6 empty-profile behavior still need their device re-tests.
 
 ---
 
-_Verified: 2026-11-13T23:30:00Z_
+_Verified: 2026-11-15T06:00:00Z_
 _Verifier: Claude (gsd-verifier)_

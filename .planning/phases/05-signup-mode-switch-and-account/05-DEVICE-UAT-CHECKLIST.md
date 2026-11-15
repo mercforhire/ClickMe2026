@@ -57,7 +57,7 @@ Expected:
 - The app stays in Client mode underneath (it never stores Expert and bounces).
 - The hub shows a `Not now` button at the top left and **no back chevron**.
 
-Result:
+Result: PASS (2026-11-14); `Not now` legibility issue logged as G-05-1, fixed by 05-18, re-test PASS 2026-11-15
 
 ### 2. SIGN-06 — the hub stays open; the app never jumps back to a home route (05-07)
 
@@ -67,7 +67,7 @@ Steps: from item 1, stay on the hub for about 30 seconds. Open a checklist step 
 
 Expected: the hub stays on screen the whole time. The app never snaps back to client home or Expert home while the hub is open.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 3. SIGN-06 — a finished expert enters Expert home (05-07)
 
@@ -77,7 +77,7 @@ Steps: as the finished expert, in Client mode: Profile > Mode Switch > Expert.
 
 Expected: Expert home opens (Dashboard). The hub does not appear.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 4. SIGN-06 / D-02 — a failed setup lookup fails open: airplane mode enters Expert, also right after Publish (05-07)
 
@@ -90,7 +90,7 @@ Steps:
 
 Expected: in both cases Expert home opens with no error and no hub. A cached "setup incomplete" profile never sends a user to the hub; only a successful answer of "incomplete" does.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 5. SIGN-06 / D-01 — the hub chrome on every entry: no back chevron, swipe-back blocked, checklist steps still go back (05-16)
 
@@ -105,7 +105,7 @@ Steps: open the hub by each route and try the edge swipe from the left on the hu
 
 Expected: on every entry the hub has `Not now` and no back chevron, and the edge swipe does nothing. Swipe-back from a checklist step pushed on top returns to the hub (swipe-back is restored for that step). Other screens in the app still swipe back.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 6. SIGN-06 — Not now lands on client home on a fresh Explore tab (05-16)
 
@@ -115,7 +115,7 @@ Steps: on the hub from item 1, tap `Not now`.
 
 Expected: client home opens on a fresh Explore tab, in Client mode. No confirmation and no toast. The `Not now` text is the quiet secondary grey-green style, not the bright accent.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 7. SIGN-06 / D-01 — the deferral survives a relaunch (05-10, 05-16)
 
@@ -125,7 +125,7 @@ Steps: after item 6, force-quit the app and relaunch it. Then background it and 
 
 Expected: client home, no hub, after the relaunch and after each foreground return.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 8. SIGN-06 / D-01 — asking for Expert again clears the deferral and reopens the hub (05-10, 05-16)
 
@@ -135,7 +135,7 @@ Steps: with the deferral set (item 7), Profile > Mode Switch > Expert. The hub o
 
 Expected: the hub opens again on the Mode Switch tap, and after the relaunch the hub opens at launch (the deferral was cleared by asking again, and setup is still unfinished).
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 9. SIGN-06 / D-01 — signing out clears the deferral (05-10, 05-16)
 
@@ -145,7 +145,7 @@ Steps: tap `Not now` on the hub (deferral set). Sign out (Profile > Log Out), th
 
 Expected: the hub opens after the login. The deferral did not carry across the sign-out.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 10. SIGN-06 — Publish from the hub lands on client home, and Expert then works (05-16)
 
@@ -155,7 +155,7 @@ Steps: as the unfinished expert, finish the checklist from the hub and tap Publi
 
 Expected: Publish lands on client home (the existing landing), and Mode Switch > Expert now enters Expert home with no hub.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 11. SIGN-06 — Mode Switch is blocked during a call on all four screens (05-07, 05-10)
 
@@ -169,7 +169,7 @@ Steps: with a call active (use the second device to book and join a short sessio
 
 Expected: each shows the alert `End the call to switch modes.` and changes nothing: same mode, the call screen unchanged. The two shell routes had no guard before Phase 5, so check them closely. After the call ends, the switch works.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 12. SIGN-06 / D-03 — Mode Switch cards are dimmed while a slow lookup runs (05-10, UI-SPEC L1)
 
@@ -179,7 +179,8 @@ Steps: Settings > Developer > Network Link Conditioner (a very slow profile), th
 
 Expected: the two cards are dimmed and disabled (no spinner, no toast, no new text) until the lookup answers, and a second tap cannot start a second switch.
 
-Result:
+Result: skipped
+reason: Deferred follow-up: Network Link Conditioner not set up; optional, unit-tested (2026-11-15)
 
 ### 13. SIGN-06 / D-03 — a push for the other mode tapped during a call waits until the call ends (05-10)
 
@@ -189,7 +190,7 @@ Steps: on the dual-role account in Client mode, start a call. From the second de
 
 Expected: while the call is active the mode and the call screen are unchanged and no alert appears (a push is not a user tap, so there is no "End the call" message). Once the call ends, the app switches mode and opens the push's destination exactly once.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 14. SIGN-06 / D-01 — an expert-targeted push for an unfinished expert opens the notifications list, not the hub (05-10)
 
@@ -199,7 +200,7 @@ Steps: as the unfinished expert in Client mode, tap a push that targets the Expe
 
 Expected: the notifications list opens. The setup hub is never opened by a push.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 15. SIGN-06 / D-02 — the foreground re-check opens the hub after an offline launch (05-12, RESEARCH A6)
 
@@ -211,7 +212,7 @@ Steps:
 
 Expected: home opens first, then after the reopen the setup hub opens. If it never does, A6 is wrong (App-level `scenePhase` does not report `.active`) and the fix is to move the call into the two shells' `scenePhase` handlers; write that in Result.
 
-Result:
+Result: PASS (2026-11-14; RESEARCH A6 confirmed, App-level scenePhase re-check fires)
 
 ### 16. SIGN-06 / D-04 — a client-only account is never promoted by a launch or a foreground (05-10, 05-12)
 
@@ -221,7 +222,7 @@ Steps: sign in as the client-only account in Client mode, relaunch, then run the
 
 Expected: nothing happens. No hub, no Expert mode, no offer of Expert. Neither launch nor foreground makes an `/expert/*` call for this account (check with your backend logs or by confirming the account still has no expert profile afterward). The explicit Expert tap on Mode Switch is the only thing that may promote it (D-04); try that last, on the throwaway account only, and write what you saw.
 
-Result:
+Result: PASS (2026-11-14) steps 1-3; step 4: the setup hub opened and the app stays in Client until setup is published; server-side promotion not read back
 
 ### 17. SIGN-06 — the foreground re-check never opens the hub over a live call (05-12)
 
@@ -231,7 +232,8 @@ Steps: repeat the item 15 setup so a re-check is pending (offline launch as the 
 
 Expected: the hub does not open while the call is active. It opens on a later foreground after the call ends.
 
-Result:
+Result: skipped
+reason: Deferred follow-up: needs a booked live call on the unfinished account; optional, items 11 and 13 cover in-call behavior (2026-11-15)
 
 ### 18. SIGN-01 — publish needs a photo and names the missing step (05-04)
 
@@ -241,7 +243,7 @@ Steps: as an expert in signup with everything done except the profile photo, go 
 
 Expected: the alert `Couldn't publish profile` with the message `Finish these first: Add profile picture.` and an `OK` button. No request is sent (the profile stays unpublished). With the photo added, Publish succeeds.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 19. SIGN-05 — the uploaded photo matches the preview circle (05-03)
 
@@ -251,7 +253,7 @@ Steps: in signup Profile Photo, pick a **portrait** camera-roll photo, drag the 
 
 Expected: the avatar is framed the same as the preview circle (centred, same zoom, upright, not the whole original). For the downloaded avatar the zoom slider is disabled and Save succeeds without uploading.
 
-Result:
+Result: PASS (2026-11-14; 05-UAT.md test 4)
 
 ### 20. SIGN-03 — tags and languages keep the order tapped (05-02)
 
@@ -261,7 +263,7 @@ Steps: in signup, tap three expertise tags in a deliberate non-alphabetical orde
 
 Expected: the Selected Tags strip and the language rows show your tapped order. The first tag tapped is the primary tag on the saved profile. Deselecting then reselecting one puts it last.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 21. SIGN-04 / D-05 — country is normalized and the province is optional on publish (05-04)
 
@@ -271,7 +273,7 @@ Steps: in signup Basic Info, leave **Province/State (optional)** empty, choose a
 
 Expected: the placeholder reads `Province/State (optional)`, Basic Info completes with no province, and Publish succeeds. The country shows by name on the profile. (The `"ca "` to `CAN` normalization is unit-tested; you cannot type a malformed code from the picker.)
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 22. D-07 — a province can be cleared in settings and stays cleared (05-04, 05-09)
 
@@ -281,7 +283,7 @@ Steps: on a profile that has a province, open Profile > profile settings (client
 
 Expected: the field is still empty after reopening. No error. (The wire rule, `""` and never `null`, is unit-tested on both screens.)
 
-Result:
+Result: PASS (2026-11-14) on a complete profile; FAIL on an incomplete profile logged as G-05-6, fixed by 05-19/05-20, re-test below PASS
 
 **Re-test for G-05-6 (plans 05-19, 05-20)**
 
@@ -305,7 +307,7 @@ Expected:
 - In step 5, "Please enter your first name." shows in red under First Name with no alert, and City saves. After reopening, First Name shows the old name and City the new value. Typing the name back removes the error.
 - A9 is unchanged: Done in the language picker with nothing selected still shows "Keep at least one language."
 
-Result:
+Result: PASS (2026-11-15; 05-UAT.md test 9)
 
 ### 23. D-06 — locations read "City, Country" or "City, Province, Country" with no stray comma (05-04)
 
@@ -315,7 +317,7 @@ Steps: as an expert, open a client's profile from a booking or a chat where that
 
 Expected: the Location row reads `{City}, {Province}, {Country name}` with a province and `{City}, {Country name}` without one: no stray comma, no blank.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 24. SIGN-02 — resuming signup keeps the verified email ticked (05-11)
 
@@ -325,7 +327,8 @@ Steps: start an expert signup, verify the email, force-quit before publishing, r
 
 Expected: the hub opens with Verify email ticked, and the progress ring includes it. (A brief moment of Verify email unticked before the status read returns is the accepted U4 flash, judged in item 45.)
 
-Result:
+Result: skipped
+reason: Deferred follow-up: needs another unpublished expert signup; not run in the Phase 5 device pass (2026-11-15)
 
 ### 25. SET-01 — client profile language edits save and come back from the server, including a custom language (05-09)
 
@@ -335,7 +338,7 @@ Steps: as a client, Profile > profile settings > Spoken Languages. Change the se
 
 Expected: the new languages and their order are shown from the server, and any custom language is still there (the picker cannot delete customs). The picker is the searchable `LanguageSelectionView`, not the old 12-label sheet.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 26. SET-01 — expert profile language edits save the same way (05-09)
 
@@ -345,7 +348,7 @@ Steps: repeat item 25 on the Expert profile settings screen.
 
 Expected: same result as item 25. A text-only edit (change the bio, not the languages) leaves the languages untouched.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 27. SET-01 / EM4 — a profile with no languages shows "Add languages" and the chips wrap (05-09)
 
@@ -355,7 +358,8 @@ Steps: open settings on a profile that has zero languages (or look at the previe
 
 Expected: with none, the row shows `Add languages` in muted text under `Spoken Languages`. With many, the chips wrap onto more lines instead of running off screen. Done with zero selected on a profile that already had none does nothing (no alert).
 
-Result:
+Result: skipped
+reason: Deferred follow-up: optional, unit-tested; not run in the Phase 5 device pass (2026-11-15)
 
 ### 28. SET-01 / A9 — a Done with nothing selected keeps the previous languages (05-09; UI-SPEC A9, EM4) — YOUR DECISION
 
@@ -365,7 +369,7 @@ Steps: on a profile that has languages, open Spoken Languages, deselect every la
 
 Expected: the alert `Couldn't save changes` with the message `Keep at least one language.` and an `OK` button; the previous languages are still shown; no request is sent (confirm by reopening the screen). Then decide whether you want a user to be able to clear all languages.
 
-Result: (KEEP = never save an empty list, or CHANGE = allow it)
+Result: PASS (2026-11-14) - decision: KEEP (never save an empty list)
 
 ### 29. SET-04 — opening Notification preferences saves nothing (05-05)
 
@@ -375,7 +379,7 @@ Steps: from the second device (or Android), turn one preference off on the accou
 
 Expected: the preference you turned off is still off, and no saved indicator or error appears on open. Flipping one toggle shows the saved indicator once.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 30. SET-05 — Feedback needs 10 characters (05-05)
 
@@ -385,7 +389,7 @@ Steps: Settings > Feedback. Type 9 characters and submit. Then type text padded 
 
 Expected: under 10 (after trimming) shows the red inline message `Please enter at least 10 characters.` in small regular-weight text, keeps your text and sends nothing. The message clears only once the text is long enough. 10 characters send, and the form clears with the thanks (unchanged behavior).
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 31. SET-02 — Help > Email Us opens Mail addressed to the support inbox (05-05)
 
@@ -395,7 +399,7 @@ Steps: Profile > Help > Email Us.
 
 Expected: the default mail app opens with a new message addressed to `clickmeapp@uptrendinvestments.net`. Close it without sending. If you have no mail account set up, write `SKIPPED (why)`.
 
-Result:
+Result: PASS (2026-11-14; 05-UAT.md test 3)
 
 ### 32. T8 / D-14 — Login pre-fills the last email after each sign-out path, password empty (05-01)
 
@@ -405,7 +409,7 @@ Steps: sign in with an account, then Profile > Log Out. Look at the Login screen
 
 Expected: the email field opens with the last signed-in email and the password field is empty, after the sign-out and after a relaunch. The field is editable. The suspension alert (if you saw one) is unchanged, just over a pre-filled email. A very long email scrolls in the field.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 33. T8 / D-14 — the remembered email is forgotten after a successful account deletion (05-01)
 
@@ -415,7 +419,7 @@ Steps: sign in as the throwaway account, delete it through Delete Account (item 
 
 Expected: the email field is empty. A deletion that fails (for example a wrong password, or a 409 blocker) keeps the email.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 34. SET-06 / SET-03 — Delete Account, confirmation step: permanence line, upfront line, three groups, no Pause card (05-15)
 
@@ -429,7 +433,7 @@ Expected:
 - There is **no** `Before you go...` title and **no** Pause Account card.
 - The copy is readable, with even spacing (about 16 pt between blocks), and at the largest size every group wraps with nothing truncated, the screen scrolls, and the last line stays clear of the bottom buttons.
 
-Result:
+Result: PASS (2026-11-14) for copy; Dynamic Type clearance covered by the re-test below
 
 **Re-test for SET-06 legibility (plan 05-22)**
 
@@ -457,7 +461,7 @@ Expected:
 - In step 3, Cancel closes the screen and Delete Account opens the feedback step.
 - During a call, Delete Account still shows `End the call to delete your account.` (optional; item 47 covers it).
 
-Result:
+Result: PASS (2026-11-15; 05-UAT.md test 8)
 
 ### 35. SET-06 — Delete Account, feedback step: headline and permanence line only (05-15)
 
@@ -467,7 +471,7 @@ Steps: from item 34 tap Delete Account to reach the reason and password step.
 
 Expected: only the headline and `Deleting your account is permanent and can't be undone.` sit above the reason form (the long copy was read once, on the first step). The step order is unchanged: confirmation, reason and password, farewell.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 36. SET-06 / U3 — saved cards: the copy makes no claim either way (05-15; UI-SPEC U3, A6) — YOUR DECISION
 
@@ -477,7 +481,7 @@ Steps: read the Delete Account copy once more (item 34). Decide whether it shoul
 
 Expected: nothing on screen changes in this phase. You record whether the silence is acceptable.
 
-Result: (KEEP = no card claim for this release, or CHANGE (what))
+Result: PASS (2026-11-14) - decision: KEEP (no card claim for this release)
 
 ### 37. SET-06 — a client with a confirmed upcoming session gets the blocker alert, and View My Bookings opens My Bookings (05-08)
 
@@ -487,7 +491,7 @@ Steps: Delete Account > Delete Account, enter the reason and password, confirm. 
 
 Expected: the alert titled `You can't delete your account yet` with `You have upcoming sessions booked. Cancel them, then try again.` and two buttons, `View My Bookings` and `OK`. You stay on the reason step. `View My Bookings` opens the Bookings tab (the Profile stack is back at its root when you return to it). A second attempt asks the server again and shows the same alert; it does not hang on a spent token.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 38. SET-06 — the blocker alert from the Expert shell: View My Bookings opens the expert Bookings tab (05-14)
 
@@ -497,7 +501,7 @@ Steps: Profile > Delete Account, confirm with the password, read the alert, tap 
 
 Expected: `You have upcoming bookings as an expert. Cancel or finish them, then try again.` with `View My Bookings` and `OK`. The button opens the expert Bookings tab and the Profile tab is back at its root when reopened. As a client, `View My Bookings` on Request Sent still opens My Bookings (unchanged).
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 39. SET-06 — a dual-role user in the wrong mode sees the switch-mode message and no bookings button (05-08)
 
@@ -507,7 +511,7 @@ Steps: in Client mode, start Delete Account and confirm. Switch to Expert mode a
 
 Expected: when the blocker is on the other mode's side, the message names the mode to switch to (`You have upcoming bookings as an expert. Switch to Expert mode to cancel or finish them, then try again.` or `You have upcoming sessions booked as a client. Switch to Client mode to cancel them, then try again.`) and there is **no** `View My Bookings` button, only `OK`. When the blocker is on the active mode's side, the button shows (items 37 and 38).
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 40. SET-06 — deleting a throwaway account completes the flow (05-01, 05-15)
 
@@ -517,7 +521,7 @@ Steps: Delete Account > Delete Account, choose a reason, enter the password, con
 
 Expected: the farewell screen appears, then Login. The earlier steps behave as in items 34 and 35, and the `Delete Account` button is the only red control.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 41. SET-07 — the Cancellation policy link from the Bookings-tab cancel flow (05-06, RESEARCH A5)
 
@@ -527,7 +531,7 @@ Steps: as a client with a confirmed booking, Bookings tab > the booking > Cancel
 
 Expected: the link (underlined, green, centred between the 24-hour notice and the buttons) opens the Cancellation Policies screen (three cards). Back returns to the confirmation with the same reason still selected. If the link does nothing or the screen does not push, A5 is wrong; the fallback is a sheet, and you write that in Result.
 
-Result:
+Result: PASS (2026-11-14; 05-UAT.md test 5)
 
 ### 42. SET-07 — the Cancellation policy link from a Home-route cancel (05-06, RESEARCH A5)
 
@@ -537,7 +541,7 @@ Steps: open a booking from the Explore tab's upcoming card (the Home-route cance
 
 Expected: the same as item 41, pushed onto the Explore stack, with the reason kept.
 
-Result:
+Result: PASS (2026-11-14; 05-UAT.md test 5)
 
 ### 43. SET-07 — the corrected policy copy and the refund footnote (05-06)
 
@@ -547,7 +551,7 @@ Steps: on the Cancellation Policies screen read How to Initiate a Cancellation. 
 
 Expected: the intro reads `To cancel a booking, follow the steps below. You can start a cancellation from the Bookings tab until the session ends.` Step 3 reads `Tap 'Cancel'.` The refund footnote appears only when a refund applies and reads `Your bank decides how long a refund takes to appear.` with no business-days promise.
 
-Result:
+Result: PASS (2026-11-14)
 
 ### 44. SET-07 / U2 — the policy link's tap target (UI-SPEC U2) — YOUR DECISION
 
@@ -557,7 +561,7 @@ Steps: tap the `Cancellation policy` link about ten times with a normal thumb on
 
 Expected: it opens reliably. Note any mis-tap.
 
-Result: (KEEP = leave as shipped, or CHANGE (what), for example a 44 pt hit area)
+Result: PASS (2026-11-14) - decision: KEEP (leave as shipped)
 
 ### 45. SIGN-02 / U4 — the Verify email flash on resume (UI-SPEC U4) — YOUR DECISION
 
@@ -567,7 +571,8 @@ Steps: do item 24 again, this time watching the checklist as the hub appears, on
 
 Expected: at most a brief flash of Verify email unticked, then ticked, with the progress ring updating to match.
 
-Result: (KEEP = accept the flash, or CHANGE (what))
+Result: skipped
+reason: Deferred follow-up: U4 decision KEEP for now (accept the flash); flash not observed on a device, needs another unpublished expert signup (2026-11-15)
 
 ### 46. SIGN-06 / A1 — the Not now button style (UI-SPEC A1) — YOUR DECISION
 
@@ -577,7 +582,7 @@ Steps: look at the hub with a few steps done.
 
 Expected: the checklist and progress ring are the focal point; `Not now` is visible and tappable (system toolbar button, 44 pt target) without competing with Continue.
 
-Result: (KEEP, or CHANGE (what))
+Result: PASS (2026-11-14) - decision: KEEP (quiet secondary style)
 
 **Re-test for G-05-1 (plan 05-18)**
 
@@ -599,7 +604,7 @@ Steps:
 
 Expected: in every combination `Not now` is pale text on a dark capsule (never a light grey capsule) and reads clearly. It sits at the top left at body size, is not accent green, and has no back chevron beside it. Tapping it lands on client home.
 
-Result:
+Result: PASS (2026-11-15; 05-UAT.md test 7)
 
 ### 47. SET-06 — Delete during a call, and the session-in-progress blocker (05-08) *optional*
 
@@ -609,7 +614,7 @@ Steps: with a call active, open Delete Account and tap Delete Account on each st
 
 Expected: during a call, the alert `End the call to delete your account.` on both steps (existing behavior, unchanged by Phase 5). With a session in progress or about to start, the blocker alert reads `A session is in progress or starts within 15 minutes. Wait until it ends, then try again.` with `View My Bookings` in either mode (`SKIPPED (why)` if you have no session starting soon).
 
-Result:
+Result: PASS (2026-11-14)
 
 ## Re-test for CR-01 (plan 05-21) — a cleared Skype / Zoom link stays cleared, and a reload shows the server's link
 
@@ -643,7 +648,7 @@ Expected:
 - With no second device or Simulator, write `SKIPPED (no second device)` for steps 4 and 5. The reload rule is unit-tested (ExpertMeetingLinkReloadTests).
 - Bookings made before the clear keep the link they were booked with, because the backend copies it at booking time. That is expected, not a failure.
 
-Result:
+Result: PASS (2026-11-15; 05-UAT.md test 10)
 
 ---
 

@@ -3,14 +3,30 @@ phase: 05
 review: 05-REVIEW.md
 titles: json
 findings:
+  - id: CR-01
+    severity: critical
+    disposition: open
+    title: "Clearing the meeting link is never sent, yet the screen shows \"saved\""
   - id: WR-01
     severity: warning
     disposition: open
-    title: "`resolvePostAuthLanding` writes state after the session may have ended"
+    title: "`ProfileSaveErrorMapper` hides the useful message for expert-only 422 fields, and drops unmapped fields when any mapped one is present"
   - id: WR-02
     severity: warning
     disposition: open
-    title: "`refreshExpertProfile` repopulates `expertProfile` after logout"
+    title: "Overlapping auto-saves are not serialised"
+  - id: IN-01
+    severity: info
+    disposition: open
+    title: "Inconsistent whitespace trimming"
+  - id: IN-02
+    severity: info
+    disposition: open
+    title: "The new inline error text has no accessibility treatment"
+  - id: IN-03
+    severity: info
+    disposition: open
+    title: "Test and code hygiene"
   - id: WR-03
     severity: warning
     disposition: open
@@ -27,41 +43,30 @@ findings:
     severity: warning
     disposition: open
     title: "Flipping a notification toggle back during an in-flight save cancels it and skips the resave"
-  - id: IN-01
-    severity: info
-    disposition: open
-    title: "The checklist and the publish gate disagree on an empty `avatarUrl`"
-  - id: IN-02
-    severity: info
-    disposition: open
-    title: "Tapping the already-active Expert mode triggers a lookup and can open the setup hub"
-  - id: IN-03
-    severity: info
-    disposition: open
-    title: "`DeleteAccountView` reads `UserManager.shared` directly instead of the view model's injected manager"
   - id: IN-04
     severity: info
     disposition: open
     title: "`RememberedLoginEmailTests` mutates the real Keychain through the singleton"
-open: 10
-total: 10
-recorded: 2026-11-13T22:59:14.045Z
+open: 11
+total: 11
+recorded: 2026-11-15T05:11:10.439Z
 ---
 
 # Phase 05: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
+| CR-01 | critical | open | - |
 | WR-01 | warning | open | - |
 | WR-02 | warning | open | - |
-| WR-03 | warning | open | - |
-| WR-04 | warning | open | - |
-| WR-05 | warning | open | - |
-| WR-06 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-02 | info | open | - |
 | IN-03 | info | open | - |
-| IN-04 | info | open | - |
+| WR-03 | warning | open | - (not in the current review) |
+| WR-04 | warning | open | - (not in the current review) |
+| WR-05 | warning | open | - (not in the current review) |
+| WR-06 | warning | open | - (not in the current review) |
+| IN-04 | info | open | - (not in the current review) |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.

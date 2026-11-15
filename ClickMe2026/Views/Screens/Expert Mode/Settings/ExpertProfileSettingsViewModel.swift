@@ -237,11 +237,16 @@ final class ExpertProfileSettingsViewModel {
         // `meetingUrl` reflect the latest server state. Silent on
         // failure — the cached copy (if any) stays displayed. Re-baseline
         // the meeting link AFTER its hydration so `.onChange` firing on the
-        // just-loaded value doesn't trip a no-op PATCH.
+        // just-loaded value doesn't trip a no-op PATCH. The link comes from
+        // `loadedMeetingLink(from:current:)`.
         try? await userManager.refreshExpertProfile()
         expertiseEntries = userManager.expertProfile?.expertiseTags ?? expertiseEntries
-        meetingUrl = userManager.expertProfile?.professionalDetails.meetingUrl ?? meetingUrl
+        meetingUrl = Self.loadedMeetingLink(from: userManager.expertProfile?.professionalDetails, current: meetingUrl)
         baselineMeetingUrl = trimmedMeetingUrl
+    }
+
+    static func loadedMeetingLink(from details: ExpertProfileData.ProfessionalDetails?, current: String) -> String {
+        details?.meetingUrl ?? current
     }
 
     func hydrate(from data: UserProfileData) {

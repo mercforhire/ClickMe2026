@@ -1,7 +1,7 @@
 ---
 phase: 05-signup-mode-switch-and-account
 verified: 2026-11-15T07:30:00Z
-status: human_needed
+status: passed
 score: 13/16 must-haves verified
 covered_files: [
     ".planning/phases/05-signup-mode-switch-and-account/05-01-PLAN.md",

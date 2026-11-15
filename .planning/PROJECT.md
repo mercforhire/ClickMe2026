@@ -31,6 +31,8 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - ✓ Offline-tolerant auto-login — existing (`f43f38d`)
 - ✓ FCM push for chat and booking requests — existing (other categories broken, see N1)
 - ✓ Backend fixes K1–K5, K9–K12, K14, K16, plus the backend halves of H7 and N1 — Phase 1 (deployed to production at `d86bf97`)
+- ✓ Signup and mode switch: S1, S3–S7, plus S2 optional province (D-05 to D-07) — Phase 5 (device UAT 2026-11-14/15; S3 resume check deferred, unit-tested)
+- ✓ Settings / profile / account: T1–T7, plus T8 remember-login-email (D-14) — Phase 5 (device UAT 2026-11-14/15)
 
 ### Active
 
@@ -40,11 +42,9 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - [ ] Client bookings: B1–B19 (incl. critical B6 reschedule response)
 - [ ] Payments: P1, P2, P3, P5, P6
 - [ ] Explore / profile / favorites / reviews: X1–X6 (likely X2)
-- [ ] Signup and mode switch: S1, S3–S7
 - [ ] Expert mode: E1–E8, E11–E18 (likely E14)
 - [ ] Chat: H1–H9 (H7 needs backend, H8 needs re-test)
 - [ ] Push: N1–N4 (N1 needs backend)
-- [ ] Settings / profile / account: T1–T7
 - [ ] Backend fixes still open: K6, K7, K15 and Q2 refund retry (BACK-19) are deployed but await real-money checks in Phase 4; K8 and K13 are not delivered (wave 3c parked until SIGN-06)
 - [ ] Backend: handle card removal made inside Stripe's PaymentSheet (T-01-32 accepted risk; must ship before the iOS release)
 - [ ] EXPL-07: Explore loads when a featured topic has no currency (fix built; device check in Phase 4)
@@ -54,7 +54,7 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - Deliberate Android deviations D1–D9 (loading standard, optimistic favorites, booking IDs on rows, private note on details, etc.) — product choices, not iOS bugs; port later only if wanted
 - Already-fixed items P7, E9, E10, T9 and the by-design P8/P9 config — nothing to do (rotate the preview JWT separately if it was ever shared)
 - Android code changes — Android is a separate project; this project keeps backend changes compatible with the current Android build and logs any Android follow-ups instead
-- P4 (3DS cancel toast), S2 (optional province), S8 (password digit rule), T8 (remember-login-email) — by-design differences, unless the related decision (Q1/Q5) moves them in
+- P4 (3DS cancel toast), S8 (password digit rule) — by-design differences (S2 and T8 were moved in by Phase 5)
 
 ## Context
 
@@ -86,18 +86,19 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 | Settle open product questions (inventory Q1–Q8) in each phase's discuss step | Decide with the code in front of the user, not up front | — Pending |
 
 | Drop deploy wave 3c (BACK-08, BACK-13) | It would stop client-only accounts on App Store build 6 from becoming experts; no backend change may break the live build | ✓ Good — revisit with SIGN-06 |
+| Defer BACK-13 past this release; gate Expert mode on iOS instead (Phase 5 D-04) | The iOS gate fixes the user-facing bug without a backend change that build 6 and Android rely on | ✓ Good — SIGN-06 passed device UAT 2026-11-14 |
 | Defer real-money smoke checks to Phase 4 payment UAT | Avoid real holds now; mocked tests cover the logic | — Pending (backlog 999.1, 999.2) |
 | Backend guard for the Explore free-topic decode failure | Build 6 can't get an iOS fix until release | ✓ Good — migration applied 2026-11-09 |
 
 ### Open product questions (settle in the affected phase's discuss step)
 
-- Q1 Merge `feature/remember-login-email` (iOS `b0629d9`)?
+- Q1 Merge `feature/remember-login-email` (iOS `b0629d9`)? — settled in Phase 5 (05-CONTEXT.md)
 - Q2 Expert cancel: always a full refund, or the backend's 24 h rule? (E13, B8)
 - Q3 Long-lead SCA recovery on iOS, or just route the push as Android does? (B15)
 - Q4 Dismissed payment sheet with a preselected card: cancel or confirm? (P1)
-- Q5 Optional province and a gated Expert-mode switch? (S2, S7)
+- Q5 Optional province and a gated Expert-mode switch? (S2, S7) — settled in Phase 5 (05-CONTEXT.md)
 - Q6 Fix dead iOS pushes via backend `category` for iOS or by extending the iOS parser? (N1)
-- Q7 Delete or wire in `CancellationPoliciesView` and `ReadyToStartCallView`? (T7)
+- Q7 Delete or wire in `CancellationPoliciesView` and `ReadyToStartCallView`? (T7) — settled in Phase 5 (05-CONTEXT.md)
 - Q8 Re-test H8 ("Read" label) on a device before planning it
 
 ## Evolution
@@ -118,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-09 after Phase 1*
+*Last updated: 2026-11-15 after Phase 5*

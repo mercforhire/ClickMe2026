@@ -1,43 +1,43 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 05
-current_phase_name: Signup, Mode Switch and Account
+current_phase: 2
+current_phase_name: Shared iOS Plumbing
 status: verifying
-stopped_at: Completed 05-22-PLAN.md
-last_updated: "2026-11-15T06:32:17.094Z"
+stopped_at: Phase 05 complete, ready to verify Phase 2
+last_updated: "2026-11-15T20:13:16.350Z"
 last_activity: 2026-11-15
-last_activity_desc: Phase 05 execution started
-state_head: 5c9cc95b45175b7a2cb7aed98caa02945454c58f
+last_activity_desc: Phase 05 complete, transitioned to Phase 2
+state_head: 0f4836a321edd66090738db70eb7a32f3db373cf
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 97
   completed_plans: 97
-  percent: 13
+  percent: 25
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-09)
+See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 05 — Signup, Mode Switch and Account
+**Current focus:** Phase 02 — Shared iOS Plumbing (executed; device UAT pending)
 
 ## Current Position
 
-Phase: 05 (Signup, Mode Switch and Account) — EXECUTING
-Plan: 22 of 22
+Phase: 2 — Shared iOS Plumbing
+Plan: 15
 Status: Phase complete — ready for verification
-Last activity: 2026-11-15 — Phase 05 execution started
+Last activity: 2026-11-15 — Phase 05 complete, transitioned to Phase 2
 
-Progress: [█░░░░░░░░░] 13%
+Progress: [███░░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26
+- Total plans completed: 48
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -46,6 +46,7 @@ Progress: [█░░░░░░░░░] 13%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 26 | - | - |
+| 05 | 22 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -409,6 +410,7 @@ Captured todos:
 - [Phase 1]: Refund retry fix (user chose option A, 2026-11-08) is live in production at backend `d86bf97` (plans 01-24 to 01-26, user push 2026-11-09). Mocked Stripe only: no real failed refund has been retried and can be forced safely on live data. The user reported no flagged rows; the optional no-money check on build 6 and Android was not reported, so that claim rests on a code read. Four related gaps are open in deferred-items.md. BACK-19 stays Pending until the 01-19 checklist is run.
 - [Phase 1]: BACK-19 production smoke not run (user skip 2026-11-08); run the 01-19 checklist before it closes, at the latest during Phase 4 payment UAT.
 - BACK-08 and BACK-13 not delivered (wave 3c dropped 2026-11-08). The silent client-to-expert promotion and the tax-ID prompt remain in production. Phase 5 SIGN-06 pairs with BACK-13 and needs a re-decision. Code parked on backend branch wave-3c.
+- [Phase 5]: Five device checklist items deferred as follow-ups on 2026-11-15 (05-UAT.md ## Deferred Follow-Ups): 12, 17 and 27 (optional, unit-tested), 24 (SIGN-02 resume keeps the verified email; SIGN-02 ticked on unit evidence) and 45 (U4 flash, KEEP for now). Items 24 and 45 need a fresh unpublished expert signup; run them with the Phase 8 pre-release pass.
 - 02-01 follow-up: Android peer stayed connected after iPhone auto-end; verify iOS POST /end vs Android call.ended handling in Phase 2 device UAT (CALL-01 device check also pending)
 
 ### Quick Tasks Completed
@@ -431,6 +433,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-15T06:32:16.415Z
-Stopped at: Completed 05-22-PLAN.md
+Last session: 2026-11-15T20:20:00Z
+Stopped at: Phase 05 complete, ready to verify Phase 2
 Resume file: None

@@ -35,7 +35,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Shared iOS Plumbing** - Call timing, join window, money formatting, status decoding, error codes and push routing are correct in one place
 - [ ] **Phase 3: Booked Sessions and Joining** - Clients and experts can respond to, cancel, reschedule and join booked sessions from every screen that offers it
 - [ ] **Phase 4: Booking, Payment and Discovery** - Clients can find an expert, book and pay without resubmits, unintended holds or misleading errors
-- [ ] **Phase 5: Signup, Mode Switch and Account** - Signup, becoming an expert and account settings save correctly and tell the truth
+- [x] **Phase 5: Signup, Mode Switch and Account** - Signup, becoming an expert and account settings save correctly and tell the truth (completed 2026-11-15)
 - [ ] **Phase 6: Expert Mode** - Experts can price, schedule and run their bookings without wrong amounts or dead ends
 - [ ] **Phase 7: Chat** - Messages, block state, unread and read state behave reliably and clearly
 - [ ] **Phase 8: Release** - One verified iOS build ships to TestFlight and the App Store after the backend is live
@@ -303,7 +303,7 @@ Plans:
   4. Help → Email Us opens a mail to `clickmeapp@uptrendinvestments.net`. Feedback cannot be sent with fewer than 10 characters. Delete Account has no Pause Account card and accurately says what is deleted and what is kept or anonymized.
   5. `CancellationPoliciesView` and `ReadyToStartCallView` are either reachable in the app or removed from the codebase (per Q7).
 
-**Plans**: 22/22 plans executed (17/17 in 6 waves: iOS only, no backend change; BACK-13 deferred per D-04. Plus 3 UAT gap closure plans, 05-18 to 05-20, iOS only, no backend deploy. Plus 2 verification gap closure plans, 05-21 and 05-22, iOS only, no backend deploy)
+**Plans**: 22/22 plans complete (17/17 in 6 waves: iOS only, no backend change; BACK-13 deferred per D-04. Plus 3 UAT gap closure plans, 05-18 to 05-20, iOS only, no backend deploy. Plus 2 verification gap closure plans, 05-21 and 05-22, iOS only, no backend deploy)
 
 Plans:
 **Wave 1**
@@ -422,7 +422,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Shared iOS Plumbing | 15/15 | In Progress | - |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
-| 5. Signup, Mode Switch and Account | 22/22 | In Progress | - |
+| 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 0/TBD | Not started | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |

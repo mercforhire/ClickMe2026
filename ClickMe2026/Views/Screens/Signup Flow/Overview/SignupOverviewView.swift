@@ -111,6 +111,12 @@ struct SignupOverviewView: View {
         .safeAreaInset(edge: .bottom) {
             OverviewNextBar(action: onNext)
         }
+        // The hub's toolbar button uses a dark-surface colour. Without a dark bar
+        // trait the iOS 26 glass capsule turns light grey in Light appearance
+        // with opaque glass (G-05-1); same pins as the sibling signup screens.
+        .toolbarBackground(Brand.surface, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
         .modifier(OverviewNotNowChrome(onNotNow: onNotNow))
         .onAppear {
             withAnimation(.easeOut(duration: 0.8).delay(0.15)) {

@@ -14,6 +14,8 @@ Not in scope: new expert capabilities, any backend change (none is expected: the
 
 EXP-17 and EXP-18 are cross-platform: they need matching Android changes in `../ClickMe_Android` (one commit per repo). Every other item is iOS-only unless noted.
 
+**Amended 2026-11-16 (user decision during plan-phase revision):** the EXP-17 Android change lands as **one squashed commit** in `ClickMe_Android` (plan 06-09), not one commit per task.
+
 </domain>
 
 <decisions>
@@ -37,6 +39,7 @@ EXP-17 and EXP-18 are cross-platform: they need matching Android changes in `../
 
 ### Accept -> Confirmed flow (EXP-09, EXP-10)
 - **D-11:** **Copy Android 11-CONTEXT D-04/D-05.** On a successful accept, the accept sheet closes and `BookingConfirmedView` **replaces** Request Decision on the stack. Back returns to a refreshed Incoming Requests, never a stale decision screen. "Back to Home" pops to the Dashboard (switching tabs if the flow began elsewhere), refreshed so the pending count drops.
+  - **Amended 2026-11-16 (user sign-off during plan-phase):** Confirmed is hosted inside RequestDecisionView rather than replacing it on the stack via `HomeNavigationPath.replace(with:)`; behaviour unchanged — Back returns to a refreshed Incoming Requests, no stale decision screen, works for list and push entry. (Implemented by plan 06-05; resolves 06-RESEARCH Open Question 1.)
 - **D-12:** **409 `ALREADY_PROCESSED`** on accept (or decline): an alert shows the server message; OK pops to a refreshed Incoming Requests (Android D-07). Other errors show the server message and stay on the screen.
 - **D-13:** The calendar event title is **exactly Android's string: `"ClickMe · {topic} with {client name}"`**. Start and end come from the booking; the description carries the meeting type ("In-App Voice" or "Skype/Zoom") plus the client's message if present (Android D-06). This fixes the bug where iOS uses the expert's own name.
 
@@ -47,6 +50,8 @@ EXP-17 and EXP-18 are cross-platform: they need matching Android changes in `../
 - **D-17:** EXP-12: expired request cards keep text at full contrast. Dim only the background or badge, not the text (inventory E14, UI-SPEC A5). It is a LIKELY item: confirm on a device first.
 - **D-18:** EXP-14: the Client Profile history row already shows real net earnings (02-15). This phase covers any remaining Client Profile earnings surface (totals and summary), formatted through `Money` in the booking currency.
 - **D-19:** EXP-16: copy Android 16.4 D-01 to D-04. A hard 5000-character cap with a counter. A whitespace-only note is sent as `""`, which clears it. Leaving with unsaved changes asks "Discard changes?" (Keep editing / Discard). Save is disabled when nothing changed.
+  - **Amended 2026-11-16 (user decision during plan-phase revision):** the interactive pop (swipe-back) gesture on the Booking Note screen is **always disabled**, using the existing `BookingRequestSentPopGestureLock` attached unconditionally. The custom Back button is the only way out: it asks "Discard changes?" when there are unsaved changes and pops at once when there are none. This supersedes UI-SPEC section 7's conditional lock; nothing is left to decide at the device check. Device check D4 verifies that the swipe is blocked and that Back prompts when dirty and pops when clean. (Implemented by plan 06-07; resolves 06-RESEARCH Open Question 2.)
+  - **Amended 2026-11-16 (user decision, requirement wording):** REQUIREMENTS.md EXP-16 and ROADMAP Phase 6 success criterion 5 were reworded to match this decision: "capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits". Plan behaviour is unchanged.
 - **D-20:** EXP-18: the expert Booking Summary shows `ID: #A1B2C3D4` through `BookingShortID`, the same rule as the client screen (BOOK-20). Android already shows it (`ExpertSummaryCard.kt`, `expert_summary_id`); check that Android uses the same short-ID rule.
 
 ### Claude's Discretion

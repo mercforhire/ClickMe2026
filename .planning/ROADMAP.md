@@ -365,7 +365,7 @@ Plans:
   2. In availability, Cancel on the time-range picker reverts the change. No end time is produced that the picker can't show. An off-grid stored time such as 09:15 shows as selected.
   3. Accepting a request shows the booking-confirmed screen, and the calendar event created from it is titled with the client's name.
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.
-  5. The private booking note is capped at 5000 characters with a counter, trims whitespace, and asks before discarding unsaved edits.
+  5. The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits.
 
 **Plans**: 10 plans in 3 waves (iOS plus one Android plan in `../ClickMe_Android`; no backend change)
 

@@ -529,29 +529,36 @@ Pattern proven by `.planning/phases/05-signup-mode-switch-and-account/05-18-PLAN
 | # | Claim | Section | Risk if Wrong |
 |---|-------|---------|---------------|
 | A1 | `navigationBarBackButtonHidden(true)` disables swipe-back in SwiftUI on the current OS (community sources only) | Pitfall 6 | The Booking Note swipe design could be simpler than planned, or the fallback unneeded; device check D4 settles it |
-| A2 | A `LockController` inserted after the view appeared still gets `viewDidAppear` | Pitfall 6 | Conditional lock does nothing; use the unconditional fallback |
+| A2 | A `LockController` inserted after the view appeared still gets `viewDidAppear` | Pitfall 6 | Conditional lock does nothing; use the unconditional fallback. Moot since 2026-11-16: the lock is attached unconditionally (Open Question 2, D-19 amendment) |
 | A3 | `Decimal(string:)` accepts a numeric prefix and ignores trailing junk | Standard Stack, Pattern 1 | None for the recommendation (digit-split avoids it) |
 | A4 | Android Gradle build works in this environment | Environment Availability | Android plan may need environment fixes first |
 | A5 | `.alert` is right over `.confirmationDialog` when a `Menu` item is the trigger (UI-SPEC A7: iPad popover anchoring) | Anti-Patterns | Cosmetic only |
 | A6 | A push-opened decision for an already-expired request shows Accept and the server returns the 409/`ALREADY_PROCESSED` path | Pitfall 10 | Different error code would show the generic alert instead of popping; still safe |
 | A7 | PATCH from the editor may always send explicit `.set`/`.null` for icon and description (full-form semantics) instead of diffing against the original | Pattern 2 | None functionally; UI-SPEC prefers omit-when-unchanged, which needs the original values threaded through |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All five questions are resolved (planning, 2026-11-16). Each item names the resolving plan.
 
 1. **UI-SPEC says "the replace uses the existing `HomeNavigationPath.replace(with:)`". Should the planner override it?**
    - What we know: `replace(with:)` leaves one entry (HomeNavigationPath.swift:67-69). Incoming Requests opens the decision screen with `.navigationDestination(item: $pushedRequest)` (IncomingRequestsView.swift:71-73), outside the path. Push taps open it as `HomeRoute.requestDecision` through the path.
    - What's unclear: whether the user cares about the mechanism or only the behaviour (D-11 states behaviour: Back returns to a refreshed Incoming Requests).
    - Recommendation: host `BookingConfirmedView` inside `RequestDecisionView` (Pattern 3). It satisfies D-11 and works for both entry paths with no path surgery. Tell the plan-checker the UI-SPEC mechanism was deliberately superseded; update the UI-SPEC sentence in the plan's notes.
+   - **RESOLVED: 06-05** — `BookingConfirmedView` is hosted inside `RequestDecisionView`. The user signed off on this before execution (2026-11-16), recorded as the D-11 amendment in 06-CONTEXT.md; the behaviour D-11 locks is unchanged. Not re-asked at the device check.
 
 2. **Booking Note swipe-back.**
    - What we know: UI-SPEC section 7 wants swipe to work when clean and be locked when dirty; hiding the back button probably disables the gesture entirely.
    - Recommendation: build custom Back + discard alert first (guaranteed), attach the lock unconditionally if D4 shows the conditional lock fails. Decide at the device check, do not block the plan.
+   - **RESOLVED: 06-07** — user decision 2026-11-16, recorded as the D-19 amendment in 06-CONTEXT.md: the pop gesture is always disabled (`BookingRequestSentPopGestureLock` attached unconditionally), and the custom Back with the "Discard changes?" alert when dirty is the only exit. Nothing is deferred to the device check; D4 verifies the swipe is blocked and Back prompts when dirty and pops when clean.
 
 3. **USD symbol.** `docs/ios/USD-TOPIC-PRICING.md` §0 item 5 says USD renders as `US$`, but the shipped `Money` table uses `$` for USD (Phase 2 D-10) and the topic card therefore shows `$12.50` while the editor label says `US$`. Out of this phase; do not "fix" it in a Phase 6 plan. Raise it for Phase 8 or a follow-up.
+   - **RESOLVED: 06-10** — out of Phase 6. 06-10 writes the todo `2026-11-16-usd-symbol-us-dollar-prefix.md` asking for a `$` versus `US$` decision before Phase 8; 06-01 leaves `Money` and the editor label unchanged.
 
 4. **U4 accessibility label.** UI-SPEC says the slot-delete button "gains the accessibility label `Delete time range`", but the code already has `.accessibilityLabel("Delete time slot")` (`AvailabilityDayRow.swift`, delete button). It is a rename, not an addition. Recommendation: rename to the spec string; harmless.
+   - **RESOLVED: 06-03** — the shipped label is renamed to `Delete time range` (UI U4); touch targets unchanged.
 
 5. **Expert hub public-profile preview.** Confirm `isOnline: false` (Pitfall 11) is what the user wants for the expert's own profile preview; the alternative is to keep the hero dot. D-10 says remove the online dot on the hub; the preview feeding `true` is the same fake presence.
+   - **RESOLVED: 06-06** — the self-preview is built with `isOnline: false`, so no fake presence shows anywhere on the expert side (D-10). 06-10's device checklist lists it as a KEEP or CHANGE item so the user can still judge it on hardware.
 
 ## Sources
 

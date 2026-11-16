@@ -33,18 +33,18 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - ✓ Backend fixes K1–K5, K9–K12, K14, K16, plus the backend halves of H7 and N1 — Phase 1 (deployed to production at `d86bf97`)
 - ✓ Signup and mode switch: S1, S3–S7, plus S2 optional province (D-05 to D-07) — Phase 5 (device UAT 2026-11-14/15; S3 resume check deferred, unit-tested)
 - ✓ Settings / profile / account: T1–T7, plus T8 remember-login-email (D-14) — Phase 5 (device UAT 2026-11-14/15)
+- ✓ Shared iOS plumbing: C1, C2, C5, C9 (call overtime, join window, Agora failure, provider detection), B10, B14, B15, B18 (money formatter, paid 6-day cap, payment_actions route, live booking.update), P6 (one error copy table), H9 (no banner for the open chat), N1–N4 (push routing, mode switch, request push, logout unregister) — Phase 2 (device UAT 2026-11-16; CALL-01 end + 60 and the offline cold-launch re-route accepted on unit evidence by developer override)
 
 ### Active
 
 <!-- Full detail, evidence and fix notes per ID live in .planning/IOS-BUG-INVENTORY.md. -->
 
-- [ ] Calls: C1–C10 (incl. critical C1 5-minute overtime cutoff, likely C5)
-- [ ] Client bookings: B1–B19 (incl. critical B6 reschedule response)
-- [ ] Payments: P1, P2, P3, P5, P6
+- [ ] Calls: C3, C4, C6, C7, C8, C10 (C1, C2, C5, C9 done in Phase 2)
+- [ ] Client bookings: B1–B19 except B10, B14, B15, B18 (done in Phase 2); incl. critical B6 reschedule response
+- [ ] Payments: P1, P2, P3, P5 (P6 done in Phase 2)
 - [ ] Explore / profile / favorites / reviews: X1–X6 (likely X2)
 - [ ] Expert mode: E1–E8, E11–E18 (likely E14)
-- [ ] Chat: H1–H9 (H7 needs backend, H8 needs re-test)
-- [ ] Push: N1–N4 (N1 needs backend)
+- [ ] Chat: H1–H8 (H7 needs backend, H8 needs re-test; H9 done in Phase 2)
 - [ ] Backend fixes still open: K6, K7, K15 and Q2 refund retry (BACK-19) are deployed but await real-money checks in Phase 4; K8 and K13 are not delivered (wave 3c parked until SIGN-06)
 - [ ] Backend: handle card removal made inside Stripe's PaymentSheet (T-01-32 accepted risk; must ship before the iOS release)
 - [ ] EXPL-07: Explore loads when a featured topic has no currency (fix built; device check in Phase 4)
@@ -94,7 +94,7 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 
 - Q1 Merge `feature/remember-login-email` (iOS `b0629d9`)? — settled in Phase 5 (05-CONTEXT.md)
 - Q2 Expert cancel: always a full refund, or the backend's 24 h rule? (E13, B8)
-- Q3 Long-lead SCA recovery on iOS, or just route the push as Android does? (B15)
+- Q3 Long-lead SCA recovery on iOS, or just route the push as Android does? (B15) — settled in Phase 2: route only (D-01)
 - Q4 Dismissed payment sheet with a preselected card: cancel or confirm? (P1)
 - Q5 Optional province and a gated Expert-mode switch? (S2, S7) — settled in Phase 5 (05-CONTEXT.md)
 - Q6 Fix dead iOS pushes via backend `category` for iOS or by extending the iOS parser? (N1)
@@ -119,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-15 after Phase 5*
+*Last updated: 2026-11-16 after Phase 2*

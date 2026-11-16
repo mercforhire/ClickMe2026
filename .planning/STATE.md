@@ -1,19 +1,19 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 2
-current_phase_name: Shared iOS Plumbing
+current_phase: 03
+current_phase_name: Booked Sessions and Joining
 status: verifying
-stopped_at: Phase 05 complete, ready to verify Phase 2
-last_updated: "2026-11-15T20:13:16.350Z"
-last_activity: 2026-11-15
-last_activity_desc: Phase 05 complete, transitioned to Phase 2
-state_head: 0f4836a321edd66090738db70eb7a32f3db373cf
+stopped_at: Phase 02 complete, ready to verify Phase 03
+last_updated: "2026-11-16T05:40:17.478Z"
+last_activity: 2026-11-16
+last_activity_desc: Phase 02 complete, transitioned to Phase 03
+state_head: 6d588ff926508ca5d4192d04ec30f9b63658d5c8
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 97
   completed_plans: 97
-  percent: 25
+  percent: 38
 ---
 
 # Project State
@@ -23,21 +23,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 02 — Shared iOS Plumbing (executed; device UAT pending)
+**Current focus:** Phase 03 — Booked Sessions and Joining (executed; verification pending)
 
 ## Current Position
 
-Phase: 2 — Shared iOS Plumbing
-Plan: 15
+Phase: 03 — Booked Sessions and Joining
+Plan: 17
 Status: Phase complete — ready for verification
-Last activity: 2026-11-15 — Phase 05 complete, transitioned to Phase 2
+Last activity: 2026-11-16 — Phase 02 complete, transitioned to Phase 03
 
-Progress: [███░░░░░░░] 25%
+Progress: [████░░░░░░] 38%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 48
+- Total plans completed: 63
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -47,6 +47,7 @@ Progress: [███░░░░░░░] 25%
 |-------|-------|-------|----------|
 | 01 | 26 | - | - |
 | 05 | 22 | - | - |
+| 02 | 15 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -411,7 +412,7 @@ Captured todos:
 - [Phase 1]: BACK-19 production smoke not run (user skip 2026-11-08); run the 01-19 checklist before it closes, at the latest during Phase 4 payment UAT.
 - BACK-08 and BACK-13 not delivered (wave 3c dropped 2026-11-08). The silent client-to-expert promotion and the tax-ID prompt remain in production. Phase 5 SIGN-06 pairs with BACK-13 and needs a re-decision. Code parked on backend branch wave-3c.
 - [Phase 5]: Five device checklist items deferred as follow-ups on 2026-11-15 (05-UAT.md ## Deferred Follow-Ups): 12, 17 and 27 (optional, unit-tested), 24 (SIGN-02 resume keeps the verified email; SIGN-02 ticked on unit evidence) and 45 (U4 flash, KEEP for now). Items 24 and 45 need a fresh unpublished expert signup; run them with the Phase 8 pre-release pass.
-- 02-01 follow-up: Android peer stayed connected after iPhone auto-end; verify iOS POST /end vs Android call.ended handling in Phase 2 device UAT (CALL-01 device check also pending)
+- [Phase 2]: Closed 2026-11-16 with developer overrides for CALL-01 end + 55 / end + 60 and 02-10 T12 (offline cold-launch re-route); neither was watched on a device. The 02-01 follow-up is still open: whether the Android peer tears down on call.ended after an iPhone auto-end at end + 60 was never observed. Run one full overtime call with an Android peer in the Phase 8 pre-release pass. Deferred, no test: 02-02 single POST /end backstop, 02-10 second tap during a mode switch (02-UAT.md ## Deferred Follow-Ups).
 
 ### Quick Tasks Completed
 
@@ -433,6 +434,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-15T20:20:00Z
-Stopped at: Phase 05 complete, ready to verify Phase 2
+Last session: 2026-11-16T05:45:00Z
+Stopped at: Phase 02 complete, ready to verify Phase 03
 Resume file: None

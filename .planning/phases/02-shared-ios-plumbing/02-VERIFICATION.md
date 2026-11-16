@@ -1,7 +1,7 @@
 ---
 phase: 02-shared-ios-plumbing
 verified: 2026-11-16T06:10:00Z
-status: human_needed
+status: passed
 score: 105/111 must-haves verified
 covered_files:
   - ".planning/phases/02-shared-ios-plumbing/02-01-PLAN.md"
@@ -126,7 +126,16 @@ covered_files:
 covered_digest: "v3:sha256:f8a54ee97fa25447f556f2e767d9075b38c92a1825b0c5d0dd0f6c9a70429d60"
 behavior_unverified: 4
 insufficient_spec: 2
-overrides_applied: 0
+overrides_applied: 2
+overrides:
+  - must_have: "Roadmap SC1 / 02-01 T3: at scheduled end + 60 minutes the call ends through CallCenter.endCall and the screen reaches Ended; notice at end + 55"
+    reason: "Boundaries and wiring are unit-tested (CallOvertimePolicyTests); device run confirmed the 5-minute cutoff is gone (alive at end + 11); user chose not to wait for end + 55 / end + 60 (UAT test 1)"
+    accepted_by: "Leon chen"
+    accepted_at: "2026-11-16T05:39:41Z"
+  - must_have: "02-10 T12: with roles unknown an expert-targeted tap stays queued and is planned again when me loads or the app becomes active"
+    reason: "Hold is unit-tested; re-plan hooks present; user accepted the offline cold-launch result as is, no fix wanted (UAT test 7 case 3, checklist item 11 step 5)"
+    accepted_by: "Leon chen"
+    accepted_at: "2026-11-16T05:39:41Z"
 prohibitions:
   test_tier_verified: 10
   judgment_tier_resolved_in_uat: 3
@@ -182,7 +191,7 @@ human_verification:
 
 **Phase Goal:** The app-wide rules that many screens rely on are correct in one shared place: call lifetime and join window, money formatting, booking-status decoding, booking error codes and push routing
 **Verified:** 2026-11-16T06:10:00Z
-**Status:** human_needed
+**Status:** passed (2026-11-16, after developer acceptance; see Developer acceptance below)
 **Re-verification:** Yes. The 2026-11-10 report (human_needed, 100/111) went stale after phases 3, 4 and 5 changed covered files. Every phase-02 must-have was re-checked against current HEAD, and the device UAT results (02-UAT.md, 14 passed, 0 issues, 3 skipped) were folded in.
 **Mode:** standard (ROADMAP.md has no `mode: mvp` for this phase)
 
@@ -428,7 +437,11 @@ Still needing a decision:
 
 No gaps. Every truth, artifact and key link resolves to VERIFIED, PRESENT_BEHAVIOR_UNVERIFIED or a declared backstop with no evidence. Nothing FAILED, no phase 3-5 change regressed a phase-02 rule, and the one in-phase code defect found earlier (WR-02) is fixed and device-confirmed. The phase goal is met in code and in everyday device use; the six open items above are edge or race behavior that was waived or deferred rather than disproved.
 
-### Suggested overrides (not applied)
+### Developer acceptance (2026-11-16)
+
+During `/gsd-verify-work 02` the developer accepted the phase as complete. The two overrides below were applied to the frontmatter `overrides:` exactly as suggested. The two backstops (02-02 single `/end`, 02-10 second tap) and the optional CALL-09 / PAY-05 device checks stay as user-deferred follow-ups in `deferred:` and 02-UAT.md. The terminal Agora failure -> Ended transition (02-02 T1) stays unit-tested only, as accepted at plan time (D-14). Status moved from `human_needed` to `passed`.
+
+### Suggested overrides (applied 2026-11-16)
 
 I did not write these into `overrides:` because acceptance has to come from the developer, not the verifier. UAT records the user's acceptance in both cases, so if you agree, add them to the frontmatter and re-verify to move the status to `passed` (the two backstops would still need an explicit decision):
 

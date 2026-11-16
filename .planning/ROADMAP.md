@@ -32,7 +32,7 @@ This project fixes every confirmed and likely iOS bug that the Android port foun
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Backend Fixes** - Production backend validates, stores and returns what the iOS fixes need, without breaking current Android (completed 2026-11-09)
-- [ ] **Phase 2: Shared iOS Plumbing** - Call timing, join window, money formatting, status decoding, error codes and push routing are correct in one place
+- [x] **Phase 2: Shared iOS Plumbing** - Call timing, join window, money formatting, status decoding, error codes and push routing are correct in one place (completed 2026-11-16)
 - [ ] **Phase 3: Booked Sessions and Joining** - Clients and experts can respond to, cancel, reschedule and join booked sessions from every screen that offers it
 - [ ] **Phase 4: Booking, Payment and Discovery** - Clients can find an expert, book and pay without resubmits, unintended holds or misleading errors
 - [x] **Phase 5: Signup, Mode Switch and Account** - Signup, becoming an expert and account settings save correctly and tell the truth (completed 2026-11-15)
@@ -159,7 +159,7 @@ Plans:
   4. Paid booking and reschedule pickers offer no slot more than 6 days ahead. The long-lead error codes show a clear error instead of an invalid confirm. Paid and free booking paths show the same slot-taken and meeting-link copy.
   5. Tapping any push switches to the right mode and opens the right screen: a booking-request push opens that request, `booking/payment_actions` opens that booking, and unknown types open the notifications list. No banner appears for the chat already on screen, and after logout the device stops receiving the old account's pushes.
 
-**Plans**: 15/15 plans executed in 3 waves (iOS only, no backend change)
+**Plans**: 15/15 plans complete in 3 waves (iOS only, no backend change)
 
 Plans:
 **Wave 1**
@@ -419,7 +419,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
-| 2. Shared iOS Plumbing | 15/15 | In Progress | - |
+| 2. Shared iOS Plumbing | 15/15 | Complete    | 2026-11-16 |
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |

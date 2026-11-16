@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-11-16T17:48:49.544Z"
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-11-16T17:59:15.251Z"
 last_activity: 2026-11-16
-last_activity_desc: Phase 02 complete, transitioned to Phase 03
-state_head: a355a197d7439523bdeabce1fc19c0d2cb33cce6
+last_activity_desc: Phase 06 execution started
+state_head: f82d0f422508cb6e0496cb9f2376439daae1d8ea
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 107
-  completed_plans: 97
+  completed_plans: 99
   percent: 38
 ---
 
@@ -23,14 +23,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 03 — Booked Sessions and Joining (executed; verification pending)
+**Current focus:** Phase 06 — Expert Mode
 
 ## Current Position
 
-Phase: 06 (Expert Mode) — READY TO EXECUTE
-Plan: 17
+Phase: 06 (Expert Mode) — EXECUTING
+Plan: 2 of 10
 Status: Ready to execute
-Last activity: 2026-11-16 — Phase 02 complete, transitioned to Phase 03
+Last activity: 2026-11-16 — Phase 06 execution started
 
 Progress: [████░░░░░░] 38%
 
@@ -155,6 +155,7 @@ Progress: [████░░░░░░] 38%
 | Phase 05 P20 | 5 min | 3 tasks | 15 files |
 | Phase 05 P21 | 13 min | 3 tasks | 7 files |
 | Phase 05 P22 | 4 min | 2 tasks | 2 files |
+| Phase 06 P01 | 7 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -335,6 +336,7 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-20: empty last name on PATCH /user/profile stays an open user decision (backend todo 2026-11-14-backend-profile-name-validation.md); the new iOS build does not depend on it
 - [Phase 05]: 05-21: a cleared expert meeting link is sent as meeting_url "" (BACK-04); a reload takes the server's link with nil read as "", each rule a static tested with literal inputs
 - [Phase 05]: Plan 05-22: UI-SPEC LT1 mechanism changed from the bottom spacer to the bottom safe-area inset on the Delete Account confirmation step; outcome unchanged, 05-UI-SPEC.md not edited
+- [Phase 06]: 06-01: topic price text parsed by integer-only TopicPriceRules (7 integer digits, currency fraction digits, comma read as point); currency switch never rewrites the typed price
 
 ### Pending Todos
 
@@ -434,6 +436,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-16T07:09:18.670Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-expert-mode/06-UI-SPEC.md
+Last session: 2026-11-16T17:59:14.533Z
+Stopped at: Completed 06-01-PLAN.md
+Resume file: None

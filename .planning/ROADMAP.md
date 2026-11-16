@@ -367,12 +367,12 @@ Plans:
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.
   5. The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits.
 
-**Plans**: 10 plans in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change)
+**Plans**: 2/10 plans executed in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change)
 
 Plans:
 **Wave 1**
-- [ ] 06-01-PLAN.md — EXP-02/03/17 iOS: decimal topic price in the topic's currency; one parser for the live hint and Save
-- [ ] 06-09-PLAN.md — EXP-17 Android: CAD and USD currency picker on the Android topic editor (one Android repo commit)
+- [x] 06-01-PLAN.md — EXP-02/03/17 iOS: decimal topic price in the topic's currency; one parser for the live hint and Save
+- [x] 06-09-PLAN.md — EXP-17 Android: CAD and USD currency picker on the Android topic editor (one Android repo commit)
 
 **Wave 2** *(blocked on 06-01)*
 - [ ] 06-02-PLAN.md — EXP-04/01/08: explicit null for a cleared icon or description; delete asks first; delete comments corrected
@@ -397,6 +397,7 @@ Plans:
 
 **Wave 9** *(blocked on every code plan)*
 - [ ] 06-10-PLAN.md — Phase gate: full suite, grep gates, device UAT checklist, follow-up todos
+
 **UI hint**: yes
 **Notes**:
 - EXP-02 and EXP-14 use the Phase 2 money formatter. EXP-03 matters for money too, because sending the wrong currency changes what clients pay.
@@ -452,7 +453,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
-| 6. Expert Mode | 0/TBD | Not started | - |
+| 6. Expert Mode | 2/10 | In Progress | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |
 

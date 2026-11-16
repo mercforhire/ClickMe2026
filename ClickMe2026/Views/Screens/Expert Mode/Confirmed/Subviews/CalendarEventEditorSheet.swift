@@ -10,7 +10,9 @@ import EventKitUI
 import SwiftUI
 
 /// Presents Apple's system `EKEventEditViewController` pre-filled from a
-/// `BookingConfirmation`. The user sees the native "New Event" sheet and
+/// `BookingConfirmation`: the title `ClickMe · {topic} with {client name}`,
+/// the booking's start and end, notes holding the meeting type and the
+/// client's message, and no location (EXP-10, D-13). The user sees the native "New Event" sheet and
 /// taps "Add" (or edits first) to write it into their default calendar.
 ///
 /// Notes:
@@ -20,7 +22,6 @@ import SwiftUI
 ///   don't need to pre-prompt.
 struct CalendarEventEditorSheet: UIViewControllerRepresentable {
     let booking: BookingConfirmation
-    let calendarPayload: BookingCalendarPayload
     let onDismiss: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -32,11 +33,7 @@ struct CalendarEventEditorSheet: UIViewControllerRepresentable {
         let controller = EKEventEditViewController()
         controller.eventStore = store
         controller.editViewDelegate = context.coordinator
-        controller.event = Self.makeEvent(
-            booking: booking,
-            calendarPayload: calendarPayload,
-            in: store
-        )
+        controller.event = Self.makeEvent(booking: booking, in: store)
         return controller
     }
 
@@ -44,19 +41,12 @@ struct CalendarEventEditorSheet: UIViewControllerRepresentable {
 
     // MARK: - Event construction
 
-    private static func makeEvent(
-        booking: BookingConfirmation,
-        calendarPayload: BookingCalendarPayload,
-        in store: EKEventStore
-    ) -> EKEvent {
+    static func makeEvent(booking: BookingConfirmation, in store: EKEventStore) -> EKEvent {
         let event = EKEvent(eventStore: store)
-        event.title = "ClickMe · \(booking.expertName)"
-        event.startDate = calendarPayload.startDate
-        event.endDate = calendarPayload.endDate
-        event.notes = booking.meetingNote
-        if !booking.isVirtual {
-            event.location = booking.meetingNote
-        }
+        event.title = booking.calendarTitle
+        event.startDate = booking.calendarPayload.startDate
+        event.endDate = booking.calendarPayload.endDate
+        event.notes = booking.calendarNotes
         // 15-minute reminder mirrors the "starting now" window used
         // elsewhere in the app.
         event.addAlarm(EKAlarm(relativeOffset: -15 * 60))

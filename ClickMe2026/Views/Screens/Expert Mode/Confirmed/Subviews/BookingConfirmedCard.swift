@@ -13,20 +13,22 @@ struct BookingConfirmedCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Expert row
+            // Client row
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(booking.expertName)
+                    Text(booking.clientName)
                         .font(.brand(.callout, weight: .bold))
                         .foregroundColor(Brand.onSurface)
-                    Text(booking.expertTitle)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(booking.topic)
                         .font(.brand(.subheadline, weight: .regular))
                         .foregroundColor(Brand.onSurfaceVariant)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer()
 
-                AsyncImage(url: URL(string: booking.expertImageURL)) { phase in
+                AsyncImage(url: URL(string: booking.clientImageURL)) { phase in
                     switch phase {
                     case let .success(img):
                         img.resizable().scaledToFill()
@@ -57,8 +59,8 @@ struct BookingConfirmedCard: View {
                     label: "\(booking.date), \(booking.time) (\(booking.duration))"
                 )
                 iconRow(
-                    icon: booking.isVirtual ? "video" : "person.2",
-                    label: booking.meetingNote
+                    icon: booking.meetingTypeIcon,
+                    label: booking.meetingTypeLabel
                 )
             }
         }

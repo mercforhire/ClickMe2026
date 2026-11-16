@@ -18,11 +18,16 @@ struct BookingConfirmedHeadline: View {
                 .foregroundColor(Brand.onSurface)
                 .multilineTextAlignment(.center)
 
-            Text("Your meeting with \(booking.expertName) on \(booking.date), at \(booking.time) has been successfully booked.")
+            Text(ExpertBookingConfirmationContent.bodySentence(
+                clientName: booking.clientName,
+                date: booking.date,
+                time: booking.time
+            ))
                 .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(Brand.onSurfaceVariant)
                 .multilineTextAlignment(.center)
                 .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

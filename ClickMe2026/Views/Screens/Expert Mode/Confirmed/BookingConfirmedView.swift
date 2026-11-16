@@ -10,25 +10,29 @@ import SwiftUI
 
 // MARK: - Booking Confirmation Display Model
 
-/// Display-only model for the confirmation screen. All fields are
-/// pre-formatted strings intended to be rendered verbatim. Raw dates for
-/// the calendar sheet live in `BookingCalendarPayload`.
+/// Display-only model for the confirmation screen: the client side of an
+/// accepted booking request. All fields are pre-formatted strings intended to
+/// be rendered verbatim, built by
+/// `ExpertBookingConfirmationContent.confirmation(...)`. Raw dates for the
+/// calendar sheet live in `calendarPayload`.
 struct BookingConfirmation {
-    let expertName: String
-    let expertTitle: String
-    let expertImageURL: String
+    let clientName: String
+    let clientImageURL: String
+    let topic: String
     let date: String // e.g. "Oct 24, 2023"
     let time: String // e.g. "10:30 AM"
     let duration: String // e.g. "30 min"
-    let isVirtual: Bool
-    let meetingNote: String // e.g. "Link will be shared"
+    let meetingTypeLabel: String // e.g. "In-App Voice"
+    let meetingTypeIcon: String // SF Symbol name
+    let calendarTitle: String // e.g. "ClickMe · Career coaching with Jane D."
+    let calendarNotes: String // meeting type, then the client's message
+    let calendarPayload: BookingCalendarPayload
 }
 
 // MARK: - Booking Confirmed View
 
 struct BookingConfirmedView: View {
     let booking: BookingConfirmation
-    let calendarPayload: BookingCalendarPayload
     var onBackToHome: () -> Void
 
     @State private var viewModel = BookingConfirmedViewModel()
@@ -38,11 +42,9 @@ struct BookingConfirmedView: View {
 
     init(
         booking: BookingConfirmation = BookingConfirmation.sample,
-        calendarPayload: BookingCalendarPayload = BookingCalendarPayload.sample,
         onBackToHome: @escaping () -> Void = {}
     ) {
         self.booking = booking
-        self.calendarPayload = calendarPayload
         self.onBackToHome = onBackToHome
     }
 
@@ -88,10 +90,7 @@ struct BookingConfirmedView: View {
         }
         .onAppear { viewModel.runEntryAnimation() }
         .sheet(isPresented: $showCalendarEditor) {
-            CalendarEventEditorSheet(
-                booking: booking,
-                calendarPayload: calendarPayload
-            ) {
+            CalendarEventEditorSheet(booking: booking) {
                 showCalendarEditor = false
             }
             .ignoresSafeArea()
@@ -103,25 +102,18 @@ struct BookingConfirmedView: View {
 
 extension BookingConfirmation {
     /// Canned display copy — used by the default init and previews.
-    static let sample = BookingConfirmation(
-        expertName: "Sophia Carter",
-        expertTitle: "Marketing Expert",
-        expertImageURL: "https://lh3.googleusercontent.com/aida-public/AB6AXuBNGXFUz9EITZoP0I4DBcFI07sjA8tNlCIrSR76s-0ILOQUmHONIn8Yp2KBQ2IYbXMt_zZ0xHTZJPxH0uAp8ynVAMCkrykEOHDlUqrE2PWSbciUg_nc-YOomp7h0MxWPtyBLVU-bL-sd9MBpMd3Rx4lD8S71qzhTd7wGXNljoREV_CApqZsm4S7omcL7oQqg0mO0htR4GFlZGp081dxaw8MX6SymSovWLGw6oOKpZkOK10cVcJmtxrmtNl0N2WbfGyAh-glPpoBV6M",
-        date: "Oct 24, 2023",
-        time: "10:30 AM",
-        duration: "30 min",
-        isVirtual: true,
-        meetingNote: "Virtual Meeting (Link will be shared)"
-    )
-}
-
-extension BookingCalendarPayload {
-    /// 30-min session starting 30 minutes from "now" — the default that
-    /// pairs with `BookingConfirmation.sample`.
-    static var sample: BookingCalendarPayload {
+    static var sample: BookingConfirmation {
         let start = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date()
-        let end = Calendar.current.date(byAdding: .minute, value: 30, to: start) ?? start
-        return BookingCalendarPayload(startDate: start, endDate: end)
+        let end = Calendar.current.date(byAdding: .minute, value: 60, to: start) ?? start
+        return ExpertBookingConfirmationContent.confirmation(
+            clientName: "Jane D.",
+            clientImageURL: "https://randomuser.me/api/portraits/women/44.jpg",
+            topic: "Career coaching",
+            start: start,
+            end: end,
+            meetingType: .inAppVoice,
+            clientMessage: "Hi, I would like to talk about moving into product management."
+        )
     }
 }
 
@@ -146,22 +138,20 @@ private struct BookingConfirmedPreviewHost: View {
         .preferredColorScheme(.dark)
 }
 
-#Preview("Face-to-Face Booking") {
+#Preview("Long names") {
     let start = Calendar.current.date(byAdding: .day, value: 2, to: Date()) ?? Date()
     let end = Calendar.current.date(byAdding: .minute, value: 60, to: start) ?? start
     return BookingConfirmedPreviewHost(
         destination: BookingConfirmedView(
-            booking: BookingConfirmation(
-                expertName: "Marcus Chen",
-                expertTitle: "Growth Hacker & Analyst",
-                expertImageURL: "https://randomuser.me/api/portraits/men/32.jpg",
-                date: "Nov 2, 2023",
-                time: "2:00 PM",
-                duration: "60 min",
-                isVirtual: false,
-                meetingNote: "Face-to-Face · Downtown Office"
-            ),
-            calendarPayload: BookingCalendarPayload(startDate: start, endDate: end)
+            booking: ExpertBookingConfirmationContent.confirmation(
+                clientName: "Alexandria Montgomery-Featherstonehaugh III",
+                clientImageURL: nil,
+                topic: "Preparing for a senior product leadership interview and negotiating the offer",
+                start: start,
+                end: end,
+                meetingType: .skypeZoom,
+                clientMessage: nil
+            )
         )
     )
     .preferredColorScheme(.dark)

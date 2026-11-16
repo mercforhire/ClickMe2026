@@ -70,6 +70,17 @@ struct ClientProfileHistoryEarningsTests {
         #expect(row.currency == nil)
     }
 
+    @Test("a client with CAD and USD sessions shows each row in its own currency (EXP-14)")
+    func mixedCurrenciesStayApart() throws {
+        let cad = ClientProfileViewModel.mapBooking(from: try item(status: "confirmed", net: 75.0, currency: "CAD"))
+        let usd = ClientProfileViewModel.mapBooking(from: try item(status: "completed", net: 42.5, currency: "USD"))
+        let cancelled = ClientProfileViewModel.mapBooking(from: try item(status: "cancelled", net: 42.5, currency: "USD"))
+
+        #expect(ClientProfileBookingCard.amountLabel(amountMajor: cad.amountMajor, currency: cad.currency) == "CA$75.00")
+        #expect(ClientProfileBookingCard.amountLabel(amountMajor: usd.amountMajor, currency: usd.currency) == "$42.50")
+        #expect(ClientProfileBookingCard.amountLabel(amountMajor: cancelled.amountMajor, currency: cancelled.currency) == "—")
+    }
+
     @Test("earnings_breakdown.net_amount and currency decode from the list row as the backend sends them")
     func breakdownFieldsDecode() throws {
         let decoded = try item(status: "confirmed", net: 75.0, currency: "CAD")

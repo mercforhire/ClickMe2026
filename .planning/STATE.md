@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-02-PLAN.md
-last_updated: "2026-11-16T18:08:39.408Z"
+stopped_at: Completed 06-03-PLAN.md
+last_updated: "2026-11-16T18:14:50.682Z"
 last_activity: 2026-11-16
 last_activity_desc: Phase 06 execution started
-state_head: 5a907b13fec8905aedc3eeb72fd0ac2fa2878307
+state_head: 8553d4a4598f399c4ac62aa856c6e0f018555f34
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 107
-  completed_plans: 100
+  completed_plans: 101
   percent: 38
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 4 of 10
+Plan: 5 of 10
 Status: Ready to execute
 Last activity: 2026-11-16 — Phase 06 execution started
 
@@ -157,6 +157,7 @@ Progress: [████░░░░░░] 38%
 | Phase 05 P22 | 4 min | 2 tasks | 2 files |
 | Phase 06 P01 | 7 min | 2 tasks | 6 files |
 | Phase 06 P02 | 10 min | 2 tasks | 7 files |
+| Phase 06 P03 | 20 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -339,6 +340,8 @@ Recent decisions affecting current work:
 - [Phase 05]: Plan 05-22: UI-SPEC LT1 mechanism changed from the bottom spacer to the bottom safe-area inset on the Delete Account confirmation step; outcome unchanged, 05-UI-SPEC.md not edited
 - [Phase 06]: 06-01: topic price text parsed by integer-only TopicPriceRules (7 integer digits, currency fraction digits, comma read as point); currency switch never rewrites the typed price
 - [Phase 06]: 06-02: topic PATCH diffs icon/description against the stored topic (omit unchanged, null only when a stored value is cleared); delete confirms via centred .alert on loadedContent
+- [Phase 06]: 06-03: Add hours disabled when the new slot's start (latest end + 30) would be 23:00 or later; end clamps to 23:30 (U3)
+- [Phase 06]: 06-03: time-range sheet edits a @State draft; only Done commits via commitEditedSlot; stored off-grid/24:00 values inserted as rows, never snapped
 
 ### Pending Todos
 
@@ -438,6 +441,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-16T18:08:38.712Z
-Stopped at: Completed 06-02-PLAN.md
+Last session: 2026-11-16T18:14:49.983Z
+Stopped at: Completed 06-03-PLAN.md
 Resume file: None

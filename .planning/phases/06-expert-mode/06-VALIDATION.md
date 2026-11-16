@@ -3,7 +3,7 @@ phase: "6"
 slug: "expert-mode"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: "2026-11-16"
@@ -99,3 +99,11 @@ Requirement-level map (task IDs are bound by the plans' `<verify>` blocks):
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** automated sign-off by plan 06-10 on 2026-11-16: gate suite green at 9e95cf3; Manual-Only rows stay pending for /gsd-verify-work 06
+
+## Validation Audit 2026-11-16
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |

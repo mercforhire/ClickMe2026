@@ -110,6 +110,7 @@ created: "2026-11-10"
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-11-10 | 46 | 46 | 0 | gsd-secure-phase (orchestrator, ASVS L1 short-circuit) |
+| 2026-11-16 | 46 | 46 | 0 | gsd-secure-phase (orchestrator, ASVS L1 short-circuit; high-severity mitigations re-grepped on current main) |
 
 ---
 
@@ -121,3 +122,11 @@ created: "2026-11-10"
 - [x] `status: verified` set in frontmatter
 
 **Approval:** verified 2026-11-10
+
+## Security Audit 2026-11-16
+
+| Metric | Count |
+|---|---|
+| Threats found | 46 |
+| Closed | 46 |
+| Open | 0 |

@@ -78,6 +78,11 @@ struct HomeExpertView: View {
         .environment(\.showMyBookings, HomeShellAction {
             applyExit(HomeShellExit.plan(.viewMyBookings, selectedTab: selectedTab))
         })
+        // Booking Confirmed's Back to Home (D-11): reset the tab the flow
+        // started on and the Dashboard, then show the Dashboard.
+        .environment(\.returnToDashboard, HomeShellAction {
+            applyExit(HomeShellExit.plan(.backToHomeRoot, selectedTab: selectedTab))
+        })
         // Global call surface + floating pill overlays.
         .modifier(CallOverlayHost { threadId, peerName, peerAvatarURL in
             selectedTab = .chats
@@ -214,7 +219,7 @@ struct HomeExpertView: View {
     /// Apply a planned exit: empty every stack in `resetTabs`, then show
     /// `showTab`. `HomeNavigationPath.reset()` is a no-op on an empty path, so
     /// a repeated exit changes nothing. `showsPastBookings` is never set by
-    /// the one exit this shell installs, so it is not read here.
+    /// the exits this shell installs, so it is not read here.
     private func applyExit(_ exit: HomeShellExit<HomeExpertTab>) {
         for tab in exit.resetTabs {
             path(for: tab).reset()

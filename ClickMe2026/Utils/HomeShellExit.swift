@@ -31,14 +31,18 @@ import Foundation
 /// asks for its Past segment.
 ///
 /// Both shells use the plan, generic over their tab enum. The client shell
-/// installs all three exits. The expert shell installs only
-/// `viewMyBookings`, for Delete Account's blocker alert (D-10), so it never
-/// asks for the Past segment.
+/// installs all three exits. The expert shell installs `viewMyBookings`, for
+/// Delete Account's blocker alert (D-10), and `backToHomeRoot`, for Booking
+/// Confirmed's Back to Home (D-11), so it never asks for the Past segment.
 struct HomeShellExit<Tab: HomeShellTab>: Equatable {
 
     /// The shell actions that leave the booking flow.
     enum Action: Equatable {
         case backToHome
+        /// Resets the source tab and the home tab, then shows the home tab.
+        /// Used by the expert Booking Confirmed screen (D-11); unlike
+        /// `backToHome`, the home tab's own stack is emptied too.
+        case backToHomeRoot
         case viewMyBookings
         case viewMyHistory
     }
@@ -63,6 +67,12 @@ struct HomeShellExit<Tab: HomeShellTab>: Equatable {
         case .backToHome:
             return HomeShellExit(
                 resetTabs: [selectedTab],
+                showTab: Tab.homeTab,
+                showsPastBookings: false
+            )
+        case .backToHomeRoot:
+            return HomeShellExit(
+                resetTabs: [selectedTab, Tab.homeTab],
                 showTab: Tab.homeTab,
                 showsPastBookings: false
             )

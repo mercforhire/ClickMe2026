@@ -148,4 +148,28 @@ struct HomeShellExitTests {
         #expect(exit.showTab == .dashboard)
         #expect(exit.showsPastBookings == false)
     }
+
+    // MARK: - Expert Back to Home root (EXP-09 / D-11)
+
+    @Test("Expert Back to Home root resets the source tab and the Dashboard and shows the Dashboard", arguments: HomeExpertTab.allCases)
+    func expertBackToHomeRoot(source: HomeExpertTab) {
+        let exit = HomeShellExit<HomeExpertTab>.plan(.backToHomeRoot, selectedTab: source)
+        #expect(exit.resetTabs == [source, .dashboard])
+        #expect(exit.showTab == .dashboard)
+        #expect(exit.showsPastBookings == false)
+    }
+
+    @Test("Expert Back to Home root from the Dashboard resets the Dashboard once")
+    func expertBackToHomeRootFromDashboard() {
+        let exit = HomeShellExit<HomeExpertTab>.plan(.backToHomeRoot, selectedTab: .dashboard)
+        #expect(exit.resetTabs == [.dashboard])
+        #expect(exit.showTab == .dashboard)
+    }
+
+    @Test("Back to Home root stays generic: from the client Search tab it resets Search and Explore")
+    func backToHomeRootClientSearch() {
+        let exit = HomeShellExit<HomeClientTab>.plan(.backToHomeRoot, selectedTab: .search)
+        #expect(exit.resetTabs == [.search, .explore])
+        #expect(exit.showTab == .explore)
+    }
 }

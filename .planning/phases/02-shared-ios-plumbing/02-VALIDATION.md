@@ -4,10 +4,10 @@ slug: "shared-ios-plumbing"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
 status: validated
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: true
 created: "2026-11-09"
-validated: "2026-11-10"
+validated: "2026-11-16"
 ---
 
 # Phase 02 — Validation Strategy
@@ -44,6 +44,8 @@ A run counts only if the output reports a non-zero test count (`Test run with [1
 
 Audited 2026-11-10 against a full-target run: 233 tests in 27 suites green before the audit; 238 tests in 28 suites after it (236 pass, 2 fail, both the WR-01 gap tests below).
 
+Re-audited 2026-11-16 against a full-target run on current `main`: 872 tests in 88 suites, all green. WR-01 was fixed in `da16ef4` and `ClientBookingStatusFallbackTests` now passes.
+
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
 | 02-01 T1, T2 | 02-01 | 1 | CALL-01 | — | N/A | unit | `-only-testing:ClickMe2026Tests/CallOvertimePolicyTests` | ✅ `Utils/CallOvertimePolicyTests.swift` | ✅ green |
@@ -59,7 +61,7 @@ Audited 2026-11-10 against a full-target run: 233 tests in 27 suites green befor
 | 02-03 T1, T2 | 02-03 | 1 | BOOK-18 | T-02-06, T-02-07 | Unknown statuses decode instead of dropping the event (typed decoders) | unit | `-only-testing:ClickMe2026Tests/BookingStatusDecodingTests` | ✅ `Model/BookingStatusDecodingTests.swift` | ✅ green |
 | 02-03 T2 | 02-03 | 1 | BOOK-18 | T-02-27 | Only the newest overlapping refetch writes the expert Upcoming list | unit + grep gate | `-only-testing:ClickMe2026Tests/ReloadGenerationTests` | ✅ `Utils/ReloadGenerationTests.swift` | ✅ green |
 | 02-13 T1, T2 | 02-13 | 3 | BOOK-18 | T-02-32 | Only the newest overlapping refetch writes the client detail, summary and My Bookings screens | grep gate + unit (helper) | `-only-testing:ClickMe2026Tests/ReloadGenerationTests` | ✅ `Utils/ReloadGenerationTests.swift` | ✅ green |
-| audit gap (WR-01) | 02-03 / 02-13 | — | BOOK-18 | T-02-06 | An unknown status on the client detail and My Bookings screens reads as `.unknown`, never `.confirmed` | unit (VM + stubbed API) | `-only-testing:ClickMe2026Tests/ClientBookingStatusFallbackTests` | ✅ `Booking/ClientBookingStatusFallbackTests.swift` (added by audit) | ❌ red: 3 control tests pass, 2 unknown-status tests fail on the real defect (escalated) |
+| audit gap (WR-01) | 02-03 / 02-13 | — | BOOK-18 | T-02-06 | An unknown status on the client detail and My Bookings screens reads as `.unknown`, never `.confirmed` | unit (VM + stubbed API) | `-only-testing:ClickMe2026Tests/ClientBookingStatusFallbackTests` | ✅ `Booking/ClientBookingStatusFallbackTests.swift` (added by audit) | ✅ green (WR-01 fixed in `da16ef4`) |
 | 02-07 T1, T3 | 02-07 | 1 | BOOK-14 | — | 6-day paid cap shows days and dims slots (user decision) | unit | `-only-testing:ClickMe2026Tests/PaidBookingWindowTests` + `BookingErrorMapperTests` | ✅ `Utils/PaidBookingWindowTests.swift`, `Utils/BookingErrorMapperTests.swift` | ✅ green |
 | 02-08 T1, T2 | 02-08 | 2 | BOOK-14 | — | Reschedule picker honours the 6-day paid cap; shared error copy | unit | `-only-testing:ClickMe2026Tests/RescheduleWindowTests` | ✅ `Booking/RescheduleWindowTests.swift` | ✅ green |
 | 02-07 T2 | 02-07 | 1 | PAY-05 | — | N/A | unit | `-only-testing:ClickMe2026Tests/BookingErrorMapperTests` + `BookingErrorCopyParityTests` | ✅ `Utils/BookingErrorMapperTests.swift`, `Booking/BookingErrorCopyParityTests.swift` | ✅ green |
@@ -108,11 +110,11 @@ All device-only checks are collected in `02-DEVICE-UAT-CHECKLIST.md` and are cla
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 300s
-- [ ] `nyquist_compliant: true` set in frontmatter. Blocked: BOOK-18 has a red test (`ClientBookingStatusFallbackTests`) exposing review WR-01. `UpcomingBookingViewModel.swift:190` and `MyBookingsViewModel.swift:214` fall back to `.confirmed` instead of `.unknown`. Escalated to the developer; app code was not changed by this audit.
+- [x] `nyquist_compliant: true` set in frontmatter. The 2026-11-10 BOOK-18 blocker (WR-01) was fixed in `da16ef4`; `ClientBookingStatusFallbackTests` is green.
 
-**Approval:** partial (22/23 requirement rows green; BOOK-18 client-screen fallback escalated)
+**Approval:** approved 2026-11-16 (all automated rows green; device checks are manual-only)
 
-### Escalated
+### Escalated (resolved 2026-11-16 by `da16ef4`)
 
 | Requirement | Test | Failing assertion | Defect |
 |-------------|------|-------------------|--------|
@@ -126,3 +128,11 @@ All device-only checks are collected in `02-DEVICE-UAT-CHECKLIST.md` and are cla
 | Gaps found | 1 |
 | Resolved | 0 |
 | Escalated | 1 |
+
+## Validation Audit 2026-11-16
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 1 |
+| Escalated | 0 |

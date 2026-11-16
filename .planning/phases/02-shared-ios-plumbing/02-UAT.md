@@ -3,7 +3,7 @@ status: complete
 phase: 02-shared-ios-plumbing
 source: [02-VERIFICATION.md]
 started: 2026-11-10T18:24:14Z
-updated: 2026-11-16T05:07:40.189Z
+updated: 2026-11-16T05:11:06.000Z
 ---
 
 ## Current Test
@@ -62,12 +62,12 @@ result: pass
 ### 12. Backstop (02-02, no test): a failed-connection event that arrives while a hang-up is already in progress, or arrives twice, produces exactly one POST /end
 expected: Exactly one /end per leg; the guard is isEndingCall / callStatus == .ended in endAfterConnectionFailure
 result: skipped
-reason: "Can't reproduce the race by hand"
+reason: "Deferred follow-up: Can't reproduce the race by hand"
 
 ### 13. Backstop (02-10, no test): a second push tap that arrives while a mode switch for the first is in flight ends on the second tap's destination
 expected: The later tap replaces pending and is the one routed after the switch
 result: skipped
-reason: "Rare test case"
+reason: "Deferred follow-up: Rare test case"
 
 ### 14. Judgment-tier prohibition (02-09, PUSH-01): MUST NOT show SwiftUI's unregistered-destination warning page from any push or notifications-list tap, in either mode
 expected: Never seen during UAT item 10 in either mode, warm or cold
@@ -86,7 +86,7 @@ note: "Verified by code review at the user's request: isLoggingOut guards are th
 ### 17. Optional (unit-tested): CALL-09 provider label on a real Zoom/Skype link (UAT item 5); PAY-05 same slot-taken copy on free and paid (UAT item 8)
 expected: Provider label for a real host, generic 'Open Meeting' for an unknown host; identical slot-unavailable text on both paths
 result: skipped
-reason: "Already unit-tested"
+reason: "Deferred follow-up: Already unit-tested"
 
 ## Summary
 
@@ -96,5 +96,24 @@ issues: 0
 pending: 0
 skipped: 3
 blocked: 0
+
+## Deferred Follow-Ups
+
+<!-- Deferred by the user on 2026-11-16 -->
+- test: 12
+  idea: "Can't reproduce the race by hand (one POST /end when a connection failure overlaps a hang-up)"
+  deferred_at: 2026-11-16
+- test: 13
+  idea: "Rare test case (second push tap during an in-flight mode switch)"
+  deferred_at: 2026-11-16
+- test: 17
+  idea: "Already unit-tested (CALL-09 provider label, PAY-05 slot-taken copy)"
+  deferred_at: 2026-11-16
+- test: checklist-5
+  idea: "CALL-09 provider label on a real Zoom/Skype link (optional, unit-tested)"
+  deferred_at: 2026-11-16
+- test: checklist-8
+  idea: "PAY-05 same slot-taken copy on free and paid (optional, unit-tested)"
+  deferred_at: 2026-11-16
 
 ## Gaps

@@ -86,7 +86,8 @@ Steps: open a booking whose meeting link is a real Zoom or Skype URL.
 
 Expected: the button shows the provider label (Zoom / Skype). A link on an unknown host shows the generic "Open Meeting" copy.
 
-Result: SKIPPED (2026-11-16, UAT test 17): optional, already unit-tested
+Result: skipped
+reason: Deferred follow-up: optional, already unit-tested in `ExternalMeetingProviderTests` (UAT test 17, 2026-11-16)
 
 ### 6. BOOK-10 — money formatting on every screen, topic reopen-and-save, Client Profile history (02-05, 02-06, 02-15)
 
@@ -139,7 +140,8 @@ Steps: from the second device book a slot; on the device try to book the same sl
 
 Expected: both show the **same written slot-unavailable message** (not raw server text), and the selected slot is cleared.
 
-Result: SKIPPED (2026-11-16, UAT test 17): optional, already unit-tested
+Result: skipped
+reason: Deferred follow-up: optional, already unit-tested through `BookingErrorMapper` (UAT test 17, 2026-11-16)
 
 ### 9. BOOK-18 — live booking updates and overlapping refresh (02-03, 02-13)
 
@@ -265,7 +267,7 @@ Decision records referenced above: D-01 (Q3 route only), D-03 (expert-targeted p
 | Device and iOS version | |
 | Tester | |
 | Date | 2026-11-10 to 2026-11-16 |
-| Items passed / failed / skipped | 13 / 0 / 2 |
-| Follow-ups opened | None. Partial coverage noted on items 1 and 11 |
+| Items passed / failed / skipped | 13 / 0 / 2 (deferred) |
+| Follow-ups opened | Items 5 and 8 deferred (see 02-UAT.md Deferred Follow-Ups). Partial coverage noted on items 1 and 11 |
 
 A Phase 2 item that fails on device goes back to its owning plan's requirement (it stays Pending in REQUIREMENTS.md) and to `.planning/WINDOWS.md` as a new entry; a passing item lets its WINDOWS.md `unrun-verify` entry be marked fixed.

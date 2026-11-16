@@ -22,6 +22,8 @@ struct ExpertBookingNoteView: View {
     let dateLabel: String
 
     @FocusState private var isFocused: Bool
+    @Environment(\.dismiss) private var dismiss
+    @State private var showDiscardPrompt = false
 
     init(
         bookingId: UUID,
@@ -39,7 +41,17 @@ struct ExpertBookingNoteView: View {
         ZStack {
             Brand.surface.ignoresSafeArea()
             content
+                .alert("Discard changes?", isPresented: $showDiscardPrompt) {
+                    Button("Keep editing", role: .cancel) {}
+                    Button("Discard", role: .destructive) { dismiss() }
+                } message: {
+                    Text("Your changes to this note won't be saved.")
+                }
         }
+        // The interactive pop is always disabled so a swipe can never discard unsaved edits;
+        // the Back button is the only exit (D-19 amendment, user decision 2026-11-16).
+        .background(BookingRequestSentPopGestureLock())
+        .navigationBarBackButtonHidden(true)
         .task { await viewModel.load() }
         .navigationTitle("My Note")
         .navigationBarTitleDisplayMode(.inline)
@@ -47,6 +59,9 @@ struct ExpertBookingNoteView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                backButton
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 saveButton
             }
@@ -138,6 +153,26 @@ struct ExpertBookingNoteView: View {
                 .padding(.vertical, 10)
                 .frame(minHeight: 260)
         }
+    }
+
+    // MARK: - Back (EXP-16, D-19)
+
+    /// Pops at once when nothing is unsaved; otherwise asks `Discard changes?` first.
+    private var backButton: some View {
+        Button {
+            if viewModel.needsDiscardPrompt {
+                showDiscardPrompt = true
+            } else {
+                dismiss()
+            }
+        } label: {
+            Image(systemName: "chevron.left")
+                .font(.body.weight(.semibold))
+                .foregroundColor(Brand.onSurface)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Back")
     }
 
     // MARK: - Counter (EXP-16, D-19)

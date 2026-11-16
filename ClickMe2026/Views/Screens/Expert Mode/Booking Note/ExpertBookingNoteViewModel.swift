@@ -41,6 +41,10 @@ final class ExpertBookingNoteViewModel: ObservableObject {
 
     var hasChanges: Bool { noteText != lastPersisted }
 
+    /// Whether leaving the screen must ask `Discard changes?`. A save in flight counts as
+    /// unsaved until it succeeds, so Back during a save still asks.
+    var needsDiscardPrompt: Bool { hasChanges || isSaving }
+
     // MARK: Dependencies
 
     private let api: ClickMeAPI

@@ -156,4 +156,37 @@ struct ExpertBookingNoteViewModelTests {
         #expect(viewModel.noteText == "abc")
         #expect(viewModel.errorMessage == nil)
     }
+
+    // MARK: - Discard prompt (D-19)
+
+    @Test("a freshly loaded note asks nothing on leave")
+    func loadedNoteDoesNotPrompt() async {
+        let viewModel = await makeViewModel(existing: "old")
+        #expect(viewModel.needsDiscardPrompt == false)
+    }
+
+    @Test("an edit prompts, and reverting it to the persisted text stops the prompt")
+    func editPromptsAndRevertClears() async {
+        let viewModel = await makeViewModel(existing: "old")
+        viewModel.updateNote("old plus")
+        #expect(viewModel.needsDiscardPrompt == true)
+        viewModel.updateNote("old")
+        #expect(viewModel.needsDiscardPrompt == false)
+    }
+
+    @Test("a save in flight counts as unsaved")
+    func savingCountsAsChanged() async {
+        let viewModel = await makeViewModel(existing: "old")
+        viewModel.isSaving = true
+        #expect(viewModel.hasChanges == false)
+        #expect(viewModel.needsDiscardPrompt == true)
+    }
+
+    @Test("after a successful save nothing is left to discard")
+    func savedNoteDoesNotPrompt() async {
+        let viewModel = await makeViewModel(existing: "old")
+        viewModel.updateNote("new")
+        await viewModel.save()
+        #expect(viewModel.needsDiscardPrompt == false)
+    }
 }

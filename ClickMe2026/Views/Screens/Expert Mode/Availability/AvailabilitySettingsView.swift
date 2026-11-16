@@ -33,7 +33,8 @@ func minutesToString(_ minutes: Int) -> String {
 }
 
 func minutesToAMPM(_ minutes: Int) -> String {
-    let h = minutes / 60
+    // Wrap at 24 so a stored 24:00 reads 12:00 AM, not 12:00 PM (D-08).
+    let h = (minutes / 60) % 24
     let m = minutes % 60
     let period = h < 12 ? "AM" : "PM"
     let h12 = h == 0 ? 12 : (h > 12 ? h - 12 : h)
@@ -65,17 +66,20 @@ struct AvailabilitySettingsView: View {
         }
         // Time picker sheet
         .sheet(isPresented: $viewModel.showTimePicker) {
-            if let di = viewModel.editingDayIndex, let si = viewModel.editingSlotIndex {
+            if let di = viewModel.editingDayIndex, let si = viewModel.editingSlotIndex,
+               viewModel.schedule.indices.contains(di),
+               viewModel.schedule[di].slots.indices.contains(si) {
                 TimeRangePickerSheet(
-                    slot: $viewModel.schedule[di].slots[si],
+                    slot: viewModel.schedule[di].slots[si],
                     brandGreen: Brand.primary,
                     bg: Brand.surfaceContainerLow,
                     onSurface: Brand.onSurface,
                     onSurfaceVar: Brand.onSurfaceVariant,
                     onPrimary: Brand.onPrimary,
-                    onDone: { viewModel.dismissTimePicker() },
+                    onDone: { viewModel.commitEditedSlot($0) },
                     onCancel: { viewModel.dismissTimePicker() }
                 )
+                .id(viewModel.schedule[di].slots[si].id)
                 .presentationDetents([.fraction(0.55)])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(Color(red: 0.10, green: 0.12, blue: 0.11).opacity(0.97))
@@ -289,18 +293,18 @@ struct AvailabilitySettingsView: View {
 }
 
 private struct TimeRangePickerSheetPreview: View {
-    @State private var slot = AvailabilityTimeSlot(start: 9 * 60, end: 9 * 60 + 15)
+    private let slot = AvailabilityTimeSlot(start: 9 * 60, end: 9 * 60 + 15)
     var body: some View {
         ZStack {
             Brand.surface.ignoresSafeArea()
             TimeRangePickerSheet(
-                slot: $slot,
+                slot: slot,
                 brandGreen: Brand.primary,
                 bg: Brand.surfaceContainerLow,
                 onSurface: Brand.onSurface,
                 onSurfaceVar: Brand.onSurfaceVariant,
                 onPrimary: Brand.onPrimary,
-                onDone: {},
+                onDone: { _ in },
                 onCancel: {}
             )
         }

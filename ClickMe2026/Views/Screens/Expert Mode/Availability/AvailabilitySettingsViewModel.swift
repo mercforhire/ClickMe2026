@@ -119,6 +119,20 @@ final class AvailabilitySettingsViewModel {
         showTimePicker = false
     }
 
+    /// Done on the time-range sheet: write the draft's times into the slot
+    /// being edited (keeping its id) and close the sheet. Cancel, swipe-down
+    /// and tap-outside call `dismissTimePicker()` instead, so they write
+    /// nothing (EXP-05, D-09). An out-of-range index only dismisses.
+    func commitEditedSlot(_ draft: AvailabilityTimeSlot) {
+        if let di = editingDayIndex, let si = editingSlotIndex,
+           schedule.indices.contains(di),
+           schedule[di].slots.indices.contains(si) {
+            schedule[di].slots[si].start = draft.start
+            schedule[di].slots[si].end = draft.end
+        }
+        dismissTimePicker()
+    }
+
     /// Snap `selectedTimezone` to whatever `TimeZone.current` maps to.
     /// Called from the "Auto-detect" affordance.
     func autoDetectTimezone() {

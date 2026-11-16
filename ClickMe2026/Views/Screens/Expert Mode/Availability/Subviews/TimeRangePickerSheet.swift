@@ -8,20 +8,42 @@
 
 import SwiftUI
 
+/// Edits a copy of a slot. Only Done hands the draft back (`onDone`), so
+/// Cancel, swipe-down and tap-outside leave the stored slot untouched (EXP-05,
+/// D-09). `original` is the slot as the sheet opened: its start and end stay
+/// rows in their lists, so an off-grid or 24:00 stored time shows as selected
+/// and is only replaced when the expert taps another row (EXP-07, D-08).
 struct TimeRangePickerSheet: View {
-    @Binding var slot: AvailabilityTimeSlot
+    let original: AvailabilityTimeSlot
+    @State private var draft: AvailabilityTimeSlot
 
     let brandGreen: Color
     let bg: Color
     let onSurface: Color
     let onSurfaceVar: Color
     let onPrimary: Color
-    let onDone: () -> Void
+    let onDone: (AvailabilityTimeSlot) -> Void
     let onCancel: () -> Void
 
-    private let step = 30 // minutes
-    private var times: [Int] {
-        stride(from: 0, through: 24 * 60 - step, by: step).map { $0 }
+    init(
+        slot: AvailabilityTimeSlot,
+        brandGreen: Color,
+        bg: Color,
+        onSurface: Color,
+        onSurfaceVar: Color,
+        onPrimary: Color,
+        onDone: @escaping (AvailabilityTimeSlot) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.original = slot
+        _draft = State(initialValue: slot)
+        self.brandGreen = brandGreen
+        self.bg = bg
+        self.onSurface = onSurface
+        self.onSurfaceVar = onSurfaceVar
+        self.onPrimary = onPrimary
+        self.onDone = onDone
+        self.onCancel = onCancel
     }
 
     var body: some View {
@@ -35,9 +57,13 @@ struct TimeRangePickerSheet: View {
                 // Start time picker
                 timePicker(
                     label: "Start Time",
-                    selectedMinutes: $slot.start,
-                    otherMinutes: slot.end,
-                    isStart: true
+                    selectedMinutes: $draft.start,
+                    rows: AvailabilitySlotRules.pickerRows(
+                        isStart: true,
+                        draftStart: draft.start,
+                        draftEnd: draft.end,
+                        storedValue: original.start
+                    )
                 )
 
                 Text("-")
@@ -48,9 +74,13 @@ struct TimeRangePickerSheet: View {
                 // End time picker
                 timePicker(
                     label: "End Time",
-                    selectedMinutes: $slot.end,
-                    otherMinutes: slot.start,
-                    isStart: false
+                    selectedMinutes: $draft.end,
+                    rows: AvailabilitySlotRules.pickerRows(
+                        isStart: false,
+                        draftStart: draft.start,
+                        draftEnd: draft.end,
+                        storedValue: original.end
+                    )
                 )
             }
             .padding(.horizontal, 20)
@@ -69,7 +99,7 @@ struct TimeRangePickerSheet: View {
                         )
                 }
 
-                Button { onDone() } label: {
+                Button { onDone(draft) } label: {
                     Text("Done")
                         .font(.brand(.callout, weight: .bold))
                         .foregroundColor(onPrimary)
@@ -90,22 +120,17 @@ struct TimeRangePickerSheet: View {
     private func timePicker(
         label: String,
         selectedMinutes: Binding<Int>,
-        otherMinutes: Int,
-        isStart: Bool
+        rows: [Int]
     ) -> some View {
         VStack(spacing: 8) {
             Text(label)
                 .font(.brand(.caption, weight: .medium))
                 .foregroundColor(onSurfaceVar)
 
-            let validTimes = isStart
-                ? times.filter { $0 < otherMinutes }
-                : times.filter { $0 > otherMinutes }
-
             ScrollViewReader { proxy in
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 0) {
-                        ForEach(validTimes, id: \.self) { t in
+                        ForEach(rows, id: \.self) { t in
                             let isSelected = selectedMinutes.wrappedValue == t
 
                             Button {

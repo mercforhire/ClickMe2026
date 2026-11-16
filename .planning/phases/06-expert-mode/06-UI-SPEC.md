@@ -1,10 +1,11 @@
 ---
 phase: "06"
 slug: expert-mode
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: "2026-11-16"
+reviewed_at: "2026-11-16"
 ---
 
 # Phase 06 — UI Design Contract
@@ -158,7 +159,7 @@ All use Dynamic Type text styles, so they scale with Dynamic Type. New multi-lin
 
 ## Color
 
-Values come from `Brand.swift`. Phase 06 adds no color and no `Brand` token, and uses no warning (orange) element. The amber `IncomingRequestsTheme.amberColor` on an open request's expiry text is existing and unchanged.
+Values come from `Brand.swift`. Phase 06 adds no color and no `Brand` token, and adds no new warning (orange or amber) element. One existing amber is kept: `IncomingRequestsTheme.amberColor` #FFB833 is the "expiry warning" semantic role for an open request's `Expires in: {n}h` text, shipped and unchanged (it is not used on expired cards).
 
 | Role | Value | Usage on Phase 06 surfaces |
 |------|-------|----------------------------|
@@ -166,7 +167,7 @@ Values come from `Brand.swift`. Phase 06 adds no color and no `Brand` token, and
 | Secondary (30%) | `Brand.surfaceContainerLow` #1c1b1b (cards, fields), `Brand.surfaceContainer` #201f1f, `Brand.surfaceContainerHigh` #2a2a2a (Availability time buttons), `Brand.outlineVariant` #3c4a3f (borders); **`Brand.surfaceContainerLowest` #0e0e0e for an expired request card fill** | Cards, fields, the segmented control track, the time-range sheet |
 | Accent (10%) | `Brand.primary` #44f697; text on accent `Brand.onPrimary` #00391d | See reserved list below |
 | Destructive | `Brand.destructive` (about #FF4D4D) and the system destructive role (`Delete`, `Discard` render red by the OS); `Brand.error` #ffb4ab for inline errors and the counter at the cap | Delete-topic confirmation button, Discard button, below-minimum price hint, counter at 5,000, save-error text. No new destructive control beyond `Delete` and `Discard` |
-| Text | `Brand.onSurface` #e5e2e1 (primary), `Brand.onSurfaceVariant` #bacbbc (secondary), `Brand.onSurfaceMuted` (gray 60%, helper) | All Phase 06 surfaces |
+| Text | `Brand.onSurface` #e5e2e1 (primary), `Brand.onSurfaceVariant` #bacbbc (secondary), `Brand.onSurfaceMuted` #999999 (`Color(white: 0.60)`, helper and counters) | All Phase 06 surfaces |
 
 Accent reserved for (Phase 06 surfaces only):
 
@@ -247,6 +248,7 @@ All strings below are exact. "Shipped" means the string is in the code at HEAD `
 | Element | Copy | Status |
 |---------|------|--------|
 | Accept CTA | `Accept` (footer capsule); `Confirm` inside the Accept sheet titled `Confirm Booking` | shipped |
+| Accept sheet message counter (from 800 characters, user decision U1) | `{n}/1000`, for example `812/1000`, same format as Android `accept_sheet_counter`. VoiceOver reads `{n} of 1,000 characters` | new |
 | Decline / Accept submit error alert, title | `Couldn't update request` (Android `request_decision_error_title`; replaces the generic `Something went wrong`) | changed |
 | Submit error alert, message and button | the server message through `Error.userMessage`; button `OK` | shipped |
 | 409 `ALREADY_PROCESSED` (accept or decline) | same alert: title `Couldn't update request`, message is the server message (today `This booking request has already been processed.`), button `OK`. Branch on `ErrorCode.alreadyProcessed`, never on the message. `OK` pops to a refreshed Incoming Requests (D-12). Any other error: same alert, `OK` only dismisses and the user stays on the screen | changed |
@@ -295,6 +297,8 @@ Rule: every new Phase 06 call-to-action label is a specific verb plus noun where
 | `Discard` (destructive role) | Discard-changes prompt (new) | The prompt title `Discard changes?` supplies the noun. Same as Android `booking_note_discard_confirm` |
 | `OK` (cancel role) | Error alerts on the topic editor, Request Decision, Booking Note, Availability (shipped) | System alert acknowledge. The title and message carry the meaning |
 | `Save`, `Done`, `Confirm` | Toolbar and sheet buttons (shipped) | Single-purpose screens or sheets titled for their object (`My Note`, `Select Time Range`, `Confirm Booking`). Existing labels, unchanged |
+| `Accept` | Request Decision footer capsule (shipped) | Paired with `Decline` on a screen whose whole subject is one booking request; same word as Android. Existing label, unchanged |
+| `Retry` | `Couldn't load note` error state (shipped) | The error text above it names what is retried. Existing label, unchanged |
 
 ### Destructive confirmation
 
@@ -348,6 +352,7 @@ Rule: every new Phase 06 call-to-action label is a specific verb plus noun where
 | `Back to Home` | Pops to the root of the Dashboard tab and selects the Dashboard tab if the flow began on another tab (a push opens the decision screen on the Dashboard stack, but chats and bookings can too). The Dashboard reloads so its pending count drops. Uses the same exit-plan mechanism as `HomeShellExit` where it fits (Phase 04 section 4) |
 | `Add to Calendar` | Presents the system `EKEventEditViewController` sheet (unchanged) pre-filled per the copy table. No app copy for denied access: the system editor owns it |
 | 409 on accept or decline | Alert with the server message; `OK` pops to a refreshed Incoming Requests. Other errors keep the user on the screen (D-12) |
+| Accept sheet message cap (user decision U1, 2026-11-16) | Hard cap of **1,000 UTF-16 code units** (backend `acceptSchema` max 1000, Android `ACCEPT_MESSAGE_MAX_CHARS = 1000`), applied as the user types and on paste with `UTF16Prefix.prefix(_:limit: 1000)`, so a long paste is cut on a character boundary. Counter `{n}/1000` appears from 800 units (Android `NOTE_COUNTER_FROM = 800` in `DeclineReason.kt`), trailing-aligned under the field, `.caption` Regular, `Brand.onSurfaceMuted`, and `Brand.error` at exactly 1,000. `Confirm` still works at the cap. No other change to the sheet's layout |
 | Decline | Unchanged apart from the shared alert title and the 409 rule. Declining still ends in the existing `Declined` footer state; it does not navigate (Android's decline pop is not in this phase) |
 | Nav bar | Inline title `Booking Confirmed`, system back kept, the three pins from "Nav-bar pins" |
 | Entry animation | The existing staggered animation (check, headline, card, buttons) is kept as is |
@@ -397,7 +402,7 @@ See the colour table under Color. Behaviour is unchanged: expired cards stay tap
 
 ### 9. Unchanged by decision
 
-Phase 06 does not: add a toast, add a currency beyond CAD and USD, add a 24:00 End choice, snap or rewrite an off-grid stored time, add an Android-style decline pop or snackbar to iOS, add an earnings total to Client Profile, add a connectivity or presence indicator to the hub, change the client hub dot, change the Accept sheet, add a cap to the Accept sheet message, change any backend contract, or hand-edit `Localizable.xcstrings` (Xcode regenerates it; stage only intended string changes).
+Phase 06 does not: add a toast, add a currency beyond CAD and USD, add a 24:00 End choice, snap or rewrite an off-grid stored time, add an Android-style decline pop or snackbar to iOS, add an earnings total to Client Profile, add a connectivity or presence indicator to the hub, change the client hub dot (user decision U2), change the Accept sheet beyond the message cap and counter (U1), resize the Availability day-row touch targets (U4), change any backend contract, or hand-edit `Localizable.xcstrings` (Xcode regenerates it; stage only intended string changes).
 
 ---
 
@@ -441,7 +446,7 @@ One primary focal point per screen Phase 06 changes. Nothing else on the screen 
 
 > Shape-rooted state coverage for the Phase 06 deltas, hand-built from the decisions, the code at `dfa8456`, the backend and the Android contract, using the 8-category taxonomy. Copy lives in the Copywriting Contract and is referenced, not restated. The engine probe (orchestrator Step 9.5) may replace or extend these rows.
 
-Applicable state considerations resolved: 22 covered, 10 backstop, 4 unresolved (U1 to U4). The four unresolved rows are explicit planner assumptions, not silently dropped.
+Applicable state considerations resolved: 29 covered, 10 backstop, 0 unresolved. U1 to U4 were resolved by the user on 2026-11-16. The engine probe (Step 9.5, 9 surfaces, 55 applicable categories) was cross-checked against these rows; the categories it raised that the hand-built rows did not cover are PR1 to PR3.
 
 | ID | Category | Element(s) | Status | Resolution / Reason |
 |----|----------|------------|--------|---------------------|
@@ -477,10 +482,13 @@ Applicable state considerations resolved: 22 covered, 10 backstop, 4 unresolved 
 | D4 | device-only | Note swipe-back lock added after the view appeared; counter above the keyboard | 🧪 backstop | Real iPhone; fallback is the unconditional lock (see section 7) |
 | D5 | device-only | Calendar sheet content, and Client Profile for a client with CAD and USD sessions | 🧪 backstop | Real iPhone and a test client with two bookings |
 | D6 | device-only | 409 `ALREADY_PROCESSED` | 🧪 backstop | Two accounts: the client cancels the request while the expert has its decision screen open, then the expert taps Accept. Production backend, test accounts |
-| U1 | interaction | Accept sheet message has no 1,000-character cap or counter (backend `acceptSchema` max 1000; Android D-08 has one) | ⚠ unresolved | Planner assumption: leave as shipped, it is not a Phase 06 requirement. A paste over 1,000 would return a 422 shown in the `Couldn't update request` alert. Surface to the user as a possible follow-up |
-| U2 | scope | The client hub user card hard-codes the same online dot (`ClientProfileHomeViewModel.isOnline`) | ⚠ unresolved | Planner assumption: EXP-15 covers the expert hub only; the client dot is untouched. If the user wants parity, it is a one-line follow-up using the same `showsOnlineDot` flag |
-| U3 | interaction | A 23:00 to 23:30 slot cannot be added with `Add hours` (disabled when the new start would be 23:00 or later) but can still be made by editing a slot | ⚠ unresolved | Planner assumption: literal reading of D-07 (assumption A3). The alternative is to enable the control until the new start passes 23:00 and clamp the end |
-| U4 | interaction | Pre-existing touch targets under 44 pt: Availability time buttons (88 x 40), the bare slot-delete icon | ⚠ unresolved | Planner assumption: leave as shipped; the phase does not restyle the day row. A 44 pt minimum is the alternative if the device check shows mis-taps |
+| U1 | long-text | Accept sheet message at and beyond 1,000 units (backend `acceptSchema` max 1000) | ✅ covered | User decision 2026-11-16: add the cap and counter. Text is cut at 1,000 UTF-16 units on a character boundary, including on paste; the counter `{n}/1000` shows from 800 and turns `Brand.error` at 1,000; no 422 for length can be produced from the sheet (section 3) |
+| U2 | scope | The client hub user card hard-codes the same online dot (`ClientProfileHomeViewModel.isOnline`) | ✅ covered | User decision 2026-11-16: expert hub only. The client hub keeps its dot exactly as shipped; it passes `showsOnlineDot: true` (or its current value) so its look is unchanged. Logged as a follow-up |
+| U3 | interaction | `Add hours` near the end of the day | ✅ covered | User decision 2026-11-16 confirms A3: `Add hours` is disabled when the new slot's start would be 23:00 or later (latest end at or after 22:30); its end is clamped to 23:30. A 23:00 to 23:30 slot can still be made by editing a slot |
+| U4 | interaction | Pre-existing touch targets under 44 pt: Availability time buttons (88 x 40), the bare slot-delete icon | ✅ covered | User decision 2026-11-16: leave the sizes as shipped. The slot-delete `minus.circle.fill` button gains the accessibility label `Delete time range` (no visual change) |
+| PR1 | loading / empty / error / zero-one-many | Topics list, Incoming Requests list, Client Profile history list and the expert hub card, in their loading, empty, error and one-or-many states | ✅ covered | Unchanged by Phase 06: these lists keep their shipped loading, empty-state, error and retry behaviour. Phase 06 changes only the Delete prompt, the expired-card colours, the dot and nothing in their load paths (engine probe, Step 9.5) |
+| PR2 | overflow / long-text | Expert Booking Summary ID line | ✅ covered | The value is always `ID: #` plus 8 characters, so it cannot overflow; it sits on its own line under `View Profile` (engine probe, Step 9.5) |
+| PR3 | loading | Booking Note load | ✅ covered | Unchanged: `Loading note…`, then the editor; a 404 means an empty note; other errors show `Couldn't load note` with `Retry` (engine probe, Step 9.5) |
 
 <!-- Status vocabulary (locked by probe-core projectTruths):
      ✅ covered   → a plain truth string lifted into must_haves.truths
@@ -497,7 +505,7 @@ This run could not ask the user questions. Each point CONTEXT leaves open, or wh
 |---|------------|-------|
 | A1 | The iOS currency picker, lock, caption, default and own-currency seed are already shipped (`73e729e`) and are **kept as is**. D-01 to D-04 are verified, not rebuilt | `TopicEditorView.swift` L98, L419 to L450 and `TopicEditorViewModel.swift` L76 to L118, L170 to L183 at `dfa8456`; CONTEXT cites pre-`73e729e` line numbers |
 | A2 | The lock caption is the longer exact backend string, not D-02's shorter text | CONTEXT "Specifics" allows matching the closer server string; `USD-TOPIC-PRICING.md` §4 requires both apps to render it character for character; it already ships |
-| A3 | D-07's "start is already 23:00 or later" means the new slot's start (latest end + 30 min). Disabled at 23:00 or later; clamp the end to 23:30 | Literal reading of D-07 and the discussion log. The alternative (disable only once the start would pass 23:00) is U3 |
+| A3 | D-07's "start is already 23:00 or later" means the new slot's start (latest end + 30 min). Disabled at 23:00 or later; clamp the end to 23:30 | Literal reading of D-07; **confirmed by the user 2026-11-16 (U3)** |
 | A4 | "Trims whitespace" in the roadmap success criterion 5 is read as D-19's rule: whitespace-only becomes `""`; other text is sent as typed | D-19 and Android 16.4 D-04 ("Otherwise the text is sent as typed") are the locked, more specific statements |
 | A5 | The expert Confirmed screen reuses the shipped `BookingConfirmedView` layout with client content, the Android body sentence and an inline `Booking Confirmed` title | D-11 "copy Android"; Android `strings_booking_confirmed.xml`. The shipped view was written for the client side and names the expert in its copy |
 | A6 | The submit-error alert title becomes `Couldn't update request` (Android parity) for 409 and other errors | D-12 leaves the title open; the shipped `Something went wrong` is generic |
@@ -568,15 +576,15 @@ Phase 06 adds no packages. No `npx shadcn view` vetting was needed and none was 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
-- [ ] Dimension 7 Inventory Provenance: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking; `Accept` and `Retry` added to the waiver)
+- [x] Dimension 2 Visuals: FLAG (non-blocking; slot-delete icon gets the label `Delete time range`, U4)
+- [x] Dimension 3 Color: FLAG (non-blocking; amber role and `onSurfaceMuted` hex declared)
+- [x] Dimension 4 Typography: FLAG (non-blocking; pre-existing styles out of contract)
+- [x] Dimension 5 Spacing: FLAG (non-blocking; listed off-grid values are known pre-existing debt, not contract values)
+- [x] Dimension 6 Registry Safety: PASS
+- [x] Dimension 7 Inventory Provenance: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-11-16 (gsd-ui-checker: APPROVED, no BLOCK). UI Considerations U1 to U4 resolved by the user the same day.
 
 ---
 
@@ -592,5 +600,5 @@ Phase 06 adds no packages. No `npx shadcn view` vetting was needed and none was 
 | Android decisions and strings copied | `../ClickMe_Android` `10-CONTEXT.md` (D-06, D-09 to D-11), `11-CONTEXT.md` (D-04 to D-07), `16.4-CONTEXT.md` (D-01 to D-04), `strings_booking_confirmed.xml`, `strings_booking_note.xml`, `strings_expert_topics.xml`, `strings_request_decision.xml`, `TopicPrice.kt`, `AvailabilityScheduleLogic.kt`, `ExpertSummaryCard.kt`, `ExpertBookingSummaryUiState.kt`, `UpcomingBookingUiState.kt` |
 | Nav-bar pin pattern | `.planning/todos/pending/2026-11-14-availability-settings-toolbar-dark-pin.md`; plan 05-18; `.planning/debug/not-now-button-low-contrast.md` |
 | Contrast figures | Computed 2026-11-16 from the `Brand.swift` hex values with the WCAG relative-luminance formula (expired text 3.91:1 and 4.85:1 at 55% opacity; 11.36:1, 14.98:1 and 8.89:1 after the change) |
-| Claude's discretion in this file | Placement and styling of the currency control (kept as shipped); the `Add hours` disabled hint; the inserted row's persistence and order; the alert title `Couldn't update request`; `.alert` over `.confirmationDialog`; the counter threshold and style; the expired card fill, border and badge; the `showsOnlineDot` flag; the assumptions A1 to A11 and unresolved rows U1 to U4 |
+| Claude's discretion in this file | Placement and styling of the currency control (kept as shipped); the `Add hours` disabled hint; the inserted row's persistence and order; the alert title `Couldn't update request`; `.alert` over `.confirmationDialog`; the counter threshold and style; the expired card fill, border and badge; the `showsOnlineDot` flag; the assumptions A1 to A11. U1 to U4 were decided by the user on 2026-11-16, not by Claude. The Accept sheet counter threshold (800) and format (`{n}/1000`) come from Android `DeclineReason.kt` and `strings_request_decision.xml` |
 | User input this session | none; every question was answered by CONTEXT, the code, the backend, the Android source or recorded as an assumption |

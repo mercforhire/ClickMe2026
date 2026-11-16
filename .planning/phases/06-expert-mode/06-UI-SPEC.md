@@ -527,7 +527,8 @@ Android mirrors iOS behavior, so some iOS changes may need an Android change. On
 | D-08 off-grid and 24:00 rows | Android's picker was written to round-trip 1440 losslessly; check that an off-grid stored time (09:15) shows selected on Android too |
 | D-12 409 handling | Android already does this (11-CONTEXT D-07); verify parity only |
 | Calendar title | Android already uses `ClickMe · {topic} with {client}`; iOS now matches |
-| U1 Accept message cap | Android has the 1,000 cap and counter; iOS does not |
+| U1 Accept message cap | iOS now matches Android's existing 1,000 cap and counter (from 800); no Android change |
+| U2 client hub online dot | Not changed on iOS (user decision); check whether Android's client hub shows a hard-coded dot too |
 
 ---
 

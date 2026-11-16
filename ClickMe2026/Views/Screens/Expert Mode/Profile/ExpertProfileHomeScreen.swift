@@ -193,7 +193,8 @@ struct ExpertProfileHomeScreen: View {
             name: viewModel.name.isEmpty ? "Your Profile" : viewModel.name,
             email: viewModel.email,
             avatarURL: viewModel.avatarURL,
-            isOnline: viewModel.isOnline,
+            // The expert side has no real presence source, so no dot (D-10).
+            isOnline: false,
             onEditTap: { push(.personalInfo) }
         )
     }
@@ -294,7 +295,8 @@ struct ExpertProfileHomeScreen: View {
                     reviewCount: 0,
                     yearsExp: "",
                     bookings: "",
-                    isOnline: viewModel.isOnline,
+                    // The expert side has no real presence source, so no dot (D-10).
+            isOnline: false,
                     bio: "",
                     expertiseTags: [],
                     topics: [],

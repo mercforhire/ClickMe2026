@@ -18,7 +18,6 @@ final class ExpertProfileHomeViewModel: ObservableObject {
     @Published var name: String
     @Published var email: String
     @Published var avatarURL: String
-    @Published var isOnline: Bool
 
     // MARK: Dependencies
 
@@ -37,7 +36,6 @@ final class ExpertProfileHomeViewModel: ObservableObject {
         self.name = ""
         self.email = ""
         self.avatarURL = ""
-        self.isOnline = true
 
         apply(profile: userManager.profile)
         observeProfileChanges()
@@ -65,14 +63,12 @@ final class ExpertProfileHomeViewModel: ObservableObject {
     static func previewSeed(
         name: String = "Alex Rivera",
         email: String = "alex.design@clickme.app",
-        avatarURL: String = "https://randomuser.me/api/portraits/women/44.jpg",
-        isOnline: Bool = true
+        avatarURL: String = "https://randomuser.me/api/portraits/women/44.jpg"
     ) -> ExpertProfileHomeViewModel {
         let vm = ExpertProfileHomeViewModel()
         vm.name = name
         vm.email = email
         vm.avatarURL = avatarURL
-        vm.isOnline = isOnline
         return vm
     }
 

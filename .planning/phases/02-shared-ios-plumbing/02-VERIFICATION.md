@@ -1,8 +1,8 @@
 ---
 phase: 02-shared-ios-plumbing
-verified: 2026-11-10T18:20:00Z
+verified: 2026-11-16T06:10:00Z
 status: human_needed
-score: 100/111 must-haves verified
+score: 105/111 must-haves verified
 covered_files:
   - ".planning/phases/02-shared-ios-plumbing/02-01-PLAN.md"
   - ".planning/phases/02-shared-ios-plumbing/02-01-SUMMARY.md"
@@ -34,7 +34,6 @@ covered_files:
   - ".planning/phases/02-shared-ios-plumbing/02-14-SUMMARY.md"
   - ".planning/phases/02-shared-ios-plumbing/02-15-PLAN.md"
   - ".planning/phases/02-shared-ios-plumbing/02-15-SUMMARY.md"
-  - "ClickMe.xcodeproj/xcshareddata/xcschemes/ClickMe2026.xcscheme"
   - "ClickMe2026/AllTests.xctestplan"
   - "ClickMe2026/ClickMe2026AppDelegate.swift"
   - "ClickMe2026/Localizable.xcstrings"
@@ -124,393 +123,328 @@ covered_files:
   - "ClickMe2026Tests/Utils/MoneyTests.swift"
   - "ClickMe2026Tests/Utils/PaidBookingWindowTests.swift"
   - "ClickMe2026Tests/Utils/ReloadGenerationTests.swift"
-covered_digest: "v3:sha256:64ae0cbb7b62d464c41abfbc52238ed341b8e9812cb5050e390351af8b91a296"
-behavior_unverified: 9
+covered_digest: "v3:sha256:f8a54ee97fa25447f556f2e767d9075b38c92a1825b0c5d0dd0f6c9a70429d60"
+behavior_unverified: 4
 insufficient_spec: 2
 overrides_applied: 0
 prohibitions:
-  test_tier_verified: 11
-  judgment_tier_flagged: 3
+  test_tier_verified: 10
+  judgment_tier_resolved_in_uat: 3
+re_verification:
+  previous_status: human_needed
+  previous_score: 100/111
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
 deferred:
-  - truth: "The stale `TODO(backend): stripeAccount` comment in MakeABookingViewModel.swift:178 (pre-existing, blamed to 06ae1398 on 2026-10-15) is removed"
-    addressed_in: "Phase 4"
-    evidence: "REQUIREMENTS.md PAY-04: 'The stale TODO(backend): stripe_account comments are removed', mapped to Phase 4"
-  - truth: "Join on the client Upcoming Booking details screen reads ClientBookingDetail.canJoin and starts the call"
-    addressed_in: "Phase 3"
-    evidence: "REQUIREMENTS.md CALL-03 (Phase 3) and plan 02-14 artifact doc: 'Phase 3 reads it on Upcoming Booking details (CALL-03, D-07)'"
-  - truth: "Push-opened booking screens have working Join, Cancel, Reschedule and Leave Review actions"
-    addressed_in: "Phase 3"
-    evidence: "Phase 3 goal: 'Clients and experts can respond to, cancel, reschedule and join their booked sessions from every screen that offers those actions'; 02-DEVICE-UAT-CHECKLIST.md note 'Push-opened screens may have inert action buttons until Phase 3 wires them (Open Question 4)'"
+  - truth: "02-UAT.md test 12 (02-02 backstop): a failed-connection event arriving during a hang-up, or twice, produces exactly one POST /end"
+    addressed_in: "user-deferred follow-up (02-UAT.md Deferred Follow-Ups, 2026-11-16); not owned by a later roadmap phase"
+    evidence: "02-UAT.md: 'Deferred follow-up: Can't reproduce the race by hand'"
+  - truth: "02-UAT.md test 13 (02-10 backstop): a second push tap during an in-flight mode switch ends on the second tap's destination"
+    addressed_in: "user-deferred follow-up (02-UAT.md Deferred Follow-Ups, 2026-11-16); not owned by a later roadmap phase"
+    evidence: "02-UAT.md: 'Deferred follow-up: Rare test case'"
+  - truth: "02-UAT.md test 17 and checklist items 5 and 8 (optional): CALL-09 provider label on a real link; PAY-05 identical slot-taken copy on a device"
+    addressed_in: "user-deferred follow-up (02-UAT.md Deferred Follow-Ups, 2026-11-16); both are unit-tested"
+    evidence: "02-UAT.md: 'Deferred follow-up: Already unit-tested'"
 behavior_unverified_items:
-  - truth: "Roadmap SC1: a call keeps running until 60 minutes after its scheduled end, then the call screen reaches Ended"
-    test: "Device UAT item 1 (CALL-01): stay in an in-app voice call past its scheduled end on a build at or after be00d74"
-    expected: "Still connected at end + 10; notice 'This call will end in 5 minutes' at end + 55; call ends on its own and shows Ended at end + 60"
-    why_human: "CallOvertimePolicy boundaries are unit-tested, but the transition applyOvertimePolicy -> CallCenter.endCall -> handleEndCall -> Ended on a live Agora session is not exercised by any test"
-  - truth: "02-01: at scheduled end + 60 minutes the call ends through CallCenter.endCall, the same path as a hang-up, and the screen reaches Ended"
-    test: "Same as above (UAT item 1)"
-    expected: "Screen shows Ended and dismisses as after a hang-up; the Android peer tears down (call.ended)"
-    why_human: "State transition on a live call; only the pure policy has tests"
-  - truth: "02-02: when Agora reports the local connection state failed, the call screen reaches Ended and the normal end path runs once with end_reason dropped"
-    test: "No safe device repro (D-14 accepted: .failed arrives only after about 20 minutes of failed reconnects). Normal-call regression PASSED on device 2026-11-09 (UAT item 2)"
+  - truth: "Roadmap SC1 / 02-01 T3: at scheduled end + 60 minutes the call ends through CallCenter.endCall (same path as a hang-up) and the screen reaches Ended; the notice 'This call will end in 5 minutes' shows at end + 55"
+    test: "In-app voice call kept past its scheduled end on a build at or after be00d74; watch end + 55, end + 60, and the Android peer"
+    expected: "Notice at end + 55; call ends by itself and shows Ended at end + 60; Android peer tears down on call.ended"
+    why_human: "02-UAT.md test 1 recorded PASS but only observed the call still connected at end + 11 (user did not wait: 'too long, assume the test passes'). The cutoff and warn boundaries are unit-tested (CallOvertimePolicyTests) and the wiring is present, but the applyOvertimePolicy -> CallCenter.endCall -> handleEndCall -> Ended transition on a live Agora session has never been observed"
+  - truth: "02-02 T1 / SC1 clause: when Agora reports the local connection state failed, the call screen reaches Ended and the normal end path runs once with end_reason dropped"
+    test: "No safe repro (D-14: .failed arrives only after about 20 minutes of failed reconnects). Normal-call regression PASSED on device 2026-11-09"
     expected: "A terminal Agora failure ends the call once with .dropped and dismisses"
-    why_human: "The mapping failed -> disconnected is unit-tested (AgoraConnectionMappingTests) and endAfterConnectionFailure is wired, but the delegate-to-view-model transition is not exercised by a test"
-  - truth: "02-04: client My Bookings cards and the expert Upcoming list Join buttons (and the expert NOW badge) change state as time passes without a refresh"
-    test: "Device UAT item 3 (CALL-02): keep each list open across start - 60 min"
-    expected: "Join enables on its own within about a minute; NOW badge appears without pull-to-refresh"
-    why_human: "TimelineView(.periodic(by: 60)) wraps both buttons, but SwiftUI timeline re-evaluation cannot be exercised in the unit target"
-  - truth: "02-14: the expert dashboard strip and the client Explore today strip use JoinWindow and their Join buttons change state as time passes without a refresh"
-    test: "Device UAT items 3 and 4 (CALL-02 / D-12) on the Dashboard and Explore strips"
-    expected: "Join Session / Join Call enable on their own inside the window; a pending_reschedule card shows Join visible but dimmed and disabled"
-    why_human: "Same TimelineView limitation as above"
-  - truth: "02-09: opening a destination selects the tab that owns it, replaces that tab's stack in one mutation, and Back returns to the tab's root (D-04)"
-    test: "Device UAT item 10 (PUSH-01 / CR-01), warm and cold, both modes"
-    expected: "The owning tab opens on the destination with no SwiftUI unregistered-destination warning page; Back returns to the tab root"
-    why_human: "HomeNavigationPath.replace(with:) and the single homeStack registration are present; SwiftUI navigation behavior is not unit-testable"
-  - truth: "02-10: a push whose target_role differs from the current mode switches mode silently and then opens the destination in the other shell (PUSH-02, D-02)"
-    test: "Device UAT item 11 (PUSH-02 / D-03), steps 1-3"
-    expected: "B in client mode tapping an expert-targeted push switches to expert mode and opens the request; client-only account C stays in client mode and opens the notifications list"
-    why_human: "PushRoutePlanner.plan is unit-tested; the hand-off (setMode, pending retained, other shell's onAppear consumes it) spans two shells and is not exercised by a test"
-  - truth: "02-10: a tap that launches the app is held until the shell for its mode appears, then routed once"
-    test: "Device UAT items 10 and 11 cold-launch steps (force-quit, tap a push)"
-    expected: "App launches in the right mode and opens the screen exactly once"
-    why_human: "Cold-launch ordering between didReceive, auto-login and shell onAppear is runtime behavior"
-  - truth: "Roadmap SC5: tapping any push switches to the right mode and opens the right screen; no banner for the chat on screen; after logout the device stops receiving the old account's pushes"
-    test: "Device UAT items 10-15"
-    expected: "Per checklist: right screen, no warning page, mode switch, no banner for the open chat, no pushes for the logged-out account"
-    why_human: "APNs/FCM delivery, UNUserNotificationCenter presentation and SwiftUI navigation are device-only"
+    why_human: "The mapping failed -> disconnected is unit-tested (AgoraConnectionMappingTests) and endAfterConnectionFailure is wired (MeetingCallViewModel.swift:274, :700), but the delegate-to-view-model-to-Ended transition is exercised by no test and no device run (D-14 accepted by the user at plan time)"
+  - truth: "02-10 T12: with roles unknown (me nil after an offline cold launch) an expert-targeted tap stays queued with no mode switch and no notifications-list fallback, and is planned again when me loads or the app next becomes active"
+    test: "Device checklist item 11 step 5: airplane mode on, cold-launch from an expert-targeted push as a set-up expert whose last mode was client, then airplane mode off and close Control Center"
+    expected: "Client home with no notifications list while offline (observed); after the network returns the app switches to expert mode and opens the request once (NOT confirmed)"
+    why_human: "The hold is unit-tested (PushRoutePlannerTests planPending rows) and the re-plan hooks are present (onChange of me?.roles and scenePhase in both shells). The two records of the device run disagree: 02-UAT.md test 7 says 'Case 3 not met: the queued tap does not open the notifications list after the network returns', 02-DEVICE-UAT-CHECKLIST.md item 11 says the no-notifications-list part matches the expected result and 'whether the request then opened was not confirmed'. Either way the user accepted it ('not important; no fix wanted'), but the re-plan after the network returns has not been seen to work"
+coincidental_reliance_items: []
 human_verification:
-  - test: "CALL-01 overtime auto-end (UAT item 1): in-app voice call kept past its scheduled end on a build at or after be00d74"
-    expected: "Still connected at end + 10 (old 5-minute cutoff gone); 'This call will end in 5 minutes' at end + 55; ends by itself at end + 60 and shows Ended; Android peer tears down on call.ended"
-    why_human: "Live Agora call; only the policy constants and boundaries are unit-tested"
-  - test: "CALL-02 join window edges on all four surfaces (UAT item 3) and the pending_reschedule disabled Join (UAT item 4)"
-    expected: "Join appears within about a minute of start - 60 with no refresh; still shown at start + 90 on a long session; leaves the client list at max(end, start + 60); pending_reschedule shows Join dimmed and disabled, enabling on its own once confirmed again"
-    why_human: "Live timing and TimelineView re-evaluation; the disabled-not-hidden presentation is the user-directed contract from a620b92 / 1ab3f1f / ddc0163"
-  - test: "BOOK-10 money on every screen, topic reopen-and-save (D-19), Client Profile history (UAT item 6)"
-    expected: "CA$12.50 / CA$12.00 on Make a Booking, Explore, Expert Profile, Payment History, booking detail, summary, cancel preview, dashboard, payouts, request, upcoming card, breakdown, topic cards; a 12.50 topic saved with only the title changed still shows CA$12.50 (and a legacy USD topic keeps $); Client Profile gated rows show real net earnings, others show a dash"
-    why_human: "Rendering plus a real topic PATCH against production data"
-  - test: "BOOK-14 paid 6-day cap on Make a Booking and the client Reschedule picker (UAT item 7)"
-    expected: "All days visible and tappable; fixed note 'Paid sessions can be booked up to 6 days ahead.' / 'Paid sessions can be rescheduled up to 6 days ahead.'; slots after now + 6 days dimmed and untappable; free topic uncapped with no note; expert reschedule picker unchanged"
-    why_human: "Presentation of the user-directed dim-not-hide contract (1ddd0d0, 9f85dc2); the window rule itself is unit-tested"
-  - test: "BOOK-18 live booking.update and overlapping refresh on Upcoming Booking details, My Bookings and expert Upcoming Bookings (UAT item 9); neutral label for an unknown status after da16ef4"
-    expected: "Screens update without pull-to-refresh; an update during a pull-to-refresh ends on the newest state with no stuck spinner; an unknown status renders a neutral label, not confirmed-state actions"
-    why_human: "Socket timing and overlapping network responses; ReloadGeneration and the .unknown mapping are unit-tested"
-  - test: "PUSH-01 / CR-01 every push type opens its screen, warm and cold, both modes; unknown category opens the notifications list; notifications-list rows match; booking_id-only cron push opens the booking (UAT item 10)"
-    expected: "Right screen, no SwiftUI warning page, Back returns to the tab root, cold tap opens once"
-    why_human: "SwiftUI navigation registration and real push payloads"
-  - test: "PUSH-02 / D-03 role-targeted pushes switch mode silently, client-only fallback, roles unknown at cold launch (UAT item 11)"
-    expected: "Set-up expert in client mode switches to expert and opens the request; client-only account stays in client mode and opens the notifications list; with roles unknown offline the tap stays queued and routes once the network returns"
-    why_human: "Mode switch across shells and UserManager.me loading are runtime behavior"
-  - test: "PUSH-03 booking-request push and notifications-list row open that request's decision screen (UAT item 12)"
-    expected: "RequestDecisionView opens; Back returns to the Dashboard"
-    why_human: "Navigation"
-  - test: "BOOK-15 payment_actions push opens the booking detail, route only (UAT item 13); SKIPPED if no eligible pre-2026-10-28 long-lead booking exists"
-    expected: "Booking detail opens, no warning page, no recovery sheet"
-    why_human: "Navigation; depends on production data"
-  - test: "PUSH-04 after logout the old account's pushes stop, including the second-account, airplane-mode and involuntary paths (UAT item 14 a-d), and the WR-02 fast re-login case: sign back in as B within about 3 seconds of logging out A"
-    expected: "No push for A arrives after logout; B receives B's pushes even when the re-login is immediate (if B receives nothing until the next foreground activation, WR-02 is reproduced and should be fixed)"
-    why_human: "Needs real APNs/FCM delivery; the isLoggingOut guard window (WR-02) can only be observed on device"
-  - test: "CHAT-09 no banner for the chat already on screen, with the control, tab-switch, stacked-chat and non-chat cases (UAT item 15)"
-    expected: "No banner or sound for the open thread; banner for any other thread, for a tab switch (A3), and for every non-chat push"
-    why_human: "UNUserNotificationCenter foreground presentation"
-  - test: "Backstop (02-02, no test): a failed-connection event that arrives while a hang-up is already in progress, or arrives twice, produces exactly one POST /end"
-    expected: "Exactly one /end per leg; the guard is isEndingCall / callStatus == .ended in endAfterConnectionFailure"
-    why_human: "Declared verification: backstop; no automated test and no safe device repro. Human judgment on the guard or a future test is required"
-  - test: "Backstop (02-10, no test): a second push tap that arrives while a mode switch for the first is in flight ends on the second tap's destination"
-    expected: "The later tap replaces pending and is the one routed after the switch"
-    why_human: "Declared verification: backstop; planPending re-checks pending == queued after each await, but no test or device step exercises it"
-  - test: "Judgment-tier prohibition (02-09, PUSH-01): MUST NOT show SwiftUI's unregistered-destination warning page from any push or notifications-list tap, in either mode"
-    expected: "Never seen during UAT item 10 in either mode, warm or cold"
-    why_human: "unverified-prohibition - human review recommended; HomeRoute is registered once per tab via homeStack (1 registration, 5 tabs per shell), but the absence of the warning page is observable only on device"
-  - test: "Judgment-tier prohibition (02-12, PUSH-04): MUST NOT keep the old account's bearer, refresh token or any other credential after logout to retry the unregister (D-18)"
-    expected: "Only the Bool marker pendingPushCleanup is written; the retry calls Firebase deleteToken only"
-    why_human: "unverified-prohibition - human review recommended; PushTokenCleanupTests 'the retry marker is a plain Bool under pendingKey and nothing else is written' and clearLocalSession's keychain clear are evidence, but the prohibition is judgment-tier by contract"
-  - test: "Judgment-tier prohibition (02-12, PUSH-04): MUST NOT register or re-upload this device's push token to the account that is logging out once logout has started"
-    expected: "registerPushToken and fetchAndUploadFCMToken return before any write while isLoggingOut is true"
-    why_human: "unverified-prohibition - human review recommended; both guards are present (UserManager.swift:662, :740), but the race with a MessagingDelegate callback is runtime behavior"
-  - test: "Optional (unit-tested): CALL-09 provider label on a real Zoom/Skype link (UAT item 5); PAY-05 same slot-taken copy on free and paid (UAT item 8)"
-    expected: "Provider label for a real host, generic 'Open Meeting' for an unknown host; identical slot-unavailable text on both paths"
-    why_human: "Optional device confirmation; both are covered by ExternalMeetingProviderTests and BookingErrorCopyParityTests"
+  - test: "CALL-01 remainder (see behavior_unverified_items): let one in-app call run to end + 60"
+    expected: "Notice at end + 55, auto-end with Ended at end + 60, Android peer tears down"
+    why_human: "User waived the wait in UAT test 1; not observed. A developer decision is needed: accept as unit-tested (add an override) or run it once"
+  - test: "02-10 T12 offline cold launch: confirm the held expert-targeted push opens the request after the network returns"
+    expected: "Switches to expert mode and opens the request once"
+    why_human: "Conflicting UAT records, user accepted as is; the developer decides whether to accept (override) or re-run"
+  - test: "Backstop 02-02 (deferred by user, UAT test 12): a failed-connection event during a hang-up or twice produces exactly one POST /end"
+    expected: "One /end per leg; guard is isEndingCall / callStatus == .ended in endAfterConnectionFailure (present at MeetingCallViewModel.swift:701)"
+    why_human: "Declared verification: backstop, no test, no safe repro. Deferred, not passed. A pure-guard unit test on the view model would close it"
+  - test: "Backstop 02-10 (deferred by user, UAT test 13): a second push tap during an in-flight mode switch ends on the second tap's destination"
+    expected: "The later tap replaces pending and is the one routed (planPending re-checks pending == queued after each await, PushRouter.swift)"
+    why_human: "Declared verification: backstop, no test, no device step. Deferred, not passed. A planPending test with a fake account source that mutates pending during loadRoles would close it"
+  - test: "Optional, deferred by user (UAT test 17 / checklist 5 and 8): CALL-09 provider label on a real Zoom/Skype link; PAY-05 identical slot-taken copy"
+    expected: "Provider label for a real host, 'Open Meeting' for an unknown host; same slot-unavailable text on free and paid"
+    why_human: "Optional device confirmation; both are covered by passing unit suites"
 ---
 
 # Phase 2: Shared iOS Plumbing Verification Report
 
 **Phase Goal:** The app-wide rules that many screens rely on are correct in one shared place: call lifetime and join window, money formatting, booking-status decoding, booking error codes and push routing
-**Verified:** 2026-11-10T18:20:00Z
+**Verified:** 2026-11-16T06:10:00Z
 **Status:** human_needed
-**Re-verification:** No - initial verification
+**Re-verification:** Yes. The 2026-11-10 report (human_needed, 100/111) went stale after phases 3, 4 and 5 changed covered files. Every phase-02 must-have was re-checked against current HEAD, and the device UAT results (02-UAT.md, 14 passed, 0 issues, 3 skipped) were folded in.
 **Mode:** standard (ROADMAP.md has no `mode: mvp` for this phase)
 
-## How this was verified
+## Bottom line
 
-- Read all 15 PLAN.md and SUMMARY.md files, REQUIREMENTS.md, 02-REVIEW.md, 02-REVIEW-DISPOSITION.md, 02-SECURITY.md, 02-UI-REVIEW.md, 02-VALIDATION.md and 02-DEVICE-UAT-CHECKLIST.md.
-- Ran the unit target once (the command given by the orchestrator, smoke suites skipped): `✔ Test run with 238 tests in 28 suites passed`, `** TEST SUCCEEDED **`, exit 0. Log: `/tmp/02-verify-tests.log`. No `warning:` lines in any phase-touched file.
-- `verify.artifacts` on all 15 plans: 14 all-passed; 02-09 reported "Missing pattern: static func destination(category:" on `PushRouter.swift`. Read the file: the signature is split across lines (`static func destination(` at L272, `category: String?,` at L273), so the artifact is present and substantive. Not a gap.
-- `verify.key-links` could not resolve any `from:` entry that carries a parenthetical annotation (tool limitation: "from: must be a relative file path"). Every link pattern was grepped by hand; results are in the Key Link table.
-- `verify.commits`: all 17 commit hashes cited in the summaries and the orchestrator context are valid (be00d74, 1a2148a, da16ef4, e43ef50, 73e729e, a620b92, ddc0163, 1ab3f1f, 63b743d, 48edd28, 21bc12b, fae23f3, 90a2dba, 13ca3d2, deaa405, 76533ee, ff4f399).
-- Changed implementation files: `git diff --name-only fb94bb2 HEAD` minus `.planning/` (90 files), all listed in `covered_files`.
+The phase goal is achieved in the code. All five roadmap success criteria hold on current main for ordinary operation: the shared rules (call overtime policy, join window, money formatter, booking-status decoding, booking error mapper, push routing) exist, are wired from every screen that needs them, and are covered by passing unit suites. No truth failed and no regression was found from phases 3 to 5.
 
-## Orchestrator context, checked against the code
+The status stays `human_needed` rather than `passed` because six items are still not demonstrated, and they were waived or deferred in UAT rather than observed. They are listed below as deferred or unobserved, not counted as verified:
 
-| Claim | Finding |
-|-------|---------|
-| BOOK-14 (02-07/02-08) user-directed: days stay visible, far slots dimmed and untappable, fixed note | Confirmed. `MakeABookingTimeSlotsCard.swift:30` "Paid sessions can be booked up to 6 days ahead.", `:141 isDisabled = !viewModel.isSelectableSlot(slot)`; `RescheduleTimeSlotsCard.swift:38` "Paid sessions can be rescheduled up to 6 days ahead.", `:70`; `RescheduleView.swift:173 isBookable: { viewModel.isSelectableSlot($0) }`. `PaidBookingWindow.isDayBeyond` has no production caller (review IN-01). The 02-07 key link `isBeyondBookingWindow` and 02-08 key link `isHidden:` are superseded by this contract. |
-| CALL-02 / D-12 (02-04/02-14): Join shown disabled, rule unchanged | Confirmed. `JoinWindow.showsJoinButton(status:)` (L54-56) returns false only for `.pendingApproval`; `isOpen` still refuses `pendingReschedule`; `JoinWindowTests.pendingRescheduleShownButDisabled`. All four surfaces call `showsJoinButton` then `.disabled(!inWindow)`. |
-| PUSH-01 (02-10): booking_id-only fallback | Confirmed. `PushEvent.swift:101-108`: a valid `booking_id` with no `route_category` and no known `event_type` sets `category = "booking"`. Tests in `PushEventTests` (RED 36b99a8, GREEN 13ca3d2). |
-| BOOK-10 (02-15): real net earnings for gated statuses | Confirmed. `ClientProfileViewModel.earningsStatuses` (L109), `mapBooking` reads `earnings_breakdown.net_amount` and `currency` (L122-131), nil/nil otherwise; card shows "—" for nil (`ClientProfileBookingCard.swift:24-26`). `ClientProfileHistoryEarningsTests` passes. EXP-14 still Pending in REQUIREMENTS.md with the 2026-11-10 note. |
-| WR-01 fixed in da16ef4 | Confirmed. `UpcomingBookingViewModel.swift:189 ?? .unknown`, `MyBookingsViewModel.swift:214 ?? .unknown`; no `?? .confirmed` left in the app target. Suite "Client booking status fallback (BOOK-18 / WR-01)" passed in this run. **02-REVIEW-DISPOSITION.md listed WR-01 as `open`; updated to `fixed` (da16ef4) by this verification.** |
-| 02-VALIDATION.md `nyquist_compliant: false` because of WR-01 | **Stale.** The escalated red test is green at HEAD (238/238). The sign-off blocker no longer holds; `nyquist_compliant` can be set to `true` by the validation owner. Not edited here. |
-| e43ef50 and 73e729e are outside the phase plans | Confirmed (topic currency picker, EXP-17 iOS half). They touch `ErrorCode.swift`, `MeData.swift`, `TopicEditorView.swift`, `TopicEditorViewModel.swift`, `TopicCurrencyTests.swift`, `MoneyCallSiteTests.swift`. Review WR-03, WR-04, IN-03 come from them and are not counted against Phase 2. Note: they also change plan 02-06 truth 7's wording ("saved in defaultCurrency") to "saved in the topic's own currency"; the D-19 untouched-save rows still pass. |
-| CALL-05 passed on device 2026-11-09; all other device checks deferred | Recorded as such. Only CALL-04 (unit-only) and CALL-05 are counted SATISFIED without a pending device step; CALL-09 and PAY-05 device items are optional per the checklist. |
-| 02-UI-SPEC drift is known and documented | Confirmed in 02-UI-REVIEW.md "Spec Drift" (16 rows). Not a code defect; the spec needs revising (WINDOWS.md #14). |
+1. CALL-01: the end + 55 notice and the end + 60 auto-end were not observed on a device (only "still connected at end + 11").
+2. The terminal Agora failure transition (02-02 T1) has no repro (D-14).
+3. 02-10 T12: after an offline cold launch, whether the held tap routes once the network returns is unconfirmed, and the two UAT records disagree about what was seen.
+4. Backstop 02-02 (single `/end`) was deferred.
+5. Backstop 02-10 (second tap during a mode switch) was deferred.
+6. Optional CALL-09 / PAY-05 device checks were deferred (both unit-tested).
+
+Items 1 and 3 were accepted or waived by the user in UAT. This report does not turn that into a pass, because an accepted deviation needs an explicit `overrides:` entry. Suggested entries are at the end.
+
+## What changed since the last report
+
+| Item | Finding on current HEAD |
+|------|-------------------------|
+| Full unit target | 872 tests in 88 suites passed (orchestrator run 2026-11-16 00:12, log `/Users/LeonChen/.claude/jobs/b11d00cc/tmp/fulltest.log`; 0 failing-suite lines, `** TEST SUCCEEDED **`). `git diff 4ef43be HEAD -- ClickMe2026 ClickMe2026Tests` is empty, so the run covers the code verified here (later commits are docs only). I did not re-run the suite and did not run the two smoke suites |
+| Files from the old covered list changed by phases 3-5 | 25 files (UserManager, HomeClientView, HomeExpertView, HomeNavigationPath, MeetingCallView/ViewModel, MakeABookingViewModel, UpcomingBookingViewModel, MyBookingsViewModel, BookingSummaryViewModel and others). Each diff was read for phase-02 behavior. None removed or altered a phase-02 rule. See the table below |
+| WR-02 (fast re-login) | Fixed by quick 261110-mmr (1824a11). `clearLocalSession()` resets `isLoggingOut` (UserManager.swift:463); logout order is now DELETE, `deleteToken`, then clear session. Device-confirmed in UAT test 10 (fast re-login step) |
+| Debt marker `TODO(backend)` at MakeABookingViewModel:178 | Gone. `grep TBD|FIXME|XXX|TODO|HACK` over every covered source file returns nothing (PAY-04 landed in Phase 4) |
+| Deferred items 2 and 3 from the old report (client Join reads `canJoin`; push-opened screens' Cancel / Reschedule / Review) | Delivered by Phase 3: `UpcomingBookingViewModel.joinWindowOpen` passes `serverCanJoin: canJoin` (L211) and `HomeRoute.cancelBooking / rescheduleBooking / writeReview` now exist |
+| 02-VALIDATION.md | `nyquist_compliant: true`, `validated: 2026-11-16` |
+| 02-SECURITY.md | `status: verified`, `threats_open: 0` |
+| Old frontmatter `test_tier_verified: 11` | Miscount. The plans declare 10 test-tier and 3 judgment-tier prohibitions (checked per plan). Corrected to 10 |
+
+### Phase 3-5 changes that touch phase-02 code, and what each means
+
+| File | Later change | Effect on phase-02 truths |
+|------|--------------|---------------------------|
+| `MeetingCallViewModel.swift` / `MeetingCallView.swift` | `endingBannerText` and `skypeStatusText` moved into the view model; Skype layout also shows the end + 55 banner (CALL-06, D-15) | Banner string "This call will end in 5 minutes" is still returned first when `isOvertimeWarning` (VM L386). `applyOvertimePolicy`, `endAfterConnectionFailure`, `endDuration` and the DEBUG-only `/end` log are unchanged. `TEMP` count 0 |
+| `HomeClientView.swift` / `HomeExpertView.swift` | Mode switch now goes through `requestModeSwitch(_, source: .push)`; a tap blocked by a call is replayed on call end; `ToastHost`, `applyExit` added | Still exactly 1 `navigationDestination(for: HomeRoute.self)` per shell, with 6 `homeStack(` occurrences (1 definition, 5 tabs). `consumePendingPush` still plans via `planPending` and still triggers on `pending`, `me?.roles`, `scenePhase`. New `.setupRequired` case replans the tap so an unfinished expert profile falls to the notifications list (D-03 preserved) |
+| `HomeNavigationPath.swift` | Added `pop(_:)`, `cancelBooking`, `rescheduleBooking`, `writeReview`, `showMyHistory` | `replace(with:)` and `HomeRoute.requestDecision` intact |
+| `UserManager.swift` | Line numbers drifted: `registerPushToken` guard L1024, `fetchAndUploadFCMToken` guard L1105, `clearLocalSession` L457-492 (clears `PushRouter.shared.pending` L490 and `ChatPresence`), `forceLogout` L421, `retryPushCleanupIfNeeded` L438. Added mode gate, setup deferral, remembered email | All PUSH-04 behavior intact. `isLoggingOut` guards are the first statement in both registration paths |
+| `MakeABookingViewModel.swift` | Phase 4 paid-flow hardening (lost-confirm ledger, retry keeps attempt) | `isBookableStart` gates `book()` (L465) and `slotsForSelectedDate`; long-lead codes still terminal with slot cleared and no confirm (L708). One intentional divergence: on `SLOT_UNAVAILABLE` the paid path shows the "may already be booked" alert instead of the shared copy when a confirm of the client's own may have succeeded (Phase 4 D-04). Otherwise both paths use `BookingErrorMapper.message`. `BookingErrorCopyParityTests` still passes |
+| `UpcomingBookingViewModel.swift`, `MyBookingsViewModel.swift` | Phase 3 actions | `?? .unknown` fallbacks at L374 and L224 intact; `ReloadGeneration` begin/isCurrent intact |
+| `ErrorCode.swift`, `ClientBookingDetail.swift`, `ExternalMeetingProvider.swift` | Added cases, `openButtonTitle` | Long-lead and reschedule codes (L133, L137, L140) intact; host matching unchanged |
 
 ## Goal Achievement
 
-### Observable Truths - Roadmap Success Criteria (the contract)
+### Observable Truths: roadmap success criteria (the contract)
+
+Status legend: VERIFIED (code) = presence, wiring and a passing unit suite; VERIFIED (device) = additionally observed on a real iPhone in 02-UAT.md; PBU = PRESENT_BEHAVIOR_UNVERIFIED.
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| SC1 | A call keeps running until 60 minutes after its scheduled end, not 5. The server accepts the end of a call with a 0-second leg. The call screen reaches Ended when the Agora connection fails or is aborted. | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `CallOvertimePolicy.cutoff = 60 * 60`, `endDuration` returns `max(1, …)`; `applyOvertimePolicy` switches on `action` and calls `CallCenter.shared.endCall()`; `TEMP` count 0; `AgoraManager.localState(for: .failed) == .disconnected` feeds `endAfterConnectionFailure()`. 9 CallOvertimePolicyTests + AgoraConnectionMappingTests pass. The live-call transition to Ended is device-only (UAT item 1; CALL-05 normal-call regression passed 2026-11-09). |
-| SC2 | Join is available from start - 60 until the later of the scheduled end and start + 60. A lookalike Skype/Zoom URL is not treated as a trusted provider. | ✓ VERIFIED | `JoinWindow.isOpen` (L68-82) equals the backend rule; JoinWindowTests edge matrix passes; wired on all 4 surfaces (`UpcomingBooking.swift:63`, `UpcomingBookingsView.swift:64`, `ExpertDashboardView.swift:488`, `ExploreTodaysSessionsSection.swift:88-90`). `ExternalMeetingProvider.host(_:isOrEndsWith:)` exact-or-dotted-suffix; test matrix includes `evilzoom.us`, `zoom.us.evil.com`, `zoom.us@evil.com`, `notskype.com`. |
-| SC3 | Every money amount goes through one shared formatter with correct decimals. A realtime `booking.update` with `rescheduled` or any unknown status updates the open screen instead of being dropped. | ✓ VERIFIED | `Money.format(minorUnits:)` integer math, fixed symbol table, backend zero-decimal set; 16 call sites grep to `Money.format`; no `NumberFormatter` currency formatting remains (only two doc comments); no `"$\(` interpolation remains. `BookingStatus.init(from:)` falls back to `.unknown`; `RealtimeBookingUpdateEvent.status: BookingStatus`; all 5 exhaustive switches name `.rescheduled, .unknown`; client string-status sites map to `.unknown` (da16ef4). MoneyTests, MoneyCallSiteTests, ClientProfileBookingCardTests, BookingStatusDecodingTests, ClientBookingStatusFallbackTests, ReloadGenerationTests pass. |
-| SC4 | Paid booking and reschedule pickers offer no slot more than 6 days ahead. Long-lead error codes show a clear error instead of an invalid confirm. Paid and free paths show the same slot-taken and meeting-link copy. | ✓ VERIFIED | `PaidBookingWindow.latestStart/allows`; `MakeABookingViewModel.isBookableStart` gates `slotsForSelectedDate`, `book()` and the free-to-paid `didSet`; `RescheduleViewModel.isPaidBooking` from `isPaidReschedule`. `handlePaidFlowError` `.longLeadRequiresSavedCard, .longLeadNotAvailable` clears the slot and resets, no confirm; `BookingErrorCopyParityTests.longLeadNeverConfirms` asserts no `/bookings/confirm` request. Both paths and both reschedule VMs call `BookingErrorMapper.message`. Slots beyond the cap are dimmed and untappable (user-directed contract). |
-| SC5 | Tapping any push switches to the right mode and opens the right screen; booking-request opens that request; `booking/payment_actions` opens that booking; unknown types open the notifications list. No banner for the chat on screen. After logout the device stops receiving the old account's pushes. | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `PushEvent` reads `route_category`/`route_sub_category` with the `event_type` and `booking_id` fallbacks; `PushRouter.destination` table (`booking/requests` -> `.incomingRequest`, default booking sub-category -> `.bookingDetail`, nil -> `.notificationsList`); `PushRoutePlanner.plan` with `canUseExpertMode`; `PushForegroundPolicy.options` returns `[]` only for the visible thread; `PushTokenCleanup.signOut` orders DELETE before `clearSession` then `deleteToken`. 5 push suites pass. Real navigation, mode switch across shells, foreground presentation and APNs delivery are device-only (UAT items 10-15). |
+| SC1 | A call keeps running until 60 minutes after its scheduled end, not 5. The server accepts the end of a call with a 0-second leg. The call screen reaches Ended when the Agora connection fails or is aborted. | ⚠️ PRESENT_BEHAVIOR_UNVERIFIED | `CallOvertimePolicy.cutoff = 60 * 60`, `warningLead = 300`, `endDuration` returns `max(1, ...)` and nil for a never-joined leg (CallOvertimePolicy.swift). `applyOvertimePolicy` switches on `action` and calls `CallCenter.shared.endCall()` (VM L568-578), driven from the 1 s tick (L556). `/end` uses `endDuration` with a DEBUG-only catch (L754-767). No `TEMP` marker. `localState(for: .failed) == .disconnected` feeds `endAfterConnectionFailure()` (VM L274, L700). `CallOvertimePolicy` and Agora mapping suites pass. Device: UAT test 1 saw the call still connected at end + 11 (old 5-minute cutoff gone, the production bug) and CALL-05 normal-call regression passed 2026-11-09. NOT observed: the end + 55 notice, the end + 60 auto-end, the Android peer teardown, and any terminal Agora failure |
+| SC2 | Join is available from start - 60 until the later of the scheduled end and start + 60. A lookalike Skype/Zoom URL is not treated as a trusted provider. | ✓ VERIFIED (device) | `JoinWindow.isOpen` (JoinWindow.swift L68-82): joinable statuses, `now >= start - 3600`, first-join deadline `max(end, start + 3600)`, reconnect tier only with `serverCanJoin == true` up to end + 3600; all edges inclusive. Used by `UpcomingBooking.swift:63`, `UpcomingBookingsView.swift:64`, `ExpertDashboardView.swift:488`, `UpcomingBookingViewModel.swift:211`, `ExpertJoinVisibility` (Phase 3). `ExploreTodaysSessionsSection` and `UpcomingBookingsSessionCard` gate on `showsJoinButton`. JoinWindow, "Expert join visibility" and "ClientBookingDetail can_join" suites pass. `ExternalMeetingProviderTests` lookalike matrix passes. Device: UAT test 2 (edges on all four surfaces and pending_reschedule disabled Join) PASS |
+| SC3 | Every money amount goes through one shared formatter with correct decimals. A realtime `booking.update` with `rescheduled` or any unknown status updates the open screen instead of being dropped. | ✓ VERIFIED (device) | 19 files call `Money.format` / `Money.fractionDigits`. No `NumberFormatter` or `.formatted(.currency` remains (2 doc comments in EarningsTransactionRow only); no `"$\(` interpolation remains. `BookingStatus.init(from:)` falls back to `.unknown` (BookingStatus.swift L38-41); `RealtimeBookingUpdateEvent.status: BookingStatus` (RealtimeEvents.swift L56); the exhaustive switches at UpcomingBookingsViewModel L218/L244, ExpertDashboardViewModel L378, ClientProfileViewModel L138, BookingSummaryViewModel L361, ExploreClientViewModel L196 name `.rescheduled, .unknown`; client string-status sites use `?? .unknown`; no `?? .confirmed` remains. Money, Money call sites, BookingStatus decoding, ReloadGeneration and "Client booking status fallback" suites pass. Device: UAT test 3 (money on every screen, D-19 reopen-and-save, Client Profile history) and test 5 (live update, overlapping refresh, neutral unknown label) PASS |
+| SC4 | Paid booking and reschedule pickers offer no slot more than 6 days ahead. Long-lead error codes show a clear error instead of an invalid confirm. Paid and free paths show the same slot-taken and meeting-link copy. | ✓ VERIFIED (device) | `PaidBookingWindow.maxLead = 6 * 24 * 3600`, `latestStart`/`allows` (inclusive edge). `MakeABookingViewModel.isBookableStart` gates the slot list, `book()` (L465) and the free-to-paid switch (L81). `.longLeadRequiresSavedCard, .longLeadNotAvailable` clear the slot, regenerate the attempt and reset with no confirm (L708-713). Reschedule VMs use `isPaidReschedule` and `BookingErrorMapper`. Slots past the cap are dimmed and untappable with a fixed note (user-directed). Suites `BookingErrorMapperTests`, `PaidBookingWindowTests`, `BookingErrorCopyParityTests` (asserts no `/bookings/confirm`), `RescheduleWindowTests` pass. Device: UAT test 4 (incl. VoiceOver) PASS. Free/paid slot-taken copy on device: deferred, unit-tested; see the Phase 4 D-04 note above |
+| SC5 | Tapping any push switches to the right mode and opens the right screen; booking-request opens that request; `booking/payment_actions` opens that booking; unknown types open the notifications list. No banner for the chat on screen. After logout the device stops receiving the old account's pushes. | ✓ VERIFIED (device), one edge unconfirmed | `PushEvent` reads `route_category`/`route_sub_category`, then `event_type`, then a `booking_id`-only fallback (PushEvent.swift L81-108). One table `PushRouter.destination(category:...)` shared with `NotificationsListViewModel.destination(for:)` (L127). `handleTap` falls back to `.notificationsList`. `PushRoutePlanner.plan` and `planPending` decide the mode. `PushForegroundPolicy.options` returns `[]` only for the visible thread (wired from `willPresent`, AppDelegate L157-162, and `ChattingView` L58/L61). `PushTokenCleanup.signOut` orders DELETE, `deleteToken`, then clear session. Five push suites pass. Device: UAT tests 6, 8, 9, 11 PASS; test 7 cases 1-2 (switch to expert; client-only stays in client and opens the notifications list) PASS; test 10 (all four logout paths and fast re-login) PASS. The edge that is NOT confirmed is tracked as 02-10 T12 (offline cold launch, roles unknown) |
 
-### Observable Truths - Plan must_haves (106 truths, grouped by plan)
+### Observable Truths: plan must_haves (106 truths, grouped by plan)
 
-Status legend: ✓ VERIFIED, ⚠️ PBU = PRESENT_BEHAVIOR_UNVERIFIED, ⚠️ IS = insufficient_spec (declared backstop, no evidence), (UD) = user-directed deviation verified against the SUMMARY contract.
+| Plan | Truths | Status | Evidence on current HEAD |
+|------|--------|--------|--------------------------|
+| 02-01 | T1 no local end before end + 60; T2 notice string at end + 55; T4 action boundaries; T5 `/end` >= 1; T6 never-joined sends no `/end`; T7 do/catch with DEBUG-only log | ✓ x5 | CallOvertimePolicy.swift L31-67; VM L386 (notice), L754-767; `CallOvertimePolicyTests` pass |
+| 02-01 | T3 at end + 60 the call ends via CallCenter.endCall and reaches Ended | ⚠️ PBU | Wiring present (VM L571-572); live transition never observed (UAT test 1 partial) |
+| 02-02 | T2 Agora disconnected never ends a call; T3 remote offline only changes remote state; T4 host matching; T5 hostless unknown and native schemes | ✓ x4 | `localState(for:)` maps only `.failed` and `.connected` (AgoraManager.swift); `ExternalMeetingProvider` exact-or-dotted-suffix; both suites pass |
+| 02-02 | T1 failed -> Ended, one `/end` with `.dropped` | ⚠️ PBU | Mapping and `endAfterConnectionFailure` present; no test or repro of the delegate transition (D-14) |
+| 02-02 | T6 (backstop) duplicate failed event -> one `/end` | ⚠️ insufficient_spec | Guard `!isEndingCall, callStatus != .ended` present at VM L701; no test; user deferred the device step |
+| 02-03 | T1-T3 decode `rescheduled`/`unknown`, nine statuses unchanged, tolerant REST; T5 switches name both cases; T6 unknown expert booking Upcoming/no Join then Past; T7 deterministic decode; T8-T9 newest refetch on the expert list | ✓ x9 | BookingStatus.swift; five switch sites above; `UpcomingBookingsViewModel` L134-193 `reloads`; `BookingStatusDecodingTests`, `ReloadGenerationTests` pass. T4 (subscribers refetch on every update) device-observed in UAT test 5 |
+| 02-04 | T1-T4 window edges, reconnect tier, status matrix, inclusive edges; T6 expert list passes server `can_join` | ✓ x5 | JoinWindow.swift; `serverCanJoin: item.actions.canJoin`; `JoinWindowTests` pass. T3: Join shown disabled for pending_reschedule, rule unchanged (user-directed) |
+| 02-04 | T5 list Join and NOW badge change state without a refresh | ✓ VERIFIED (device) | `TimelineView(.periodic(by: 60))` in `UpcomingBookingCard.swift` and `UpcomingBookingsSessionCard.swift`; UAT test 2 PASS |
+| 02-05 | T1-T8 formatter rules; T9 seven client sites through Money | ✓ x9 | Money.swift; `MoneyTests` pass; client sites listed in SC3 |
+| 02-06 | T1-T3 expert sites; T4 no NumberFormatter currency left; T5 lossless seed; T6 untouched save keeps 12550 and USD; T7 typed whole-number parse | ✓ x7 | `TopicEditorViewModel` seeds via `Money.fractionDigits`; `MoneyCallSiteTests` pass; UAT test 3 covers D-19 reopen-and-save on production data. T7 wording was superseded by 73e729e (typed price saved in the topic's own currency), outside this phase |
+| 02-07 | T1 long-lead codes -> copy, slot cleared, no confirm; T2 ErrorCode cases and reschedule copy; T3 free/paid parity; T4 unmapped -> server message; T5 no slot beyond now + 6d, inclusive edge; T6 free uncapped; T7 limit read from `Date()` each evaluation; T8 free-to-paid switch clears a far slot | ✓ x8 | MakeABookingViewModel L81, L436-450, L465, L708; ErrorCode.swift L133-140; BookingErrorMapper.swift; three suites pass |
+| 02-08 | T1 client reschedule paid cap; T2 paid flag rule; T3 free uncapped; T4 `RESCHEDULE_TOO_FAR_AHEAD` copy; T5 own copy for auth-window and payment-method, rest via mapper; T6 expert calendar uncapped | ✓ x6 | `RescheduleViewModel.swift`, `ExpertRescheduleViewModel.swift`, `RescheduleWindowTests` pass; UAT test 4 PASS |
+| 02-09 | T1 HomeRoute registered once per tab; T3 ownership table; T4 booking/requests; T5 payment_actions -> detail; T6 declines/cancellations/expirations/refunds -> summary; T7 one table for push and list; T8 unknown -> notifications list | ✓ x7 | 1 registration per shell, 5 tab stacks each; table at PushRouter.swift L272-310; `PushDestinationTableTests` pass |
+| 02-09 | T2 open selects the tab that owns it, replaces the stack in one mutation, Back returns to the root | ✓ VERIFIED (device) | `HomeNavigationPath.replace(with:)`; UAT tests 6, 8, 9 PASS (no warning page, Back to root) |
+| 02-10 | T1 route_category only; T2 event_type fallback, route_category wins; T3 nested data; T4 booking_id-only fallback; T5 UUID-only ids; T6 target_role client/expert only; T8 D-03 fallback; T9 request push switches and opens; T10 signed-out dropped, later tap wins | ✓ x9 | PushEvent.swift L81-115; PushRouter.swift `handleTap`/`plan`; `PushEventTests`, `PushRoutePlannerTests` pass; UAT test 7 cases 1-2 confirm T8/T9 on device |
+| 02-10 | T7 mode switch then open in the other shell; T11 cold-launch tap held until the shell appears, then routed once | ✓ VERIFIED (device) | Shell `consumePendingPush` -> `requestModeSwitch(.., source: .push)` -> `.switched` -> other shell consumes; UAT tests 6 (cold) and 7 PASS |
+| 02-10 | T12 roles unknown: reload once, stay queued, plan again when me loads or app becomes active | ⚠️ PBU | See `behavior_unverified_items`. The hold is unit-tested and the offline "no notifications list" half was seen; routing after the network returns is unconfirmed, and the UAT records disagree |
+| 02-10 | T13 (backstop) second tap during an in-flight switch wins | ⚠️ insufficient_spec | `planPending` re-checks `pending == queued` after each await; no test; user deferred (UAT test 13) |
+| 02-11 | T1 no banner/sound/list for the visible thread; T2 other threads and non-chat push present normally; T3 refresh tick always fires; T4 presence set on appear, cleared only by the same chat; T5 preview seed without thread id never suppresses | ✓ x5 | PushForegroundPolicy.swift L32-44; AppDelegate L157-162 (tick first); ChattingView L58/L61; `PushForegroundPolicyTests` pass; UAT test 11 PASS (control, tab switch, stacked chats, non-chat) |
+| 02-12 | T1 DELETE with live bearer before clearSession; T2 3 s cutoff, failure does not block; T3 deleteToken always runs; T4 marker + retry at launch/login/signup; T5 retry is deleteToken only; T6 no foreground retry; T7 no credential kept; T8 no registration during logout; T9 involuntary logouts clear at once then deleteToken; T10 logout clears the queued tap; T11 checklist and Q3 record | ✓ x11 | PushTokenCleanup.swift (unchanged since the last report); UserManager L393-411 logout, L421 forceLogout, L438 retry, L457-492 clearLocalSession (L490 clears pending), L1024/L1105 guards; `PushTokenCleanupTests` pass; UAT test 10 (a)-(e) PASS |
+| 02-13 | T1 newest refetch wins on detail, summary, My Bookings; T2 superseded writes nothing; T3 subscribers unchanged | ✓ x3 | `reloads.begin()`/`isCurrent` at UpcomingBookingViewModel L281-348, BookingSummaryViewModel L232-304, MyBookingsViewModel L125-181; UAT test 5 PASS |
+| 02-14 | T2 pending_reschedule shows Join disabled on the strips; T3 dashboard passes server `can_join`; T4 `ClientBookingDetail` decodes with/without `can_join`; T5 no symmetric-hour join copy left | ✓ x4 | ExpertDashboardView L486-495; ClientBookingDetail.swift `canJoin: Bool?`; suite passes |
+| 02-14 | T1 strips use JoinWindow and update live | ✓ VERIFIED (device) | `TimelineView` at ExpertDashboardView L487 and ExploreTodaysSessionsSection; UAT test 2 PASS |
+| 02-15 | T1 card formats via `Money.format(major:)`; T2 real net earnings for gated statuses, dash otherwise; T3 no hard-coded "$" | ✓ x3 | ClientProfileBookingCard, ClientProfileViewModel; two suites pass; UAT test 3 PASS |
 
-| Plan | Truths | Status | Evidence |
-|------|--------|--------|----------|
-| 02-01 | T1 no local end before end + 60; T4 action boundaries; T5 /end >= 1; T6 never-joined sends no /end; T7 do/catch, DEBUG-only log | ✓ x5 | `CallOvertimePolicy.swift` L45-67; `MeetingCallViewModel.swift:542` switch, `:726 if let … endDuration`, `:728-738 do/catch` with `#if DEBUG print("call: … \(error.userMessage)")`; no `try? await api.endCall`; CallOvertimePolicyTests (9) pass |
-| 02-01 | T2 notice "This call will end in 5 minutes" at end + 55 | ✓ | `isOvertimeWarning` set in `applyOvertimePolicy` `.warn`; `MeetingCallView.swift:225-226` returns the exact string first; `.animation(value: viewModel.isOvertimeWarning)` at L66 |
-| 02-01 | T3 at end + 60 the call ends via CallCenter.endCall and reaches Ended | ⚠️ PBU | Wiring present (`case .end: CallCenter.shared.endCall()`); live transition not tested; UAT item 1 |
-| 02-02 | T2 Agora disconnected never ends the call; T3 remote offline only changes remote state; T4 host matching; T5 hostless unknown and native schemes | ✓ x4 | `localState(for:)` maps only `.failed` and `.connected`; `didOfflineOfUid` sets `remoteConnectionState` only; `ExternalMeetingProvider.swift:30-60`; both suites pass |
-| 02-02 | T1 failed -> Ended, one /end with .dropped | ⚠️ PBU | `endAfterConnectionFailure()` sets `pendingEndReason = .dropped`, `handleEndCall` uses it; mapping test passes; delegate-to-Ended transition untested (D-14) |
-| 02-02 | T6 (backstop) duplicate failed event -> one /end | ⚠️ IS | Guard `!isEndingCall, callStatus != .ended` present; no test; declared backstop |
-| 02-03 | T1-T3 decode rescheduled/unknown, nine statuses unchanged, REST payloads tolerant; T5 switches name both cases; T6 unknown expert booking Upcoming/no Join then Past; T7 deterministic decode; T8-T9 newest refetch on expert list | ✓ x9 | `BookingStatus.swift:38-41`; grep of 5 switch sites shows `.rescheduled, .unknown` with no added `default`; `UpcomingBookingsViewModel.swift:218,244`; `reloads.begin()` at L134/138 and `isCurrent` at L146/169/193 with the catch deciding superseded vs newest; `ReloadGenerationTests` out-of-order row passes. T4 (subscribers refetch on every update) unchanged subscriber closures; runtime covered by UAT item 9 |
-| 02-04 | T1-T4 window edges, reconnect tier, status matrix, inclusive edges; T6 expert list passes server can_join | ✓ x5 | `JoinWindow.swift`; `UpcomingBookingsViewModel.swift:298 serverCanJoin: item.actions.canJoin`; JoinWindowTests pass. T3 (UD): Join shown disabled, rule unchanged |
-| 02-04 | T5 list Join/NOW badge change without refresh | ⚠️ PBU | `TimelineView(.periodic(by: 60))` in `UpcomingBookingCard.swift:54`, `UpcomingBookingsSessionCard.swift:47,142`; UAT item 3 |
-| 02-05 | T1-T8 formatter rules; T9 seven client sites through Money | ✓ x9 | `Money.swift`; MoneyTests pass; grep shows `Money.format` in BookingTopic, UpcomingBookingViewModel, BookingSummaryViewModel, ClientCancellationViewModel, ExploreClientViewModel, ExpertProfileViewModel, ClientTransactionItem |
-| 02-06 | T1-T3 expert sites, major vs minor; T4 no NumberFormatter currency left; T5 lossless seed; T6 untouched save keeps 12550 and USD; T7 typed whole-number parse unchanged | ✓ x7 | grep of 8 expert sites; `TopicEditorViewModel.swift:365-370 seededRateMinor`, `:456 editableAmount` via `Money.fractionDigits`; MoneyCallSiteTests rows "untouched 12550 USD topic saves its stored amount and stored currency", "typed decimal input is still rejected" pass. T7 wording now superseded by 73e729e (typed price saved in the topic's currency, not `defaultCurrency`); out of phase |
-| 02-07 | T1 long-lead codes -> copy, slot cleared, no confirm; T2 ErrorCode cases and reschedule copy; T3 free/paid parity incl. SLOT_UNAVAILABLE clear; T4 unmapped -> server message; T5 (UD) no slot beyond now + 6d offered (dimmed, untappable), exact edge inclusive; T6 free uncapped; T7 limit from Date() each evaluation; T8 free-to-paid switch clears a far slot | ✓ x8 | `MakeABookingViewModel.swift:601-606, 367, 372-381, 396, 78-81`; `ErrorCode.swift:131-138`; `BookingErrorMapper.swift`; BookingErrorMapperTests, PaidBookingWindowTests (+ nested "MakeABookingViewModel paid window"), BookingErrorCopyParityTests pass |
-| 02-08 | T1 (UD) client reschedule paid cap (dimmed); T2 paid flag rule; T3 free uncapped; T4 RESCHEDULE_TOO_FAR_AHEAD copy both sides; T5 own copy for auth-window/payment-method, rest via mapper; T6 expert calendar uncapped | ✓ x6 | `RescheduleViewModel.swift:182, 305, 378-390, 428`; `ExpertRescheduleViewModel.swift:300-306`; `RescheduleView.swift:173`; RescheduleWindowTests (+ "Reschedule error copy") pass |
-| 02-09 | T1 HomeRoute registered once per tab via homeStack; T3 ownership table; T4 booking/requests; T5 payment_actions -> detail; T6 declines/cancellations/expirations/refunds -> summary; T7 one table for push and list; T8 unknown -> notifications list | ✓ x7 | `HomeClientView.swift:223-230` and `HomeExpertView.swift:177-184`: 1 `navigationDestination(for: HomeRoute.self)` each, 5 tab calls each; `handlePushDestination` in both shells; `PushRouter.destination` L272-310; `NotificationsListViewModel.swift:127`; `handleTap` `?? .notificationsList`; PushDestinationTableTests pass |
-| 02-09 | T2 open selects tab, replaces stack in one mutation, Back returns to root | ⚠️ PBU | `HomeNavigationPath.replace(with:)` = `NavigationPath([value])`; SwiftUI behavior; UAT item 10 |
-| 02-10 | T1 route_category only; T2 event_type fallback table, route_category wins; T3 nested data; T4 (UD) booking_id-only fallback, else notifications list; T5 UUID-only ids; T6 target_role client/expert only; T8 D-03 fallback; T9 request push switches and opens, payment_actions opens booking; T10 signed-out dropped, later tap wins; T12 roles unknown -> reload once, stay queued | ✓ x10 | `PushEvent.swift:81-115`; `PushRouter.swift:174-225`; `PushRoutePlanner.plan/canUseExpertMode/needsRoles`; `HomeClientView.swift:137-146` onAppear/onChange(me?.roles)/scenePhase; PushEventTests, PushRoutePlannerTests pass |
-| 02-10 | T7 mode switch then open in the other shell; T11 cold-launch tap held then routed once | ⚠️ PBU x2 | Shell `consumePendingPush` -> `userManager.setMode(mode)`; pending retained until the other shell consumes it; UAT items 10-11 |
-| 02-10 | T13 (backstop) second tap during an in-flight switch wins | ⚠️ IS | `planPending` re-checks `pending == queued` after each await; no test |
-| 02-11 | T1 no banner/sound/list for the visible thread; T2 other threads and non-chat present normally; T3 refresh tick always fires; T4 presence set on appear, cleared only by the same chat; T5 preview seed without thread id never suppresses | ✓ x5 | `PushForegroundPolicy.swift:32-44`; `ClickMe2026AppDelegate.swift:158-162` tick first; `ChatPresence.chatDisappeared` compares ids; `ChattingView.swift:58,61` guard `viewModel.threadId`; PushForegroundPolicyTests pass |
-| 02-12 | T1 DELETE with live bearer before clearSession; T2 3 s cutoff, failure does not block; T3 deleteToken always runs; T4 marker + retry at launch/login/signup; T5 retry is deleteToken only; T6 no foreground retry; T7 no credential kept; T8 no registration during logout; T9 involuntary logouts clear at once then deleteToken; T10 logout clears queued tap; T11 checklist and Q3 record | ✓ x11 | `PushTokenCleanup.swift:81-138`; `UserManager.swift:340-358 logout`, `:369 forceLogout` called at L165 (suspension), L277, L558, L567; `:185,:224,:266 retryPushCleanupIfNeeded`; `:662,:740 isLoggingOut` guards; `:418 PushRouter.shared.pending = nil`; `02-DEVICE-UAT-CHECKLIST.md` item 14 with PUSH-04; REQUIREMENTS.md BOOK-15 "route only (D-01)"; ROADMAP note "Settled as route only (D-01)"; PushTokenCleanupTests (order, timeout, failure, marker-is-only-a-Bool, involuntary) pass. See WR-02 warning on T8's side effect |
-| 02-13 | T1 newest refetch wins on detail, summary, My Bookings; T2 superseded writes nothing, newest settles state; T3 subscribers unchanged | ✓ x3 | `UpcomingBookingViewModel.swift:48,155-163`; `BookingSummaryViewModel.swift:80,181-204`; `MyBookingsViewModel.swift:33,115-171`; ReloadGenerationTests pass |
-| 02-14 | T2 (UD) pending_reschedule shows Join disabled on the strips; T3 dashboard passes server can_join; T4 ClientBookingDetail decodes with/without can_join; T5 no symmetric-hour join copy left | ✓ x4 | `ExpertDashboardView.swift:486-495`; `ClientBookingDetail.swift:78 let canJoin: Bool?`; suite "ClientBookingDetail can_join" passes; grep for `3600` in Views shows only the two `isStartingNow` pill helpers and preview fixtures |
-| 02-14 | T1 strips use JoinWindow and update live | ⚠️ PBU | `TimelineView(.periodic(by: 60))` at `ExpertDashboardView.swift:487`, `ExploreTodaysSessionsSection.swift:89`; UAT items 3-4 |
-| 02-15 | T1 card formats via Money.format(major:); T2 (UD) real net earnings for gated statuses, dash otherwise; T3 no hard-coded "$" interpolation | ✓ x3 | `ClientProfileBookingCard.swift:24-26,46`; `ClientProfileViewModel.swift:109-131`; grep `"$\(` empty; ClientProfileBookingCardTests and ClientProfileHistoryEarningsTests pass |
+**Score:** 105/111 truths verified. The six that are not counted: 4 PRESENT_BEHAVIOR_UNVERIFIED (SC1, 02-01 T3, 02-02 T1, 02-10 T12) and 2 declared backstops with no evidence (02-02 T6, 02-10 T13). No truth FAILED.
 
-**Score:** 100/111 truths verified (9 present, behavior-unverified; 2 declared backstops with no evidence). No truth FAILED.
+Change from the last report: 105 vs 100. Five truths moved up to VERIFIED (device) on UAT evidence (02-04 T5, 02-14 T1, 02-09 T2, 02-10 T7, 02-10 T11). 02-10 T12 moved down from VERIFIED to PBU, because the device run did not confirm the post-network routing and the two UAT records conflict. SC5 is counted VERIFIED, with that edge named.
 
 ### Prohibitions (ADR-550)
 
-| Plan | Requirement | Tier | Statement (short) | Enforcement evidence | Status |
-|------|-------------|------|-------------------|----------------------|--------|
-| 02-01 | CALL-01 | test | MUST NOT end a live call before end + 60 | `CallOvertimePolicyTests` `#expect(cutoff == 3600)` and the boundary table | ✓ verified |
+| Plan | Req | Tier | Statement (short) | Evidence | Status |
+|------|-----|------|-------------------|----------|--------|
+| 02-01 | CALL-01 | test | MUST NOT end a live call before end + 60 | `CallOvertimePolicyTests` cutoff == 3600 and boundary rows pass | ✓ verified |
 | 02-02 | CALL-09 | test | MUST NOT label a lookalike host as a provider | `ExternalMeetingProviderTests` lookalike matrix | ✓ verified |
-| 02-05 | BOOK-10 | test | MUST NOT show a price that differs from the server minor units | `MoneyTests` boundary and symbol rows | ✓ verified |
-| 02-06 | BOOK-10 | test | MUST NOT scale an amount by 100 (major vs minor) | `MoneyCallSiteTests` per-site unit rows | ✓ verified |
-| 02-06 | BOOK-10 | test | MUST NOT change a stored price/currency on an untouched save (D-19) | `MoneyCallSiteTests` "untouched 12550 USD topic saves its stored amount and stored currency" | ✓ verified |
-| 02-07 | BOOK-14 | test | MUST NOT confirm a paid booking without a PaymentIntent after a long-lead code | `BookingErrorCopyParityTests.longLeadNeverConfirms` / `longLeadNotAvailableNeverConfirms` assert no `/bookings/confirm` | ✓ verified |
-| 02-10 | PUSH-02 | test | MUST NOT switch a non-expert account into Expert mode | `PushRoutePlannerTests.canUseExpertMode` and plan rows | ✓ verified |
-| 02-10 | PUSH-01 | test | MUST NOT route a tap while signed out | `PushRoutePlannerTests.signedOutTapIsDropped` | ✓ verified |
-| 02-11 | CHAT-09 | test | MUST NOT suppress any other chat or non-chat push | `PushForegroundPolicyTests.otherThreadPresents`, `nonChatPushPresents`, `noThreadIdPresents` | ✓ verified |
-| 02-15 | BOOK-10 | test | MUST NOT show $0 for unknown earnings | `ClientProfileBookingCardTests` nil/nil -> "—" rows | ✓ verified |
-| 02-09 | PUSH-01 | judgment | MUST NOT show the unregistered-destination warning page | homeStack single registration; device-observable only | ⚠️ unverified-prohibition - human review recommended |
-| 02-12 | PUSH-04 | judgment | MUST NOT keep a credential after logout for the retry | `markerIsOnlyABool` test; `clearLocalSession` clears keychain | ⚠️ unverified-prohibition - human review recommended |
-| 02-12 | PUSH-04 | judgment | MUST NOT register/re-upload the token once logout started | guards at `UserManager.swift:662,740` | ⚠️ unverified-prohibition - human review recommended |
+| 02-05 | BOOK-10 | test | MUST NOT show a price that differs from server minor units | `MoneyTests` | ✓ verified |
+| 02-06 | BOOK-10 | test | MUST NOT scale an amount by 100 (major vs minor) | `MoneyCallSiteTests` | ✓ verified |
+| 02-06 | BOOK-10 | test | MUST NOT change a stored price/currency on an untouched save | `MoneyCallSiteTests` "untouched 12550 USD topic..." | ✓ verified |
+| 02-07 | BOOK-14 | test | MUST NOT confirm a paid booking without a PaymentIntent after a long-lead code | `BookingErrorCopyParityTests` no `/bookings/confirm` | ✓ verified |
+| 02-10 | PUSH-02 | test | MUST NOT switch a non-expert into Expert mode | `PushRoutePlannerTests` canUseExpertMode and plan rows | ✓ verified |
+| 02-10 | PUSH-01 | test | MUST NOT route a tap while signed out | `signedOutTapIsDropped` | ✓ verified |
+| 02-11 | CHAT-09 | test | MUST NOT suppress any other chat or non-chat push | `PushForegroundPolicyTests` | ✓ verified |
+| 02-15 | BOOK-10 | test | MUST NOT show $0 for unknown earnings | `ClientProfileBookingCardTests` nil -> dash | ✓ verified |
+| 02-09 | PUSH-01 | judgment | MUST NOT show the unregistered-destination warning page | Human-resolved: UAT test 14 PASS (never seen in either mode, warm or cold). Code: 1 registration per shell, 5 tabs through `homeStack` | ✓ resolved by user (device) |
+| 02-12 | PUSH-04 | judgment | MUST NOT keep a credential after logout for the retry | Human-resolved: UAT test 15 PASS (code review). Independently re-read: only `defaults.set(true, forKey: pendingKey)` is written (PushTokenCleanup.swift); `retryIfPending` takes only a `deleteToken` closure; `clearLocalSession` clears bearer, keychain token and refresh credentials (UserManager.swift L468-470) | ✓ resolved by user |
+| 02-12 | PUSH-04 | judgment | MUST NOT register or re-upload the token once logout has started | Human-resolved: UAT test 16 PASS. Independently re-read: `isLoggingOut` is the first statement in `registerPushToken` (L1024) and `fetchAndUploadFCMToken` (L1105); `api.registerDeviceToken` has one call site (L1043) | ✓ resolved by user |
+
+No prohibition is flagged unresolved. The three judgment-tier verdicts are human verdicts from UAT, backed by my own read of the code, not an LLM-only judgment.
 
 ### Deferred Items
 
-Items not met in this phase but explicitly owned by a later milestone phase (Step 9b). Not counted as gaps.
+These are not gaps. None is owned by a later roadmap phase; they are user-deferred follow-ups recorded in 02-UAT.md on 2026-11-16, and the first two correspond to the declared backstop truths above, which is why they still hold the status at `human_needed`.
 
-| # | Item | Addressed In | Evidence |
-|---|------|-------------|----------|
-| 1 | `TODO(backend): stripeAccount` comment at `MakeABookingViewModel.swift:178` (pre-existing, blame 06ae1398 2026-10-15) | Phase 4 | REQUIREMENTS.md PAY-04 "The stale `TODO(backend): stripe_account` comments are removed" |
-| 2 | Client Upcoming Booking details Join reads `ClientBookingDetail.canJoin` | Phase 3 | CALL-03 (Phase 3); plan 02-14 adds the field "for Phase 3 (CALL-03, D-07)" |
-| 3 | Push-opened screens' Join / Cancel / Reschedule / Leave Review actions | Phase 3 | Phase 3 goal text; UAT checklist note (Open Question 4) |
+| # | Item | Where recorded | Reason given |
+|---|------|----------------|--------------|
+| 1 | 02-02 backstop: one `POST /end` when a failed-connection event overlaps a hang-up or repeats | UAT test 12 | "Can't reproduce the race by hand" |
+| 2 | 02-10 backstop: second push tap during an in-flight mode switch wins | UAT test 13 | "Rare test case" |
+| 3 | CALL-09 provider label on a real link; PAY-05 same slot-taken copy on a device | UAT test 17, checklist 5 and 8 | "Already unit-tested" |
+
+Items from the previous report's Deferred table that are now resolved: the `TODO(backend)` comment (Phase 4, gone from the file) and the Phase 3 Join / Cancel / Reschedule / Review actions on push-opened screens (HomeRoute cases and `UpcomingBookingViewModel.joinWindowOpen` are in place).
 
 ### Advisory (New Scope, Unevidenced)
 
-Not applicable: initial verification, not a re-verification run.
+None. Review items WR-03 (`TopicEditorViewModel.swift:385,432` `rateMajor * 100` ignores `Money.fractionDigits`), WR-04 (`.piCurrencyMismatch` has no case in `handlePaidFlowError`) and IN-01 (`PaidBookingWindow.isDayBeyond` has no production caller) are still `open` in 02-REVIEW-DISPOSITION.md. They come from the out-of-phase commits e43ef50/73e729e or are dead helper code, are owned by Phases 6 and 4 respectively, and do not touch a phase-02 truth.
 
 ### Required Artifacts
 
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| `ClickMe2026/Utils/CallOvertimePolicy.swift` | enum CallOvertimePolicy | ✓ VERIFIED | 69 lines, pure, nonisolated; wired from `MeetingCallViewModel` L542, L726 |
-| `ClickMe2026Tests/Utils/CallOvertimePolicyTests.swift` | struct CallOvertimePolicyTests | ✓ VERIFIED | suite "CallOvertimePolicy" passed |
-| `ClickMe2026/Managers/AgoraManager.swift` | connectionChangedTo + pure mapping | ✓ VERIFIED | `AgoraLinkState`, `ConnectionState.localState(for:)` L26-51, delegate L322-331 |
-| `ClickMe2026/Views/Screens/Call/Calling/ExternalMeetingProvider.swift` | hasSuffix host matching | ✓ VERIFIED | L56-60; used by `SkypeLinkActions.swift:28` |
-| `ClickMe2026Tests/Calls/AgoraConnectionMappingTests.swift`, `ExternalMeetingProviderTests.swift` | suites | ✓ VERIFIED | both passed |
-| `ClickMe2026/Model/Enums/BookingStatus.swift` | case unknown + tolerant init | ✓ VERIFIED | L34-41 |
-| `ClickMe2026/Utils/ReloadGeneration.swift` | struct ReloadGeneration | ✓ VERIFIED | wired in 4 view models |
-| `ClickMe2026Tests/Model/BookingStatusDecodingTests.swift`, `ClickMe2026Tests/Utils/ReloadGenerationTests.swift` | suites | ✓ VERIFIED | both passed |
-| `ClickMe2026/Utils/JoinWindow.swift` | enum JoinWindow | ✓ VERIFIED | wired on 4 surfaces + forwarders |
-| `ClickMe2026Tests/Utils/JoinWindowTests.swift` | struct JoinWindowTests | ✓ VERIFIED | passed, incl. presentation rows and can_join decode |
-| `ClickMe2026/Utils/Money.swift` | enum Money | ✓ VERIFIED | 16 call sites |
-| `ClickMe2026Tests/Utils/MoneyTests.swift`, `MoneyCallSiteTests.swift`, `ClientProfileBookingCardTests.swift` | suites | ✓ VERIFIED | all passed |
-| `ClickMe2026/Utils/BookingErrorMapper.swift`, `PaidBookingWindow.swift` | enums | ✓ VERIFIED | wired in MakeABooking and both reschedule VMs. `isDayBeyond` is unused in production (info) |
-| `ClickMe2026Tests/Booking/BookingErrorCopyParityTests.swift`, `RescheduleWindowTests.swift` | suites | ✓ VERIFIED | both passed |
-| `ClickMe2026/Managers/PushRouter.swift` | destination table, PendingPush, PushRoutePlanner, planPending | ✓ VERIFIED | verb flagged the multi-line `static func destination(` signature; present at L272 |
-| `ClickMe2026/Views/Extensions/HomeNavigationPath.swift` | replace(with:), HomeRoute.requestDecision | ✓ VERIFIED | L57, L120 |
-| `ClickMe2026/Model/Push/PushEvent.swift` | route_category parse | ✓ VERIFIED | L81-115 |
-| `ClickMe2026Tests/Push/PushDestinationTableTests.swift`, `PushEventTests.swift`, `PushRoutePlannerTests.swift` | suites | ✓ VERIFIED | all passed |
-| `ClickMe2026/Managers/PushForegroundPolicy.swift`, `ChatPresence.swift` | policy + presence | ✓ VERIFIED | wired from AppDelegate `willPresent` and `ChattingView` |
-| `ClickMe2026Tests/Push/PushForegroundPolicyTests.swift` | suite | ✓ VERIFIED | passed |
-| `ClickMe2026/Managers/PushTokenCleanup.swift` | final class PushTokenCleanup | ✓ VERIFIED | wired from `UserManager.logout/forceLogout/retryPushCleanupIfNeeded` |
-| `ClickMe2026Tests/Push/PushTokenCleanupTests.swift` | suite | ✓ VERIFIED | passed |
-| `.planning/phases/02-shared-ios-plumbing/02-DEVICE-UAT-CHECKLIST.md` | contains PUSH-04 | ✓ VERIFIED | 15 items, item 14 is PUSH-04 |
-| `UpcomingBookingViewModel.swift`, `BookingSummaryViewModel.swift`, `MyBookingsViewModel.swift` | `ReloadGeneration()` | ✓ VERIFIED | L48, L80, L33 |
-| `ClickMe2026/Model/Responses/ClientBookingDetail.swift` | `let canJoin: Bool?` | ✓ VERIFIED | L78 |
-| `ClickMe2026/Views/Screens/Expert Mode/Client Profile/Subviews/ClientProfileBookingCard.swift` | `Money.format(major` | ✓ VERIFIED | L26 |
+All artifacts from the 15 plans exist, are substantive and are wired (re-checked by reading and grep on current HEAD, not by trusting the old table).
+
+| Artifact | Status | Details |
+|----------|--------|---------|
+| `Utils/CallOvertimePolicy.swift` | ✓ VERIFIED | pure, nonisolated; used at MeetingCallViewModel L570, L754 |
+| `Managers/AgoraManager.swift` (`AgoraLinkState`, `ConnectionState.localState(for:)`) | ✓ VERIFIED | feeds `myConnectionState`; sink at VM L264-274 |
+| `Views/Screens/Call/Calling/ExternalMeetingProvider.swift` | ✓ VERIFIED | `openButtonTitle` added later without touching detection |
+| `Model/Enums/BookingStatus.swift`, `Utils/ReloadGeneration.swift` | ✓ VERIFIED | `.rescheduled`, `.unknown`; wired in 5 view models |
+| `Utils/JoinWindow.swift` | ✓ VERIFIED | 7 production call sites plus `ExpertJoinVisibility` |
+| `Utils/Money.swift` | ✓ VERIFIED | 19 callers |
+| `Utils/BookingErrorMapper.swift`, `Utils/PaidBookingWindow.swift` | ✓ VERIFIED | wired in MakeABooking and both reschedule VMs |
+| `Managers/PushRouter.swift` (table, `PendingPush`, `PushRoutePlanner`, `planPending`) | ✓ VERIFIED | unchanged since the last report |
+| `Model/Push/PushEvent.swift`, `Views/Extensions/HomeNavigationPath.swift` | ✓ VERIFIED | |
+| `Managers/PushForegroundPolicy.swift`, `Managers/ChatPresence.swift` | ✓ VERIFIED | wired from AppDelegate and ChattingView |
+| `Managers/PushTokenCleanup.swift` | ✓ VERIFIED | unchanged; wired from UserManager `logout`, `forceLogout`, `retryPushCleanupIfNeeded` |
+| `Model/Responses/ClientBookingDetail.swift` (`canJoin: Bool?`) | ✓ VERIFIED | |
+| `ClientProfileBookingCard.swift` (`Money.format(major:`) | ✓ VERIFIED | |
+| `02-DEVICE-UAT-CHECKLIST.md` (contains PUSH-04) | ✓ VERIFIED | item 14, all 15 items now carry results |
+| All 21 test files named in the plans | ✓ VERIFIED | suites appear as passed in the 872-test log |
 
 ### Key Link Verification
 
-The `verify.key-links` verb could not read annotated `from:` paths; every pattern below was grepped by hand.
+Checked by grep on current HEAD (the `verify.key-links` verb cannot read annotated `from:` paths, as noted in the earlier report). All links from the earlier report still resolve; the ones with moved line numbers or changed context:
 
 | From | To | Via | Status | Details |
 |------|----|-----|--------|---------|
-| MeetingCallViewModel (1 s tick) | CallOvertimePolicy | `CallOvertimePolicy.action` | WIRED | L542 |
-| MeetingCallViewModel.handleEndCall | POST /bookings/:id/end | `CallOvertimePolicy.endDuration` | WIRED | L726 |
-| MeetingCallView.bannerText | `isOvertimeWarning` | published flag | WIRED | L66, L225 |
-| AgoraManager connectionChangedTo | myConnectionState | `localState(for:` | WIRED | L327 |
-| MeetingCallViewModel local disconnected branch | CallCenter.endCall | `pendingEndReason` | WIRED | L146, L274, L674, L707 |
-| SkypeLinkActions | ExternalMeetingProvider.detect | label/copy | WIRED | L28 (verb also confirmed) |
-| RealtimeService booking.update | RealtimeBookingUpdateEvent.status | `init(from decoder` fallback | WIRED | `BookingStatus.swift:38`; `RealtimeEvents.swift:56 let status: BookingStatus` |
-| BookingStatusMeta.code | BookingStatus | `let code: BookingStatus` | WIRED | L14 |
-| UpcomingBookingsViewModel fetch paths | ReloadGeneration | `isCurrent(` | WIRED | L146, L169, L193 |
-| UpcomingBooking.isWithinJoinWindow | JoinWindow | `JoinWindow.isOpen` | WIRED | L63 |
-| UpcomingSession.isWithinJoinWindow | JoinWindow | `JoinWindow.isOpen` | WIRED | `UpcomingBookingsView.swift:64` |
-| UpcomingBookingsViewModel mapping | ExpertBookingItem.actions.canJoin | `serverCanJoin: item.actions.canJoin` | WIRED | L298 |
-| BookingTopic.priceLabel, ClientTransactionItem.formattedAmount | Money | `Money.format(minorUnits` | WIRED | L32, L142 |
-| ExpertDashboardViewModel.currencyLabel; IncomingRequestsViewModel.formatEarnings; TopicEditorViewModel seed/validate | Money | minor / major / `Money.fractionDigits` | WIRED | L344; L138; L365-370, L457 |
-| MakeABookingViewModel paid + free paths | BookingErrorMapper | `BookingErrorMapper.message` | WIRED | L431 (free), L587-646 (paid) |
-| MakeABookingViewModel.slotsForSelectedDate | PaidBookingWindow | `isBookableStart` | WIRED | L367-381 |
-| MakeABookingCalendarCard | `isBeyondBookingWindow` | blank day cell | SUPERSEDED (UD) | Days stay visible; cap applied in `MakeABookingTimeSlotsCard.swift:141 isSelectableSlot` |
-| RescheduleViewModel.forceLoad | `isPaidReschedule` | isPaidBooking | WIRED | L182 |
-| RescheduleView | RescheduleCalendarCard `isHidden:` | isBeyondBookingWindow | SUPERSEDED (UD) | `RescheduleView.swift:173 isBookable: { viewModel.isSelectableSlot($0) }` dims slots; calendar `isBookable: { viewModel.hasSlots(on:) }` |
-| Reschedule VMs error helpers | BookingErrorMapper | `BookingErrorMapper.message` | WIRED | `RescheduleViewModel.swift:388`, `ExpertRescheduleViewModel.swift:305` |
-| NotificationsListViewModel.destination(for:) | PushRouter.destination(category:…) | shared table | WIRED | L127 |
-| HomeClientView / HomeExpertView homeStack | `navigationDestination(for: HomeRoute.self)` | single registration | WIRED | 1 registration + 5 tab calls per shell |
-| HomeExpertView | RequestDecisionView(requestId:) | `HomeRoute.requestDecision` | WIRED | L138, L261-262 |
-| AppDelegate.didReceive | PushRouter.shared.handleTap | `PushEvent(userInfo:)` | WIRED | L181, L187 |
-| Shells consumePendingPush | `planPending(currentMode` then setMode / destination | onAppear + onChange | WIRED | HomeClientView L137-158, HomeExpertView L87-109 |
-| PushRouter.planPending | me?.roles / expertProfile?.setupCompleted | `canUseExpertMode` | WIRED | L205-224 |
-| Shells | consumePendingPush on `userManager.me?.roles` and scenePhase | onChange | WIRED | HomeClientView L142-146, HomeExpertView L92-96 |
-| AppDelegate.willPresent | `PushForegroundPolicy.options` | ChatPresence.shared.visibleThreadId | WIRED | L159-162 |
-| ChattingView onAppear/onDisappear | ChatPresence | `ChatPresence.shared` | WIRED | L58, L61 |
-| UserManager.logout | `signOut(unregister` | api.unregisterDeviceToken while bearer set | WIRED | L346-355 |
-| registerPushToken / fetchAndUploadFCMToken | `isLoggingOut` | early return | WIRED | L662, L740 |
-| clearLocalSession | `PushRouter.shared.pending = nil` | set nil | WIRED | L418 |
-| Client detail/summary/My Bookings fetch paths | ReloadGeneration | `isCurrent(` | WIRED | see 02-13 row above |
-| ExpertDashboardView Join Session | JoinWindow | `JoinWindow.isOpen` in TimelineView | WIRED | L486-495 |
-| ExploreTodaysSessionsSection Join Call | JoinWindow | `JoinWindow.showsJoinButton` + forwarder in TimelineView | WIRED | L88-90 (`isJoinableStatus` replaced by `showsJoinButton` under the UD contract) |
-| ClientProfileBookingCard amount Text | Money | `Money.format(major` | WIRED | L26, L46 |
-| ClientProfileViewModel.mapBooking | ClientBookingHistory.amountMajor/currency | `amountMajor:` | WIRED (UD) | L130-131 now maps real `earnings_breakdown.net_amount`, not nil |
+| MeetingCallViewModel tick | CallOvertimePolicy | `applyOvertimePolicy` | WIRED | L556, L568 |
+| handleEndCall | POST /bookings/:id/end | `CallOvertimePolicy.endDuration` | WIRED | L754 |
+| MeetingCallView banner | `isOvertimeWarning` | `viewModel.endingBannerText` | WIRED | text moved to the VM (L384-392); view reads it (MeetingCallView L221) |
+| AgoraManager connection callback | `myConnectionState` | `localState(for:)` | WIRED | |
+| local `.disconnected` branch | CallCenter.endCall | `endAfterConnectionFailure` + `pendingEndReason` | WIRED | L274, L700-709 |
+| RealtimeService booking.update | `BookingStatus` fallback | `init(from:)` | WIRED | |
+| Client string-status sites | `.unknown` | `?? .unknown` | WIRED | UpcomingBookingViewModel L374, MyBookingsViewModel L224 |
+| Join surfaces | JoinWindow | `isOpen` / `showsJoinButton` | WIRED | 7 sites above |
+| Money sites | Money | `Money.format` | WIRED | 19 files |
+| Make a Booking free + paid | BookingErrorMapper | `message(for:fallback:)` | WIRED | L500, L694-780 |
+| Slot list and `book()` | PaidBookingWindow | `isBookableStart` | WIRED | L81, L441, L465 |
+| NotificationsListViewModel | PushRouter table | `PushRouter.destination(category:...)` | WIRED | L127 |
+| Shells | single HomeRoute registration | `homeStack` | WIRED | 1 registration, 5 tabs per shell |
+| Shells | planner | `consumePendingPush` on `pending`, `me?.roles`, `scenePhase`, call end | WIRED | Phase 5 added the call-end replay and `requestModeSwitch` |
+| AppDelegate.willPresent | PushForegroundPolicy | `ChatPresence.shared.visibleThreadId` | WIRED | L157-162 |
+| UserManager.logout | PushTokenCleanup.signOut | unregister, deleteToken, clearSession | WIRED | L399-409 |
+| registerPushToken / fetchAndUploadFCMToken | `isLoggingOut` | early return | WIRED | L1024, L1105 |
+| clearLocalSession | `PushRouter.shared.pending = nil` | set nil | WIRED | L490 |
+| Superseded links `isBeyondBookingWindow` (02-07) and `isHidden:` (02-08) | | | SUPERSEDED | User-directed dim-not-hide; `RescheduleView` and `MakeABookingTimeSlotsCard` use `isSelectableSlot` |
 
 ### Data-Flow Trace (Level 4)
 
-| Artifact | Data Variable | Source | Produces Real Data | Status |
-|----------|---------------|--------|--------------------|--------|
-| `ClientProfileBookingCard` amount | `booking.amountMajor/currency` | `ClientProfileViewModel.mapBooking` <- `GET /expert/bookings` `earnings_breakdown.net_amount` | Yes for gated statuses; nil -> "—" by design | ✓ FLOWING |
-| Money call sites (client) | `price.amount/currency`, `heldAmount` etc. | existing REST payloads | Yes | ✓ FLOWING |
-| `UpcomingBookingsSessionCard` Join / NOW | `session.serverCanJoin`, start/end, status | `ExpertBookingItem.actions.canJoin` | Yes | ✓ FLOWING |
-| `UpcomingBookingCard` Join | `booking.serverCanJoin` (nil: client list has no can_join, accepted D-07) | `ClientBookingItem` | Yes (nil closes reconnect tier only) | ✓ FLOWING |
-| `PushRouter.pending` | `PushEvent` fields | APNs/FCM `userInfo` | Yes | ✓ FLOWING |
-| `RealtimeBookingUpdateEvent.status` | socket payload | `socket.on("booking.update")` | Yes | ✓ FLOWING |
+No change from the earlier report: each rendered value traces to a real source (REST payloads, `earnings_breakdown.net_amount`, socket payloads, APNs/FCM `userInfo`). `UpcomingBookingCard.serverCanJoin` is nil by design on the client list (reconnect tier closed); the client details screen now passes the real `canJoin` (Phase 3). No static or hollow data found.
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| Full unit target (run once) | `xcodebuild test … -only-testing:ClickMe2026Tests -skip-testing:…SignupSmokeTests -skip-testing:…AuthSmokeTests` | `Test run with 238 tests in 28 suites passed`; `** TEST SUCCEEDED **`; exit 0 | ✓ PASS |
-| WR-01 regression suite ran green | grep of the saved log | `✔ Suite "Client booking status fallback (BOOK-18 / WR-01)" passed` | ✓ PASS |
-| No `TEMP` cutoff marker | `grep -c TEMP MeetingCallViewModel.swift` | 0 | ✓ PASS |
-| No `?? .confirmed` fallback left | `grep -rn "?? .confirmed" ClickMe2026` | no matches | ✓ PASS |
-| No NumberFormatter currency formatting left | grep `numberStyle = .currency` | no matches (2 doc comments only) | ✓ PASS |
-| No `"$\(` interpolation left | grep | no matches | ✓ PASS |
-| Symmetric-hour join rule removed except pills | grep `3600` under Views | only `isStartingNow` x2 and preview fixtures | ✓ PASS |
-| Cited commits exist | `verify.commits` (17 hashes) | all valid | ✓ PASS |
-| New warnings in phase files | grep `warning:` in test log for phase paths | none | ✓ PASS |
+| Full unit target | orchestrator run of `xcodebuild test ... -only-testing:ClickMe2026Tests` (smoke suites skipped), log above | 872 tests in 88 suites passed, `** TEST SUCCEEDED **`, 0 `✘` lines | ✓ PASS |
+| Code unchanged since that run | `git diff 4ef43be HEAD -- ClickMe2026 ClickMe2026Tests` | empty | ✓ PASS |
+| Phase-02 suites present in the passing log | grep of suite names | CallOvertimePolicy, Agora mapping, ExternalMeetingProvider, BookingStatus decoding, ReloadGeneration, JoinWindow, Money, Money call sites, BookingErrorMapper, PaidBookingWindow, Reschedule x4, Push destination table, PushEvent parsing, Push route planner, Push foreground policy, Push token cleanup, Client profile (2), ClientBookingDetail can_join, Client booking status fallback | ✓ PASS |
+| No `TEMP` cutoff marker | `grep TEMP MeetingCallViewModel.swift` | none | ✓ PASS |
+| No `?? .confirmed` fallback | grep `ClickMe2026` | none | ✓ PASS |
+| No NumberFormatter or `"$\(` money formatting | grep | only 2 doc comments | ✓ PASS |
+| Debt markers in covered source files | grep `TBD|FIXME|XXX|TODO|HACK` | none | ✓ PASS |
+| All 90 covered source and test files still exist | loop over the list | none missing | ✓ PASS |
 
 ### Probe Execution
 
-No `scripts/*/tests/probe-*.sh` exists and no plan or summary declares a probe (only `scripts/run-smoke-tests.sh`, which hits production and must not run). Step 7c: not applicable.
+No `scripts/*/tests/probe-*.sh` exists and no plan or summary declares a probe. Step 7c does not apply (`scripts/run-smoke-tests.sh` hits production and was not run).
 
 ### Requirements Coverage
 
-All 15 phase requirement IDs are claimed by at least one plan; REQUIREMENTS.md maps exactly these 15 to Phase 2; no orphaned requirement. Per orchestrator direction, requirements whose Definition of Done needs the device UAT are routed to human verification rather than counted as passed by automation alone.
+All 15 phase requirement IDs are claimed by at least one plan frontmatter, and REQUIREMENTS.md maps exactly these 15 to Phase 2 (all `[x]` and `Complete`). No orphaned requirement.
 
-| Requirement | Source Plan(s) | Description | Status | Evidence |
-|-------------|----------------|-------------|--------|----------|
-| CALL-01 | 02-01 | Call runs until end + 60, not + 5 | ? NEEDS HUMAN | Policy + wiring verified; 9 tests; device UAT item 1 pending (prior device evidence was a pre-fix build) |
-| CALL-02 | 02-04, 02-14 | Join from start - 60 to max(end, start + 60), incl. second half of long sessions | ? NEEDS HUMAN | JoinWindow verified and tested on 4 surfaces; live tick and edges on device pending (UAT items 3-4) |
-| CALL-04 | 02-01 | 0-second leg accepted (send >= 1) | ✓ SATISFIED | `endDuration` + tests; checklist says unit-only, no device step |
-| CALL-05 | 02-02 | Ended on Agora failure/abort | ✓ SATISFIED | Mapping tested; normal-call regression PASSED on device 2026-11-09 (D-14) |
-| CALL-09 | 02-02 | Lookalike URL not trusted | ✓ SATISFIED | Host matrix tested; device item optional |
-| BOOK-10 | 02-05, 02-06, 02-15 | One shared money formatter, correct decimals | ? NEEDS HUMAN | 16 sites + 3 suites verified; on-screen rendering and D-19 PATCH pending (UAT item 6) |
-| BOOK-14 | 02-07, 02-08 | Paid pickers capped at 6 days; long-lead codes show a clear error | ? NEEDS HUMAN | Window + mapper + parity tests; dim-not-hide presentation pending (UAT item 7) |
-| BOOK-15 | 02-09, 02-10, 02-12 | payment_actions push opens that booking (route only, D-01) | ? NEEDS HUMAN | Table + planner tests; navigation pending (UAT item 13, may be SKIPPED for lack of eligible data) |
-| BOOK-18 | 02-03, 02-13 | rescheduled/unknown booking.update applied, not dropped | ? NEEDS HUMAN | Decode + ReloadGeneration + WR-01 fallback tests; live update pending (UAT item 9) |
-| PAY-05 | 02-07 | Same slot-taken / meeting-link copy on free and paid | ✓ SATISFIED | BookingErrorCopyParityTests through the real view model with a mocked API; device item optional |
-| PUSH-01 | 02-09, 02-10 | Any push opens the right screen; unknown -> notifications list | ? NEEDS HUMAN | Parser/table/planner tests; navigation and warning-page absence pending (UAT item 10) |
-| PUSH-02 | 02-10 | Push switches to the right mode first | ? NEEDS HUMAN | Planner tests incl. D-03; cross-shell switch pending (UAT item 11) |
-| PUSH-03 | 02-09, 02-10 | Booking-request push opens that request | ? NEEDS HUMAN | `.incomingRequest(bookingId:)` -> `HomeRoute.requestDecision`; UAT item 12 |
-| PUSH-04 | 02-12 | After logout the device stops receiving the old account's pushes | ? NEEDS HUMAN | Ordered cleanup tested with fakes; real delivery pending (UAT item 14); see WR-02 |
-| CHAT-09 | 02-11 | No foreground banner for the chat on screen | ? NEEDS HUMAN | Policy + presence tests; presentation pending (UAT item 15) |
+| Requirement | Source Plan(s) | Status | Evidence |
+|-------------|----------------|--------|----------|
+| CALL-01 | 02-01 | ✓ SATISFIED, auto-end transition unobserved | Policy, wiring and 9 tests; device saw the call alive at end + 11 (the production bug is gone). End + 55 notice and end + 60 auto-end not observed (see open item 1) |
+| CALL-02 | 02-04, 02-14 | ✓ SATISFIED | JoinWindow on all surfaces; UAT test 2 PASS |
+| CALL-04 | 02-01 | ✓ SATISFIED | `endDuration` >= 1 and tests; unit-only by design |
+| CALL-05 | 02-02 | ✓ SATISFIED, failure branch unit-tested only | Mapping tested; normal-call regression passed on device 2026-11-09; terminal-failure transition accepted as non-repro (D-14) |
+| CALL-09 | 02-02 | ✓ SATISFIED | Host matrix tested; device check deferred as optional |
+| BOOK-10 | 02-05, 02-06, 02-15 | ✓ SATISFIED | 19 sites, 3 suites, UAT test 3 PASS |
+| BOOK-14 | 02-07, 02-08 | ✓ SATISFIED | Window, mapper, parity tests; UAT test 4 PASS |
+| BOOK-15 | 02-09, 02-10, 02-12 | ✓ SATISFIED | Route only (D-01); UAT test 9 PASS on production data |
+| BOOK-18 | 02-03, 02-13 | ✓ SATISFIED | UAT test 5 PASS |
+| PAY-05 | 02-07 | ✓ SATISFIED | `BookingErrorCopyParityTests`; device check deferred as optional; Phase 4 D-04 adds a deliberate extra alert on one slot-taken path |
+| PUSH-01 | 02-09, 02-10 | ✓ SATISFIED | UAT tests 6 and 14 PASS |
+| PUSH-02 | 02-10 | ✓ SATISFIED, one edge unconfirmed | UAT test 7 cases 1-2 PASS; offline cold-launch re-plan unconfirmed (T12) |
+| PUSH-03 | 02-09, 02-10 | ✓ SATISFIED | UAT test 8 PASS |
+| PUSH-04 | 02-12 | ✓ SATISFIED | UAT test 10 (a)-(e), 15 and 16 PASS |
+| CHAT-09 | 02-11 | ✓ SATISFIED | UAT test 11 PASS |
 
 ### Anti-Patterns Found
 
-Scan covered every app-target Swift file changed between fb94bb2 and HEAD (null-delimited, paths with spaces handled).
+Scan covered every covered app and test source file.
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `ClickMe2026/Views/Screens/Client Mode/Make a Booking/MakeABookingViewModel.swift` | 178 | `TODO(backend): the stripeAccount …` | ⚠️ Warning (deferred) | Pre-existing (blame 06ae1398, 2026-10-15), explicitly scheduled as PAY-04 in Phase 4. Not a TBD/FIXME/XXX, so not a blocker. |
-| `ClickMe2026/Managers/UserManager.swift` | 341-357, 662, 740 | `isLoggingOut` stays true until the bounded `deleteToken` finishes (up to 3 s after the Login screen appears); `apply(loginData:)` registers the token exactly once | ⚠️ Warning (review WR-02, in-phase code) | A re-login inside that window can skip push registration for the new account until the next foreground activation; also `retryPushCleanupIfNeeded` at login can run a second `deleteToken` concurrently with the first. Does not break any phase truth; routed to UAT item 14 with an explicit fast re-login step. Suggested fix is in 02-REVIEW.md. |
-| `ClickMe2026/Utils/PaidBookingWindow.swift` | 37-42 | `isDayBeyond` has no production caller; type doc still says "hide" | ℹ️ Info (review IN-01) | Dead helper kept alive by tests after the dim-not-hide decision |
-| `ClickMe2026/Views/Screens/Expert Mode/Topics/Topic Editor/TopicEditorViewModel.swift` | 385 | `rateMinor = rateMajor * 100` ignores `Money.fractionDigits`; `Int * 100` can trap on a long numPad entry | ⚠️ Warning (review WR-03, **outside phase plans**: e43ef50/73e729e) | Reachable only for a legacy zero-decimal topic; EXP-02 (Phase 6) owns decimal/typed-price parsing. Not counted against Phase 2. |
-| `ClickMe2026/Views/Screens/Client Mode/Make a Booking/MakeABookingViewModel.swift` | 590 | `.intentExpired, .piContextMismatch, .piAmountMismatch` handled; `.piCurrencyMismatch` falls to `default` | ⚠️ Warning (review WR-04, **outside phase plans**: 73e729e) | The retry reuses the attempt id. Phase 4 ("book and pay without … misleading errors") is the natural home; not a Phase 2 truth. |
-| `ClickMe2026/Model/Responses/Children/ClientTransactionItem.swift` | 65, 71 | doc comments say "placeholder for forward compat" | ℹ️ Info | Pre-existing API-contract field docs (blame 06ae1398); not a stub |
-
-No `TBD`, `FIXME` or `XXX` markers in any phase-modified file. No `return null`/empty-stub patterns in new types. `ClientCancellationViewModel.placeholderBooking` and the reschedule `placeholderBooking` constants are preview/initial state overwritten by `forceLoad`, not rendered stubs.
+| (none) | | No TBD, FIXME, XXX, TODO or HACK marker in any covered source file | | |
+| `Expert Mode/Topics/Topic Editor/TopicEditorViewModel.swift` | 385, 432 | `rateMajor * 100` ignores `Money.fractionDigits`; `Int * 100` can trap on a long entry | ⚠️ Warning (review WR-03, out-of-phase commits e43ef50/73e729e) | Only for a legacy zero-decimal topic; owned by EXP-02 (Phase 6). Not counted against Phase 2 |
+| `Make a Booking/MakeABookingViewModel.swift` | ~L700 | `.piCurrencyMismatch` has no case in `handlePaidFlowError` (falls to the default branch) | ⚠️ Warning (review WR-04, out-of-phase 73e729e) | Not a Phase 2 truth |
+| `Utils/PaidBookingWindow.swift` | 37-42 | `isDayBeyond` has no production caller | ℹ️ Info (review IN-01) | Dead helper kept by tests after dim-not-hide |
 
 ### Human Verification Required
 
-All items below are already enumerated in `02-DEVICE-UAT-CHECKLIST.md` (items 1, 3-4, 6-7, 9-15; 5 and 8 optional) and were cross-checked against the `<human-check>` blocks in the 15 plans; duplicates were merged. Three additions that are not device items: the two declared backstop truths (02-02 duplicate failed event, 02-10 second tap during a mode switch) and the three judgment-tier prohibitions, which need a human disposition rather than a device run. The full structured list is in the frontmatter `human_verification` block.
+Resolved by the device UAT since the last report (14 passed, 0 issues): CALL-02 edges and disabled Join; BOOK-10 on every screen and D-19; BOOK-14 caps and VoiceOver; BOOK-18 live update and overlapping refresh; PUSH-01 every push type warm and cold, both modes; PUSH-02 mode switch and client-only fallback; PUSH-03; BOOK-15; PUSH-04 all paths and fast re-login; CHAT-09; three judgment-tier prohibitions.
 
-1. **CALL-01 overtime auto-end (UAT 1).** Keep an in-app voice call past its end on a build at or after be00d74. Expected: connected at +10, notice at +55, auto-end and Ended at +60, Android peer tears down.
-2. **CALL-02 join window and D-12 disabled Join (UAT 3-4).** All four surfaces update without a refresh; pending_reschedule shows Join dimmed and disabled.
-3. **BOOK-10 money, D-19 reopen-and-save, Client Profile history (UAT 6).**
-4. **BOOK-14 dim-not-hide 6-day cap on both client pickers (UAT 7).**
-5. **BOOK-18 live update and overlapping refresh; neutral label for an unknown status (UAT 9).**
-6. **PUSH-01 / CR-01 every push type, warm and cold, both modes; notifications-list parity; booking_id-only cron push (UAT 10).**
-7. **PUSH-02 / D-03 mode switch, client-only fallback, roles-unknown cold launch (UAT 11).**
-8. **PUSH-03 request push opens the decision screen (UAT 12).**
-9. **BOOK-15 payment_actions opens the booking, route only (UAT 13; SKIPPED if no eligible booking).**
-10. **PUSH-04 logout stops pushes, all four paths, plus a fast re-login within about 3 s to observe WR-02 (UAT 14).**
-11. **CHAT-09 no banner for the open chat; control, tab switch, stacked chats, non-chat push (UAT 15).**
-12. **Backstops with no test:** one `/end` for a duplicate failed-connection event (02-02); second tap during an in-flight mode switch wins (02-10). Decide whether the guards are sufficient or a test is required.
-13. **Judgment-tier prohibitions:** no unregistered-destination warning page (02-09); no credential kept after logout (02-12); no token registration after logout started (02-12).
-14. **Optional:** CALL-09 provider label on a real link (UAT 5); PAY-05 identical slot-taken copy (UAT 8).
+Still needing a decision:
+
+1. **CALL-01 end + 55 / end + 60 (UAT test 1, partial).** Only "still connected at end + 11" was seen. Run one call to end + 60, or accept the unit-tested policy and add an override.
+2. **02-10 T12 offline cold launch (UAT test 7 case 3).** The two UAT records disagree and the post-network routing was not seen. The user accepted it as is. Accept with an override or re-run checklist item 11 step 5.
+3. **Backstop: single `/end` on a duplicate failed-connection event (02-02).** Deferred by the user. The guard exists at `MeetingCallViewModel.swift:701`; a small unit test of `endAfterConnectionFailure` on a preview-seeded view model would close it.
+4. **Backstop: second tap during an in-flight mode switch (02-10).** Deferred by the user. A `planPending` test whose fake `loadRoles` replaces `pending` would close it.
+5. **Optional, deferred:** CALL-09 provider label on a real link; PAY-05 identical slot-taken copy.
+6. **Terminal Agora failure -> Ended (02-02 T1).** No repro (D-14); stays unit-tested only unless the user wants a test harness for the delegate callback.
 
 ### Gaps Summary
 
-No gaps. Every truth, artifact and key link resolves to VERIFIED, PRESENT_BEHAVIOR_UNVERIFIED (code present and wired, runtime transition device-only) or a declared backstop with no evidence; none FAILED. The single debt marker found (`TODO(backend)` at MakeABookingViewModel.swift:178) predates the phase and is owned by PAY-04 in Phase 4. Review warnings WR-03 and WR-04 come from the out-of-phase commits e43ef50/73e729e and are recorded, not counted. WR-02 is an in-phase side effect of the PUSH-04 guard that does not break a phase truth; it is routed to the device UAT with an explicit step and should be fixed per the review suggestion before release.
+No gaps. Every truth, artifact and key link resolves to VERIFIED, PRESENT_BEHAVIOR_UNVERIFIED or a declared backstop with no evidence. Nothing FAILED, no phase 3-5 change regressed a phase-02 rule, and the one in-phase code defect found earlier (WR-02) is fixed and device-confirmed. The phase goal is met in code and in everyday device use; the six open items above are edge or race behavior that was waived or deferred rather than disproved.
 
-Documentation state after this verification:
-- `02-REVIEW-DISPOSITION.md`: WR-01 row updated to `fixed` (da16ef4). WR-02, WR-03, WR-04, IN-01, IN-02, IN-03 remain `open` for triage.
-- `02-VALIDATION.md`: `nyquist_compliant: false` and the "Escalated" WR-01 rows are stale; the escalated suite passes at HEAD. The validation owner can set `nyquist_compliant: true`.
-- `02-UI-SPEC.md`: known drift (hidden days, hidden Join, Client Profile dash) documented in 02-UI-REVIEW.md; revise after the UAT (WINDOWS.md #14).
-- REQUIREMENTS.md marks the 15 Phase 2 IDs `[x]`/Complete; 13 of them still carry a pending device UAT under the project's Definition of Done. The orchestrator should keep that distinction visible until `02-DEVICE-UAT-CHECKLIST.md` is signed off.
+### Suggested overrides (not applied)
+
+I did not write these into `overrides:` because acceptance has to come from the developer, not the verifier. UAT records the user's acceptance in both cases, so if you agree, add them to the frontmatter and re-verify to move the status to `passed` (the two backstops would still need an explicit decision):
+
+```yaml
+overrides:
+  - must_have: "Roadmap SC1 / 02-01 T3: at scheduled end + 60 minutes the call ends through CallCenter.endCall and the screen reaches Ended; notice at end + 55"
+    reason: "Boundaries and wiring are unit-tested (CallOvertimePolicyTests); device run confirmed the 5-minute cutoff is gone (alive at end + 11); user chose not to wait for end + 55 / end + 60 (UAT test 1)"
+    accepted_by: "{developer}"
+    accepted_at: "{ISO timestamp}"
+  - must_have: "02-10 T12: with roles unknown an expert-targeted tap stays queued and is planned again when me loads or the app becomes active"
+    reason: "Hold is unit-tested; re-plan hooks present; user accepted the offline cold-launch result as is, no fix wanted (UAT test 7 case 3, checklist item 11 step 5)"
+    accepted_by: "{developer}"
+    accepted_at: "{ISO timestamp}"
+```
 
 ---
 
-_Verified: 2026-11-10T18:20:00Z_
+_Verified: 2026-11-16T06:10:00Z_
 _Verifier: Claude (gsd-verifier)_

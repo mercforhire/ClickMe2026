@@ -33,4 +33,12 @@ struct BookingShortIDTests {
         let lower = try #require(UUID(uuidString: "7f3c9a2b-1d4e-4c8a-9b0f-123456789abc"))
         #expect(BookingShortID.short(lower) == "#7F3C9A2B")
     }
+
+    @Test("the expert Booking Summary label uses the same rule (EXP-18)")
+    func expertSummaryLabel() throws {
+        let expertId = try #require(UUID(uuidString: "7f3c9a2b-1d4e-4f6a-9b8c-0d1e2f3a4b5c"))
+        let viewModel = ExpertBookingSummaryViewModel(bookingId: expertId)
+        #expect(viewModel.bookingIdLabel == "ID: #7F3C9A2B")
+        #expect(viewModel.bookingIdLabel == BookingShortID.label(expertId))
+    }
 }

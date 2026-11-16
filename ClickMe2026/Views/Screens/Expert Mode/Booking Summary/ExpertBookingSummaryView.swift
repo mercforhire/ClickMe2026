@@ -356,7 +356,7 @@ struct ExpertBookingSummaryView: View {
             .frame(width: 64, height: 64)
             .clipShape(Circle())
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(detail.client.name ?? "Client")
                     .font(.brand(.title3, weight: .bold))
                     .foregroundColor(Brand.onSurface)
@@ -374,6 +374,11 @@ struct ExpertBookingSummaryView: View {
                         .foregroundColor(Brand.primary)
                 }
                 .buttonStyle(.plain)
+
+                Text(viewModel.bookingIdLabel)
+                    .font(.brand(.caption))
+                    .foregroundColor(Brand.onSurfaceVariant)
+                    .textSelection(.enabled)
             }
 
             Spacer()

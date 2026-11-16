@@ -94,6 +94,11 @@ final class ExpertBookingSummaryViewModel: ObservableObject {
         }
     }
 
+    /// `"ID: #7F3C9A2B"`: the BOOK-20 short-ID rule, built from the route's own
+    /// id so it shows before the detail loads. Same line as Android
+    /// `expert_summary_id` (EXP-18, D-20).
+    var bookingIdLabel: String { BookingShortID.label(bookingId) }
+
     /// SF Symbol matching the meeting type.
     var meetingTypeIcon: String {
         guard let detail else { return "phone" }

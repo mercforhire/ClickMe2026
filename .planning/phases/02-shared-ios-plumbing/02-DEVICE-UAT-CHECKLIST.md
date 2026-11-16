@@ -38,7 +38,7 @@ Expected:
 - At end + 60 minutes the call **ends by itself** and the screen shows **Ended**.
 - Follow-up from 02-01: when the iPhone auto-ends, the **Android peer tears down too** (`call.ended` is emitted to both). If it stays connected, note it; with a debug iOS build a failed `POST /end` prints a `push:`-style DEBUG line in the Xcode console. No Android or backend change was made for this.
 
-Result:
+Result: PASS, partial (2026-11-10, UAT test 1): call still connected at end + 11, so the old 5-minute cutoff is gone. The end + 55 notice, the end + 60 auto-end and the Android peer teardown were not observed (user did not wait); warn/end timing is covered by `CallOvertimePolicyTests`
 
 ### 2. CALL-05 — Agora failure maps to Ended; normal-call regression (02-02, D-14)
 
@@ -62,7 +62,7 @@ Steps and expected:
 3. On the client list, the booking **leaves the joinable list at max(end, start + 60 min)**.
 4. During overtime (after end, before end + 60), the expert can **reconnect** when the server still allows it.
 
-Result:
+Result: PASS (2026-11-10, UAT test 2)
 
 ### 4. CALL-02 / D-12 — `pending_reschedule` shows Join visible but disabled (02-04, 02-14)
 
@@ -76,7 +76,7 @@ Expected:
 - Client **My Bookings** and expert **Upcoming** list: the card shows **Join disabled**.
 - Once the reschedule is accepted (booking back to `confirmed`), Join enables on its own within about a minute when inside the window.
 
-Result:
+Result: PASS (2026-11-10, UAT test 2)
 
 ### 5. CALL-09 — external meeting link shows its provider (02-02) — *optional*
 
@@ -86,7 +86,7 @@ Steps: open a booking whose meeting link is a real Zoom or Skype URL.
 
 Expected: the button shows the provider label (Zoom / Skype). A link on an unknown host shows the generic "Open Meeting" copy.
 
-Result:
+Result: SKIPPED (2026-11-16, UAT test 17): optional, already unit-tested
 
 ### 6. BOOK-10 — money formatting on every screen, topic reopen-and-save, Client Profile history (02-05, 02-06, 02-15)
 
@@ -106,7 +106,7 @@ Result:
 **Client Profile history (02-15, supersedes the plan-stage "—" wording):**
 8. As B, open a client's profile from a booking. Rows with status `confirmed`, `completed`, `pending_approval`, `pending_reschedule` or `in_progress` show the **real net earnings as `CA$x.xx`**. `cancelled` and other non-gated rows show **`—`**. No row shows `$0` or `CA$0.00` unless the net really is zero. The layout is unchanged.
 
-Result:
+Result: PASS (2026-11-10, UAT test 3)
 
 ### 7. BOOK-14 — paid 6-day cap: days visible, slots dimmed, fixed note (02-07, 02-08)
 
@@ -129,7 +129,7 @@ Expected, VoiceOver (02-UI-SPEC A1, C1; quick 261110-nzy):
 - The chevrons read "Previous month" and "Next month".
 - The client Reschedule calendar behaves the same.
 
-Result:
+Result: PASS (2026-11-10, UAT test 4), including the VoiceOver checks
 
 ### 8. PAY-05 — same slot-taken copy on free and paid bookings (02-07) — *optional*
 
@@ -139,7 +139,7 @@ Steps: from the second device book a slot; on the device try to book the same sl
 
 Expected: both show the **same written slot-unavailable message** (not raw server text), and the selected slot is cleared.
 
-Result:
+Result: SKIPPED (2026-11-16, UAT test 17): optional, already unit-tested
 
 ### 9. BOOK-18 — live booking updates and overlapping refresh (02-03, 02-13)
 
@@ -152,7 +152,7 @@ Client (02-13):
 Expert (02-03):
 3. With the expert **Upcoming Bookings** tab open, have the client cancel or reschedule from the other device **while pulling to refresh**: the row ends in its new state with no stuck spinner.
 
-Result:
+Result: PASS (2026-11-10, UAT test 5), including the neutral label for an unknown status
 
 ### 10. PUSH-01 / CR-01 — every push type opens its screen, warm and cold (02-09, 02-10)
 
@@ -165,7 +165,7 @@ Steps and expected:
 4. **Notifications list rows** behave the same as the push (02-09): in expert mode tap a booking notification from the Dashboard bell — it switches to Bookings and shows the booking summary; Back returns to the Upcoming list.
 5. **Android parity (02-10):** a cron **reminder, no-show or nudge push that carries only `booking_id`** opens that booking.
 
-Result:
+Result: PASS (2026-11-15, UAT test 6); no SwiftUI warning page seen from any push or notifications-list tap (UAT test 14)
 
 ### 11. PUSH-02 / D-03 — role-targeted pushes switch mode silently, with the client-only fallback (02-10)
 
@@ -178,7 +178,7 @@ Steps and expected:
 4. Force-quit, tap a push: launches in the right mode and opens the screen once.
 5. **Roles unknown at cold launch** (02-10 device check 6): airplane mode on, last mode client, set-up expert account B; cold-launch from an expert-targeted push. **Client home opens with no notifications list**; turn airplane mode off and close Control Center — the app **switches to expert mode and opens the request** once the network returns.
 
-Result:
+Result: PASS (2026-11-15, UAT test 7): mode switch for set-up expert B and client-only C fallback pass. Step 5 (roles unknown at cold launch): the app did not open the notifications list after the network returned, which matches the expected result; whether the request then opened was not confirmed. User accepted it as is, no fix wanted
 
 ### 12. PUSH-03 — a booking-request push opens that request (02-09, 02-10)
 
@@ -188,7 +188,7 @@ Steps and expected:
 1. As B (expert mode), tap a **booking-request** push: that request's **decision screen** opens; Back returns to the Dashboard.
 2. From the expert **notifications list**, tap a booking-request row: the same decision screen opens; Back returns to the Dashboard (02-09).
 
-Result:
+Result: PASS (2026-11-15, UAT test 8)
 
 ### 13. BOOK-15 — a `payment_actions` push opens that booking, route only (02-10, D-01)
 
@@ -198,7 +198,7 @@ Steps: tap a `booking/payment_actions` (`PAYMENT_ACTION_REQUIRED`) push for one 
 
 Expected: the **booking detail opens**, no warning page. No recovery sheet or payment prompt is shown.
 
-Result:
+Result: PASS (2026-11-15, UAT test 9)
 
 ### 14. PUSH-04 — after logout the old account's pushes stop (02-12, D-06 as amended by D-17, D-18)
 
@@ -233,7 +233,7 @@ Expected: **B receives it; the push to A does not arrive.** Sign-in itself takes
 
 **Not a failure:** a push to A arriving before the retry after an offline logout (D-17); the app never keeping A's bearer or refresh token for the retry (D-18) — only a Bool marker is saved; the Log Out spinner staying up for as long as about 6 seconds on a slow or offline network (two 3-second caps); and, if Firebase was unreachable for longer than that during the logout, B's pushes starting only after the next token callback or foreground (same class as the D-17 window; record it in Result if seen).
 
-Result:
+Result: PASS (2026-11-15, UAT test 10), including (a)-(d) and the (e) fast re-login. No-credential retry (D-18) and no token re-upload during logout confirmed by code review (UAT tests 15, 16)
 
 ### 15. CHAT-09 — no banner for the chat already on screen (02-11)
 
@@ -247,7 +247,7 @@ Steps and expected:
 5. **Non-chat push while a chat is open:** a booking push (for example a request accepted) while any chat is open **still shows the banner and sound**.
 6. *Not device-testable:* a chat push with no thread id (preview seeds only); covered by the `noThreadIdPresents` unit row.
 
-Result:
+Result: PASS (2026-11-15, UAT test 11)
 
 ---
 
@@ -264,8 +264,8 @@ Decision records referenced above: D-01 (Q3 route only), D-03 (expert-targeted p
 | Build (commit / TestFlight build number) | |
 | Device and iOS version | |
 | Tester | |
-| Date | |
-| Items passed / failed / skipped | / / |
-| Follow-ups opened | |
+| Date | 2026-11-10 to 2026-11-16 |
+| Items passed / failed / skipped | 13 / 0 / 2 |
+| Follow-ups opened | None. Partial coverage noted on items 1 and 11 |
 
 A Phase 2 item that fails on device goes back to its owning plan's requirement (it stays Pending in REQUIREMENTS.md) and to `.planning/WINDOWS.md` as a new entry; a passing item lets its WINDOWS.md `unrun-verify` entry be marked fixed.

@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-11-16T18:27:44.031Z"
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-11-16T18:31:01.745Z"
 last_activity: 2026-11-16
 last_activity_desc: Phase 06 execution started
-state_head: 83f47baba5bba2da54d8c63fc08b04ec8c8ad37d
+state_head: 64a2237ba0cb5c2a1a52cb66f5544d1e3014a5f7
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 107
-  completed_plans: 103
+  completed_plans: 104
   percent: 38
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 7 of 10
+Plan: 8 of 10
 Status: Ready to execute
 Last activity: 2026-11-16 — Phase 06 execution started
 
@@ -160,6 +160,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P03 | 20 min | 2 tasks | 7 files |
 | Phase 06 P04 | 25 min | 2 tasks | 6 files |
 | Phase 06 P05 | 6 min | 3 tasks | 8 files |
+| Phase 06 P06 | 2 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -347,6 +348,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-04: BookingCalendarPayload lives inside BookingConfirmation (calendarPayload); Face-to-Face preview replaced by Long names preview
 - [Phase 06]: 06-05: Booking Confirmed is hosted inside RequestDecisionView (user sign-off 2026-11-16), superseding the UI-SPEC path replace; Back reaches the refreshed list and Back to Home resets to the Dashboard root via HomeShellExit.Action.backToHomeRoot and returnToDashboard
 - [Phase 06]: 06-05: 409 ALREADY_PROCESSED pops after the Couldn't update request alert, decided by BookingErrorMapper.code only; accept message capped at 1,000 UTF-16 units with a counter from 800
+- [Phase 06]: 06-06: expert hub passes isOnline:false to the unchanged shared ClientProfileHomeUserCard (no presence on expert side, client hub untouched)
 
 ### Pending Todos
 
@@ -446,6 +448,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-16T18:27:43.296Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-11-16T18:31:01.031Z
+Stopped at: Completed 06-06-PLAN.md
 Resume file: None

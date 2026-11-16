@@ -47,6 +47,8 @@ struct IncomingRequestAvatar: View {
             }
             .frame(width: 65, height: 65)
             .clipShape(Circle())
+            // Only the photo dims on an expired request; the ring and all text keep full strength.
+            .opacity(request.isExpired ? 0.55 : 1)
         }
         .frame(width: 75, height: 75)
     }

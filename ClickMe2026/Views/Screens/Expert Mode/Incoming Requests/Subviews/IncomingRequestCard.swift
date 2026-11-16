@@ -12,6 +12,8 @@ struct IncomingRequestCard: View {
     let request: BookingRequest
     var onTap: (BookingRequest) -> Void
 
+    private var borderOpacity: Double { request.isExpired ? 0.35 : 1 }
+
     var body: some View {
         Button { onTap(request) } label: {
             VStack(spacing: 0) {
@@ -60,6 +62,9 @@ struct IncomingRequestCard: View {
                             .font(.brand(.subheadline, weight: .bold))
                             .tracking(1.2)
                             .foregroundColor(Brand.onSurfaceVariant)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Brand.overlayWhite10))
                     } else {
                         HStack(spacing: 0) {
                             Text("Expires in: ")
@@ -76,16 +81,20 @@ struct IncomingRequestCard: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Brand.surfaceContainerLow)
+                    .fill(request.isExpired ? Brand.surfaceContainerLowest : Brand.surfaceContainerLow)
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(IncomingRequestsTheme.irisBorder, lineWidth: 1.5)
+                            .stroke(
+                                IncomingRequestsTheme.irisBorder.opacity(borderOpacity),
+                                lineWidth: 1.5
+                            )
                     )
             )
-            // Fully-past requests are visually dimmed but still tappable
-            // — tap opens a read-only decision screen so the expert can
-            // review the client info and message them if they want to.
-            .opacity(request.isExpired ? 0.55 : 1.0)
+            // Fully-past requests stay tappable — tap opens a read-only
+            // decision screen so the expert can review the client info and
+            // message them. They are marked by fill, border and the EXPIRED
+            // badge, never by dimming the card: a whole-card opacity dropped
+            // the secondary text below 4.5:1 contrast (EXP-12, D-17).
         }
         .buttonStyle(PressScaleButtonStyle())
     }

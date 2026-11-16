@@ -44,7 +44,7 @@ struct TopicsSetupTopicCard: View {
                 Menu {
                     Button("Edit") { viewModel.editTopic(topic) }
                     Button("Delete", role: .destructive) {
-                        Task { await viewModel.deleteTopic(topic) }
+                        viewModel.requestDelete(topic)
                     }
                 } label: {
                     Image(systemName: "ellipsis")

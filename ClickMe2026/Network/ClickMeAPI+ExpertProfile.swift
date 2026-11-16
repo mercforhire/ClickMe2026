@@ -63,8 +63,9 @@ extension ClickMeAPI {
         try await service.httpRequest(url: url(.updateMyTopic, id: id), method: .patch, body: body)
     }
 
-    /// `DELETE /expert/topics/:id`. Returns 409 if the topic has active
-    /// bookings — surface the server message to the user.
+    /// `DELETE /expert/topics/:id`. A soft delete: the topic is archived (no
+    /// longer bookable) and existing bookings keep it. A topic that does not
+    /// exist or is not the caller's is a 404; there is no conflict response.
     func deleteMyTopic(id: UUID) async throws -> SuccessMessageResponse {
         try await service.httpRequest(url: url(.deleteMyTopic, id: id), method: .delete)
     }

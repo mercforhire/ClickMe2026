@@ -83,6 +83,25 @@ struct TopicsSetupView: View {
                 .padding(.bottom, 32)
         }
         .refreshable { await viewModel.reload() }
+        // `.alert` rather than `.confirmationDialog`: the trigger is a `Menu`
+        // item, and a dialog would anchor as a popover on iPad (UI-SPEC A7).
+        // Separate from the error alert on the outer ZStack so the two never
+        // compete for one presentation slot.
+        .alert(
+            "Delete this topic?",
+            isPresented: Binding(
+                get: { viewModel.topicPendingDelete != nil },
+                set: { if !$0 { viewModel.cancelDelete() } }
+            ),
+            presenting: viewModel.topicPendingDelete
+        ) { topic in
+            Button("Delete", role: .destructive) {
+                Task { await viewModel.confirmDelete(topic) }
+            }
+            Button("Cancel", role: .cancel) { viewModel.cancelDelete() }
+        } message: { topic in
+            Text("\u{201C}\(topic.title)\u{201D} will be removed and clients won't be able to book it.")
+        }
     }
 
     private var loadingContent: some View {

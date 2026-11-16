@@ -29,6 +29,12 @@ final class TopicsSetupViewModel: ObservableObject {
     /// Non-fatal error surfaced from any topic mutation (create/update/delete).
     @Published var apiError: String?
 
+    // MARK: Delete confirmation
+
+    /// The topic the expert tapped Delete on, while the "Delete this topic?"
+    /// alert is up. Nothing is sent until `confirmDelete(_:)` (D-14).
+    @Published var topicPendingDelete: ExpertTopicItem?
+
     // MARK: Dependencies
 
     private let api: ClickMeAPI
@@ -43,6 +49,7 @@ final class TopicsSetupViewModel: ObservableObject {
         self.editingTopic = nil
         self.showTopicEditor = false
         self.apiError = nil
+        self.topicPendingDelete = nil
         self.api = api
         self.userManager = userManager
     }
@@ -186,8 +193,28 @@ final class TopicsSetupViewModel: ObservableObject {
         return text
     }
 
-    /// `DELETE /expert/topics/:id`. Server returns 409 with a message when
-    /// the topic has active bookings — surface that message in the alert.
+    /// Asks for confirmation; sends nothing.
+    func requestDelete(_ topic: ExpertTopicItem) {
+        topicPendingDelete = topic
+    }
+
+    /// The expert backed out of the alert. Sends nothing and keeps the topic.
+    func cancelDelete() {
+        topicPendingDelete = nil
+    }
+
+    /// The expert confirmed. The topic is passed in explicitly because the
+    /// alert clears `topicPendingDelete` as it dismisses.
+    func confirmDelete(_ topic: ExpertTopicItem) async {
+        topicPendingDelete = nil
+        await deleteTopic(topic)
+    }
+
+    /// `DELETE /expert/topics/:id`. A soft delete: the topic stops being
+    /// bookable and existing bookings keep it. A topic that does not exist (or
+    /// is not the caller's) is a 404; the endpoint has no conflict response. The
+    /// topic leaves the list only after a 2xx. On failure the server message
+    /// goes to `apiError` and the topic stays.
     func deleteTopic(_ topic: ExpertTopicItem) async {
         apiError = nil
         do {

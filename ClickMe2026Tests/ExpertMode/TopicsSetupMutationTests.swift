@@ -126,4 +126,100 @@ struct TopicsSetupMutationTests {
         #expect(body["description"] == nil)
         #expect(body["title"] as? String == "Portfolio review")
     }
+
+    // MARK: - Delete confirmation (EXP-01, D-14) and removal after 2xx (EXP-08)
+
+    nonisolated private static func deletes() -> [URLRequest] {
+        MockURLProtocol.recordedRequests.filter { $0.httpMethod == "DELETE" }
+    }
+
+    private func makeViewModel(
+        deleteStatus: Int = 200,
+        deleteBody: Data = ClientBookingFixtures.successMessage
+    ) throws -> (TopicsSetupViewModel, ExpertTopicItem, ExpertTopicItem) {
+        let first = try Self.decodeTopic(Self.topicJSON())
+        let second = try Self.decodeTopic(Self.topicJSON(id: Self.otherTopicId, title: "Intro chat"))
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, status: deleteStatus, body: deleteBody)
+        }
+        let viewModel = TopicsSetupViewModel(api: api)
+        viewModel.topics = [first, second]
+        return (viewModel, first, second)
+    }
+
+    @Test("tapping Delete only asks: the topic is pending and no request is sent")
+    func requestDeleteSendsNothing() throws {
+        let (viewModel, first, _) = try makeViewModel()
+
+        viewModel.requestDelete(first)
+
+        #expect(viewModel.topicPendingDelete?.id == first.id)
+        #expect(Self.deletes().isEmpty)
+        #expect(viewModel.topics.count == 2)
+    }
+
+    @Test("Cancel clears the pending topic, sends nothing and keeps the card")
+    func cancelDeleteSendsNothing() throws {
+        let (viewModel, first, _) = try makeViewModel()
+        viewModel.requestDelete(first)
+
+        viewModel.cancelDelete()
+
+        #expect(viewModel.topicPendingDelete == nil)
+        #expect(Self.deletes().isEmpty)
+        #expect(viewModel.topics.map(\.id) == [first.id, UUID(uuidString: Self.otherTopicId)!])
+    }
+
+    @Test("confirming sends one DELETE for that topic and removes it after the 2xx")
+    func confirmDeleteRemovesAfterSuccess() async throws {
+        let (viewModel, first, second) = try makeViewModel()
+        viewModel.requestDelete(first)
+
+        await viewModel.confirmDelete(first)
+
+        #expect(viewModel.topicPendingDelete == nil)
+        let sent = Self.deletes()
+        #expect(sent.count == 1)
+        #expect(sent.first?.url?.path.hasSuffix("/expert/topics/\(first.id.uuidString.lowercased())") == true)
+        #expect(viewModel.topics.map(\.id) == [second.id])
+        #expect(viewModel.apiError == nil)
+    }
+
+    @Test("a failed DELETE keeps the card and shows the server message")
+    func failedDeleteKeepsTheTopic() async throws {
+        let (viewModel, first, second) = try makeViewModel(
+            deleteStatus: 404,
+            deleteBody: Fixtures.errorBody(code: "NOT_FOUND", message: "Topic not found")
+        )
+        viewModel.requestDelete(first)
+
+        await viewModel.confirmDelete(first)
+
+        #expect(viewModel.topicPendingDelete == nil)
+        #expect(viewModel.apiError == "Topic not found")
+        #expect(viewModel.topics.map(\.id) == [first.id, second.id])
+    }
+
+    @Test("a repeat DELETE of a topic already removed answers 404 and leaves the list as it was")
+    func secondDeleteLeavesTheListAlone() async throws {
+        let (viewModel, first, second) = try makeViewModel()
+        await viewModel.confirmDelete(first)
+        #expect(viewModel.topics.map(\.id) == [second.id])
+
+        // The server now answers the same id with a 404.
+        let api = APITestFactory.make { request in
+            Fixtures.response(
+                for: request,
+                status: 404,
+                body: Fixtures.errorBody(code: "NOT_FOUND", message: "Topic not found")
+            )
+        }
+        let again = TopicsSetupViewModel(api: api)
+        again.topics = [second]
+        await again.confirmDelete(first)
+
+        #expect(again.apiError == "Topic not found")
+        #expect(again.topics.map(\.id) == [second.id])
+        #expect(Self.deletes().count == 1)
+    }
 }

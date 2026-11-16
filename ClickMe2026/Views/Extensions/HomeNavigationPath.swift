@@ -218,4 +218,9 @@ extension EnvironmentValues {
     /// Favorites empty state's "View My History". Installed by
     /// `HomeClientView` only.
     @Entry var showMyHistory: HomeShellAction? = nil
+
+    /// Switch the expert shell to the Dashboard tab at its root after
+    /// resetting the source tab, used by Booking Confirmed's Back to Home
+    /// (D-11). Installed by `HomeExpertView` only; `nil` outside a shell.
+    @Entry var returnToDashboard: HomeShellAction? = nil
 }

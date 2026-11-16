@@ -49,9 +49,20 @@ final class RequestDecisionViewModel: ObservableObject {
 
     // MARK: Submission state
     @Published var isSubmitting: Bool
-    @Published var isAccepted: Bool
     @Published var isDeclined: Bool
     @Published var submitError: String?
+
+    /// Set only after a 2xx `POST /accept` (D-11, EXP-09). The view shows
+    /// Booking Confirmed in place of the decision content while it is set.
+    @Published private(set) var confirmation: BookingConfirmation?
+
+    /// True once the request has been accepted. Read-only so the footer and
+    /// the sheet guards keep their meaning.
+    var isAccepted: Bool { confirmation != nil }
+
+    /// The detail the screen loaded, kept for the raw start, end and meeting
+    /// type that the display `IncomingRequest` does not carry.
+    private var loadedDetail: BookingRequestDetail?
 
     // MARK: Dependencies
     private let api: ClickMeAPI
@@ -74,7 +85,6 @@ final class RequestDecisionViewModel: ObservableObject {
         self.isExpired = isExpired
         self.loadState = .idle
         self.isSubmitting = false
-        self.isAccepted = false
         self.isDeclined = false
         self.submitError = nil
         self.api = api
@@ -109,7 +119,6 @@ final class RequestDecisionViewModel: ObservableObject {
         self.isExpired = isExpired
         self.loadState = loadState
         self.isSubmitting = false
-        self.isAccepted = false
         self.isDeclined = false
         self.submitError = nil
         self.api = .shared
@@ -135,6 +144,7 @@ final class RequestDecisionViewModel: ObservableObject {
         do {
             let response = try await api.getBookingRequest(id: requestId)
             let detail = response.data
+            loadedDetail = detail
             request = Self.map(detail: detail, isExpired: isExpired)
             clientMessage = detail.session.clientMessage ?? ""
             potentialEarnings = detail.economics.potentialEarnings ?? 0
@@ -174,9 +184,10 @@ final class RequestDecisionViewModel: ObservableObject {
 
     /// Fires `POST /expert/booking-requests/:id/accept`. `message` is
     /// optional — trimmed and nil'd when empty. On success closes the
-    /// sheet and flips `isAccepted` for the footer's "Accepted!" state.
+    /// sheet and sets `confirmation`, built from the loaded request, in the
+    /// same transaction (D-11).
     func confirmAccept(message: String) async {
-        guard let requestId else { return }
+        guard let requestId, let detail = loadedDetail else { return }
         guard !isSubmitting else { return }
 
         submitError = nil
@@ -191,9 +202,15 @@ final class RequestDecisionViewModel: ObservableObject {
             )
             withAnimation(.spring(response: 0.38, dampingFraction: 0.82)) {
                 showAcceptSheet = false
-            }
-            withAnimation(.easeInOut(duration: 0.25).delay(0.15)) {
-                isAccepted = true
+                confirmation = ExpertBookingConfirmationContent.confirmation(
+                    clientName: detail.client.name,
+                    clientImageURL: detail.client.avatarUrl,
+                    topic: detail.session.topic,
+                    start: detail.session.startTime,
+                    end: detail.session.endTime,
+                    meetingType: detail.session.meetingType,
+                    clientMessage: detail.session.clientMessage
+                )
             }
         } catch {
             submitError = error.userMessage

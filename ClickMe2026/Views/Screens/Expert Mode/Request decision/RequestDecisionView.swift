@@ -115,6 +115,10 @@ struct RequestDecisionView: View {
     /// isolated tests) — in that case the Message tap silently no-ops.
     @Environment(\.openChatThread) private var openChatThread
 
+    /// Shell-injected Back to Home for Booking Confirmed (D-11). Nil outside
+    /// a `HomeExpertView` shell, where the tap does nothing.
+    @Environment(\.returnToDashboard) private var returnToDashboard
+
     // MARK: Init
 
     /// Runtime init — hydrates from
@@ -135,6 +139,43 @@ struct RequestDecisionView: View {
     // MARK: Body
 
     var body: some View {
+        Group {
+            if let confirmation = viewModel.confirmation {
+                // D-11: Confirmed replaces the decision content in the same
+                // transaction that closes the sheet. Back reveals the screen
+                // under this one, which reloads on appear.
+                BookingConfirmedView(
+                    booking: confirmation,
+                    onBackToHome: { returnToDashboard?() }
+                )
+            } else {
+                decisionContent
+            }
+        }
+        .navigationTitle(viewModel.confirmation == nil ? "Booking Details" : "Booking Confirmed")
+        .navigationBarTitleDisplayMode(.inline)
+        // System back is reachable from Confirmed, so pin the bar the way the
+        // other glass-sensitive screens do (05-18).
+        .toolbarBackground(Brand.surface, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .task { await viewModel.load() }
+        .alert(
+            "Something went wrong",
+            isPresented: Binding(
+                get: { viewModel.submitError != nil },
+                set: { if !$0 { viewModel.submitError = nil } }
+            ),
+            presenting: viewModel.submitError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+        .keyboardDismissToolbar()
+    }
+
+    private var decisionContent: some View {
         ZStack {
             Brand.surface.ignoresSafeArea()
             content
@@ -169,22 +210,6 @@ struct RequestDecisionView: View {
                 }
             }
         }
-        .navigationTitle("Booking Details")
-        .navigationBarTitleDisplayMode(.inline)
-        .task { await viewModel.load() }
-        .alert(
-            "Something went wrong",
-            isPresented: Binding(
-                get: { viewModel.submitError != nil },
-                set: { if !$0 { viewModel.submitError = nil } }
-            ),
-            presenting: viewModel.submitError
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { message in
-            Text(message)
-        }
-        .keyboardDismissToolbar()
     }
 
     // MARK: - Content router

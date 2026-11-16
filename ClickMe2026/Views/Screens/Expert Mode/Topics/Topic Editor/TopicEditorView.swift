@@ -101,8 +101,11 @@ struct TopicEditorView: View {
                             editorField(
                                 label: "Price per Session (\(viewModel.currencySymbol))",
                                 placeholder: "e.g. 150",
-                                text: $viewModel.rate,
-                                keyboard: .numberPad
+                                text: Binding(
+                                    get: { viewModel.rate },
+                                    set: { viewModel.updateRate($0) }
+                                ),
+                                keyboard: Money.fractionDigits(for: viewModel.currency) > 0 ? .decimalPad : .numberPad
                             )
                             if let hint = viewModel.minPriceHint {
                                 Text(hint)

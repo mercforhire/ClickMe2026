@@ -24,10 +24,11 @@ final class TopicEditorViewModel: ObservableObject {
     /// so a price with cents is shown to the cent instead of being truncated
     /// by integer division. While the trimmed text still equals that seed,
     /// `validate()` sends the stored minor amount back unchanged (D-19).
-    /// Once the expert edits it, the text is parsed as whole major units,
-    /// times 100. Either way the amount is priced in `currency`, the topic's
-    /// own currency (backend Phase 34 D-18); decimal input for typed prices
-    /// is Phase 6 (EXP-02).
+    /// Once the expert edits it, the text is parsed in the currency's fraction
+    /// digits by `TopicPriceRules.parseMinor` (D-05: `12.50` and `12,50` are
+    /// 1250 CAD). Either way the amount is priced in `currency`, the topic's
+    /// own currency (backend Phase 34 D-18). Typing goes through
+    /// `updateRate(_:)`, which filters the text first.
     @Published var rate: String
     /// The currency this topic is priced in. Seeded from the topic's own
     /// stored currency (never the account default) or, for a new topic, from
@@ -272,6 +273,16 @@ final class TopicEditorViewModel: ObservableObject {
         selectedTagIds.formIntersection(validIds)
     }
 
+    // MARK: Price input
+
+    /// Stores what the price field keeps of `raw`: digits and one separator,
+    /// capped to the currency's fraction digits (`TopicPriceRules.filterInput`).
+    /// Switching `currency` never calls this, so the typed text survives a
+    /// currency change untouched (D-03).
+    func updateRate(_ raw: String) {
+        rate = TopicPriceRules.filterInput(raw, currency: currency)
+    }
+
     // MARK: Icon picker
 
     func toggleIcon(_ slug: String) {
@@ -337,8 +348,8 @@ final class TopicEditorViewModel: ObservableObject {
         let description: String?
         let durationMinutes: Int
         /// Minor units. The topic's stored amount when the price field was
-        /// left at its seed (D-19), otherwise the typed whole major units
-        /// times 100.
+        /// left at its seed (D-19), otherwise the typed text parsed in the
+        /// currency's fraction digits (D-05).
         let hourlyRateAmount: Int
         /// The editor's `currency`: the topic's own stored currency for an
         /// existing paid topic (locked), the picked one for a new or free
@@ -364,25 +375,18 @@ final class TopicEditorViewModel: ObservableObject {
         let rateMinor: Int
         if let seededRateMinor, trimmedRate == seededRate {
             // Untouched price (D-19): send the stored minor amount back
-            // unchanged. The seed may carry cents ("125.50") that the
-            // whole-number parser below would reject; an open-and-save must
-            // not rewrite it.
+            // unchanged, so an open-and-save never rewrites it.
             rateMinor = seededRateMinor
         } else {
-            // Rate parsing: empty OR explicit "0" = free session (allowed).
-            // Positive int = paid, subject to the min-price check below.
-            // Anything else (non-numeric, negative, decimals) = invalid.
-            // Decimal input for typed prices is Phase 6 (EXP-02).
-            let rateMajor: Int
-            if trimmedRate.isEmpty {
-                rateMajor = 0
-            } else if let parsed = Int(trimmedRate), parsed >= 0 {
-                rateMajor = parsed
-            } else {
+            // Empty OR explicit "0" = free session (allowed). A positive
+            // amount is paid, subject to the min-price check below. Anything
+            // the currency cannot represent (non-numeric, negative, too many
+            // decimals) = invalid. The live hint reads the same parse (D-05).
+            guard let parsed = TopicPriceRules.parseMinor(trimmedRate, currency: currency) else {
                 withAnimation { errorMessage = "Please fill in all required fields with valid values." }
                 return nil
             }
-            rateMinor = rateMajor * 100
+            rateMinor = parsed
         }
 
         // Server-authoritative floor (per PRICING-LIMITS spec §4) —
@@ -427,9 +431,8 @@ final class TopicEditorViewModel: ObservableObject {
     /// (empty or `0`) which is exempt from the floor per spec §4.
     var isRateBelowMinimum: Bool {
         guard let limit = userManager.me?.pricingLimits?.minSessionAmount else { return false }
-        let trimmed = rate.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty, let rateMajor = Int(trimmed), rateMajor > 0 else { return false }
-        return rateMajor * 100 < limit.minMinorUnits(for: currency)
+        guard let rateMinor = TopicPriceRules.parseMinor(rate, currency: currency), rateMinor > 0 else { return false }
+        return rateMinor < limit.minMinorUnits(for: currency)
     }
 
     /// Inline helper caption. Calls out that free is a valid choice so
@@ -449,10 +452,9 @@ final class TopicEditorViewModel: ObservableObject {
     /// the expert edits it. The digit count comes from `Money` so the seed
     /// matches what the server means by `amount` in that currency (`1250`
     /// USD is `"12.50"`, `1200` JPY is `"1200"`). A whole amount seeds as a
-    /// plain integer (`"12"`, not `"12.00"`) so the whole-number parser still
-    /// accepts an edit of it; a seed with cents is recognized by `validate()`
-    /// and passed through as stored. Integer arithmetic only, and total: a
-    /// negative value gets a leading `-`.
+    /// plain integer (`"12"`, not `"12.00"`); a seed with cents is recognized
+    /// by `validate()` and passed through as stored. Integer arithmetic only,
+    /// and total: a negative value gets a leading `-`.
     static func editableAmount(minorUnits: Int, currency: String) -> String {
         let digits = Money.fractionDigits(for: currency)
         let sign = minorUnits < 0 ? "-" : ""

@@ -96,11 +96,18 @@ struct MoneyCallSiteTests {
         #expect(validated?.currency != vm.defaultCurrency)
     }
 
-    @Test("typed decimal input is still rejected until Phase 6")
-    func typedDecimalIsRejected() throws {
+    @Test("a typed decimal is parsed to the cent in the topic's own currency (EXP-02)")
+    func typedDecimalSavesTheCents() throws {
         let vm = TopicEditorViewModel(topic: try Self.topic(Self.hourlyRate12550USD))
         vm.rate = "130.50"
-        #expect(vm.validate() == nil)
+        let validated = vm.validate()
+        #expect(validated?.hourlyRateAmount == 13050)
+        #expect(validated?.currency == "USD")
+
+        vm.rate = "130,5"
+        let comma = vm.validate()
+        #expect(comma?.hourlyRateAmount == 13050)
+        #expect(comma?.currency == "USD")
     }
 
     @Test("a whole-dollar hourly rate seeds as a plain integer and saves unchanged")

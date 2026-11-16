@@ -131,6 +131,73 @@ struct TopicCurrencyTests {
         #expect(validated?.currency == "USD")
     }
 
+    // MARK: - Decimal prices and currency switching (EXP-02, D-03)
+
+    @Test("switching currency keeps the typed number and re-prices it in the new currency")
+    func currencySwitchKeepsTypedText() {
+        let vm = TopicEditorViewModel(topic: nil)
+        vm.title = "Portfolio review" // validate() checks the title before the price
+        vm.currency = "CAD"
+        vm.updateRate("12.50")
+
+        vm.currency = "USD"
+        #expect(vm.rate == "12.50")
+        #expect(vm.validate()?.hourlyRateAmount == 1250)
+        #expect(vm.validate()?.currency == "USD")
+
+        vm.currency = "CAD"
+        #expect(vm.rate == "12.50")
+        #expect(vm.validate()?.hourlyRateAmount == 1250)
+        #expect(vm.validate()?.currency == "CAD")
+    }
+
+    @Test("a comma decimal on a new topic saves as the same minor amount")
+    func commaDecimalOnNewTopic() {
+        let vm = TopicEditorViewModel(topic: nil)
+        vm.title = "Portfolio review"
+        vm.updateRate("12,50")
+        #expect(vm.rate == "12,50")
+        #expect(vm.validate()?.hourlyRateAmount == 1250)
+    }
+
+    @Test("a typed decimal on a paid USD topic validates in USD")
+    func typedDecimalOnPaidUSDTopic() throws {
+        let vm = TopicEditorViewModel(topic: try Self.topic(Self.paidUSD))
+        vm.updateRate("130.25")
+        let validated = vm.validate()
+        #expect(validated?.hourlyRateAmount == 13025)
+        #expect(validated?.currency == "USD")
+    }
+
+    @Test("a 20-digit paste is capped at 7 integer digits and never traps")
+    func longPasteInEditor() {
+        let vm = TopicEditorViewModel(topic: nil)
+        vm.title = "Portfolio review"
+        vm.updateRate(String(repeating: "9", count: 20))
+        #expect(vm.rate == "9999999")
+        #expect(vm.validate()?.hourlyRateAmount == 999_999_900)
+    }
+
+    @Test("a third fraction digit is dropped as the expert types")
+    func thirdFractionDigitDropped() {
+        let vm = TopicEditorViewModel(topic: nil)
+        vm.updateRate("12.505")
+        #expect(vm.rate == "12.50")
+    }
+
+    @Test("untouched seeds round-trip: 1250 seeds 12.50, 1200 seeds 12")
+    func untouchedSeedsRoundTrip() throws {
+        let cents = TopicEditorViewModel(topic: try Self.topic(Self.paidCAD1250))
+        #expect(cents.rate == "12.50")
+        #expect(cents.validate()?.hourlyRateAmount == 1250)
+        #expect(cents.validate()?.currency == "CAD")
+
+        let whole = TopicEditorViewModel(topic: try Self.topic(Self.paidCAD1200))
+        #expect(whole.rate == "12")
+        #expect(whole.validate()?.hourlyRateAmount == 1200)
+        #expect(whole.validate()?.currency == "CAD")
+    }
+
     // MARK: - Fixtures
 
     private static func decoder() -> JSONDecoder {
@@ -176,6 +243,24 @@ struct TopicCurrencyTests {
       "title": "Portfolio review",
       "price": { "amount": 12550, "currency": "usd", "is_free": false },
       "hourly_rate": { "amount": 12550, "currency": "usd" }
+    }
+    """
+
+    private static let paidCAD1250 = """
+    {
+      "id": "66666666-6666-6666-6666-666666666666",
+      "title": "Portfolio review",
+      "price": { "amount": 1250, "currency": "CAD", "is_free": false },
+      "hourly_rate": { "amount": 1250, "currency": "CAD" }
+    }
+    """
+
+    private static let paidCAD1200 = """
+    {
+      "id": "77777777-7777-7777-7777-777777777777",
+      "title": "Portfolio review",
+      "price": { "amount": 1200, "currency": "CAD", "is_free": false },
+      "hourly_rate": { "amount": 1200, "currency": "CAD" }
     }
     """
 

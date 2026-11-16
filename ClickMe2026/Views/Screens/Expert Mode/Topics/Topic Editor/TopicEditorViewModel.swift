@@ -398,9 +398,9 @@ final class TopicEditorViewModel: ObservableObject {
         // (`rateMinor == 0`) — the floor doesn't apply to free sessions
         // per spec §4. The floor is looked up for the currency chosen
         // above, so an untouched USD topic is checked against the USD floor.
-        if rateMinor > 0, let limit = userManager.me?.pricingLimits?.minSessionAmount {
+        if let limit = userManager.me?.pricingLimits?.minSessionAmount {
             let floor = limit.minMinorUnits(for: currency)
-            if rateMinor < floor {
+            if TopicPriceRules.isBelowFloor(minor: rateMinor, floorMinor: floor) {
                 withAnimation {
                     errorMessage = Self.minPriceMessage(floorMinorUnits: floor, currency: currency)
                 }
@@ -430,9 +430,11 @@ final class TopicEditorViewModel: ObservableObject {
     /// loaded (silent rather than misleading), and for the free case
     /// (empty or `0`) which is exempt from the floor per spec §4.
     var isRateBelowMinimum: Bool {
-        guard let limit = userManager.me?.pricingLimits?.minSessionAmount else { return false }
-        guard let rateMinor = TopicPriceRules.parseMinor(rate, currency: currency), rateMinor > 0 else { return false }
-        return rateMinor < limit.minMinorUnits(for: currency)
+        TopicPriceRules.isBelowFloor(
+            rateText: rate,
+            currency: currency,
+            floorMinor: userManager.me?.pricingLimits?.minSessionAmount.minMinorUnits(for: currency)
+        )
     }
 
     /// Inline helper caption. Calls out that free is a valid choice so

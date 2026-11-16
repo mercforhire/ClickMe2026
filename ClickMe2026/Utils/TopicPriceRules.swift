@@ -97,6 +97,29 @@ nonisolated enum TopicPriceRules {
         return minor
     }
 
+    // MARK: - Floor check
+
+    /// True only for a paid amount under the floor. A free price (0) is exempt.
+    /// - Parameters:
+    ///   - minor: The parsed amount in minor units.
+    ///   - floorMinor: The currency's minimum in minor units.
+    static func isBelowFloor(minor: Int, floorMinor: Int) -> Bool {
+        minor > 0 && minor < floorMinor
+    }
+
+    /// Live-hint variant of the floor check on the raw field text, using the
+    /// same parse as Save. A free price is exempt, and an invalid price is
+    /// reported on Save, not live, so both are `false` here. A `nil` floor
+    /// (limits not loaded) is never below.
+    /// - Parameters:
+    ///   - rateText: The price field text.
+    ///   - currency: ISO 4217 code of the topic's currency.
+    ///   - floorMinor: The currency's minimum in minor units, or nil.
+    static func isBelowFloor(rateText: String, currency: String, floorMinor: Int?) -> Bool {
+        guard let floorMinor, let minor = parseMinor(rateText, currency: currency) else { return false }
+        return isBelowFloor(minor: minor, floorMinor: floorMinor)
+    }
+
     // MARK: - Helpers
 
     private static func isASCIIDigit(_ character: Character) -> Bool {

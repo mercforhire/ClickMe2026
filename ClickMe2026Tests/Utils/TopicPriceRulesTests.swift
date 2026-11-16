@@ -84,4 +84,33 @@ struct TopicPriceRulesTests {
         let twentyDigits = String(repeating: "7", count: 20)
         #expect(TopicPriceRules.filterInput(twentyDigits, currency: "CAD") == "7777777")
     }
+
+    // MARK: - isBelowFloor
+
+    @Test("a typed price is flagged below a CA$5.00 floor only when paid and under it", arguments: [
+        ("4.99", true),
+        ("0.01", true),
+        ("5", false),
+        ("5.00", false),
+        ("5.01", false),
+        ("", false),
+        ("0", false),
+        ("abc", false),
+        ("99999999999999999999", false)
+    ])
+    func liveFloorCheck(text: String, expected: Bool) {
+        #expect(TopicPriceRules.isBelowFloor(rateText: text, currency: "CAD", floorMinor: 500) == expected)
+    }
+
+    @Test("a missing floor is never below")
+    func missingFloor() {
+        #expect(TopicPriceRules.isBelowFloor(rateText: "0.01", currency: "CAD", floorMinor: nil) == false)
+    }
+
+    @Test("the minor overload exempts free and exact-floor prices")
+    func minorFloor() {
+        #expect(TopicPriceRules.isBelowFloor(minor: 499, floorMinor: 500))
+        #expect(TopicPriceRules.isBelowFloor(minor: 0, floorMinor: 500) == false)
+        #expect(TopicPriceRules.isBelowFloor(minor: 500, floorMinor: 500) == false)
+    }
 }

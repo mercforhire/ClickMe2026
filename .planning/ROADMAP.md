@@ -367,7 +367,24 @@ Plans:
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.
   5. The private booking note is capped at 5000 characters with a counter, trims whitespace, and asks before discarding unsaved edits.
 
-**Plans**: TBD
+**Plans**: 10 plans in 3 waves (iOS plus one Android plan in `../ClickMe_Android`; no backend change)
+
+Plans:
+**Wave 1**
+- [ ] 06-01-PLAN.md — EXP-02/03/17 iOS: decimal topic price in the topic's currency; one parser for the live hint and Save
+- [ ] 06-02-PLAN.md — EXP-04/01/08: explicit null for a cleared icon or description; delete asks first; delete comments corrected
+- [ ] 06-03-PLAN.md — EXP-05/06/07: time-range sheet edits a draft, shows off-grid stored times; Add hours capped at 23:30; nav-bar pins (folded todo)
+- [ ] 06-04-PLAN.md — EXP-10 (+ EXP-09 content): Booking Confirmed and its calendar event name the client
+- [ ] 06-06-PLAN.md — EXP-15/12: no online dot on the expert hub; expired request cards keep full-contrast text
+- [ ] 06-07-PLAN.md — EXP-16: private note capped at 5,000 with a counter, whitespace-only saves empty, discard prompt
+- [ ] 06-08-PLAN.md — EXP-18/14: expert Booking Summary ID (Android verified); mixed-currency Client Profile earnings pinned
+- [ ] 06-09-PLAN.md — EXP-17 Android: CAD and USD currency picker on the Android topic editor (Android repo commits only)
+
+**Wave 2** *(blocked on 06-04)*
+- [ ] 06-05-PLAN.md — EXP-09: Accept lands on Booking Confirmed (hosted in Request Decision); 409 ALREADY_PROCESSED pops; accept message cap; Back to Home
+
+**Wave 3** *(blocked on every code plan)*
+- [ ] 06-10-PLAN.md — Phase gate: full suite, grep gates, device UAT checklist, follow-up todos
 **UI hint**: yes
 **Notes**:
 - EXP-02 and EXP-14 use the Phase 2 money formatter. EXP-03 matters for money too, because sending the wrong currency changes what clients pay.

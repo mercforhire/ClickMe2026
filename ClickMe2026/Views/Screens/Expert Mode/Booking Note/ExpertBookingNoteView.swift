@@ -84,7 +84,10 @@ struct ExpertBookingNoteView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 header
-                editor
+                VStack(spacing: 4) {
+                    editor
+                    counter
+                }
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
@@ -122,7 +125,10 @@ struct ExpertBookingNoteView: View {
                     .allowsHitTesting(false)
             }
 
-            TextEditor(text: $viewModel.noteText)
+            TextEditor(text: Binding(
+                get: { viewModel.noteText },
+                set: { viewModel.updateNote($0) }
+            ))
                 .focused($isFocused)
                 .scrollContentBackground(.hidden)
                 .font(.brand(.subheadline))
@@ -131,6 +137,20 @@ struct ExpertBookingNoteView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 .frame(minHeight: 260)
+        }
+    }
+
+    // MARK: - Counter (EXP-16, D-19)
+
+    /// Shown from 4,500 units; reserves no space before that.
+    @ViewBuilder
+    private var counter: some View {
+        if viewModel.showsCounter {
+            Text(ExpertBookingNoteViewModel.counterText(length: viewModel.noteLength))
+                .font(.brand(.caption, weight: .regular))
+                .foregroundColor(viewModel.noteLength == ExpertBookingNoteViewModel.noteLimit ? Brand.error : Brand.onSurfaceMuted)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .accessibilityLabel("\(viewModel.noteLength) of 5,000 characters")
         }
     }
 

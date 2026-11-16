@@ -78,6 +78,36 @@ final class ExpertBookingNoteViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Cap and counter (EXP-16, D-19)
+
+    /// Server `noteSchema` limit (`z.string().max(5000)`), counted in UTF-16 code units.
+    static let noteLimit = 5000
+
+    /// The counter appears from this many UTF-16 units (Android `NOTE_COUNTER_FROM`).
+    static let counterFrom = 4500
+
+    /// Applies typed or pasted text, cut on a character boundary at `noteLimit` units
+    /// so an emoji is never split and the server never rejects the note for length.
+    func updateNote(_ raw: String) {
+        noteText = UTF16Prefix.prefix(raw, limit: Self.noteLimit)
+    }
+
+    /// Current length in UTF-16 code units, the unit the server counts.
+    var noteLength: Int { noteText.utf16.count }
+
+    var showsCounter: Bool { noteLength >= Self.counterFrom }
+
+    /// `{n} / 5,000` with integer grouping for `locale`, for example `4,731 / 5,000`.
+    static func counterText(length: Int, locale: Locale = .current) -> String {
+        "\(length.formatted(.number.locale(locale))) / \(noteLimit.formatted(.number.locale(locale)))"
+    }
+
+    /// A note that is empty after trimming spaces and newlines is sent as `""`, which
+    /// clears it server-side. Any other text is sent exactly as typed, not trimmed.
+    static func normalizedForSave(_ text: String) -> String {
+        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : text
+    }
+
     // MARK: - Save
 
     func save() async {
@@ -85,9 +115,15 @@ final class ExpertBookingNoteViewModel: ObservableObject {
         isSaving = true
         defer { isSaving = false }
 
+        let typed = noteText
+        let sent = Self.normalizedForSave(typed)
+
         do {
-            let response = try await api.createBookingNote(id: bookingId, note: noteText)
-            lastPersisted = response.data.note ?? noteText
+            _ = try await api.createBookingNote(id: bookingId, note: sent)
+            // The persisted value is exactly what was sent. Text typed while the request
+            // was in flight is kept and still counts as changed.
+            lastPersisted = sent
+            if noteText == typed { noteText = sent }
             withAnimation(.easeInOut(duration: 0.2)) { didSave = true }
             Task { [weak self] in
                 try? await Task.sleep(nanoseconds: 1_500_000_000)

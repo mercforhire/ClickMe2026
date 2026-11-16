@@ -130,4 +130,78 @@ struct RequestDecisionAcceptTests {
         #expect(viewModel.confirmation == nil)
         #expect(viewModel.isAccepted == false)
     }
+
+    // MARK: - Failures (D-12)
+
+    private static let alreadyProcessed = Fixtures.errorBody(
+        code: "ALREADY_PROCESSED",
+        message: "This booking request has already been processed."
+    )
+
+    @Test("a 409 ALREADY_PROCESSED on accept shows the server message and pops on OK")
+    func acceptAlreadyProcessedPops() async {
+        let viewModel = await makeLoadedViewModel(acceptStatus: 409, acceptBody: Self.alreadyProcessed)
+
+        await viewModel.confirmAccept(message: "")
+
+        #expect(viewModel.submitFailure?.message == "This booking request has already been processed.")
+        #expect(viewModel.submitFailure?.popsOnDismiss == true)
+        #expect(viewModel.confirmation == nil)
+    }
+
+    @Test("any other accept error shows the alert and does not pop")
+    func acceptOtherErrorStays() async {
+        let viewModel = await makeLoadedViewModel(
+            acceptStatus: 500,
+            acceptBody: Fixtures.errorBody(code: "INTERNAL_ERROR", message: "Something broke")
+        )
+
+        await viewModel.confirmAccept(message: "")
+
+        #expect(viewModel.submitFailure?.message == "Something broke")
+        #expect(viewModel.submitFailure?.popsOnDismiss == false)
+    }
+
+    @Test("a 409 ALREADY_PROCESSED on decline pops and leaves the request undeclined")
+    func declineAlreadyProcessedPops() async {
+        let viewModel = await makeLoadedViewModel(declineStatus: 409, declineBody: Self.alreadyProcessed)
+
+        await viewModel.confirmDecline(reasonCode: "UNAVAILABLE", reasonText: "")
+
+        #expect(viewModel.submitFailure?.popsOnDismiss == true)
+        #expect(viewModel.isDeclined == false)
+    }
+
+    @Test("a 409 with another code does not pop: the branch reads the code, not the status")
+    func otherConflictCodeStays() async {
+        let viewModel = await makeLoadedViewModel(
+            acceptStatus: 409,
+            acceptBody: Fixtures.errorBody(code: "SLOT_UNAVAILABLE", message: "Taken")
+        )
+
+        await viewModel.confirmAccept(message: "")
+
+        #expect(viewModel.submitFailure?.popsOnDismiss == false)
+    }
+
+    // MARK: - Message cap (U1)
+
+    @Test("1,500 characters are cut to 1,000 UTF-16 units")
+    func capCutsLongText() {
+        let capped = RequestDecisionViewModel.cappedAcceptMessage(String(repeating: "a", count: 1500))
+        #expect(capped.utf16.count == 1000)
+    }
+
+    @Test("a character that would straddle the cap is dropped whole")
+    func capNeverSplitsACharacter() {
+        let capped = RequestDecisionViewModel.cappedAcceptMessage(String(repeating: "a", count: 999) + "\u{1F600}")
+        #expect(capped.utf16.count == 999)
+        #expect(capped.hasSuffix("a"))
+    }
+
+    @Test("the counter shows from 800 units, not at 799")
+    func counterThreshold() {
+        #expect(RequestDecisionViewModel.showsAcceptCounter(String(repeating: "a", count: 799)) == false)
+        #expect(RequestDecisionViewModel.showsAcceptCounter(String(repeating: "a", count: 800)))
+    }
 }

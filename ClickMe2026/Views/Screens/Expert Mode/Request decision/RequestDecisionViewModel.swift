@@ -50,7 +50,10 @@ final class RequestDecisionViewModel: ObservableObject {
     // MARK: Submission state
     @Published var isSubmitting: Bool
     @Published var isDeclined: Bool
-    @Published var submitError: String?
+    /// The Couldn't update request alert content, set by a failed accept or
+    /// decline. `popsOnDismiss` is true only for `ErrorCode.alreadyProcessed`
+    /// (D-12): the request was settled elsewhere, so OK leaves the screen.
+    @Published var submitFailure: SubmitFailure?
 
     /// Set only after a 2xx `POST /accept` (D-11, EXP-09). The view shows
     /// Booking Confirmed in place of the decision content while it is set.
@@ -86,7 +89,7 @@ final class RequestDecisionViewModel: ObservableObject {
         self.loadState = .idle
         self.isSubmitting = false
         self.isDeclined = false
-        self.submitError = nil
+        self.submitFailure = nil
         self.api = api
     }
 
@@ -120,7 +123,7 @@ final class RequestDecisionViewModel: ObservableObject {
         self.loadState = loadState
         self.isSubmitting = false
         self.isDeclined = false
-        self.submitError = nil
+        self.submitFailure = nil
         self.api = .shared
     }
 
@@ -190,7 +193,7 @@ final class RequestDecisionViewModel: ObservableObject {
         guard let requestId, let detail = loadedDetail else { return }
         guard !isSubmitting else { return }
 
-        submitError = nil
+        submitFailure = nil
         isSubmitting = true
         defer { isSubmitting = false }
 
@@ -213,7 +216,7 @@ final class RequestDecisionViewModel: ObservableObject {
                 )
             }
         } catch {
-            submitError = error.userMessage
+            submitFailure = Self.failure(for: error)
         }
     }
 
@@ -224,7 +227,7 @@ final class RequestDecisionViewModel: ObservableObject {
         guard let requestId else { return }
         guard !isSubmitting else { return }
 
-        submitError = nil
+        submitFailure = nil
         isSubmitting = true
         defer { isSubmitting = false }
 
@@ -242,7 +245,7 @@ final class RequestDecisionViewModel: ObservableObject {
                 isDeclined = true
             }
         } catch {
-            submitError = error.userMessage
+            submitFailure = Self.failure(for: error)
         }
     }
 
@@ -292,6 +295,39 @@ final class RequestDecisionViewModel: ObservableObject {
 
     // MARK: - Error mapping
 
+    /// The alert content for a failed accept or decline. The pop is decided
+    /// by the server's error code only, never its status or message text.
+    static func failure(for error: Error) -> SubmitFailure {
+        SubmitFailure(
+            message: error.userMessage,
+            popsOnDismiss: BookingErrorMapper.code(for: error) == .alreadyProcessed
+        )
+    }
+
+    // MARK: - Accept message cap (U1)
+
+    /// Backend `acceptSchema` caps `message` at 1000 (Android `ACCEPT_MESSAGE_MAX_CHARS`).
+    static let acceptMessageLimit = 1000
+
+    /// The counter shows from this many UTF-16 units (Android `NOTE_COUNTER_FROM`).
+    static let acceptCounterFrom = 800
+
+    /// `text` cut to `acceptMessageLimit` UTF-16 units without splitting a character.
+    static func cappedAcceptMessage(_ text: String) -> String {
+        UTF16Prefix.prefix(text, limit: acceptMessageLimit)
+    }
+
+    /// Whether the `{n}/1000` counter is shown for `text`.
+    static func showsAcceptCounter(_ text: String) -> Bool {
+        text.utf16.count >= acceptCounterFrom
+    }
+
+    /// Content of the Couldn't update request alert.
+    struct SubmitFailure: Identifiable, Equatable {
+        let id = UUID()
+        let message: String
+        let popsOnDismiss: Bool
+    }
 }
 
 // MARK: - Decline reason enum

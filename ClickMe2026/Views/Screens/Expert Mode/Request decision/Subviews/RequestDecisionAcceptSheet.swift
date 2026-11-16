@@ -67,7 +67,10 @@ struct RequestDecisionAcceptSheet: View {
                                     .padding(.top, 12)
                             }
 
-                            TextEditor(text: $message)
+                            TextEditor(text: Binding(
+                                get: { message },
+                                set: { message = RequestDecisionViewModel.cappedAcceptMessage($0) }
+                            ))
                                 .scrollContentBackground(.hidden)
                                 .background(Color.clear)
                                 .foregroundColor(Brand.onSurface)
@@ -75,6 +78,19 @@ struct RequestDecisionAcceptSheet: View {
                                 .frame(minHeight: 72)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 8)
+                        }
+
+                        if RequestDecisionViewModel.showsAcceptCounter(message) {
+                            let units = message.utf16.count
+                            Text("\(units)/1000")
+                                .font(.brand(.caption))
+                                .foregroundColor(
+                                    units >= RequestDecisionViewModel.acceptMessageLimit
+                                        ? Brand.error
+                                        : Brand.onSurfaceMuted
+                                )
+                                .frame(maxWidth: .infinity, alignment: .trailing)
+                                .accessibilityLabel("\(units) of 1,000 characters")
                         }
                     }
 

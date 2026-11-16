@@ -119,6 +119,9 @@ struct RequestDecisionView: View {
     /// a `HomeExpertView` shell, where the tap does nothing.
     @Environment(\.returnToDashboard) private var returnToDashboard
 
+    /// Pops this screen when a 409 `ALREADY_PROCESSED` alert is dismissed (D-12).
+    @Environment(\.dismiss) private var dismiss
+
     // MARK: Init
 
     /// Runtime init — hydrates from
@@ -161,16 +164,18 @@ struct RequestDecisionView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await viewModel.load() }
         .alert(
-            "Something went wrong",
+            "Couldn't update request",
             isPresented: Binding(
-                get: { viewModel.submitError != nil },
-                set: { if !$0 { viewModel.submitError = nil } }
+                get: { viewModel.submitFailure != nil },
+                set: { if !$0 { viewModel.submitFailure = nil } }
             ),
-            presenting: viewModel.submitError
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { message in
-            Text(message)
+            presenting: viewModel.submitFailure
+        ) { failure in
+            Button("OK", role: .cancel) {
+                if failure.popsOnDismiss { dismiss() }
+            }
+        } message: { failure in
+            Text(failure.message)
         }
         .keyboardDismissToolbar()
     }

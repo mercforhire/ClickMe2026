@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-11-16T18:19:40.538Z"
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-11-16T18:27:44.031Z"
 last_activity: 2026-11-16
 last_activity_desc: Phase 06 execution started
-state_head: 6b427b8ef0c0e09b09b7ceefbd7349377dfdf73c
+state_head: 83f47baba5bba2da54d8c63fc08b04ec8c8ad37d
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 107
-  completed_plans: 102
+  completed_plans: 103
   percent: 38
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 6 of 10
+Plan: 7 of 10
 Status: Ready to execute
 Last activity: 2026-11-16 — Phase 06 execution started
 
@@ -159,6 +159,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P02 | 10 min | 2 tasks | 7 files |
 | Phase 06 P03 | 20 min | 2 tasks | 7 files |
 | Phase 06 P04 | 25 min | 2 tasks | 6 files |
+| Phase 06 P05 | 6 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -344,6 +345,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-03: Add hours disabled when the new slot's start (latest end + 30) would be 23:00 or later; end clamps to 23:30 (U3)
 - [Phase 06]: 06-03: time-range sheet edits a @State draft; only Done commits via commitEditedSlot; stored off-grid/24:00 values inserted as rows, never snapped
 - [Phase 06]: 06-04: BookingCalendarPayload lives inside BookingConfirmation (calendarPayload); Face-to-Face preview replaced by Long names preview
+- [Phase 06]: 06-05: Booking Confirmed is hosted inside RequestDecisionView (user sign-off 2026-11-16), superseding the UI-SPEC path replace; Back reaches the refreshed list and Back to Home resets to the Dashboard root via HomeShellExit.Action.backToHomeRoot and returnToDashboard
+- [Phase 06]: 06-05: 409 ALREADY_PROCESSED pops after the Couldn't update request alert, decided by BookingErrorMapper.code only; accept message capped at 1,000 UTF-16 units with a counter from 800
 
 ### Pending Todos
 
@@ -443,6 +446,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-16T18:19:39.837Z
-Stopped at: Completed 06-04-PLAN.md
+Last session: 2026-11-16T18:27:43.296Z
+Stopped at: Completed 06-05-PLAN.md
 Resume file: None

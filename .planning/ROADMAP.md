@@ -367,7 +367,7 @@ Plans:
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.
   5. The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits.
 
-**Plans**: 5/10 plans executed in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change)
+**Plans**: 6/10 plans executed in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change)
 
 Plans:
 **Wave 1**
@@ -384,7 +384,7 @@ Plans:
 - [x] 06-04-PLAN.md — EXP-10 (+ EXP-09 content): Booking Confirmed and its calendar event name the client
 
 **Wave 5** *(blocked on 06-04)*
-- [ ] 06-05-PLAN.md — EXP-09: Accept lands on Booking Confirmed (hosted in Request Decision); 409 ALREADY_PROCESSED pops; accept message cap; Back to Home
+- [x] 06-05-PLAN.md — EXP-09: Accept lands on Booking Confirmed (hosted in Request Decision); 409 ALREADY_PROCESSED pops; accept message cap; Back to Home
 
 **Wave 6** *(blocked on 06-05)*
 - [ ] 06-06-PLAN.md — EXP-15/12: no online dot on the expert hub; expired request cards keep full-contrast text
@@ -453,7 +453,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
-| 6. Expert Mode | 5/10 | In Progress | - |
+| 6. Expert Mode | 6/10 | In Progress | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |
 

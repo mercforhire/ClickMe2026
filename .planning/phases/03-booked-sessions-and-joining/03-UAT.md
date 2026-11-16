@@ -3,12 +3,12 @@ status: partial
 phase: 03-booked-sessions-and-joining
 source: [03-VERIFICATION.md]
 started: 2026-11-11T06:30:00Z
-updated: 2026-11-11T20:02:04.579Z
+updated: 2026-11-16T05:55:00Z
 ---
 
 ## Current Test
 
-[testing complete]
+[testing paused — 3 items outstanding]
 
 ## Tests
 
@@ -16,7 +16,7 @@ updated: 2026-11-11T20:02:04.579Z
 expected: Every item records PASS. JOIN CALL works from every entry. The end + 55 notice shows on the Skype/Zoom layout. The expert cancel sheet line is right for a live hold, a captured booking, a free booking and a converted long-lead booking.
 result: blocked
 blocked_by: physical-device
-reason: "Defer the iPhone test. Move on to test 3."
+reason: "Defer the iPhone test. Move on to test 3." Re-offered 2026-11-16 (resume at checklist item 1); user: "Skip testing and move to the next phase."
 
 ### 2. The 11 UI-SPEC backstop truths
 The checks:
@@ -51,7 +51,7 @@ note: "Ran 2026-11-11: :app:testProdDebugUnitTest BookingSummaryScreenTest 34/34
 expected: Both run before Phase 8. Until the BACK-19 smoke runs, the EXP-11 expert refund-or-release copy is verified in code only.
 result: blocked
 blocked_by: prior-phase
-reason: "defer" (02-UAT.md is partial with tests 7-17 pending and test 6 skipped; BACK-19 smoke from 01-19 still unrun)
+reason: "defer" (02-UAT.md is partial with tests 7-17 pending and test 6 skipped; BACK-19 smoke from 01-19 still unrun). Update 2026-11-16: Phase 2 UAT is now complete and Phase 2 is closed; only the BACK-19 production smoke remains (Phase 4 D-11 session).
 
 ## Summary
 
@@ -66,7 +66,9 @@ blocked: 3
 
 - gap_id: G-03-3-WR01
   truth: "After a successful reschedule accept or decline, the Accept/Decline card disappears even if the follow-up booking refetch fails"
-  status: failed
+  status: resolved
+  resolved_by: 03-16-PLAN.md
+  resolved_at: 2026-11-16
   reason: "User reported: fix both (code-review finding WR-01, fix before the Phase 8 release)"
   severity: major
   test: 3
@@ -84,7 +86,9 @@ blocked: 3
   debug_session: ".planning/phases/03-booked-sessions-and-joining/03-REVIEW.md#wr-01"
 - gap_id: G-03-3-WR02
   truth: "The post-cancel toast never promises a refund amount the server did not issue"
-  status: failed
+  status: resolved
+  resolved_by: 03-17-PLAN.md
+  resolved_at: 2026-11-16
   reason: "User reported: fix both (code-review finding WR-02, fix before the Phase 8 release)"
   severity: major
   test: 3

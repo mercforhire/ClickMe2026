@@ -118,4 +118,50 @@ struct AvailabilitySlotRulesTests {
         #expect(vm.schedule[0].slots[0].end == before.end)
         #expect(!vm.showTimePicker)
     }
+
+    // MARK: Add hours
+
+    @Test("Add hours on an empty day adds 9:00 AM to 5:00 PM")
+    func addHoursEmptyDay() throws {
+        let slot = try #require(AvailabilitySlotRules.addHours(after: nil))
+        #expect(slot.start == 540)
+        #expect(slot.end == 1020)
+    }
+
+    @Test("Add hours after 22:00 gives 22:30 to 23:30")
+    func addHoursAfterTenPM() throws {
+        let slot = try #require(AvailabilitySlotRules.addHours(after: 1320))
+        #expect(slot.start == 1350)
+        #expect(slot.end == 1410)
+    }
+
+    @Test("an off-grid latest end flows through and the end is clamped")
+    func addHoursOffGridEnd() throws {
+        let slot = try #require(AvailabilitySlotRules.addHours(after: 1335))
+        #expect(slot.start == 1365)
+        #expect(slot.end == 1410)
+    }
+
+    @Test("Add hours after 10:00 AM gives 10:30 to 11:30")
+    func addHoursMidday() throws {
+        let slot = try #require(AvailabilitySlotRules.addHours(after: 600))
+        #expect(slot.start == 630)
+        #expect(slot.end == 690)
+    }
+
+    @Test("Add hours is unavailable when the new start would be 23:00 or later")
+    func addHoursNoRoom() {
+        for latestEnd in [1350, 1380, 1410, 1440] {
+            #expect(AvailabilitySlotRules.addHours(after: latestEnd) == nil)
+        }
+    }
+
+    @Test("a new slot never ends after 23:30 and always has end after start")
+    func addHoursNeverPastLastGridTime() {
+        for latestEnd in stride(from: 0, through: 1440, by: 15) {
+            guard let slot = AvailabilitySlotRules.addHours(after: latestEnd) else { continue }
+            #expect(slot.end <= 1410)
+            #expect(slot.end > slot.start)
+        }
+    }
 }

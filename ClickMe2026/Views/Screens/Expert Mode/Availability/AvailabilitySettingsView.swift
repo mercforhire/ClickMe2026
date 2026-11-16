@@ -104,6 +104,11 @@ struct AvailabilitySettingsView: View {
         }
         .navigationTitle("Availability")
         .navigationBarTitleDisplayMode(.inline)
+        // The trailing Save uses dark-surface colours, so the bar is pinned
+        // dark like the plan 05-18 siblings (G-05-1 pattern).
+        .toolbarBackground(Brand.surface, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 
     // MARK: - Content router

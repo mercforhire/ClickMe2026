@@ -22,3 +22,7 @@ So on a phone in Light appearance with Reduce Transparency or Liquid Glass Tinte
 Apply the sibling pins used by plan 05-18 on the screen body: `toolbarBackground(Brand.surface, for: .navigationBar)`, `toolbarBackground(.visible, for: .navigationBar)` and `toolbarColorScheme(.dark, for: .navigationBar)`. Then check on a device in Light appearance with Reduce Transparency on, and again with Liquid Glass set to Tinted.
 
 References: `.planning/debug/not-now-button-low-contrast.md` (root cause and the pixel evidence) and plan 05-18 (the fix on the setup hub).
+
+## Resolution
+
+Fixed by plan 06-03: the three pins (`toolbarBackground(Brand.surface, for: .navigationBar)`, `toolbarBackground(.visible, for: .navigationBar)`, `toolbarColorScheme(.dark, for: .navigationBar)`) are on `AvailabilitySettingsView.body`. The device check is D2 in `06-DEVICE-UAT-CHECKLIST.md`.

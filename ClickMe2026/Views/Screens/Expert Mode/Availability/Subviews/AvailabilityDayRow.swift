@@ -93,7 +93,7 @@ struct AvailabilityDayRow: View {
                                 .foregroundColor(Brand.error.opacity(0.85))
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Delete time slot")
+                        .accessibilityLabel("Delete time range")
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -101,7 +101,9 @@ struct AvailabilityDayRow: View {
                 // "Add hours" — always visible while the day is enabled
                 // so an expert who deletes every slot (or lands in the
                 // enabled-but-empty state) can add one back without
-                // having to uncheck / recheck the day.
+                // having to uncheck / recheck the day. Dimmed and inert
+                // when the day has no room left for another range.
+                let nextSlot = AvailabilitySlotRules.addHours(after: day.slots.map(\.end).max())
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         // Anchor to the latest end across ALL slots,
@@ -111,12 +113,8 @@ struct AvailabilityDayRow: View {
                         // fresh add from overlapping. Falls back to
                         // 9 AM – 5 PM when there are no slots at all
                         // (mirrors the auto-seed on day-enable).
-                        if let maxEnd = day.slots.map(\.end).max() {
-                            let newStart = min(maxEnd + 30, 23 * 60)
-                            let newEnd = min(newStart + 60, 24 * 60)
-                            day.slots.append(AvailabilityTimeSlot(start: newStart, end: newEnd))
-                        } else {
-                            day.slots.append(AvailabilityTimeSlot(start: 9 * 60, end: 17 * 60))
+                        if let nextSlot {
+                            day.slots.append(nextSlot)
                         }
                     }
                 } label: {
@@ -130,6 +128,9 @@ struct AvailabilityDayRow: View {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plain)
+                .disabled(nextSlot == nil)
+                .opacity(nextSlot == nil ? 0.45 : 1)
+                .accessibilityHint(nextSlot == nil ? "There is no room left in this day for another time range." : "")
             }
         }
     }

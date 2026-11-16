@@ -47,4 +47,26 @@ enum AvailabilitySlotRules {
         if allowed(storedValue) { rows.append(storedValue) }
         return Array(Set(rows)).sorted()
     }
+
+    /// The slot Add hours appends, or `nil` when the day has no room left.
+    ///
+    /// With no slots (`latestEnd` is `nil`) the new slot is 9:00 AM to 5:00 PM,
+    /// the same as enabling an empty day. Otherwise it starts 30 minutes after
+    /// the latest end across all slots, runs 60 minutes and clamps its end to
+    /// `lastGridTime` (D-06, D-07). It returns `nil` when that start would be
+    /// 23:00 or later, which is the user decision of 2026-11-16 (UI U3):
+    /// "the start is already 23:00 or later" means the new slot's start, not
+    /// the latest end. A 23:00 to 23:30 slot can still be made by editing one.
+    ///
+    /// - Parameter latestEnd: The largest end across the day's slots, or `nil`
+    ///   when the day has none. Never the last array item: the expert may have
+    ///   edited an earlier slot to run later.
+    static func addHours(after latestEnd: Int?) -> AvailabilityTimeSlot? {
+        guard let latestEnd else {
+            return AvailabilityTimeSlot(start: 9 * 60, end: 17 * 60)
+        }
+        let start = latestEnd + gridStep
+        guard start < 23 * 60 else { return nil }
+        return AvailabilityTimeSlot(start: start, end: min(start + 60, lastGridTime))
+    }
 }

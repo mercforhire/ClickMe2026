@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-07-PLAN.md
-last_updated: "2026-11-16T18:36:28.727Z"
+stopped_at: Completed 06-08-PLAN.md
+last_updated: "2026-11-16T18:40:21.145Z"
 last_activity: 2026-11-16
 last_activity_desc: Phase 06 execution started
-state_head: eb14c73007bdc0b114940125e27d6f02cba1b4ca
+state_head: e27793d72c82452cd818144776605a1ba9cd138c
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 107
-  completed_plans: 105
+  completed_plans: 106
   percent: 38
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 9 of 10
+Plan: 10 of 10
 Status: Ready to execute
 Last activity: 2026-11-16 — Phase 06 execution started
 
@@ -162,6 +162,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P05 | 6 min | 3 tasks | 8 files |
 | Phase 06 P06 | 2 min | 2 tasks | 4 files |
 | Phase 06 P07 | 15 min | 2 tasks | 3 files |
+| Phase 06 P08 | 3 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -351,6 +352,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-05: 409 ALREADY_PROCESSED pops after the Couldn't update request alert, decided by BookingErrorMapper.code only; accept message capped at 1,000 UTF-16 units with a counter from 800
 - [Phase 06]: 06-06: expert hub passes isOnline:false to the unchanged shared ClientProfileHomeUserCard (no presence on expert side, client hub untouched)
 - [Phase 06]: 06-07: swipe-back lock on the Booking Note screen is unconditional (D-19 amendment, user 2026-11-16), superseding UI-SPEC section 7; needsDiscardPrompt = hasChanges || isSaving; save persists exactly the normalized text sent and keeps text typed during the request
+- [Phase 06]: 06-08: EXP-14 needed no app code; mixed-currency Client Profile rows pinned by test, closes on device check D5
+- [Phase 06]: 06-08: expert booking ID uses bookingIdLabel (BookingShortID.label); Android already matches, no Android change
 
 ### Pending Todos
 
@@ -450,6 +453,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-16T18:36:28.013Z
-Stopped at: Completed 06-07-PLAN.md
+Last session: 2026-11-16T18:40:20.417Z
+Stopped at: Completed 06-08-PLAN.md
 Resume file: None

@@ -142,13 +142,18 @@ final class TopicsSetupViewModel: ObservableObject {
 
         do {
             if let existing = editingTopic {
+                // D-15: a key goes out only when the expert changed it, and a
+                // stored value that was cleared goes out as an explicit null.
                 let body = UpdateExpertTopicRequest(
                     title: title,
-                    description: description,
+                    description: NullableField.patch(
+                        old: Self.storedValue(existing.description?.trimmingCharacters(in: .whitespacesAndNewlines)),
+                        new: description
+                    ),
                     durationMins: durationMins,
                     hourlyRate: .init(amount: wireAmount, currency: currency),
                     isFree: isFree,
-                    iconSlug: iconSlug,
+                    iconSlug: NullableField.patch(old: Self.storedValue(existing.iconSlug), new: iconSlug),
                     expertiseTagIds: expertiseTagIds
                 )
                 let updated = try await api.updateMyTopic(id: existing.id, body).data.topic
@@ -172,6 +177,13 @@ final class TopicsSetupViewModel: ObservableObject {
         } catch {
             return error.userMessage
         }
+    }
+
+    /// A stored text field with an empty string read as no value, so the
+    /// PATCH diff treats "" and nil alike.
+    private static func storedValue(_ text: String?) -> String? {
+        guard let text, !text.isEmpty else { return nil }
+        return text
     }
 
     /// `DELETE /expert/topics/:id`. Server returns 409 with a message when

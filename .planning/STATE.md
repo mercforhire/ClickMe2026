@@ -407,8 +407,9 @@ Captured todos:
 - [2026-11-12] [payments] Long-lead T-24h sweep: transient errors after the stamp still cancel at 6 h — [todo file](.planning/todos/pending/2026-11-12-long-lead-sweep-transient-errors-after-stamp.md)
 - [2026-11-13] [account] Decide what to do about saved cards when an account is deleted (RESEARCH Open Question 1) — [todo file](.planning/todos/pending/2026-11-13-decide-saved-cards-on-account-deletion.md)
 - [2026-11-13] [testing] Flaky test: MakeABookingAvailabilityTests "An older load that lands last writes nothing" — [todo file](.planning/todos/pending/2026-11-13-flaky-make-a-booking-availability-test.md)
-- [2026-11-14] [ui] Availability settings: pin the nav bar dark so the Save button stays legible (G-05-1 pattern) — [todo file](.planning/todos/pending/2026-11-14-availability-settings-toolbar-dark-pin.md)
 - [2026-11-14] [api] Backend: PATCH /user/profile name validation and the empty last name decision (G-05-6) — [todo file](.planning/todos/pending/2026-11-14-backend-profile-name-validation.md)
+- [2026-11-16] [android] Android: Phase 6 parity follow-ups (Add hours end of day, off-grid rows, 409, client hub dot) — [todo file](.planning/todos/pending/2026-11-16-android-phase-6-parity-follow-ups.md)
+- [2026-11-16] [ui] Decide how USD renders: `$` (shipped Money table) or `US$` (backend doc and topic editor label) — [todo file](.planning/todos/pending/2026-11-16-usd-symbol-us-dollar-prefix.md)
 
 ### Blockers/Concerns
 

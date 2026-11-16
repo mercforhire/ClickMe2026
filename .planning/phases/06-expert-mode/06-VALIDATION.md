@@ -4,8 +4,8 @@ slug: "expert-mode"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: "2026-11-16"
 ---
 
@@ -47,23 +47,23 @@ Requirement-level map (task IDs are bound by the plans' `<verify>` blocks):
 
 | Requirement | Behavior | Test Type | Automated Command / Suite | File Exists | Status |
 |-------------|----------|-----------|---------------------------|-------------|--------|
-| EXP-02 | Decimal price parse (`12.50`→1250, `12,50`, `.5`, 3 decimals invalid, 20 digits no crash, zero-decimal currency) | unit | `TopicPriceRulesTests` | ❌ W0 | ⬜ pending |
-| EXP-03 / EXP-17 iOS | Currency kept on edit; paid locked; default from limits else CAD | unit | `TopicCurrencyTests` (extend) | ✅ | ⬜ pending |
-| EXP-04 | PATCH sends `icon_slug: null` / `description: null` when cleared, omits unchanged keys | unit + unit (stubbed, `.serialized`) | `ExpertTopicRequestBodyTests`, `TopicsSetupMutationTests` (PATCH rows) | ❌ W0 | ⬜ pending |
-| EXP-01 | No DELETE before confirm; exactly one after | unit (stubbed, `.serialized`) | `TopicsSetupMutationTests` (delete rows) | ❌ W0 | ⬜ pending |
-| EXP-08 | Stale 409 comment removed | grep | `! grep -rn "Returns 409 if the topic has active" ClickMe2026` | n/a | ⬜ pending |
-| EXP-05 | Cancel reverts draft; commit writes | unit | `AvailabilitySlotRulesTests` | ❌ W0 | ⬜ pending |
-| EXP-06 | `addHours` never yields an unpickable end | unit | `AvailabilitySlotRulesTests` | ❌ W0 | ⬜ pending |
-| EXP-07 | Off-grid 09:15 row present and selected | unit | `AvailabilitySlotRulesTests` | ❌ W0 | ⬜ pending |
-| EXP-09 / D-12 / U1 | Accept → confirmation; 409 `ALREADY_PROCESSED` pops; 1000-unit cap | unit (stubbed, `.serialized`) | `RequestDecisionAcceptTests` | ❌ W0 | ⬜ pending |
-| EXP-10 | Calendar title `ClickMe · <topic> with <client>` + fallbacks | unit | `ExpertBookingConfirmationContentTests` | ❌ W0 | ⬜ pending |
-| Back to Home | Resets source tab, shows `.dashboard` | unit | `HomeShellExitTests` (extend) | ✅ | ⬜ pending |
-| EXP-12 | No whole-card opacity on expired | grep + device D1 | `! grep -n "opacity(request.isExpired" ".../IncomingRequestCard.swift"` | n/a | ⬜ pending |
-| EXP-14 | Earnings in booking currency stay green | unit | `ClientProfileHistoryEarningsTests`, `ClientProfileBookingCardTests` | ✅ | ⬜ pending |
-| EXP-15 | No fake `isOnline` in hub VM | grep | `! grep -n "isOnline" ".../ExpertProfileHomeViewModel.swift"` | n/a | ⬜ pending |
-| EXP-16 | 5000 cap, whitespace-only saves empty (other text sent as typed), dirty tracking, discard prompt | unit (stubbed, `.serialized`) | `ExpertBookingNoteViewModelTests` | ❌ W0 | ⬜ pending |
-| EXP-18 | `ID: #` + first 8 upper-cased | unit | `BookingShortIDTests` (extend) | ✅ | ⬜ pending |
-| Android EXP-17 | Picker from `allowed_currencies`; lock; body currency; segmented row, caption and notice | Android unit + Robolectric | `./gradlew :app:testDevDebugUnitTest --tests '<FQCN>' ktlintCheck` for `TopicEditorViewModelTest`, `TopicEditorSubviewsTest`, `TopicEditorScreenTest` (plan 06-09) | extend | ⬜ pending |
+| EXP-02 | Decimal price parse (`12.50`→1250, `12,50`, `.5`, 3 decimals invalid, 20 digits no crash, zero-decimal currency) | unit | `TopicPriceRulesTests` | ✅ | ✅ green |
+| EXP-03 / EXP-17 iOS | Currency kept on edit; paid locked; default from limits else CAD | unit | `TopicCurrencyTests` (extend) | ✅ | ✅ green |
+| EXP-04 | PATCH sends `icon_slug: null` / `description: null` when cleared, omits unchanged keys | unit + unit (stubbed, `.serialized`) | `ExpertTopicRequestBodyTests`, `TopicsSetupMutationTests` (PATCH rows) | ✅ | ✅ green |
+| EXP-01 | No DELETE before confirm; exactly one after | unit (stubbed, `.serialized`) | `TopicsSetupMutationTests` (delete rows) | ✅ | ✅ green |
+| EXP-08 | Stale 409 comment removed | grep | `! grep -rn "Returns 409 if the topic has active" ClickMe2026` | n/a | ✅ green |
+| EXP-05 | Cancel reverts draft; commit writes | unit | `AvailabilitySlotRulesTests` | ✅ | ✅ green |
+| EXP-06 | `addHours` never yields an unpickable end | unit | `AvailabilitySlotRulesTests` | ✅ | ✅ green |
+| EXP-07 | Off-grid 09:15 row present and selected | unit | `AvailabilitySlotRulesTests` | ✅ | ✅ green |
+| EXP-09 / D-12 / U1 | Accept → confirmation; 409 `ALREADY_PROCESSED` pops; 1000-unit cap | unit (stubbed, `.serialized`) | `RequestDecisionAcceptTests` | ✅ | ✅ green |
+| EXP-10 | Calendar title `ClickMe · <topic> with <client>` + fallbacks | unit | `ExpertBookingConfirmationContentTests` | ✅ | ✅ green |
+| Back to Home | Resets source tab, shows `.dashboard` | unit | `HomeShellExitTests` (extend) | ✅ | ✅ green |
+| EXP-12 | No whole-card opacity on expired | grep + device D1 | `! grep -n "opacity(request.isExpired" ".../IncomingRequestCard.swift"` | n/a | ✅ green (grep); device D1 pending |
+| EXP-14 | Earnings in booking currency stay green | unit | `ClientProfileHistoryEarningsTests`, `ClientProfileBookingCardTests` | ✅ | ✅ green |
+| EXP-15 | No fake `isOnline` in hub VM | grep | `! grep -n "isOnline" ".../ExpertProfileHomeViewModel.swift"` | n/a | ✅ green |
+| EXP-16 | 5000 cap, whitespace-only saves empty (other text sent as typed), dirty tracking, discard prompt | unit (stubbed, `.serialized`) | `ExpertBookingNoteViewModelTests` | ✅ | ✅ green |
+| EXP-18 | `ID: #` + first 8 upper-cased | unit | `BookingShortIDTests` (extend) | ✅ | ✅ green |
+| Android EXP-17 | Picker from `allowed_currencies`; lock; body currency; segmented row, caption and notice | Android unit + Robolectric | `./gradlew :app:testDevDebugUnitTest --tests '<FQCN>' ktlintCheck` for `TopicEditorViewModelTest`, `TopicEditorSubviewsTest`, `TopicEditorScreenTest` (plan 06-09) | extend | ✅ green (06-09: TopicEditorViewModelTest 49/49, TopicEditorSubviewsTest 30/30, TopicEditorScreenTest 22/22, ktlintCheck clean) |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -71,9 +71,9 @@ Requirement-level map (task IDs are bound by the plans' `<verify>` blocks):
 
 ## Wave 0 Requirements
 
-- [ ] New suites under `ClickMe2026Tests/`: `TopicPriceRulesTests`, `ExpertTopicRequestBodyTests`, `TopicsSetupMutationTests`, `AvailabilitySlotRulesTests`, `RequestDecisionAcceptTests`, `ExpertBookingConfirmationContentTests`, `ExpertBookingNoteViewModelTests` (no pbxproj edit — synchronized folder)
-- [ ] Test seams: `TopicsSetupViewModel` `topicPendingDelete` / `requestDelete(_:)` / `cancelDelete()` / `confirmDelete(_:)`; request body recorded via `MockURLProtocol.recordedRequests`
-- [ ] `06-DEVICE-UAT-CHECKLIST.md` (written by the last plan, Phase 4/5 format)
+- [x] New suites under `ClickMe2026Tests/`: `TopicPriceRulesTests`, `ExpertTopicRequestBodyTests`, `TopicsSetupMutationTests`, `AvailabilitySlotRulesTests`, `RequestDecisionAcceptTests`, `ExpertBookingConfirmationContentTests`, `ExpertBookingNoteViewModelTests` (no pbxproj edit — synchronized folder)
+- [x] Test seams: `TopicsSetupViewModel` `topicPendingDelete` / `requestDelete(_:)` / `cancelDelete()` / `confirmDelete(_:)`; request body recorded via `MockURLProtocol.recordedRequests`
+- [x] `06-DEVICE-UAT-CHECKLIST.md` (written by the last plan, Phase 4/5 format)
 
 ---
 
@@ -91,11 +91,11 @@ Requirement-level map (task IDs are bound by the plans' `<verify>` blocks):
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency within the stated budget (~4 min per suite run, ~12 min per task verify)
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency within the stated budget (~4 min per suite run, ~12 min per task verify)
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** automated sign-off by plan 06-10 on 2026-11-16: gate suite green at 9e95cf3; Manual-Only rows stay pending for /gsd-verify-work 06

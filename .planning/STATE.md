@@ -5,10 +5,10 @@ current_phase_name: Expert Mode
 current_plan: 18
 status: executing
 stopped_at: Completed 06-17-PLAN.md
-last_updated: "2026-11-17T05:46:30.494Z"
+last_updated: "2026-11-17T06:31:24.331Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 06 execution started
-state_head: 1bc24d0f720fe1a8376c9131fe2d4eca4fd3848f
+state_head: c0cbfff98a5e041ed55a351f9fb881dc33038abf
 progress:
   total_phases: 8
   completed_phases: 3
@@ -32,7 +32,7 @@ Phase: 06 (Expert Mode) — EXECUTING
 Current Plan: 18
 Total Plans in Phase: 18
 Status: 06-17 complete (user skipped the optional backend null currency); 18 of 18 plans have a SUMMARY. Device re-check R1 to R8 awaits the user's Results in 06-DEVICE-UAT-CHECKLIST.md, then /gsd-verify-work 06
-Last activity: 2026-11-17 — 06-17 complete
+Last activity: 2026-11-17 - Completed quick task 261117-1le: fix phase 06 review findings WR-01, IN-03, IN-07 per 06-REVIEW.md
 
 Progress: [████░░░░░░] 38%
 
@@ -463,6 +463,7 @@ Captured todos:
 | 261109-323 | Fix Explore home feed decode failure on free topics with no currency | 2026-11-09 | 77178f5 | [261109-323-explore-home-feed-free-topic-decode](./quick/261109-323-explore-home-feed-free-topic-decode/) |
 | 261110-mmr | Fix WR-02: logout waits for push cleanup (Android order) so a fast re-login keeps push registration; Log out shows progress (IN-02) | 2026-11-10 | 81f8797 | [261110-mmr-fix-wr-02-fast-re-login-after-logout-ski](./quick/261110-mmr-fix-wr-02-fast-re-login-after-logout-ski/) |
 | 261110-nzy | Make a Booking calendar: filler cells hidden from VoiceOver; E1/A1/C1 gap resolved in 02-UI-SPEC | 2026-11-10 | 88c6a23 | [261110-nzy-make-a-booking-calendar-month-blank-capt](./quick/261110-nzy-make-a-booking-calendar-month-blank-capt/) |
+| 261117-1le | fix phase 06 review findings WR-01, IN-03, IN-07 per 06-REVIEW.md | 2026-11-17 | c0cbfff | [261117-1le-fix-phase-06-review-findings-wr-01-in-03](./quick/261117-1le-fix-phase-06-review-findings-wr-01-in-03/) |
 
 ## Deferred Items
 

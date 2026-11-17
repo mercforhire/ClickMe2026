@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-11-PLAN.md
-last_updated: "2026-11-17T05:12:22.070Z"
+stopped_at: Completed 06-15-PLAN.md
+last_updated: "2026-11-17T05:17:22.476Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 06 execution started
-state_head: 20d6d8aaca7c0b5f4f6998fcfc1b979a7859219b
+state_head: 9b4f46cc9bd3cfbfdacc741d0b06fd8340ab0a78
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 115
-  completed_plans: 108
+  completed_plans: 109
   percent: 38
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 12 of 18
+Plan: 13 of 18
 Status: Ready to execute
 Last activity: 2026-11-17 — Phase 06 execution started
 
@@ -165,6 +165,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P08 | 3 min | 2 tasks | 4 files |
 | Phase 06 P10 | 8 min | 2 tasks | 6 files |
 | Phase 06 P11 | 20 min | 2 tasks | 6 files |
+| Phase 06 P15 | 25 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -358,6 +359,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-08: expert booking ID uses bookingIdLabel (BookingShortID.label); Android already matches, no Android change
 - [Phase 06]: 06-10: Phase 6 gate green (952 tests in 93 suites, build clean, 9 grep gates); known flake MakeABookingAvailabilityTests failed once at :154 and passed on rerun, recorded not gated; no requirement box ticked, left to /gsd-verify-work 06 (device checklist has 35 items)
 - [Phase 06]: 06-11: a stored topic currency is valid only as trimmed exactly 3 ASCII letters (uppercased); blank or malformed reads as none and the editor falls back to the default, then CAD
+- [Phase 06]: 06-15: Android Add to Calendar on expert Booking Summary and client Upcoming Booking via shared rememberCalendarInsertLauncher and isCalendarEventOffered (iOS parity); one Android commit 69c4e159
 
 ### Pending Todos
 
@@ -458,6 +460,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-17T05:12:21.193Z
-Stopped at: Completed 06-11-PLAN.md
+Last session: 2026-11-17T05:17:17.279Z
+Stopped at: Completed 06-15-PLAN.md
 Resume file: None

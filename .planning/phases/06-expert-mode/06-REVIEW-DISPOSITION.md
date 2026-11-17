@@ -5,47 +5,59 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: accepted
-    note: "Accepted by the user in UAT 2026-11-16. The server's 409 ALREADY_PROCESSED guard (device-checked in checklist item 19) prevents any wrong charge; the misleading Accept/Decline screen on a push-opened expired or settled request stays as is."
-    title: "Expired or already-settled request opened from a push still shows Accept and Decline"
+    disposition: open
+    title: "Topic editor seeds the price text with a different currency than the one it selects"
   - id: WR-02
     severity: warning
     disposition: open
-    note: "To fix in Phase 6: confirmed on device in UAT 2026-11-16 (every free topic opens on a blank currency and fails to save). Gap G-06-1-currency in 06-UAT.md."
-    title: "Legacy free topic with no stored currency opens with an empty-string currency and cannot be saved"
-  - id: WR-03
-    severity: warning
-    disposition: accepted
-    note: "Accepted by the user in UAT 2026-11-16: a price of 1,000 or more is unlikely. A reasonable maximum price (none exists today in the iOS rules or the backend) is logged as a deferred follow-up in 06-UAT.md."
-    title: "A pasted grouped price (\"12,000\") is silently read as 12.00"
-  - id: WR-04
-    severity: warning
-    disposition: open
-    title: "Android hides the USD conversion-fee notice when only one currency is pickable; iOS shows it"
+    title: "Calendar sheet content is built from the same optional that drives `isPresented`, and the pattern is copy-pasted"
   - id: IN-01
     severity: info
     disposition: open
-    title: "Android new-topic default can fall outside the allowed list; iOS picks the first allowed one"
+    title: "Production code left unused after the delegation refactor"
   - id: IN-02
     severity: info
     disposition: open
-    title: "Back to Home from Booking Confirmed is a silent no-op outside the expert shell"
+    title: "Duplicated `trimmed` helper and a circular dependency between the two content enums"
   - id: IN-03
     severity: info
     disposition: open
-    title: "Stale planning reference and duplicated duration math"
+    title: "Stale plan reference in a doc comment"
   - id: IN-04
     severity: info
     disposition: open
-    title: "Misindented argument in `ExpertProfileHomeScreen`"
+    title: "Redundant status gate in two views"
   - id: IN-05
     severity: info
     disposition: open
-    title: "Capped `TextEditor` bindings should be checked on a device"
+    title: "Summary view modifier layout and comment"
+  - id: IN-06
+    severity: info
+    disposition: open
+    title: "Card currency symbol differs from the editor's for codes other than USD and CAD"
+  - id: IN-07
+    severity: info
+    disposition: open
+    title: "New tests depend on shared global state"
+open: 9
+total: 9
+recorded: 2026-11-17T05:51:07.607Z
 ---
 
-# Phase 06 — Code Review Disposition
+# Phase 06: Code Review Disposition
 
-Ledger of what happened to each finding in `06-REVIEW.md`. Every finding defaults to `open`; update a row's `disposition` (`fixed`, `accepted`, `deferred`, `wont-fix`) when it is triaged.
+| Finding | Severity | Disposition | Source |
+|---------|----------|-------------|--------|
+| WR-01 | warning | open | - |
+| WR-02 | warning | open | - |
+| IN-01 | info | open | - |
+| IN-02 | info | open | - |
+| IN-03 | info | open | - |
+| IN-04 | info | open | - |
+| IN-05 | info | open | - |
+| IN-06 | info | open | - |
+| IN-07 | info | open | - |
 
-Counts: 0 critical, 4 warning, 5 info (9 total).
+Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
+Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.
+Re-running the gate keeps every row it can. A row the current review no longer reports is kept and its Source cell flagged, so a finding does not leave this record silently. ONE exception: when a finding id is REUSED by a different finding, the earlier decision cannot keep a row — the id is taken — and it is dropped. A RECORDED decision (anything but `open`) is named on the console when that happens; a row still at `open` is replaced silently, because `open` records no decision to lose.

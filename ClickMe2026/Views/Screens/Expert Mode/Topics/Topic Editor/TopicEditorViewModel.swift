@@ -190,6 +190,20 @@ final class TopicEditorViewModel: ObservableObject {
             ?? [accountDefaultCurrency(me)]
     }
 
+    /// The currency a new topic starts on, and the one a topic with no valid
+    /// stored currency opens in: the backend default when it is pickable,
+    /// otherwise the first allowed currency. Passed to
+    /// `resolveInitialCurrency`, which validates it and falls back to CAD.
+    /// `TopicsSetupTopicCard` calls it too, so the card prices such a topic in
+    /// the editor's currency (G-06-1-card-cents, user decision 2026-11-16).
+    static func newTopicDefaultCurrency(in me: MeData?) -> String {
+        let accountDefault = accountDefaultCurrency(me)
+        let allowed = allowedCurrencies(in: me)
+        return allowed.contains(accountDefault.uppercased())
+            ? accountDefault
+            : (allowed.first ?? accountDefault)
+    }
+
     // MARK: Init
 
     /// Seed from an existing topic (edit mode) or nil (add mode).
@@ -217,16 +231,13 @@ final class TopicEditorViewModel: ObservableObject {
         let accountDefault = Self.accountDefaultCurrency(userManager.me)
         let seedCurrency = storedCurrency ?? accountDefault
         let seed = minorAmount.map { Self.editableAmount(minorUnits: $0, currency: seedCurrency) } ?? ""
-        // New-topic default per the contract: the backend default when it is
-        // pickable, otherwise the first allowed currency.
-        let allowed = Self.allowedCurrencies(in: userManager.me)
-        let newTopicDefault = allowed.contains(accountDefault.uppercased())
-            ? accountDefault
-            : (allowed.first ?? accountDefault)
         self.rate = seed
         self.seededRate = seed
         self.seededRateMinor = minorAmount
-        self.currency = Self.resolveInitialCurrency(topic: topic, defaultCurrency: newTopicDefault)
+        self.currency = Self.resolveInitialCurrency(
+            topic: topic,
+            defaultCurrency: Self.newTopicDefaultCurrency(in: userManager.me)
+        )
         self.isCurrencyLocked = Self.isCurrencyLocked(topic: topic)
         self.durationMinutes = topic?.durationMins ?? 60
         self.iconSlug = topic?.iconSlug

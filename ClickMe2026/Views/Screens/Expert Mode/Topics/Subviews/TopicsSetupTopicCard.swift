@@ -12,17 +12,45 @@ struct TopicsSetupTopicCard: View {
     let topic: ExpertTopicItem
     @ObservedObject var viewModel: TopicsSetupViewModel
 
+    /// Suffix the server's own label carries (`CA$50 / session`), kept so the
+    /// card reads as before apart from the cents.
+    static let perSessionSuffix = " / session"
+
+    /// Symbol the card shows before the digits. USD keeps `US$`, what the card
+    /// showed through the server label and what the editor's `currencySymbol`
+    /// shows, until the open todo `2026-11-16-usd-symbol-us-dollar-prefix.md`
+    /// decides how USD renders; this rule, and the `US$` rows in
+    /// `TopicsSetupTopicCardLabelTests`, change with that decision. Every other
+    /// code takes the `Money` prefix, so CAD stays `CA$`.
+    static func cardSymbol(for currency: String) -> String {
+        currency == "USD" ? "US$" : Money.prefix(for: currency)
+    }
+
     /// Per-session price display (the amount the client pays per booking).
-    /// Server sends `amount` in minor units (cents), so this goes through
-    /// `Money.format(minorUnits:currency:)` (BOOK-10): full minor digits
-    /// (`CA$180.50`, `CA$12.00`) with a fixed symbol, never the device
-    /// locale. Falls back to the server's `price.label` only when the
-    /// payload carries no `hourlyRate`. The wire key is `hourly_rate` but
-    /// the semantics are per-session; see project memory
-    /// `topic_price_semantics.md`.
+    /// The server label trims cents (`formatPrice.js`), so the card formats the
+    /// stored minor amount itself: the digits come from `Money` (BOOK-10), full
+    /// minor digits, in the currency the Topic Editor opens the topic in (its
+    /// own valid currency, plan 06-11, else the editor's account default), so
+    /// card and editor agree. Keeps the ` / session` suffix, reads `Free` for a
+    /// free topic, and uses the server label only when no usable amount
+    /// exists (missing or negative). The wire key `hourly_rate` is per-session
+    /// too; see project memory `topic_price_semantics.md` (G-06-1-card-cents).
+    static func priceLabel(for topic: ExpertTopicItem, defaultCurrency: String) -> String {
+        if topic.price.isFree { return "Free" }
+        guard let amount = topic.hourlyRate?.amount ?? topic.price.amount, amount >= 0 else {
+            return topic.price.label ?? ""
+        }
+        let currency = TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: defaultCurrency)
+        let formatted = Money.format(minorUnits: amount, currency: currency)
+        let digits = String(formatted.dropFirst(Money.prefix(for: currency).count))
+        return cardSymbol(for: currency) + digits + perSessionSuffix
+    }
+
     private var priceLabel: String {
-        guard let rate = topic.hourlyRate else { return topic.price.label ?? "" }
-        return Money.format(minorUnits: rate.amount, currency: rate.currency)
+        Self.priceLabel(
+            for: topic,
+            defaultCurrency: TopicEditorViewModel.newTopicDefaultCurrency(in: UserManager.shared.me)
+        )
     }
 
     var body: some View {

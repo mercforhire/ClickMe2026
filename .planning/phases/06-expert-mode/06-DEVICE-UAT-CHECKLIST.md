@@ -445,3 +445,116 @@ Run by plan 06-16 on 2026-11-17 at HEAD `1724c93`, simulator `iPhone 17`, Debug.
 - **What the automation does not cover:** every item below.
 
 ### Re-check items
+
+**Setup for R1 to R8.**
+
+- **iPhone:** a real iPhone on a build at or after `2a6c578`, the final gap-closure app commit (plan 06-14). The working tree still carries the uncommitted `ClickMe2026/Localizable.xcstrings` edits that Phase 6 did not make, as noted in Setup above.
+- **Android (R7 only):** a device or emulator on a build at or after `69c4e159`, the plan 06-15 commit in `ClickMe_Android`.
+- **Backend:** production. The gap closure changed and deployed nothing on the backend (plan 06-17 decides the optional backend hardening and deploys nothing), so a free topic stored with no currency still arrives with a blank currency. That is the case R2 and R3 test, so do not skip them because the backend "looks fine".
+- **Test expert:** the free topics that showed the blank currency segment in item 4; paid CAD topics at 50, 5 and 12.50; a paid USD topic at 5; a confirmed future booking whose Booking Summary shows Cancel; a past booking; and, if available, a pending reschedule.
+- **Test client:** a confirmed future booking, a pending request and a past booking.
+- **Live Stripe:** accept only requests for a free topic, and never confirm a cancellation (R4 stops at `Keep Booking`).
+
+### R1. Re-check item 1 — G-06-1-card-cents: Topics tab cards show the cents (06-12)
+
+**Status:** PENDING.
+
+Steps: as the test expert, open Topics and read each card. Open a paid CAD topic and a paid USD topic and compare the editor's price field and price label with the card.
+
+Expected:
+- The cards read `CA$50.00 / session`, `CA$5.00 / session`, `CA$12.50 / session`, `US$5.00 / session` and `Free`.
+- Opening a topic still shows `50` and `12.50` in the editor's price field.
+- The editor's price label shows the same symbol as that topic's card. A paid topic with no stored currency, if the account has one, reads in the editor's default with the cents (`CA$` in production) on both the card and the editor, never a trimmed `$125 / session`.
+
+Note: USD keeps the `US$` the card showed before, so a USD card reads `US$5.00 / session` while other `Money` surfaces (for example the Client Profile history rows) read `$5.00`. That difference is expected until the open USD-symbol todo (`2026-11-16-usd-symbol-us-dollar-prefix.md`) is decided, and is not a fail.
+
+Result:
+
+### R2. Re-check item 4 — G-06-1-currency: a free topic opens on CAD | USD and saves (06-11)
+
+**Status:** PENDING.
+
+Steps: as the test expert, edit each free topic that showed the blank currency segment. Tap `USD`, then `CAD`, then Save. Reopen the topic.
+
+Expected:
+- The picker has exactly two segments, `CAD` and `USD`, with `CAD` selected and no blank segment.
+- The USD notice from item 4 shows while USD is selected and not on CAD.
+- Save succeeds, with no `Topics can be priced in CAD or USD only.` message.
+- Reopening shows `CAD` selected again. That is expected, because the server keeps no currency on a free topic.
+
+Result:
+
+### R3. Re-check item 8 — G-06-1-currency: clearing the icon and description on a free topic sticks (06-11)
+
+**Status:** PENDING.
+
+Steps: item 8's steps, on a free topic. Edit the topic, tap the selected icon chip to clear it, delete all the description text, Save, reopen. Then edit again, change only the title, Save, reopen.
+
+Expected: as item 8. After the first Save the icon and description stay cleared. The second Save, which changes the title only, does not bring them back and does not clear anything else. Save works on a free topic (it failed on the earlier build, item 4).
+
+Result:
+
+### R4. Re-check item 17 — G-06-1-summary-calendar: the expert Booking Summary has Add to Calendar, and its Cancel sheet still works (06-18)
+
+**Status:** PENDING.
+
+Steps: as the test expert, open Bookings and the Booking Summary of a confirmed future booking that shows Cancel.
+1. Tap Cancel and look at the `Confirm Cancellation` sheet. Tap `Keep Booking`. Never confirm the cancellation: it cancels a live booking and its payment.
+2. Tap `Add to Calendar` and inspect the New Event sheet. Cancel it.
+3. Tap Cancel again, then `Keep Booking` again.
+4. Leave the summary, open the same summary again and repeat `Add to Calendar`.
+5. Open a past booking's summary.
+6. If available, open a pending reschedule's summary.
+
+Expected:
+- The `Confirm Cancellation` sheet opens as before and `Keep Booking` returns to the summary, both before and after the New Event sheet. The New Event sheet opens right after the cancellation sheet has closed.
+- The `Add to Calendar` button sits below Message Client.
+- The sheet title is `ClickMe · {topic} with {client name}`; start and end match the booking; there is one alert 15 minutes before; the notes hold the meeting type and the client's message; there is no location. This is exactly the Booking Confirmed event of item 17.
+- It works on every visit.
+- The past booking shows no button.
+- A pending reschedule shows the button with the current time. An event added then keeps that time if the new time is accepted later (the app cannot update a calendar event).
+
+Result:
+
+### R5. Re-check item 17 — G-06-1-summary-calendar: the client Upcoming Booking has Add to Calendar (06-14)
+
+**Status:** PENDING.
+
+Steps: as the test client, open My Bookings, then Upcoming, then the confirmed future booking. Tap `Add to Calendar`, inspect the New Event sheet, cancel it. Then open the pending request. Then open a past booking (Session Summary).
+
+Expected:
+- The title reads `ClickMe · {topic} with {expert name}`; start and end are the booking's times; there is one alert 15 minutes before; the notes hold the meeting type and the client's own note; there is no location.
+- The pending request shows no `Add to Calendar` button.
+- The Session Summary of a past booking shows no `Add to Calendar` button.
+
+Result:
+
+### R6. Regression — G-06-1-summary-calendar: Booking Confirmed still adds the same event (06-13, 06-18)
+
+**Status:** PENDING.
+
+Steps: as the test expert, accept a free-topic request (item 14) and tap `Add to Calendar` on Booking Confirmed.
+
+Expected: exactly the event of item 17: title `ClickMe · {topic} with {client name}`, the booking's start and end, one 15-minute alert, the meeting type and the client's message in the notes, no location.
+
+Result:
+
+### R7. Android — G-06-1-summary-calendar: Booking Summary and Upcoming Booking on Android (06-15)
+
+**Status:** PENDING.
+
+Steps: on the Android build named in the setup, run the 06-15 human check: the expert Booking Summary of a confirmed future booking, the client Upcoming Booking of a confirmed future booking, a past booking, a pending request, and Booking Confirmed.
+
+Expected: the same titles and offer rule as R4 to R6 (`ClickMe · {topic} with {client name}` for the expert, `ClickMe · {topic} with {expert name}` for the client, no button on a past booking or a pending request, Booking Confirmed unchanged). Tapping `Add to Calendar` opens the device's calendar app pre-filled with that event.
+
+Result:
+
+### R8. Optional — G-06-1-summary-calendar: the button goes when the session ends (06-18, 06-14)
+
+**Status:** PENDING (optional).
+
+Steps: keep an expert Booking Summary or a client Upcoming Booking open across a session's scheduled end, with no refresh.
+
+Expected: the `Add to Calendar` button disappears within about a minute of the scheduled end, without a refresh.
+
+Result:

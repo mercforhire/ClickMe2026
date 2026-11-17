@@ -1,219 +1,157 @@
 ---
 phase: 06-expert-mode
-reviewed: 2026-11-16T00:00:00Z
+reviewed: 2026-11-17T12:00:00Z
 depth: standard
-files_reviewed: 50
+files_reviewed: 29
 files_reviewed_list:
-  - ClickMe2026/Model/Requests/ExpertTopicRequest.swift
-  - ClickMe2026/Network/ClickMeAPI+ExpertProfile.swift
-  - ClickMe2026/Utils/AvailabilitySlotRules.swift
+  - ClickMe2026/Model/BookingCalendarPayload.swift
+  - ClickMe2026/Model/Responses/Children/ExpertTopicItem.swift
+  - ClickMe2026/Utils/BookingCalendarEventContent.swift
   - ClickMe2026/Utils/ExpertBookingConfirmationContent.swift
-  - ClickMe2026/Utils/HomeShellExit.swift
   - ClickMe2026/Utils/TopicPriceRules.swift
-  - ClickMe2026/Views/Extensions/HomeNavigationPath.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Availability/AvailabilitySettingsView.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Availability/AvailabilitySettingsViewModel.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Availability/Subviews/AvailabilityDayRow.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Availability/Subviews/TimeRangePickerSheet.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Booking Note/ExpertBookingNoteView.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Booking Note/ExpertBookingNoteViewModel.swift
+  - ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/Subviews/UpcomingBookingAddToCalendarButton.swift
+  - ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/UpcomingBookingView.swift
+  - ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/UpcomingBookingViewModel.swift
   - ClickMe2026/Views/Screens/Expert Mode/Booking Summary/ExpertBookingSummaryView.swift
   - ClickMe2026/Views/Screens/Expert Mode/Booking Summary/ExpertBookingSummaryViewModel.swift
   - ClickMe2026/Views/Screens/Expert Mode/Confirmed/BookingConfirmedView.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Confirmed/Subviews/BookingConfirmedCard.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Confirmed/Subviews/BookingConfirmedHeadline.swift
   - ClickMe2026/Views/Screens/Expert Mode/Confirmed/Subviews/CalendarEventEditorSheet.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Home/HomeExpertView.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Incoming Requests/Subviews/IncomingRequestAvatar.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Incoming Requests/Subviews/IncomingRequestCard.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Profile/ExpertProfileHomeScreen.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Profile/ExpertProfileHomeViewModel.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Request decision/RequestDecisionView.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Request decision/RequestDecisionViewModel.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Request decision/Subviews/RequestDecisionAcceptSheet.swift
   - ClickMe2026/Views/Screens/Expert Mode/Topics/Subviews/TopicsSetupTopicCard.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Topics/Topic Editor/TopicEditorView.swift
   - ClickMe2026/Views/Screens/Expert Mode/Topics/Topic Editor/TopicEditorViewModel.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Topics/TopicsSetupView.swift
-  - ClickMe2026/Views/Screens/Expert Mode/Topics/TopicsSetupViewModel.swift
-  - ClickMe2026Tests/ExpertMode/ExpertBookingNoteViewModelTests.swift
-  - ClickMe2026Tests/ExpertMode/RequestDecisionAcceptTests.swift
+  - ClickMe2026Tests/Booking/UpcomingBookingViewModelTests.swift
   - ClickMe2026Tests/ExpertMode/TopicsSetupMutationTests.swift
-  - ClickMe2026Tests/Model/ExpertTopicRequestBodyTests.swift
+  - ClickMe2026Tests/ExpertMode/TopicsSetupTopicCardLabelTests.swift
   - ClickMe2026Tests/Model/TopicCurrencyTests.swift
-  - ClickMe2026Tests/Utils/AvailabilitySlotRulesTests.swift
-  - ClickMe2026Tests/Utils/BookingShortIDTests.swift
-  - ClickMe2026Tests/Utils/ClientProfileHistoryEarningsTests.swift
+  - ClickMe2026Tests/Utils/BookingCalendarEventContentTests.swift
   - ClickMe2026Tests/Utils/ExpertBookingConfirmationContentTests.swift
-  - ClickMe2026Tests/Utils/HomeShellExitTests.swift
-  - ClickMe2026Tests/Utils/MoneyCallSiteTests.swift
   - ClickMe2026Tests/Utils/TopicPriceRulesTests.swift
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/model/responses/MeData.kt
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/subviews/TopicCurrencyPicker.kt
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/TopicEditorScreen.kt
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/TopicEditorUiState.kt
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/TopicEditorViewModel.kt
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/res/values/strings_expert_topics.xml
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/test/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/subviews/TopicEditorSubviewsTest.kt
-  - /Users/LeonChen/Documents/ClickMe_Android/app/src/test/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/TopicEditorViewModelTest.kt
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/confirmed/CalendarIntent.kt
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/confirmed/BookingConfirmedScreen.kt
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/bookingsummary/ExpertBookingSummaryScreen.kt
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/clientmode/upcomingbooking/UpcomingBookingScreen.kt
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/main/res/values/strings_upcoming_booking.xml
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/test/java/com/uptrendinvestments/clickmeapp/screens/expertmode/confirmed/CalendarIntentTest.kt
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/test/java/com/uptrendinvestments/clickmeapp/screens/expertmode/bookingsummary/ExpertBookingSummaryScreenTest.kt
+  - /Users/LeonChen/Documents/ClickMe_Android/app/src/test/java/com/uptrendinvestments/clickmeapp/screens/clientmode/upcomingbooking/UpcomingBookingScreenTest.kt
 findings:
   critical: 0
-  warning: 4
-  info: 5
+  warning: 2
+  info: 7
   total: 9
 status: issues_found
 ---
 
-# Phase 6: Code Review Report
+# Phase 06: Code Review Report (gap-closure plans 06-11..06-18)
 
-**Reviewed:** 2026-11-16
+**Reviewed:** 2026-11-17T12:00:00Z
 **Depth:** standard
-**Files Reviewed:** 50
+**Files Reviewed:** 29 (21 iOS, 8 Android)
 **Status:** issues_found
+
+This report supersedes the earlier phase-06 review (preserved in git history at `e7f9cd5`) for the gap-closure scope only: the iOS changes since `e7f9cd5f` and the Android commit `69c4e159`.
 
 ## Summary
 
-Reviewed the Phase 6 iOS diff (`59da049..HEAD`) and the Android commit `da498620` (currency picker), reading each changed source file in full and cross-checking the API-facing pieces against the backend (`bookingRequests.controller.js`, `expertTopics.controller.js`, `note.controller.js`, `expertTopics.schema.js`).
+The change set does three things: (1) it adds Add to Calendar to the expert Booking Summary and the client Upcoming Booking screens through a shared `BookingCalendarEventContent` builder and a `BookingCalendarPayload`-based `CalendarEventEditorSheet`; (2) it treats a blank or malformed stored topic currency as "no currency" through `TopicPriceRules.validCurrencyCode` and `ExpertTopicItem.storedCurrency`; (3) it makes the topic card show cents. Android gets the matching calendar change.
 
-The core money-path logic is sound. `TopicPriceRules` is integer-only and cannot trap. The PATCH `NullableField` encoding is correct. `ExpertBookingNoteViewModel`'s UTF-16 cap matches the server `max(5000)`. The accept flow's double-tap guard, the `ALREADY_PROCESSED` pop decided by `ErrorCode` rather than message text, and the delete-confirmation alert all behave as specified. I found no security issues, no data-loss paths and nothing that blocks the release.
+I found no correctness blockers, security issues or data-loss risks. I checked these areas in detail:
 
-There are four warnings. The most important one is the one the UI audit raised: the push route for Request Decision cannot know a request is expired. It is confirmed and classified WARNING (WR-01). The others are an empty-currency edge on legacy free topics (WR-02), a silent decimal/thousands mis-parse on paste (WR-03), and an iOS/Android parity gap in the USD notice (WR-04).
+- **Offer rule parity.** iOS `offeredStatuses` (`confirmed`, `pendingReschedule`, `inProgress`) matches Android `JOINABLE_BOOKING_STATUSES`. Both use a strict `end > now` and both reject unknown statuses.
+- **Title and notes parity.** Both trim topic and name, use the same fallbacks (`Session`, `Client`, `Expert`), and add the message on a new line only when it is not blank.
+- **Currency parsing.** `validCurrencyCode` is total, ASCII-only, and rejects the blank code that would cause a 422.
+- **Card formatting.** `priceLabel` slices off the `Money` prefix by its own length, which is correct for `$`, `CA$` and `CODE\u{00A0}`.
+- **Android launcher.** `rememberCalendarInsertLauncher` keeps the double-tap guard and clears it on resume. The intent carries user text only as extras, never in a URI.
+
+The findings below are an internal inconsistency in the topic editor seed, a presentation pattern that is copied twice and can misbehave on dismissal, and several maintainability items (dead production code after the delegation refactor, duplicated helpers, test coupling to global state).
 
 ## Warnings
 
-### WR-01: Expired or already-settled request opened from a push still shows Accept and Decline
+### WR-01: Topic editor seeds the price text with a different currency than the one it selects
 
-**File:** `ClickMe2026/Views/Screens/Expert Mode/Home/HomeExpertView.swift:338`, `ClickMe2026/Views/Screens/Expert Mode/Request decision/RequestDecisionViewModel.swift:76-88,151`, `ClickMe2026/Model/Responses/BookingRequestDetail.swift:16-49`
+**File:** `ClickMe2026/Views/Screens/Expert Mode/Topics/Topic Editor/TopicEditorViewModel.swift:229-240`
+**Issue:** For a topic with no valid stored currency, `seedCurrency` is `storedCurrency ?? accountDefault`. That uses the raw, unvalidated, not-necessarily-allowed account default (`accountDefaultCurrency`). `self.currency` is resolved separately through `resolveInitialCurrency(topic:defaultCurrency: newTopicDefaultCurrency(...))`. That path picks the first allowed currency when the account default is not pickable, validates the code, and falls back to `CAD`.
 
-**Verification of the UI-audit finding:** Confirmed. There are three entry points to `RequestDecisionView(requestId:)`:
-- `IncomingRequestsView.swift:72` forwards `isExpired`, taken from the list row (`status == "expired" || expiresAt <= now`).
-- `LiveFetchRequestDecisionBootstrap` (`RequestDecisionView.swift:414`) computes it from the list row.
-- The push route, `HomeExpertView.swift:338` (`case let .requestDecision(requestId)`), calls `RequestDecisionView(requestId: requestId)` and so takes the default `isExpired: false`.
+The two can differ. Example: account default `JPY` (zero-decimal) while `allowed_currencies` is `["CAD","USD"]`. `editableAmount` then formats the stored minor amount with 0 digits, so 5000 shows as `5000`, while the editor's `currency` is `CAD` and `parseMinor` and `filterInput` use 2 digits. The seed text and the selected currency disagree by a factor of 100. The untouched-save shortcut hides this on save. If the user edits the text, or the card and editor are compared, the amounts diverge.
 
-`forceLoad` never corrects this afterwards. `BookingRequestDetail` has no status or expiry field, and the backend `getDetail` selects `status` but does not return it or `expires_at` (`bookingRequests.controller.js:158-215`). So for a push-opened request that has expired, or was already accepted or declined on another device, the screen renders the client message, the earnings section and the Accept/Decline footer. The expired banner never shows.
-
-**Classification: WARNING, not BLOCKER.** The server guards the mutation. Accept and decline use a compare-and-set on `status='pending_approval'` and answer 409 `ALREADY_PROCESSED` (`bookingRequests.controller.js:300-314,401-405`). The new D-12 path then shows the server message and pops. So no wrong charge or double-accept results. The cost is a misleading screen and a wasted tap on the most common way an expert reaches a request, which is the push notification.
-
-There is a backend caveat. `accept` does not check `expires_at`. It only checks `status`. A request past `expires_at` but not yet swept by `expireBookings` (runs every 5 minutes) can still be accepted server-side. The client cannot compensate for that, and a client-side expiry check would reduce but not close the window.
-
-**Fix:** Make the detail response self-describing, additively so the Android build is unaffected. In the backend `getDetail`, return `status` and `expires_at`. Then in iOS:
-
+The new `TopicsSetupTopicCard` comment says "card and editor agree". They do agree on the symbol and digits for the card, but the editor's seed path was left on the old rule. `TopicsSetupMutationTests` asserts `editor.currency == editor.defaultCurrency`, which only holds while the account default is allowed. The new `newTopicDefaultCurrency` helper is the correct single source, but `defaultCurrency` (the property, documented as the new-topic seed) still returns the raw account default. Server allowlist is currently CAD and USD, both 2 digits, so this is latent today.
+**Fix:** Resolve the currency once and use it for both the seed and `currency`:
 ```swift
-// BookingRequestDetail
-let status: String?
-let expiresAt: Date?
-
-// RequestDecisionViewModel.forceLoad, before mapping
-let serverExpired = detail.status == "expired"
-    || (detail.expiresAt.map { $0 <= Date() } ?? false)
-let settled = detail.status.map { $0 != "pending_approval" && $0 != "expired" } ?? false
-isExpired = isExpired || serverExpired || settled   // or add a separate `isSettled` banner
-request = Self.map(detail: detail, isExpired: isExpired)
+let resolvedCurrency = Self.resolveInitialCurrency(
+    topic: topic,
+    defaultCurrency: Self.newTopicDefaultCurrency(in: userManager.me)
+)
+let seed = minorAmount.map { Self.editableAmount(minorUnits: $0, currency: resolvedCurrency) } ?? ""
+...
+self.currency = resolvedCurrency
 ```
+Then make the `defaultCurrency` property return `Self.newTopicDefaultCurrency(in: userManager.me)` so the property, the test assertion and the init agree.
 
-If the backend change is deferred, at least pass a push-time `isExpired` where the push payload carries one. This needs a matching Android check, since Android uses the same contract.
+### WR-02: Calendar sheet content is built from the same optional that drives `isPresented`, and the pattern is copy-pasted
 
-### WR-02: Legacy free topic with no stored currency opens with an empty-string currency and cannot be saved
-
-**File:** `ClickMe2026/Views/Screens/Expert Mode/Topics/Topic Editor/TopicEditorViewModel.swift:165-175,207-221` (new coverage in `ClickMe2026Tests/Model/TopicCurrencyTests.swift`)
-
-**Issue:** The backend serializes a null `price_currency` as `''` (`expertTopics.controller.js:95`: `(topic.price_currency || '').toUpperCase()`). The controller comments confirm free topics can have `price_currency NULL`. `ExpertTopicItem.Price.currency` decodes that as `""`, not `nil`. `resolveInitialCurrency` does `(stored ?? defaultCurrency)`, so `""` is kept and the editor starts with `currency == ""`:
-- `pickableCurrencies` adds `""` as a third segment with an empty label, and it is the selected one.
-- `validate()` returns `currency: ""`, and `saveTopic` sends `hourly_rate.currency: ""`.
-- The backend rejects it. The PATCH schema validates the currency against an allowlist (`isAllowedTopicCurrency`), so the expert sees a 422 on a topic they have not changed.
-
-Android handles this: `TopicPrice.resolveCurrency` and `cleanCode` treat anything that is not a 3-letter code as absent. The `TopicCurrencyTests` fixtures only cover `"CAD"` and `"USD"`, so the gap is not pinned.
-
-**Fix:** Normalize blank and invalid stored currencies to `nil` in both the seed and the lock rule:
-
-```swift
-private static func storedCurrency(of topic: ExpertTopicItem?) -> String? {
-    let raw = topic?.hourlyRate?.currency ?? topic?.price.currency
-    let trimmed = raw?.trimmingCharacters(in: .whitespaces)
-    guard let trimmed, trimmed.count == 3 else { return nil }
-    return trimmed.uppercased()
-}
-// use it in resolveInitialCurrency, isCurrencyLocked and the init's storedCurrency
-```
-
-Add a `TopicCurrencyTests` row for `"currency": ""` on a free topic.
-
-### WR-03: A pasted grouped price ("12,000") is silently read as 12.00
-
-**File:** `ClickMe2026/Utils/TopicPriceRules.swift:57-78,92-111` (pinned by `ClickMe2026Tests/Utils/TopicPriceRulesTests.swift`, "12,50" row)
-
-**Issue:** The field treats both `.` and `,` as the decimal separator, since the keyboard decides which one is typed. A paste of `12,000` or `1,000.50` is filtered: the first separator wins and fraction digits past the currency's count are dropped. `12,000` becomes `12,00`, which parses to 1200 minor units. The expert asked for 12,000 and gets 12.00. This is a paid price in a live-payment app. The `isBelowFloor` check only helps when the result lands under the floor, and `12,00` (12.00) clears a 5.00 floor with no warning. The field does show `12,00`, but nothing says that digits were dropped.
-
-Android's `TopicPrice.filterInput` is the stated source of this behavior, so the same defect exists there.
-
-**Fix:** Do not silently truncate a fraction that is longer than the currency allows. Treat it as invalid so `parseMinor` returns `nil` and Save shows the validation message:
-
-```swift
-// filterInput: keep the extra fraction digit(s) instead of dropping them,
-// so parseMinor rejects "12,000" ("12.000" has 3 fraction digits, USD allows 2).
-```
-
-Or, if typing-time capping is wanted, drop only on a typed (single-character) change and reject on a multi-character paste. Fix the same way on Android.
-
-### WR-04: Android hides the USD conversion-fee notice when only one currency is pickable; iOS shows it
-
-**File:** `/Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/subviews/TopicCurrencyPicker.kt:46` (iOS reference: `TopicEditorView.swift:118`)
-
-**Issue:** `TopicCurrencyPicker` starts with `if (currencies.size < 2) return`, and the USD notice is rendered inside it. On iOS the notice is a separate block under the price field, shown whenever `currency == "USD"` (`showsUSDFXNotice`). So an Android expert whose only allowed or stored currency is USD never sees the Stripe conversion-fee warning. That happens when `allowed_currencies == ["USD"]`, or when `pickableCurrencies` collapses to one entry. This is the money-disclosure copy the contract says to show "only while USD is selected", and it is meant to be shown regardless of picker visibility. The Android test `TopicEditorSubviewsTest` covers the two-currency case only.
-
-**Fix:** Render the notice outside the picker's early return, driven by `state.showsUsdNotice`:
-
-```kotlin
-if (state.showsCurrencyPicker) { TopicCurrencyPicker(...) }
-if (state.showsUsdNotice) { UsdNotice() }   // or hoist into its own composable under PriceSection
-```
-
-Add a Compose test for a single `["USD"]` allowed list.
+**File:** `ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/UpcomingBookingView.swift:85-95` and `ClickMe2026/Views/Screens/Expert Mode/Booking Summary/ExpertBookingSummaryView.swift:74-87`
+**Issue:** Both screens present the editor with `.sheet(isPresented: Binding(get: { pendingCalendarEvent != nil }, set: ...))` and an `if let event = pendingCalendarEvent` in the content closure. When the sheet is dismissed (swipe-down, or `onDismiss` setting `pendingCalendarEvent = nil`), the optional becomes nil before the dismissal animation finishes, so the content closure can re-evaluate to an empty view while the sheet is still on screen. This is a known SwiftUI flash. `.sheet(item:)` keeps the item for the whole presentation and removes the hand-made Binding. I could not run the UI to confirm the flash on iOS 18, so treat the visual effect as likely rather than proven. The same ten lines also exist in two files, so a fix has to be made twice.
+**Fix:** Make the payload `Identifiable` (a stored `let id = UUID()` set at construction, excluded from `Equatable` if the tests compare payloads, or wrap it in a small `Identifiable` struct) and present with `.sheet(item: $pendingCalendarEvent) { event in CalendarEventEditorSheet(event: event) { pendingCalendarEvent = nil }.ignoresSafeArea() }`. Better, extract one `View` extension, for example `calendarEventSheet(item:)`, and use it in both screens.
 
 ## Info
 
-### IN-01: Android new-topic default can fall outside the allowed list; iOS picks the first allowed one
+### IN-01: Production code left unused after the delegation refactor
 
-**File:** `/Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/expertmode/topics/editor/TopicEditorViewModel.kt:107-130` (iOS: `TopicEditorViewModel.swift:214-217`)
+**File:** `ClickMe2026/Utils/ExpertBookingConfirmationContent.swift:25-45` and `ClickMe2026/Views/Screens/Expert Mode/Confirmed/BookingConfirmedView.swift:30-33`
+**Issue:** `confirmation(...)` now builds its event through `BookingCalendarEventContent.expertEvent`, so `ExpertBookingConfirmationContent.calendarTitle(topic:clientName:)`, `calendarNotes(meetingType:clientMessage:)`, and the `BookingConfirmation.calendarTitle` and `calendarNotes` computed properties have no production caller. Only tests use them. The aliases `clientFallback` and `topicFallback` are still used inside `confirmation`, but they only forward to `BookingCalendarEventContent`.
+**Fix:** Delete the wrappers and the computed properties, and point the existing tests at `BookingCalendarEventContent.title` and `.notes` (which `BookingCalendarEventContentTests` already covers). If they are kept for the older tests, say so in the doc comment.
 
-**Issue:** iOS seeds a new topic with the account default only when it is in `allowed_currencies`, otherwise the first allowed one. Android's `resolveCurrency` returns the account default unconditionally, and `allowedOf` then appends it to the list. If the backend ever returns a default that is not in `allowed_currencies`, Android would offer and send a currency the server rejects.
+### IN-02: Duplicated `trimmed` helper and a circular dependency between the two content enums
 
-**Fix:** In `resolveCurrency`, for a non-edit topic with no pick, use `stored.takeIf { it in listed } ?: listed.first()`, matching iOS `newTopicDefault`.
+**File:** `ClickMe2026/Utils/BookingCalendarEventContent.swift:123-128`, `ClickMe2026/Utils/ExpertBookingConfirmationContent.swift:116-121`, and `BookingCalendarEventContent.swift:44`
+**Issue:** The private `trimmed(_:)` is byte-identical in both enums. `BookingCalendarEventContent.notes` calls `ExpertBookingConfirmationContent.meetingTypeLabel`, while `ExpertBookingConfirmationContent` calls back into `BookingCalendarEventContent` for title, notes and event. The new shared builder therefore depends on the screen-specific one it was meant to serve.
+**Fix:** Move `meetingTypeLabel` (and `meetingTypeIcon`) into `BookingCalendarEventContent` or a tiny `MeetingTypeDisplay` helper, and share one `trimmed` (an internal `String?` extension).
 
-### IN-02: Back to Home from Booking Confirmed is a silent no-op outside the expert shell
+### IN-03: Stale plan reference in a doc comment
 
-**File:** `ClickMe2026/Views/Screens/Expert Mode/Request decision/RequestDecisionView.swift:152`
+**File:** `ClickMe2026/Utils/BookingCalendarEventContent.swift:77-78`
+**Issue:** "Plan 06-14 calls it from the client Upcoming Booking screen" is already true and will go stale as plans are archived. The project convention is to explain the why, not restate plan numbers.
+**Fix:** Say "Used by the client Upcoming Booking screen" or drop the sentence.
 
-**Issue:** `onBackToHome: { returnToDashboard?() }` does nothing when the environment value is `nil`. That is by design for previews. But `confirmAccept` has already succeeded at that point, so a tap that does nothing on the primary button leaves only the system back control. Both runtime entry points sit inside `HomeExpertView`, so this is latent today.
+### IN-04: Redundant status gate in two views
 
-**Fix:** Fall back to `dismiss()` when `returnToDashboard` is `nil`.
+**File:** `ClickMe2026/Views/Screens/Client Mode/Upcoming Booking Details/UpcomingBookingView.swift:259` and `ClickMe2026/Views/Screens/Expert Mode/Booking Summary/ExpertBookingSummaryView.swift:315`
+**Issue:** Each view wraps the `TimelineView` in `BookingCalendarEventContent.offeredStatuses.contains(...)`, and the view model's `showsAddToCalendar(at:)` then applies the same status rule again through `isOffered`. There are two copies of the rule on the screen path, so a future change to the offered set has to be made in the view as well as the model. The outer check only avoids creating a timer for hidden statuses.
+**Fix:** Keep the status check in the view model only and always render the `TimelineView`, or expose one `var offersCalendarTimeline: Bool` on the view model and use it in both views.
 
-### IN-03: Stale planning reference and duplicated duration math
+### IN-05: Summary view modifier layout and comment
 
-**File:** `ClickMe2026/Utils/ExpertBookingConfirmationContent.swift:82,66-69`; `RequestDecisionViewModel.swift:291-294`
+**File:** `ClickMe2026/Views/Screens/Expert Mode/Booking Summary/ExpertBookingSummaryView.swift:72-86`
+**Issue:** `.sheet` is chained under `content` at the same indentation as `content`, and a line comment inside the `ZStack` explains the presenter choice. This reads as if `.sheet` belongs to the `ZStack`. SwiftFormat would indent it, and a later reader may move it.
+**Fix:** Indent the modifier one level under `content`, and move the "why" comment above `pendingCalendarEvent`'s declaration. Folds into WR-02 if the shared modifier is extracted.
 
-**Issue:** The doc comment says "Plan 06-05 calls this on accept success", a planning reference that will rot. `durationText` (`"\(minutes) min"`) duplicates `RequestDecisionViewModel.formatDuration` (`"\(minutes)m"`), which has the same `Int(end - start)/60` truncation. `RequestDecisionViewModel.formatDate` and `formatTime` also create new `DateFormatter`s, which `CLAUDE.md` says to avoid in favor of `DateUtil`. The same screen's Confirmed state already uses `DateUtil`.
+### IN-06: Card currency symbol differs from the editor's for codes other than USD and CAD
 
-**Fix:** Drop the plan reference. Have `formatDuration` call a shared helper, and move `formatDate` and `formatTime` to `DateUtil`.
+**File:** `ClickMe2026/Views/Screens/Expert Mode/Topics/Subviews/TopicsSetupTopicCard.swift:26-28` and `ClickMe2026/Views/Screens/Expert Mode/Topics/Topic Editor/TopicEditorViewModel.swift:116-122`
+**Issue:** `TopicsSetupTopicCard.cardSymbol` returns `US$` for USD, otherwise `Money.prefix`. The editor's `currencySymbol` returns `US$`, `CA$`, otherwise the bare ISO code. For any other code they differ (the card shows `€` for EUR, the editor shows `EUR`). The server allowlist is CAD and USD only, and the card comment already tracks the open USD-symbol todo, so there is no user impact today. There are now two places to update when that todo lands.
+**Fix:** Have the editor's `currencySymbol` call `TopicsSetupTopicCard.cardSymbol(for:)` (or move the function to `Money`) so one rule drives both.
 
-### IN-04: Misindented argument in `ExpertProfileHomeScreen`
+### IN-07: New tests depend on shared global state
 
-**File:** `ClickMe2026/Views/Screens/Expert Mode/Profile/ExpertProfileHomeScreen.swift:299`
-
-**Issue:** `isOnline: false,` is at the wrong indent level after the comment was inserted. It will trip SwiftFormat and reads as if it belongs to a different call.
-
-**Fix:** Indent it to match the surrounding arguments.
-
-### IN-05: Capped `TextEditor` bindings should be checked on a device
-
-**File:** `ClickMe2026/Views/Screens/Expert Mode/Request decision/Subviews/RequestDecisionAcceptSheet.swift:70-73`, `ClickMe2026/Views/Screens/Expert Mode/Booking Note/ExpertBookingNoteView.swift:143-146`
-
-**Issue:** Both editors cap the text inside a custom `Binding` setter. When the text is already at the cap and the user types one more character, the setter writes back a value equal to the stored one. For the accept sheet the storage is `@State`, which does not re-render on an equal write, so the editor may show the extra character until the next change. The view model tests cover `cappedAcceptMessage` and `updateNote`, but not what the editor displays. This is not confirmed. SwiftUI's behavior here has varied between releases.
-
-**Fix:** Add the "type past the cap" case (including pasting an emoji across the boundary) to the Phase 6 device UAT checklist. If it reproduces, cap in `.onChange(of:)` instead of the setter.
+**File:** `ClickMe2026Tests/ExpertMode/TopicsSetupTopicCardLabelTests.swift:72-85` and `ClickMe2026Tests/ExpertMode/TopicsSetupMutationTests.swift` (new `blankCurrencyFreeTopicSavesARealCurrency`)
+**Issue:** `cardAndEditorAgreeOnBlankCurrency` reads `UserManager.shared.me` and hard-codes `editor.currency == "CAD"`. The mutation test asserts `editor.currency == editor.defaultCurrency`, which also depends on `me`. Both pass only while `me` is nil (as in the test host) or has a CAD default. A suite that populates the shared `UserManager` would break them depending on run order. This is the same coupling WR-01 describes in production code. `TopicCurrencyTests` already notes "The test host has no /me" as an assumption.
+**Fix:** Build the editor with an injected `UserManager` (the init already takes `userManager:`) or pass `me: nil` into `newTopicDefaultCurrency`, so the assertions do not read the singleton.
 
 ---
 
-_Reviewed: 2026-11-16_
+## Android (commit 69c4e159)
+
+No findings. The parity checks passed:
+
+- `isCalendarEventOffered` uses `JOINABLE_BOOKING_STATUSES` (`confirmed`, `in_progress`, `pending_reschedule`) and `now.isBefore(end)`, matching iOS `isOffered`.
+- `calendarEventSpec` trims the message and omits it when blank, matching iOS `notes`.
+- Titles and fallbacks resolve in composition (not in the click lambda) and match iOS, including the `Expert` and `Session` fallbacks.
+- The shared launcher handles `ActivityNotFoundException` by re-enabling the button before the callback.
+- Tests cover the offered set, the unknown-status case and the end boundary.
+
+One non-blocking difference, already documented in the code: Android cannot set a 15-minute reminder through `ACTION_INSERT`, while the iOS sheet adds one.
+
+---
+
+_Reviewed: 2026-11-17T12:00:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_

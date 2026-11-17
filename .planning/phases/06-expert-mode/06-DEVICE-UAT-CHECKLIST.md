@@ -62,7 +62,7 @@ Expected:
 - The topic card reads `CA$12.50`; reopening shows `12.50` in the field.
 - With the field blank or `0` the hint reads `Leave blank or enter 0 for a free session — otherwise min CA$5.00.`; typing `4.99` turns it red, and Save shows `A paid session must be at least CA$5.00.`
 
-Result:
+Result: PASS (2026-11-16): the edit topic screen shows the price correctly. Separate observation, logged as its own cosmetic issue: the Topics tab cards show whole amounts with no cents ("CA$50 / session", "CA$5 / session", "US$5 / session"), and the user wants two decimal places (e.g. "CA$50.00 / session"). The USD card also reads "US$5", not the "$" item 3 expected.
 
 ### 2. EXP-03 — Save with nothing changed keeps the price and the currency (06-01)
 
@@ -72,7 +72,7 @@ Steps: open the `CA$12.50` topic from item 1, change nothing, Save, reopen. Then
 
 Expected: both cards read exactly as before (`CA$12.50`, `CA$120.00`) and the currency is unchanged. No price changes by a cent.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 3. EXP-17 — a paid USD topic has its currency locked, with the caption (06-01)
 
@@ -84,7 +84,7 @@ Expected:
 - The picker is shown but disabled, on `USD`, with the caption `A paid topic's currency can't be changed. Create a new topic to charge in a different currency.` under it.
 - Save without changing anything keeps the price at 20 USD. The label reads `Price per Session (US$)`. The topic card reads `$20.00` (the shipped `Money` table shows `$` for USD; the `US$` question is logged in `2026-11-16-usd-symbol-us-dollar-prefix.md`, so `$20.00` on the card is not a failure).
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 4. EXP-17 — a free topic can switch currency, and USD shows the conversion-fee notice (06-01)
 
@@ -94,7 +94,7 @@ Steps: edit a free topic (price blank or `0`). Tap `USD`, then `CAD`.
 
 Expected: the picker is enabled. While USD is selected the notice reads `Clients will pay in US dollars. If your payout bank account is in Canadian dollars, Stripe converts each payment and keeps a currency conversion fee of about 2%. You may be able to avoid this by adding a USD bank account in your Stripe Express dashboard.` and it disappears on CAD.
 
-Result:
+Result: FAIL (2026-11-16): some topics show a third, invisible (blank) currency segment in the picker. The user suspects the backend. This reproduces review finding WR-02: the backend serializes a NULL `price_currency` as `''` (`expertTopics.controller.js:95`), and iOS keeps `""` as a pickable, selected currency, so Save sends `currency: ""` and gets a 422. Android already treats a non-3-letter code as absent. Severity: major. Update (item 8): the user reports that by default **every** free topic opens on the unknown currency, and Save fails. Free topics cannot be edited on this build.
 
 ### 5. EXP-03 — switching currency keeps the typed number and updates the hint (06-01)
 
@@ -104,7 +104,7 @@ Steps: on a new topic type `12.50`, then switch CAD to USD to CAD. Type `4.99`, 
 
 Expected: the field keeps `12.50` through every switch (no conversion, no reformat). The label symbol (`CA$` or `US$`) and the minimum hint update on each switch; `4.99` shows the hint in red against the 5.00 floor of either currency.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 6. EXP-02 — a comma decimal saves as cents under a comma locale (06-01, D3)
 
@@ -114,7 +114,7 @@ Steps: Settings > General > Language & Region > Region: Canada, with the iPhone 
 
 Expected: the keyboard has a decimal key, `12,50` is accepted, the topic saves as 12.50 CAD and the card reads `CA$12.50` (the app formats money through its own fixed table, not the device locale), never `CA$1,250` or `CA$12`.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 7. EXP-02 — the lock caption, USD notice and hint wrap at the largest text size (06-01, LT3)
 
@@ -124,7 +124,7 @@ Steps: Settings > Accessibility > Display & Text Size > Larger Text > Larger Acc
 
 Expected: every line of the caption, notice and hint is fully visible, wrapped over several lines, with nothing cut off or overlapping the price field. Put the text size back afterwards.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 8. EXP-04 — clearing the icon and description sticks after Save and reopen (06-02)
 
@@ -134,7 +134,7 @@ Steps: edit a topic that has an icon and a description. Tap the selected icon ch
 
 Expected: after the first Save the icon and description stay cleared (no icon selected, empty description). The second Save, which changes the title only, does not bring them back and does not clear anything else.
 
-Result:
+Result: PASS (2026-11-16), on a paid topic. Free topics cannot be saved on this build (see item 4).
 
 ### 9. EXP-01 — Delete asks first, in a centred alert (06-02)
 
@@ -147,7 +147,7 @@ Expected:
 - Cancel keeps the card and nothing is sent.
 - Delete removes the card, with no toast. With airplane mode on, Delete leaves the card and shows the existing error alert with a message.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 10. EXP-05 — Cancel on the time-range sheet leaves the original times (06-03)
 
@@ -157,7 +157,7 @@ Steps: as the test expert, Availability, tap a slot's time button, pick differen
 
 Expected: Cancel, swipe-down and tap-outside leave the row showing the original times and the screen does not show unsaved changes. Done writes the new times to the row.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 11. EXP-06 — Add hours on a day ending at 22:00 and at 22:30 (06-03)
 
@@ -167,7 +167,7 @@ Steps: set a day's only slot to end at `22:00`, tap Add hours. Then on a day who
 
 Expected: at 22:00 Add hours adds a slot `22:30 - 23:30`. At 22:30 the control is dimmed and tapping does nothing; with VoiceOver on it reads `There is no room left in this day for another time range.` On an empty enabled day it still adds `09:00 - 17:00`. The slot-delete icon is announced as `Delete time range`.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 12. EXP-07 — a stored 09:15 and a stored 24:00 open selected and save unchanged (06-03)
 
@@ -177,7 +177,7 @@ Steps: this needs slots the app cannot create: set one slot to start at `09:15` 
 
 Expected: the sheet opens with `9:15 AM` selected in the start list and `12:00 AM` selected in the end list (24:00 reads `12:00 AM`); no other row changes; after Done and Save the day row still reads `09:15` and `24:00`. `12:00 AM` is not offered as a new End choice on a normal slot.
 
-Result:
+Result: SKIPPED (no such slot) (2026-11-16)
 
 ### 13. EXP-05 — Availability Save is readable with Reduce Transparency and Liquid Glass Tinted (06-03, D2)
 
@@ -187,7 +187,7 @@ Steps: on an iOS 26 iPhone, Light appearance. Settings > Accessibility > Display
 
 Expected: the `Save` label in the navigation bar and the back chevron are readable in both settings (not white on white). Put the settings back afterwards.
 
-Result:
+Result: SKIPPED (2026-11-16, no reason given)
 
 ### 14. EXP-09 — Accept lands on Booking Confirmed with no Accepted frame, and Back shows the refreshed list (06-05, N1)
 
@@ -197,7 +197,7 @@ Steps: as the test expert, Incoming Requests, open a pending request for a free 
 
 Expected: the sheet closes and `Booking Confirmed` replaces the decision screen straight away, with no `Accepted!` frame and no toast; the title reads `Booking Confirmed`, the headline `Booking Confirmed!` and the body `Your meeting with {client name} on {date}, at {time} has been successfully booked.` The card shows the client's name, the topic, the client's photo (or the person placeholder), `{date}, {time} ({n} min)` and the meeting type. Back (the chevron or Back from the nav bar) lands on Incoming Requests without the accepted request, and its pending count is right. The old decision screen is not reachable. Per the 06-05 SUMMARY, Confirmed is hosted inside the decision screen (D-11 amendment); you are checking the behavior only.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 15. EXP-09 — Back to Home lands on the Dashboard root from a Dashboard push and from another tab (06-05, N2)
 
@@ -207,7 +207,7 @@ Steps: accept another free-topic test request and tap `Back to Home` instead of 
 
 Expected: in every case the Dashboard tab is selected and shown at its root (no screens above it) and its pending-request count has dropped.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 16. EXP-09 — the Confirmed back chevron and title are readable on iOS 26 (06-05, D2)
 
@@ -217,7 +217,7 @@ Steps: on a Booking Confirmed screen, look at the navigation bar with Reduce Tra
 
 Expected: the back chevron and the `Booking Confirmed` title are readable in both settings. Put the settings back afterwards.
 
-Result:
+Result: SKIPPED (2026-11-16, no reason given)
 
 ### 17. EXP-10 — Add to Calendar opens the system editor pre-filled with the client and topic (06-04, 06-05, D5)
 
@@ -227,7 +227,7 @@ Steps: on Booking Confirmed (item 14), tap `Add to Calendar` and allow calendar 
 
 Expected: the title reads `ClickMe · {topic} with {client name}` (a middle dot with a space each side); the start and end match the booking; there is one alert 15 minutes before; the notes hold the meeting type (`In-App Voice` or `Skype/Zoom`) and, on a new line, the client's message when the client wrote one; there is no location.
 
-Result:
+Result: PASS (2026-11-16). CHANGE REQUEST (2026-11-16): the user wants the "Add to Calendar" button on the Booking Summary screen too, for both client and expert, because Booking Confirmed is shown only once and Booking Summary can be reached repeatedly. Android must mirror it.
 
 ### 18. EXP-10 — Add to Calendar with calendar access denied (06-04, E7)
 
@@ -237,7 +237,7 @@ Steps: Settings > Privacy & Security > Calendars: turn ClickMe off (or choose no
 
 Expected: the system editor shows its own message about access; the app shows no copy of its own and adds nothing to the calendar.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 19. EXP-09 — a 409 ALREADY_PROCESSED shows the server message and pops to a refreshed list (06-05, D6)
 
@@ -247,7 +247,7 @@ Steps: the client sends a booking request for the expert's free topic. The exper
 
 Expected: an alert titled `Couldn't update request` with the server message (today `This booking request has already been processed.`) and `OK`. OK pops to Incoming Requests, refreshed, without that request. No Booking Confirmed screen appears. Repeat with Decline instead of Accept if you want: same alert, same pop.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 20. EXP-09 — the Accept message stops at 1,000 characters, with a counter (06-05, U1)
 
@@ -257,7 +257,7 @@ Steps: on a pending free-topic request, tap Accept and paste about 1,500 charact
 
 Expected: the text stops at 1,000 UTF-16 units and never splits an emoji. A `{n}/1000` counter appears from 800 characters, muted, and turns red at `1000/1000`; VoiceOver reads `{n} of 1,000 characters`. `Confirm` still works at the cap.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 21. EXP-12 — BEFORE: the expired request card on App Store build 6 (06-06, D1)
 
@@ -267,7 +267,7 @@ Steps: on a device with App Store build 6 installed, as an expert with an expire
 
 Expected (the bug to confirm): the card's topic and `Earnings` text are hard to read (the whole card is faded). Record whether it is. If build 6 reads fine, say so in Result: the verifier may then close EXP-12 as not reproducible (see item 35).
 
-Result:
+Result: PASS (2026-11-16): the bug is confirmed on build 6. The expired card is hard to read.
 
 ### 22. EXP-12 — AFTER: the expired card keeps its text at full contrast (06-06, D1)
 
@@ -277,7 +277,7 @@ Steps: the same account and request on the new build.
 
 Expected: name, topic, `Earnings`, the amount and the date read at full contrast; the card has a darker fill and a fainter border; the photo is dimmed; `EXPIRED` sits in a pill. Tapping the card still opens the read-only decision screen. An open (not expired) card looks as it did.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 23. EXP-15 — the expert hub has no online dot, and the client hub keeps its dot (06-06, U2)
 
@@ -287,7 +287,7 @@ Steps: Expert mode > Profile hub: look at the avatar card at the top, and open t
 
 Expected: the expert hub avatar and the self-preview show no dot, no ring and no replacement text. The client hub avatar shows its online dot exactly as before.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 24. EXP-14 — Client Profile shows each session in its own currency (06-08, D5)
 
@@ -297,7 +297,7 @@ Steps: as the test expert, open the Client Profile of a test client who has one 
 
 Expected: each history row shows its own currency (`CA$…` for the CAD session, `$…` for the USD session), never a converted or summed figure; the cancelled row shows `—`. There is no earnings total anywhere on the screen.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 25. EXP-18 — the expert Booking Summary shows the booking ID and it matches Android (06-08)
 
@@ -307,7 +307,7 @@ Steps: as the test expert, open any booking's Booking Summary. Note the line und
 
 Expected: the last line of the client header reads `ID: #A1B2C3D4` (the first 8 characters of the booking id, upper-case, selectable by long-press); it appears at once, before the details load; the Android summary shows the same 8 characters for that booking.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 26. EXP-16 — a 6,000-character paste stops at 5,000 with a red counter (06-07, LT1)
 
@@ -317,7 +317,7 @@ Steps: as the test expert, open a past session's My Note and paste about 6,000 c
 
 Expected: the text stops at 5,000 and no emoji is split; the counter reads `5,000 / 5,000` in the error colour; Save still works. Counters from 4,500 show `{n} / 5,000` muted, with the number grouped for the device locale.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 27. EXP-16 — a whitespace-only note saves as empty (06-07, EM2)
 
@@ -327,7 +327,7 @@ Steps: in My Note, select all text and replace it with spaces and a blank line o
 
 Expected: Save works; the field then shows empty with the placeholder; reopening shows an empty note. A note with real text is saved exactly as typed, including leading and trailing spaces.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 28. EXP-16 — Back asks `Discard changes?` when there are edits, and pops at once when there are none (06-07, D4)
 
@@ -337,7 +337,7 @@ Steps: (a) open My Note, change nothing, tap the Back button. (b) Open it again,
 
 Expected: (a) the screen pops at once, no prompt. (b) a centred alert `Discard changes?` / `Your changes to this note won't be saved.` with `Keep editing` (stays) and `Discard` (leaves, the edits are lost). (c) no prompt after a successful save. Back also asks while a save is still in flight.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 29. EXP-16 — a left-edge swipe never pops the note screen, with or without edits (06-07, D4)
 
@@ -347,7 +347,7 @@ Steps: on My Note with no edits, swipe from the left edge of the screen. Then ty
 
 Expected: the swipe never pops the screen, with or without edits. Back with no edits pops at once, and Back with edits asks the prompt. A swipe that pops the screen is a failure of plan 06-07, not a choice to make here.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 30. EXP-16 — the counter stays above the keyboard near the cap (06-07, OV2, LT1)
 
@@ -357,7 +357,7 @@ Steps: in My Note with a note near 4,600 characters, tap in the editor so the ke
 
 Expected: the counter `{n} / 5,000` stays visible above the keyboard (not hidden behind it) and updates as you type; the keyboard can be dismissed with the toolbar button.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 31. EXP-16 — the editor shows the cut text when a keystroke or paste is truncated and the stored text does not change (06-07, WINDOWS #36)
 
@@ -367,7 +367,7 @@ Steps: in My Note, type or paste until the text is exactly 5,000 characters, the
 
 Expected: when the keystroke or paste is cut at 5,000 and the stored text does not change, the TextEditor shows the truncated text (the extra characters do not appear on screen and the cursor stays where it was). If the editor shows the extra characters while the counter reads `5,000 / 5,000`, that is a bug in plan 06-07 to fix before the release: record `FAIL (editor shows N extra characters)`.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 32. EXP-17 — the Android topic editor has the CAD | USD picker (06-09, Android)
 
@@ -377,7 +377,7 @@ Steps: in the Android app create a topic, pick USD, type `12.50`, switch to CAD 
 
 Expected: a `CAD | USD` row sits above the price field under `Currency`; picking USD shows the conversion-fee notice (the same text as item 4) and the helper minimum in US dollars; `12.50` survives every switch; the paid USD topic shows the row disabled on USD with the lock caption (the same text as item 3); the free topic can switch.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 33. PO1 — every Phase 6 change in its normal filled state (all plans)
 
@@ -387,7 +387,7 @@ Steps: with real, filled data (not the empty or error states), look at each of t
 
 Expected: nothing is cut off, overlaps another element or looks out of place; spacing around the new ID line and the counter is even. Add anything odd to Result.
 
-Result:
+Result: PASS (2026-11-16)
 
 ### 34. Assumption — the expert's own public-profile preview shows no online dot (06-06, Open Question 5)
 
@@ -399,7 +399,7 @@ Steps: open the self-preview from the Expert Profile hub and compare with how a 
 
 Expected: judge whether a preview with no dot is what you want.
 
-Result: (KEEP, or CHANGE (what))
+Result: KEEP (2026-11-16)
 
 ### 35. Assumption — EXP-12 is only LIKELY: is the expired card a real problem on build 6? (06-06)
 
@@ -411,4 +411,4 @@ Steps: use the results of items 21 and 22.
 
 Expected: say whether the before-state was a real readability problem and whether the after-state is acceptable.
 
-Result: (KEEP, or CHANGE (what))
+Result: KEEP (2026-11-16): the before-state on build 6 was a real readability problem (item 21), and the after-state is acceptable (item 22). EXP-12 closes on item 22.

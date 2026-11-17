@@ -5,15 +5,18 @@ titles: json
 findings:
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: accepted
+    note: "Accepted by the user in UAT 2026-11-16. The server's 409 ALREADY_PROCESSED guard (device-checked in checklist item 19) prevents any wrong charge; the misleading Accept/Decline screen on a push-opened expired or settled request stays as is."
     title: "Expired or already-settled request opened from a push still shows Accept and Decline"
   - id: WR-02
     severity: warning
     disposition: open
+    note: "To fix in Phase 6: confirmed on device in UAT 2026-11-16 (every free topic opens on a blank currency and fails to save). Gap G-06-1-currency in 06-UAT.md."
     title: "Legacy free topic with no stored currency opens with an empty-string currency and cannot be saved"
   - id: WR-03
     severity: warning
-    disposition: open
+    disposition: accepted
+    note: "Accepted by the user in UAT 2026-11-16: a price of 1,000 or more is unlikely. A reasonable maximum price (none exists today in the iOS rules or the backend) is logged as a deferred follow-up in 06-UAT.md."
     title: "A pasted grouped price (\"12,000\") is silently read as 12.00"
   - id: WR-04
     severity: warning

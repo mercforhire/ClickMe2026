@@ -13,8 +13,9 @@ import SwiftUI
 /// Display-only model for the confirmation screen: the client side of an
 /// accepted booking request. All fields are pre-formatted strings intended to
 /// be rendered verbatim, built by
-/// `ExpertBookingConfirmationContent.confirmation(...)`. Raw dates for the
-/// calendar sheet live in `calendarPayload`.
+/// `ExpertBookingConfirmationContent.confirmation(...)`. The calendar event
+/// (title, notes and raw dates) lives in `calendarPayload`, the plain value
+/// the EventKit sheet takes.
 struct BookingConfirmation {
     let clientName: String
     let clientImageURL: String
@@ -24,9 +25,12 @@ struct BookingConfirmation {
     let duration: String // e.g. "30 min"
     let meetingTypeLabel: String // e.g. "In-App Voice"
     let meetingTypeIcon: String // SF Symbol name
-    let calendarTitle: String // e.g. "ClickMe · Career coaching with Jane D."
-    let calendarNotes: String // meeting type, then the client's message
     let calendarPayload: BookingCalendarPayload
+
+    /// e.g. "ClickMe · Career coaching with Jane D."
+    var calendarTitle: String { calendarPayload.title }
+    /// The meeting type, then the client's message.
+    var calendarNotes: String { calendarPayload.notes }
 }
 
 // MARK: - Booking Confirmed View
@@ -90,7 +94,7 @@ struct BookingConfirmedView: View {
         }
         .onAppear { viewModel.runEntryAnimation() }
         .sheet(isPresented: $showCalendarEditor) {
-            CalendarEventEditorSheet(booking: booking) {
+            CalendarEventEditorSheet(event: booking.calendarPayload) {
                 showCalendarEditor = false
             }
             .ignoresSafeArea()

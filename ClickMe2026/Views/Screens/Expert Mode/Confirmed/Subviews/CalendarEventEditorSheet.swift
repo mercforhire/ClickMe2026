@@ -9,11 +9,14 @@ import EventKit
 import EventKitUI
 import SwiftUI
 
-/// Presents Apple's system `EKEventEditViewController` pre-filled from a
-/// `BookingConfirmation`: the title `ClickMe · {topic} with {client name}`,
-/// the booking's start and end, notes holding the meeting type and the
-/// client's message, and no location (EXP-10, D-13). The user sees the native "New Event" sheet and
-/// taps "Add" (or edits first) to write it into their default calendar.
+/// Presents Apple's system `EKEventEditViewController` pre-filled from a plain
+/// `BookingCalendarPayload` (title, notes, start, end), so Booking Confirmed
+/// and the summary screens share one sheet (EXP-10, D-13,
+/// G-06-1-summary-calendar). Booking Confirmed's event is titled
+/// `ClickMe · {topic} with {client name}` with the meeting type and the
+/// client's message as notes, and has no location. The user sees the native
+/// "New Event" sheet and taps "Add" (or edits first) to write it into their
+/// default calendar.
 ///
 /// Notes:
 /// - Requires `NSCalendarsWriteOnlyAccessUsageDescription` in Info.plist
@@ -21,7 +24,7 @@ import SwiftUI
 /// - `EKEventEditViewController` requests access itself on first use; we
 ///   don't need to pre-prompt.
 struct CalendarEventEditorSheet: UIViewControllerRepresentable {
-    let booking: BookingConfirmation
+    let event: BookingCalendarPayload
     let onDismiss: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -33,7 +36,7 @@ struct CalendarEventEditorSheet: UIViewControllerRepresentable {
         let controller = EKEventEditViewController()
         controller.eventStore = store
         controller.editViewDelegate = context.coordinator
-        controller.event = Self.makeEvent(booking: booking, in: store)
+        controller.event = Self.makeEvent(event, in: store)
         return controller
     }
 
@@ -41,16 +44,16 @@ struct CalendarEventEditorSheet: UIViewControllerRepresentable {
 
     // MARK: - Event construction
 
-    static func makeEvent(booking: BookingConfirmation, in store: EKEventStore) -> EKEvent {
-        let event = EKEvent(eventStore: store)
-        event.title = booking.calendarTitle
-        event.startDate = booking.calendarPayload.startDate
-        event.endDate = booking.calendarPayload.endDate
-        event.notes = booking.calendarNotes
+    static func makeEvent(_ event: BookingCalendarPayload, in store: EKEventStore) -> EKEvent {
+        let ekEvent = EKEvent(eventStore: store)
+        ekEvent.title = event.title
+        ekEvent.startDate = event.startDate
+        ekEvent.endDate = event.endDate
+        ekEvent.notes = event.notes
         // 15-minute reminder mirrors the "starting now" window used
         // elsewhere in the app.
-        event.addAlarm(EKAlarm(relativeOffset: -15 * 60))
-        return event
+        ekEvent.addAlarm(EKAlarm(relativeOffset: -15 * 60))
+        return ekEvent
     }
 
     // MARK: - Coordinator

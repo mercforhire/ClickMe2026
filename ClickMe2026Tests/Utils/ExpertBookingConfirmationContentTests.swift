@@ -131,6 +131,27 @@ struct ExpertBookingConfirmationContentTests {
 
     // MARK: Event
 
+    @Test("the plain event value carries the built title, notes and window")
+    func payloadCarriesTitleAndNotes() {
+        let booking = ExpertBookingConfirmationContent.confirmation(
+            clientName: "Jane D.",
+            clientImageURL: nil,
+            topic: "Career coaching",
+            start: start,
+            end: end60,
+            meetingType: .inAppVoice,
+            clientMessage: "Hello"
+        )
+        #expect(booking.calendarPayload == BookingCalendarPayload(
+            title: "ClickMe \u{00B7} Career coaching with Jane D.",
+            notes: "In-App Voice\nHello",
+            startDate: start,
+            endDate: end60
+        ))
+        #expect(booking.calendarTitle == booking.calendarPayload.title)
+        #expect(booking.calendarNotes == booking.calendarPayload.notes)
+    }
+
     @Test("event carries the built title, notes and window, no location, one 15-minute alert")
     func event() {
         let booking = ExpertBookingConfirmationContent.confirmation(
@@ -142,7 +163,7 @@ struct ExpertBookingConfirmationContentTests {
             meetingType: .inAppVoice,
             clientMessage: "Hello"
         )
-        let event = CalendarEventEditorSheet.makeEvent(booking: booking, in: EKEventStore())
+        let event = CalendarEventEditorSheet.makeEvent(booking.calendarPayload, in: EKEventStore())
         #expect(event.title == "ClickMe \u{00B7} Career coaching with Jane D.")
         #expect(event.notes == "In-App Voice\nHello")
         #expect(event.startDate == start)

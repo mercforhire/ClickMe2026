@@ -96,9 +96,12 @@ enum ExpertBookingConfirmationContent {
             duration: durationText(start: start, end: end),
             meetingTypeLabel: meetingTypeLabel(meetingType),
             meetingTypeIcon: meetingTypeIcon(meetingType),
-            calendarTitle: calendarTitle(topic: topic, clientName: clientName),
-            calendarNotes: calendarNotes(meetingType: meetingType, clientMessage: clientMessage),
-            calendarPayload: BookingCalendarPayload(startDate: start, endDate: end)
+            calendarPayload: BookingCalendarPayload(
+                title: calendarTitle(topic: topic, clientName: clientName),
+                notes: calendarNotes(meetingType: meetingType, clientMessage: clientMessage),
+                startDate: start,
+                endDate: end
+            )
         )
     }
 

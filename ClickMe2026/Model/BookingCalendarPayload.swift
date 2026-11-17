@@ -7,10 +7,14 @@
 
 import Foundation
 
-/// Raw session window handed to the EventKit sheet for "Add to Calendar".
-/// Kept separate from `BookingConfirmation` so the display model stays
-/// display-only (formatted strings) and this data model owns the real dates.
-struct BookingCalendarPayload {
+/// The plain event the EventKit sheet adds: title, notes, start and end. No
+/// location; the sheet adds the 15-minute alert itself. Built by the content
+/// builders (`ExpertBookingConfirmationContent` today) so any screen can
+/// present `CalendarEventEditorSheet` without knowing the display model of
+/// the screen that built the event (G-06-1-summary-calendar).
+struct BookingCalendarPayload: Equatable {
+    let title: String
+    let notes: String
     let startDate: Date
     let endDate: Date
 }

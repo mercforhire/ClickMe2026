@@ -412,3 +412,36 @@ Steps: use the results of items 21 and 22.
 Expected: say whether the before-state was a real readability problem and whether the after-state is acceptable.
 
 Result: KEEP (2026-11-16): the before-state on build 6 was a real readability problem (item 21), and the after-state is acceptable (item 22). EXP-12 closes on item 22.
+
+---
+
+## Gap closure re-check (plans 06-11 to 06-15 and 06-18)
+
+UAT Test 1 of this checklist found three gaps: `G-06-1-currency` (item 4 and item 8: a free topic opened on a blank currency segment and Save failed), `G-06-1-card-cents` (item 1: the Topics tab cards dropped the cents) and `G-06-1-summary-calendar` (item 17: Add to Calendar was wanted on the Booking Summary screens too, with Android mirroring it). Plans 06-11 to 06-15 and 06-18 fixed them in code, and these items re-check items 1, 4, 8 and 17 on the fixed build, plus the regressions the fixes could cause. Record each Result as `PASS`, `FAIL (what happened)` or `SKIPPED (why)`, with the date. The 35 Results above stay as recorded; nothing here edits them, and nothing here ticks a box in `REQUIREMENTS.md` (`/gsd-verify-work 06` reads the new Results).
+
+### Automated evidence (gap closure)
+
+Run by plan 06-16 on 2026-11-17 at HEAD `1724c93`, simulator `iPhone 17`, Debug. The final gap-closure app commit (`git log -1 --format=%h -- ClickMe2026`) is `2a6c578` (plan 06-14); every later Phase 6 commit is tests or docs:
+
+- **Phase gate suite (the full unit suite in one xcodebuild invocation, smoke suites and the known flake skipped):** `✔ Test run with 994 tests in 95 suites passed after 8.588 seconds.` and `** TEST SUCCEEDED **` (log `/tmp/06-16-full.log`). That is 42 more tests than the 952 of plan 06-10, so no suite was dropped. Skipped: `AuthSmokeTests` and `SignupSmokeTests` hit production and were not run; `MakeABookingAvailabilityTests` is the known flaky suite (todo `2026-11-13-flaky-make-a-booking-availability-test.md`) and was run separately below.
+- **Known-flaky record run (`MakeABookingAvailabilityTests` alone, not part of the verdict):** run 1 passed: `✔ Test run with 5 tests in 1 suite passed after 0.727 seconds.` Run 2 was not needed (log `/tmp/06-16-flaky-1.log`). No Phase 6 commit touches the Make a Booking folder or its test file; the outcome is appended to the todo.
+- **Debug build:** `** BUILD SUCCEEDED **`; the only `warning:` line in the log is the build system's own `Metadata extraction skipped. No AppIntents.framework dependency found.` (log `/tmp/06-16-build.log`).
+- **Grep gates, the nine 06-10 phase gates (all PASS):**
+  - no `rateMajor` in `TopicEditorViewModel.swift` outside comments: 0 matches;
+  - no `Returns 409 if the topic has active` in `ClickMe2026`: 0 matches;
+  - no `slot: $viewModel.schedule` in `AvailabilitySettingsView.swift`: 0 matches;
+  - no `expertName` in the `Expert Mode/Confirmed` folder outside comments: 0 matches;
+  - no `replace(with:)` in `RequestDecisionView.swift`: 0 matches;
+  - no `opacity(request.isExpired` in `IncomingRequestCard.swift`: 0 matches;
+  - no `isOnline` in `ExpertProfileHomeViewModel.swift`: 0 matches;
+  - the `toolbarColorScheme(.dark, for: .navigationBar)` pin appears at least once in `AvailabilitySettingsView.swift` and at least once in `RequestDecisionView.swift`.
+- **Grep gates, one per gap (all PASS):**
+  - `G-06-1-currency`: no `hourlyRate?.currency` read in `TopicEditorViewModel.swift` outside comments (0 matches), and `func validCurrencyCode` exists in `TopicPriceRules.swift`;
+  - `G-06-1-card-cents`: `static func priceLabel(for` exists in `TopicsSetupTopicCard.swift`, and the old `guard let rate = topic.hourlyRate` is gone from it (0 matches);
+  - `G-06-1-summary-calendar`: `CalendarEventEditorSheet.swift` no longer has `let booking:` (0 matches); the expert Booking Summary and the client Upcoming Booking both present `CalendarEventEditorSheet(event:`; the expert Booking Summary still has exactly one `.sheet(isPresented: $showCancellationSheet)` and two or more `.sheet(` lines in all; the client Session Summary folder has no `CalendarEventEditorSheet` (0 files); and `fun isCalendarEventOffered` exists in the Android `CalendarIntent.kt`.
+- **Android (plan 06-15):** one commit, `69c4e159` in `ClickMe_Android` (base `da4986206f01875dc718dd313cb6642b7bae1f48`, eight files). Its Gradle result, from the 06-15 SUMMARY and not re-run here: `./gradlew :app:testDevDebugUnitTest` on `CalendarIntentTest`, `BookingConfirmedScreenTest`, `ExpertBookingSummaryScreenTest` and `UpcomingBookingScreenTest` plus `ktlintCheck` was `BUILD SUCCESSFUL`, 0 failures, 0 skipped.
+- **Android topic card (plan 06-12, read-only check, no Android edit):** the Android Topics card builds its price through `TopicPrice.resolveCurrency` and `PriceDisplay`/`Money.format` (two fraction digits) and never reads the server's `price.label`, so it already shows the cents and needed no mirror. Its USD symbol follows the device region (recorded in the USD-symbol todo).
+- **Backend:** the gap closure deployed nothing. Plan 06-17 decides the optional backend hardening and deploys nothing, so production still sends `price.currency: ""` for a free topic stored with no currency, which is exactly the case R2 and R3 exercise.
+- **What the automation does not cover:** every item below.
+
+### Re-check items

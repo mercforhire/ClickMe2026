@@ -16,6 +16,8 @@ Seen during Phase 5 (2026-11-13): it failed in 1 of 3 isolated runs and once in 
 
 Seen in Phase 6 plan 06-10 (2026-11-16): run 1 failed at MakeABookingAvailabilityTests.swift:154, run 2 passed; Phase 6 did not touch Make a Booking.
 
+Seen in Phase 6 plan 06-16 (2026-11-17): run 1 passed; the gap closure did not touch Make a Booking.
+
 ## What to look at
 
 The test starts two loads for the same month with two unstructured `Task`s (`older`, `newer`) and makes the first request the stub sees slow (`Thread.sleep(0.3)` when `counter.next() == 1`), tagging each response with its request number. It assumes the first request to reach the stub belongs to the older load and the second to the newer one. Nothing guarantees which `Task` reaches the stub first, so on a run where the newer load's request is number 1, the slow one is the newer load and `"Zone/1"` wins, which is what the failure shows. This is an unconfirmed hypothesis from reading the test, not a diagnosis; confirm by running the test in a loop and logging which load issues request 1.

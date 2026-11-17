@@ -291,6 +291,43 @@ struct TopicCurrencyTests {
         #expect(vm.pickableCurrencies == vm.allowedCurrencies + ["EUR"])
     }
 
+    // MARK: - Seed text and selected currency agree (06-REVIEW WR-01)
+
+    @Test("a blank-currency topic on a JPY-default account seeds in the currency it selects (CAD), and saves untouched")
+    func blankCurrencySeedAgreesWithSelectionOnJPYDefault() throws {
+        let me = try MeDataFixtures.me(defaultCurrency: "JPY", allowedCurrencies: ["CAD", "USD"])
+        let vm = TopicEditorViewModel(topic: try Self.topic(Self.paidBlankWire), meProvider: { me })
+        #expect(vm.currency == "CAD")
+        #expect(vm.defaultCurrency == "CAD")
+        #expect(vm.rate == "125.50")
+        #expect(TopicPriceRules.parseMinor(vm.rate, currency: vm.currency) == 12550)
+        let saved = vm.validate()
+        #expect(saved?.hourlyRateAmount == 12550)
+        #expect(saved?.currency == "CAD")
+    }
+
+    @Test("a new topic on a JPY-default account starts on the first allowed currency, and defaultCurrency says so")
+    func newTopicStartsOnFirstAllowedCurrencyOnJPYDefault() throws {
+        let me = try MeDataFixtures.me(defaultCurrency: "JPY", allowedCurrencies: ["CAD", "USD"])
+        let vm = TopicEditorViewModel(topic: nil, meProvider: { me })
+        #expect(vm.currency == "CAD")
+        #expect(vm.defaultCurrency == "CAD")
+        #expect(vm.rate == "")
+        #expect(vm.pickableCurrencies == ["CAD", "USD"])
+    }
+
+    @Test("a stored USD topic keeps USD, its 125.50 seed and its lock on a JPY-default account (D-18, D-19)")
+    func storedUSDTopicIsUnchangedOnJPYDefault() throws {
+        let me = try MeDataFixtures.me(defaultCurrency: "JPY", allowedCurrencies: ["CAD", "USD"])
+        let vm = TopicEditorViewModel(topic: try Self.topic(Self.paidUSD), meProvider: { me })
+        #expect(vm.currency == "USD")
+        #expect(vm.rate == "125.50")
+        #expect(vm.isCurrencyLocked)
+        let saved = vm.validate()
+        #expect(saved?.hourlyRateAmount == 12550)
+        #expect(saved?.currency == "USD")
+    }
+
     // MARK: - Fixtures
 
     private static func decoder() -> JSONDecoder {

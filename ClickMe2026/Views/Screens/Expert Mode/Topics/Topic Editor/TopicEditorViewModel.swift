@@ -89,14 +89,14 @@ final class TopicEditorViewModel: ObservableObject {
     /// `PRICE_BELOW_MINIMUM`, so we're not authoritative here. Only a seed
     /// for a new topic; an existing topic keeps its own `currency`.
     var defaultCurrency: String {
-        Self.accountDefaultCurrency(userManager.me)
+        Self.accountDefaultCurrency(currentMe)
     }
 
     /// Currencies a topic may be priced in: `pricing_limits.allowed_currencies`,
     /// or just the default currency when the backend omits the key (older
     /// server, or `/me` not loaded yet). See `docs/ios/USD-TOPIC-PRICING.md` §1.
     var allowedCurrencies: [String] {
-        Self.allowedCurrencies(in: userManager.me)
+        Self.allowedCurrencies(in: currentMe)
     }
 
     /// Currencies shown in the picker: `allowedCurrencies` plus the current
@@ -150,6 +150,14 @@ final class TopicEditorViewModel: ObservableObject {
 
     private let api: ClickMeAPI
     private let userManager: UserManager
+    /// Reads the account's `/me` for the currency rules and the price floor.
+    /// The default reads the signed-in `userManager.me` live, so a `/me` that
+    /// lands after the editor opens is used. Tests inject a fixed `MeData`:
+    /// `UserManager`'s private init rewires the shared API client's token
+    /// refresher and connects the shared realtime socket, so a test cannot
+    /// build its own instance (06-REVIEW IN-07).
+    private let meProvider: @MainActor () -> MeData?
+    private var currentMe: MeData? { meProvider() }
 
     // MARK: Price seed (D-19)
 
@@ -210,8 +218,11 @@ final class TopicEditorViewModel: ObservableObject {
     init(
         topic: ExpertTopicItem?,
         api: ClickMeAPI = .shared,
-        userManager: UserManager = .shared
+        userManager: UserManager = .shared,
+        meProvider: (@MainActor () -> MeData?)? = nil
     ) {
+        let meProvider = meProvider ?? { userManager.me }
+        let me = meProvider()
         self.isEditing = topic != nil
         self.title = topic?.title ?? ""
         self.descriptionText = topic?.description ?? ""
@@ -228,7 +239,7 @@ final class TopicEditorViewModel: ObservableObject {
         // counts as none, G-06-1-currency), or a new topic, takes the default.
         let minorAmount = topic?.hourlyRate?.amount ?? topic?.price.amount
         let storedCurrency = topic?.storedCurrency
-        let accountDefault = Self.accountDefaultCurrency(userManager.me)
+        let accountDefault = Self.accountDefaultCurrency(me)
         let seedCurrency = storedCurrency ?? accountDefault
         let seed = minorAmount.map { Self.editableAmount(minorUnits: $0, currency: seedCurrency) } ?? ""
         self.rate = seed
@@ -236,7 +247,7 @@ final class TopicEditorViewModel: ObservableObject {
         self.seededRateMinor = minorAmount
         self.currency = Self.resolveInitialCurrency(
             topic: topic,
-            defaultCurrency: Self.newTopicDefaultCurrency(in: userManager.me)
+            defaultCurrency: Self.newTopicDefaultCurrency(in: me)
         )
         self.isCurrencyLocked = Self.isCurrencyLocked(topic: topic)
         self.durationMinutes = topic?.durationMins ?? 60
@@ -247,6 +258,7 @@ final class TopicEditorViewModel: ObservableObject {
         self.errorMessage = nil
         self.api = api
         self.userManager = userManager
+        self.meProvider = meProvider
     }
 
     /// Preview seam — installs canned tag list without hitting the network.
@@ -417,7 +429,7 @@ final class TopicEditorViewModel: ObservableObject {
         // (`rateMinor == 0`) — the floor doesn't apply to free sessions
         // per spec §4. The floor is looked up for the currency chosen
         // above, so an untouched USD topic is checked against the USD floor.
-        if let limit = userManager.me?.pricingLimits?.minSessionAmount {
+        if let limit = currentMe?.pricingLimits?.minSessionAmount {
             let floor = limit.minMinorUnits(for: currency)
             if TopicPriceRules.isBelowFloor(minor: rateMinor, floorMinor: floor) {
                 withAnimation {
@@ -452,7 +464,7 @@ final class TopicEditorViewModel: ObservableObject {
         TopicPriceRules.isBelowFloor(
             rateText: rate,
             currency: currency,
-            floorMinor: userManager.me?.pricingLimits?.minSessionAmount.minMinorUnits(for: currency)
+            floorMinor: currentMe?.pricingLimits?.minSessionAmount.minMinorUnits(for: currency)
         )
     }
 
@@ -461,7 +473,7 @@ final class TopicEditorViewModel: ObservableObject {
     /// field blank. `nil` while `pricingLimits` is loading so we don't
     /// render a placeholder that later shifts.
     var minPriceHint: String? {
-        guard let limit = userManager.me?.pricingLimits?.minSessionAmount else { return nil }
+        guard let limit = currentMe?.pricingLimits?.minSessionAmount else { return nil }
         let floor = limit.minMinorUnits(for: currency)
         return "Leave blank or enter 0 for a free session — otherwise min \(Self.formatMinorUnits(floor, currency: currency))."
     }

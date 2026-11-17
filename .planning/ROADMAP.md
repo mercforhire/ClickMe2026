@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 3: Booked Sessions and Joining** - Clients and experts can respond to, cancel, reschedule and join booked sessions from every screen that offers it
 - [ ] **Phase 4: Booking, Payment and Discovery** - Clients can find an expert, book and pay without resubmits, unintended holds or misleading errors
 - [x] **Phase 5: Signup, Mode Switch and Account** - Signup, becoming an expert and account settings save correctly and tell the truth (completed 2026-11-15)
-- [ ] **Phase 6: Expert Mode** - Experts can price, schedule and run their bookings without wrong amounts or dead ends
+- [x] **Phase 6: Expert Mode** - Experts can price, schedule and run their bookings without wrong amounts or dead ends (completed 2026-11-17)
 - [ ] **Phase 7: Chat** - Messages, block state, unread and read state behave reliably and clearly
 - [ ] **Phase 8: Release** - One verified iOS build ships to TestFlight and the App Store after the backend is live
 
@@ -367,7 +367,7 @@ Plans:
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.
   5. The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits.
 
-**Plans**: 18/18 plans executed: 10/10 executed in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change), plus 8 gap-closure plans (06-11 to 06-18) in 7 waves from UAT 06 Test 1 (gaps G-06-1-currency, G-06-1-card-cents, G-06-1-summary-calendar)
+**Plans**: 18/18 plans complete: 10/10 executed in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change), plus 8 gap-closure plans (06-11 to 06-18) in 7 waves from UAT 06 Test 1 (gaps G-06-1-currency, G-06-1-card-cents, G-06-1-summary-calendar)
 
 Plans:
 **Wave 1**
@@ -463,7 +463,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
-| 6. Expert Mode | 18/18 | In Progress | - |
+| 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |
 
@@ -495,3 +495,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-16 during /gsd-verify-work 06 session completion
 **Follow-ups:**
 - [ ] Test 6: Set a reasonable maximum topic price (iOS, Android and backend validation), which would also bound the WR-03 grouped-paste misread (deferred 2026-11-16)
+
+### Phase 999.4: Follow-up — Phase 06 deferred UAT follow-up: Test 9 (BACKLOG)
+
+**Goal:** Resolve the UAT checkpoint deferred during Phase 06 verification
+**Source phase:** 06
+**Deferred at:** 2026-11-17 during /gsd-verify-work 06 session completion
+**Follow-ups:**
+- [ ] Test 9: Run the two iOS 26 Liquid Glass readability checks (checklist items 13 and 16: Availability Save, and the Booking Confirmed back chevron and title, with Reduce Transparency and Liquid Glass Tinted) before Phase 8. Item 12 (09:15 and 24:00 slot edges) is accepted on AvailabilitySlotRulesTests. (deferred 2026-11-17)

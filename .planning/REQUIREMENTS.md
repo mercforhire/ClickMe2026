@@ -74,26 +74,26 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Expert Mode
 
-- [ ] **EXP-01** [E1]: Deleting a topic asks for confirmation
+- [x] **EXP-01** [E1]: Deleting a topic asks for confirmation
 - [x] **EXP-02** [E2] **[major]**: Expert can enter a topic price with decimals (e.g. 12.50) in the topic's currency
 - [x] **EXP-03** [E3] **[major]**: Editing a topic keeps the topic's own currency
-- [ ] **EXP-04** [E4]: Expert can clear a topic's icon or description
-- [ ] **EXP-05** [E5]: Cancelling the availability time-range picker reverts the change
-- [ ] **EXP-06** [E6]: Availability never produces an end time the picker can't show (24:00 displays correctly or is capped)
-- [ ] **EXP-07** [E7]: An off-grid stored time (e.g. 09:15) still shows as selected in the picker
-- [ ] **EXP-08** [E8]: The stale 409 comment on topic delete is corrected
-- [ ] **EXP-09** [E11]: Accepting a request shows the booking-confirmed screen
+- [x] **EXP-04** [E4]: Expert can clear a topic's icon or description
+- [x] **EXP-05** [E5]: Cancelling the availability time-range picker reverts the change
+- [x] **EXP-06** [E6]: Availability never produces an end time the picker can't show (24:00 displays correctly or is capped)
+- [x] **EXP-07** [E7]: An off-grid stored time (e.g. 09:15) still shows as selected in the picker
+- [x] **EXP-08** [E8]: The stale 409 comment on topic delete is corrected
+- [x] **EXP-09** [E11]: Accepting a request shows the booking-confirmed screen
 - [x] **EXP-10** [E12]: The calendar event created from a confirmed booking is titled with the client's name
 - [x] **EXP-11** [E13] **[major]**: The expert cancel screen states the client's refund correctly — policy per decision Q2
-- [ ] **EXP-12** [E14] (likely): Expired request cards stay readable (no 55% dim on text)
+- [x] **EXP-12** [E14] (likely): Expired request cards stay readable (no 55% dim on text)
 - [x] **EXP-13** [E15] **[major]**: Reschedule on an expert Upcoming card opens the expert reschedule flow
-- [ ] **EXP-14** [E16]: The expert-side Client Profile shows real earnings in the booking currency
+- [x] **EXP-14** [E16]: The expert-side Client Profile shows real earnings in the booking currency
   - Note (2026-11-10): the Client Profile *history* rows were delivered early in plan 02-15 (Android parity, user decision at the tracer gate): `earnings_breakdown.net_amount` in the breakdown currency, gated to pending_approval / confirmed / pending_reschedule / in_progress / completed, dash otherwise. Device check pending in 02-12. Phase 6 planning should cover any remaining Client Profile earnings surface (for example the relationship summary) rather than redo the history rows.
-- [ ] **EXP-15** [E17]: The expert hub online dot reflects real presence, or is removed
-- [ ] **EXP-16** [E18]: The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits
+- [x] **EXP-15** [E17]: The expert hub online dot reflects real presence, or is removed
+- [x] **EXP-16** [E18]: The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits
   - Note (2026-11-16): reworded from "trims whitespace" by user decision during Phase 6 planning, to match 06-CONTEXT D-19 (Android 16.4 D-01 to D-04). The behaviour planned in 06-07 is unchanged.
 - [x] **EXP-17** [new, user request 2026-11-09]: When creating a topic, the expert can choose its currency from CAD or USD (default CAD), on both iOS and Android; the minimum-price hint and validation follow the chosen currency, and editing keeps the topic's currency. Backend already accepts `hourly_rate.currency` (seeded `currencies` table, per-currency floors in `src/utils/pricing.js`), so no backend change is expected
-- [ ] **EXP-18** [new, user request 2026-11-10]: The expert Booking Summary screen shows the booking ID, on both iOS and Android. Android already shows `ID: #…` (`expert_summary_id`, `ExpertSummaryCard.kt`); iOS adds it in the same format, and Android is checked to match the client screen's short-ID rule (BOOK-20)
+- [x] **EXP-18** [new, user request 2026-11-10]: The expert Booking Summary screen shows the booking ID, on both iOS and Android. Android already shows `ID: #…` (`expert_summary_id`, `ExpertSummaryCard.kt`); iOS adds it in the same format, and Android is checked to match the client screen's short-ID rule (BOOK-20)
 
 ### Chat
 
@@ -227,24 +227,24 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | SIGN-04 | Phase 5 | Complete |
 | SIGN-05 | Phase 5 | Complete |
 | SIGN-06 | Phase 5 | Complete |
-| EXP-01 | Phase 6 | Pending |
+| EXP-01 | Phase 6 | Complete |
 | EXP-02 | Phase 6 | Complete |
 | EXP-03 | Phase 6 | Complete |
-| EXP-04 | Phase 6 | Pending |
-| EXP-05 | Phase 6 | Pending |
-| EXP-06 | Phase 6 | Pending |
-| EXP-07 | Phase 6 | Pending |
-| EXP-08 | Phase 6 | Pending |
-| EXP-09 | Phase 6 | Pending |
+| EXP-04 | Phase 6 | Complete |
+| EXP-05 | Phase 6 | Complete |
+| EXP-06 | Phase 6 | Complete |
+| EXP-07 | Phase 6 | Complete |
+| EXP-08 | Phase 6 | Complete |
+| EXP-09 | Phase 6 | Complete |
 | EXP-10 | Phase 6 | Complete |
 | EXP-11 | Phase 3 | Complete |
-| EXP-12 | Phase 6 | Pending |
+| EXP-12 | Phase 6 | Complete |
 | EXP-13 | Phase 3 | Complete |
-| EXP-14 | Phase 6 | Pending |
-| EXP-15 | Phase 6 | Pending |
-| EXP-16 | Phase 6 | Pending |
+| EXP-14 | Phase 6 | Complete |
+| EXP-15 | Phase 6 | Complete |
+| EXP-16 | Phase 6 | Complete |
 | EXP-17 | Phase 6 | Complete |
-| EXP-18 | Phase 6 | Pending |
+| EXP-18 | Phase 6 | Complete |
 | CHAT-01 | Phase 7 | Pending |
 | CHAT-02 | Phase 7 | Pending |
 | CHAT-03 | Phase 7 | Pending |

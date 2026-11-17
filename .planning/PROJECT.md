@@ -34,6 +34,7 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - ✓ Signup and mode switch: S1, S3–S7, plus S2 optional province (D-05 to D-07) — Phase 5 (device UAT 2026-11-14/15; S3 resume check deferred, unit-tested)
 - ✓ Settings / profile / account: T1–T7, plus T8 remember-login-email (D-14) — Phase 5 (device UAT 2026-11-14/15)
 - ✓ Shared iOS plumbing: C1, C2, C5, C9 (call overtime, join window, Agora failure, provider detection), B10, B14, B15, B18 (money formatter, paid 6-day cap, payment_actions route, live booking.update), P6 (one error copy table), H9 (no banner for the open chat), N1–N4 (push routing, mode switch, request push, logout unregister) — Phase 2 (device UAT 2026-11-16; CALL-01 end + 60 and the offline cold-launch re-route accepted on unit evidence by developer override)
+- ✓ Expert mode: E1–E8, E11, E12, E14, E16–E18 (topic price, currency and cents, availability edits, request accept and Booking Confirmed, Add to Calendar on Booking Confirmed and both Booking Summary screens, expired cards, client earnings, booking notes) — Phase 6 (device UAT 2026-11-16/17; EXP-07 slot edges accepted on unit evidence, two iOS 26 glass checks deferred to before Phase 8). E13 and E15 shipped in Phase 3
 
 ### Active
 
@@ -43,7 +44,7 @@ Live iOS users can book, pay for, join and finish a session without the app cutt
 - [ ] Client bookings: B1–B19 except B10, B14, B15, B18 (done in Phase 2); incl. critical B6 reschedule response
 - [ ] Payments: P1, P2, P3, P5 (P6 done in Phase 2)
 - [ ] Explore / profile / favorites / reviews: X1–X6 (likely X2)
-- [ ] Expert mode: E1–E8, E11–E18 (likely E14)
+- [ ] Before Phase 8: run the two deferred iOS 26 Liquid Glass readability checks from Phase 6 (checklist items 13 and 16)
 - [ ] Chat: H1–H8 (H7 needs backend, H8 needs re-test; H9 done in Phase 2)
 - [ ] Backend fixes still open: K6, K7, K15 and Q2 refund retry (BACK-19) are deployed but await real-money checks in Phase 4; K8 and K13 are not delivered (wave 3c parked until SIGN-06)
 - [ ] Backend: handle card removal made inside Stripe's PaymentSheet (T-01-32 accepted risk; must ship before the iOS release)
@@ -119,4 +120,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-11-16 after Phase 2*
+*Last updated: 2026-11-17 after Phase 6*

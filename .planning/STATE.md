@@ -2,17 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
+current_plan: 18
 status: executing
-stopped_at: Completed 06-16-PLAN.md
-last_updated: "2026-11-17T05:44:07.569Z"
+stopped_at: Completed 06-17-PLAN.md
+last_updated: "2026-11-17T05:46:30.494Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 06 execution started
-state_head: af249a2ac4ce08e3b15dc938b58437202c0b8620
+state_head: 1bc24d0f720fe1a8376c9131fe2d4eca4fd3848f
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 115
-  completed_plans: 114
+  completed_plans: 115
   percent: 38
 ---
 
@@ -28,9 +29,10 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 06-16 complete; 17 of 18 plans have a SUMMARY. Remaining: 06-17 (optional backend null-currency decision; deploys nothing). Device re-check R1 to R8 awaits the user's Results in 06-DEVICE-UAT-CHECKLIST.md
-Status: Ready to execute
-Last activity: 2026-11-17 — 06-16 complete
+Current Plan: 18
+Total Plans in Phase: 18
+Status: 06-17 complete (user skipped the optional backend null currency); 18 of 18 plans have a SUMMARY. Device re-check R1 to R8 awaits the user's Results in 06-DEVICE-UAT-CHECKLIST.md, then /gsd-verify-work 06
+Last activity: 2026-11-17 — 06-17 complete
 
 Progress: [████░░░░░░] 38%
 
@@ -171,6 +173,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P18 | 9 min | 2 tasks | 5 files |
 | Phase 06 P14 | 8 min | 2 tasks | 4 files |
 | Phase 06 P16 | 15min | 2 tasks | 2 files |
+| Phase 06 P17 | 3 min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -370,6 +373,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-18: the expert Booking Summary calendar sheet is presented from the content router (own presenter), so the cancellation sheet stays byte-identical; BookingCalendarEventContent holds the shared title, notes, expertEvent, clientEvent and isOffered rule, which plan 06-14 reuses
 - [Phase 06]: 06-14: client Upcoming Booking offers Add to Calendar through BookingCalendarEventContent.clientEvent and isOffered on a 60 s timeline, with the sheet on UpcomingBookingView.body; the client Session Summary stays without a calendar button; device check R5 owned by 06-16
 - [Phase 06]: 06-16: gap-closure gate passed (994 tests, clean Debug build, all grep gates); device re-check R1 to R8 appended to the Phase 6 checklist, earlier 35 Results untouched
+- [Phase 06]: 06-17: user chose skip (2026-11-17) for the optional backend null topic currency; backend untouched, no worktree or branch; the iOS fix in 06-11 closes G-06-1-currency either way, todo 2026-11-16-backend-null-topic-currency.md records the value change and the client tolerance gate to rerun first
 
 ### Pending Todos
 
@@ -470,6 +474,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-17T05:43:58.197Z
-Stopped at: Completed 06-16-PLAN.md
+Last session: 2026-11-17T05:46:20.276Z
+Stopped at: Completed 06-17-PLAN.md
 Resume file: None

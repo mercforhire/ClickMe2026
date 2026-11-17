@@ -92,7 +92,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **EXP-15** [E17]: The expert hub online dot reflects real presence, or is removed
 - [ ] **EXP-16** [E18]: The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits
   - Note (2026-11-16): reworded from "trims whitespace" by user decision during Phase 6 planning, to match 06-CONTEXT D-19 (Android 16.4 D-01 to D-04). The behaviour planned in 06-07 is unchanged.
-- [ ] **EXP-17** [new, user request 2026-11-09]: When creating a topic, the expert can choose its currency from CAD or USD (default CAD), on both iOS and Android; the minimum-price hint and validation follow the chosen currency, and editing keeps the topic's currency. Backend already accepts `hourly_rate.currency` (seeded `currencies` table, per-currency floors in `src/utils/pricing.js`), so no backend change is expected
+- [x] **EXP-17** [new, user request 2026-11-09]: When creating a topic, the expert can choose its currency from CAD or USD (default CAD), on both iOS and Android; the minimum-price hint and validation follow the chosen currency, and editing keeps the topic's currency. Backend already accepts `hourly_rate.currency` (seeded `currencies` table, per-currency floors in `src/utils/pricing.js`), so no backend change is expected
 - [ ] **EXP-18** [new, user request 2026-11-10]: The expert Booking Summary screen shows the booking ID, on both iOS and Android. Android already shows `ID: #…` (`expert_summary_id`, `ExpertSummaryCard.kt`); iOS adds it in the same format, and Android is checked to match the client screen's short-ID rule (BOOK-20)
 
 ### Chat
@@ -243,7 +243,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXP-14 | Phase 6 | Pending |
 | EXP-15 | Phase 6 | Pending |
 | EXP-16 | Phase 6 | Pending |
-| EXP-17 | Phase 6 | Pending |
+| EXP-17 | Phase 6 | Complete |
 | EXP-18 | Phase 6 | Pending |
 | CHAT-01 | Phase 7 | Pending |
 | CHAT-02 | Phase 7 | Pending |

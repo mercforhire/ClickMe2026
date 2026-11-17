@@ -39,8 +39,12 @@ findings:
     severity: info
     disposition: fixed
     title: "New tests depend on shared global state"
-open: 0
-total: 9
+  - id: IN-08
+    severity: info
+    disposition: open
+    title: "Other TopicEditorViewModel tests still rely on the shared UserManager having no /me"
+open: 1
+total: 10
 recorded: 2026-11-17T05:51:07.607Z
 ---
 
@@ -57,6 +61,7 @@ recorded: 2026-11-17T05:51:07.607Z
 | IN-05 | info | deferred | Deferred at UAT 2026-11-17: folds into WR-02 when that is picked up |
 | IN-06 | info | deferred | Deferred at UAT 2026-11-17: server allows CAD and USD only; tracked with the USD-symbol todo |
 | IN-07 | info | fixed | Fixed in quick 261117-1le (8322e9b) |
+| IN-08 | info | open | New in the 2026-11-17 re-review (c3eb1ae); prior rows carried forward |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.

@@ -1,9 +1,9 @@
 ---
-status: partial
+status: complete
 phase: 06-expert-mode
 source: [06-VERIFICATION.md]
 started: 2026-11-17T00:00:00Z
-updated: 2026-11-17T06:07:29.121Z
+updated: 2026-11-17T16:00:24.622Z
 ---
 
 Re-verification after gap closure (plans 06-11 to 06-18). The previous UAT session
@@ -53,6 +53,7 @@ result: pass
 ### 9. Items 12, 13 and 16 skipped on 2026-11-16
 expected: Either run them (09:15 and 24:00 slot edges; two iOS 26 glass checks) or accept AvailabilitySlotRulesTests as the EXP-07 evidence and record the glass checks as unchecked
 result: skipped
+reason: "Deferred follow-up: accept AvailabilitySlotRulesTests as the EXP-07 evidence for item 12; record glass checks 13 and 16 as unchecked and run them on iOS 26 before Phase 8 (user decision 2026-11-17)"
 
 ### 10. Open code-review findings (06-REVIEW-DISPOSITION.md)
 expected: A recorded disposition (fix, accept or defer) for each of the 9 open findings, at least WR-01 (editor price seed vs selected currency) and WR-02 (calendar sheet built from the isPresented optional)
@@ -69,3 +70,9 @@ skipped: 1
 blocked: 0
 
 ## Gaps
+
+## Deferred Follow-Ups
+
+- test: 9
+  idea: "Run the two iOS 26 Liquid Glass readability checks (checklist items 13 and 16: Availability Save, and the Booking Confirmed back chevron and title, with Reduce Transparency and Liquid Glass Tinted) before Phase 8. Item 12 (09:15 and 24:00 slot edges) is accepted on AvailabilitySlotRulesTests."
+  deferred_at: 2026-11-17

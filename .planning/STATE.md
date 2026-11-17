@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-18-PLAN.md
-last_updated: "2026-11-17T05:33:46.769Z"
+stopped_at: Completed 06-14-PLAN.md
+last_updated: "2026-11-17T05:38:52.101Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 06 execution started
-state_head: faefcc5b063bdbd4b686672bb9b530066d8aa952
+state_head: 20a0c53e9ae838630f33fba78be81ec119ad7413
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 115
-  completed_plans: 112
+  completed_plans: 113
   percent: 38
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 06-18 complete; 15 of 18 plans have a SUMMARY (06-15 ran early). Remaining: 06-14, 06-16, 06-17 (order 06-14 then 06-16)
+Plan: 06-14 complete; 16 of 18 plans have a SUMMARY (06-15 ran early). Remaining: 06-16, 06-17 (order 06-16 then 06-17)
 Status: Ready to execute
-Last activity: 2026-11-17 — 06-18 complete
+Last activity: 2026-11-17 — 06-14 complete
 
 Progress: [████░░░░░░] 38%
 
@@ -169,6 +169,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P12 | 6 min | 2 tasks | 4 files |
 | Phase 06 P13 | 12 min | 1 tasks | 5 files |
 | Phase 06 P18 | 9 min | 2 tasks | 5 files |
+| Phase 06 P14 | 8 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -366,6 +367,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-12: the topic card keeps US$ for USD and prices a topic with no valid stored currency in the editor's default (newTopicDefaultCurrency); the server label is used only when the amount is missing or negative
 - [Phase 06]: 06-13: CalendarEventEditorSheet takes a plain BookingCalendarPayload (title, notes, start, end); BookingConfirmation derives calendarTitle and calendarNotes from it, and plan 06-18 builds the Booking Summary button on CalendarEventEditorSheet(event:onDismiss:)
 - [Phase 06]: 06-18: the expert Booking Summary calendar sheet is presented from the content router (own presenter), so the cancellation sheet stays byte-identical; BookingCalendarEventContent holds the shared title, notes, expertEvent, clientEvent and isOffered rule, which plan 06-14 reuses
+- [Phase 06]: 06-14: client Upcoming Booking offers Add to Calendar through BookingCalendarEventContent.clientEvent and isOffered on a 60 s timeline, with the sheet on UpcomingBookingView.body; the client Session Summary stays without a calendar button; device check R5 owned by 06-16
 
 ### Pending Todos
 
@@ -466,6 +468,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-17T05:33:45.812Z
-Stopped at: Completed 06-18-PLAN.md
+Last session: 2026-11-17T05:38:51.189Z
+Stopped at: Completed 06-14-PLAN.md
 Resume file: None

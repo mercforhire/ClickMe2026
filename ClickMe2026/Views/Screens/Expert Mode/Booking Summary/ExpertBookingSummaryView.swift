@@ -43,6 +43,11 @@ struct ExpertBookingSummaryView: View {
     /// by the Cancel action button; cleared by the sheet's dismiss.
     @State private var showCancellationSheet: Bool = false
 
+    /// The calendar event captured when Add to Calendar is tapped. Non-nil
+    /// presents the calendar sheet, so a refresh while the sheet is up cannot
+    /// change the event being edited (G-06-1-summary-calendar).
+    @State private var pendingCalendarEvent: BookingCalendarPayload?
+
     /// Confirmation-dialog state for accepting the pending reschedule.
     @State private var showAcceptRescheduleConfirmation: Bool = false
     /// Alert-with-text-field state for declining the reschedule with
@@ -66,7 +71,19 @@ struct ExpertBookingSummaryView: View {
     var body: some View {
         ZStack {
             Brand.surface.ignoresSafeArea()
+            // The body chain below presents the cancellation sheet; the calendar sheet gets its own presenter here.
             content
+            .sheet(isPresented: Binding(
+                get: { pendingCalendarEvent != nil },
+                set: { if !$0 { pendingCalendarEvent = nil } }
+            )) {
+                if let event = pendingCalendarEvent {
+                    CalendarEventEditorSheet(event: event) {
+                        pendingCalendarEvent = nil
+                    }
+                    .ignoresSafeArea()
+                }
+            }
         }
         .navigationTitle("Booking Summary")
         .navigationBarTitleDisplayMode(.inline)
@@ -217,6 +234,8 @@ struct ExpertBookingSummaryView: View {
 
                 joinAndMessageSection(detail: detail)
 
+                addToCalendarSection(detail: detail)
+
                 if detail.actions.canReschedule || detail.actions.canCancel {
                     HStack(spacing: 12) {
                         if detail.actions.canReschedule {
@@ -281,6 +300,26 @@ struct ExpertBookingSummaryView: View {
                     }
                 }
                 .padding(.top, 4)
+            }
+        }
+    }
+
+    // MARK: - Add to Calendar
+
+    /// Add to Calendar sits below Message Client for a booked session that has
+    /// not ended. The 60 s timeline re-evaluates the shared offer rule so the
+    /// button leaves when the session ends, without a refresh. The tap captures
+    /// the event for the calendar sheet presented from the content router
+    /// (G-06-1-summary-calendar, EXP-10).
+    @ViewBuilder
+    private func addToCalendarSection(detail: ExpertBookingDetail) -> some View {
+        if BookingCalendarEventContent.offeredStatuses.contains(detail.status.code) {
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                if viewModel.showsAddToCalendar(at: context.date) {
+                    secondaryActionButton(icon: "calendar.badge.plus", label: "Add to Calendar") {
+                        pendingCalendarEvent = viewModel.calendarEvent
+                    }
+                }
             }
         }
     }

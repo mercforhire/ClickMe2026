@@ -14,31 +14,34 @@ import Foundation
 ///
 /// The event is titled `ClickMe · {topic} with {client name}`, the same copy
 /// as Android `booking_confirmed_calendar_title`, so both apps put identical
-/// events on an expert's calendar. Names and topics are kept exactly as
-/// received (emoji, accents, length); only leading and trailing whitespace is
-/// trimmed. A blank client reads `Client` and a blank topic reads `Session`.
+/// events on an expert's calendar. The title, notes and event are built by
+/// `BookingCalendarEventContent`, shared with the expert Booking Summary.
+/// Names and topics are kept exactly as received (emoji, accents, length);
+/// only leading and trailing whitespace is trimmed. A blank client reads
+/// `Client` and a blank topic reads `Session`.
 enum ExpertBookingConfirmationContent {
 
     /// Shown when the client's name is missing or blank.
-    static let clientFallback = "Client"
+    static let clientFallback = BookingCalendarEventContent.clientFallback
 
     /// Shown when the topic is missing or blank.
-    static let topicFallback = "Session"
+    static let topicFallback = BookingCalendarEventContent.topicFallback
 
     /// The calendar event title, for example `ClickMe · Career coaching with Jane D.`
-    /// (U+00B7 middle dot, one space each side).
+    /// (U+00B7 middle dot, one space each side). Delegates to the shared builder.
     static func calendarTitle(topic: String?, clientName: String?) -> String {
-        let topicText = trimmed(topic) ?? topicFallback
-        let clientText = trimmed(clientName) ?? clientFallback
-        return "ClickMe \u{00B7} \(topicText) with \(clientText)"
+        BookingCalendarEventContent.title(
+            topic: topic,
+            counterpartName: clientName,
+            counterpartFallback: clientFallback
+        )
     }
 
     /// The calendar event notes: the meeting type, then a new line and the
-    /// client's message only when that message is not blank.
+    /// client's message only when that message is not blank. Delegates to the
+    /// shared builder.
     static func calendarNotes(meetingType: MeetingType, clientMessage: String?) -> String {
-        let label = meetingTypeLabel(meetingType)
-        guard let message = trimmed(clientMessage) else { return label }
-        return label + "\n" + message
+        BookingCalendarEventContent.notes(meetingType: meetingType, message: clientMessage)
     }
 
     /// `In-App Voice` or `Skype/Zoom`, matching Expert Booking Summary.
@@ -96,11 +99,13 @@ enum ExpertBookingConfirmationContent {
             duration: durationText(start: start, end: end),
             meetingTypeLabel: meetingTypeLabel(meetingType),
             meetingTypeIcon: meetingTypeIcon(meetingType),
-            calendarPayload: BookingCalendarPayload(
-                title: calendarTitle(topic: topic, clientName: clientName),
-                notes: calendarNotes(meetingType: meetingType, clientMessage: clientMessage),
-                startDate: start,
-                endDate: end
+            calendarPayload: BookingCalendarEventContent.expertEvent(
+                topic: topic,
+                clientName: clientName,
+                start: start,
+                end: end,
+                meetingType: meetingType,
+                clientMessage: clientMessage
             )
         )
     }

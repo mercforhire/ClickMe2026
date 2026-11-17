@@ -108,6 +108,34 @@ final class ExpertBookingSummaryViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Add to Calendar (G-06-1-summary-calendar)
+
+    /// The calendar event for this booking, identical to the one Booking
+    /// Confirmed adds (same shared builder). `nil` until `detail` loads.
+    var calendarEvent: BookingCalendarPayload? {
+        guard let detail else { return nil }
+        return BookingCalendarEventContent.expertEvent(
+            topic: detail.session.topicTitle,
+            clientName: detail.client.name,
+            start: detail.session.schedule.startTime,
+            end: detail.session.schedule.endTime,
+            meetingType: detail.session.meetingType,
+            clientMessage: detail.preparationNotes.text
+        )
+    }
+
+    /// True when Add to Calendar is offered at `now`: a booked status and a
+    /// session that has not ended (`BookingCalendarEventContent.isOffered`).
+    /// False without a loaded detail. The view passes the 60 s timeline date.
+    func showsAddToCalendar(at now: Date) -> Bool {
+        guard let detail else { return false }
+        return BookingCalendarEventContent.isOffered(
+            status: detail.status.code,
+            end: detail.session.schedule.endTime,
+            now: now
+        )
+    }
+
     // MARK: - Reschedule actions
 
     /// Accept a client-initiated reschedule. Rolls the booking forward

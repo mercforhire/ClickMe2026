@@ -198,6 +198,31 @@ struct UpcomingBookingViewModelTests {
         #expect(!vm.joinWindowOpen(at: now))
     }
 
+    // MARK: Add to Calendar (G-06-1-summary-calendar)
+
+    @Test("a confirmed future booking offers Add to Calendar with the expert's name in the title")
+    func confirmedFutureOffersCalendar() async {
+        let start = now.addingTimeInterval(1800)
+        let end = now.addingTimeInterval(5400)
+        let vm = await loadedModel(status: "confirmed", start: start, end: end)
+        #expect(vm.showsAddToCalendar(at: now))
+        #expect(
+            vm.calendarEvent == BookingCalendarPayload(
+                title: "ClickMe \u{00B7} Free chat with Ada Lovelace",
+                notes: "In-App Voice",
+                startDate: start,
+                endDate: end
+            )
+        )
+    }
+
+    @Test("before any load there is no calendar event and no button")
+    func calendarClosedBeforeLoad() {
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: detailAPI(body: Fixtures.detailJSON()))
+        #expect(vm.calendarEvent == nil)
+        #expect(!vm.showsAddToCalendar(at: now))
+    }
+
     // MARK: Accept in place
 
     @Test("accept sends one POST, then the screen shows the confirmed booking without leaving .loaded")

@@ -33,6 +33,9 @@ struct UpcomingBookingView: View {
     @State private var showAcceptRescheduleConfirmation = false
     @State private var showDeclineReschedulePrompt = false
     @State private var declineRescheduleReason = ""
+    /// The event captured when Add to Calendar is tapped; non-nil presents the
+    /// system New Event sheet.
+    @State private var pendingCalendarEvent: BookingCalendarPayload?
 
     // MARK: Inits
 
@@ -79,6 +82,17 @@ struct UpcomingBookingView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await viewModel.appeared() }
+        .sheet(isPresented: Binding(
+            get: { pendingCalendarEvent != nil },
+            set: { if !$0 { pendingCalendarEvent = nil } }
+        )) {
+            if let event = pendingCalendarEvent {
+                CalendarEventEditorSheet(event: event) {
+                    pendingCalendarEvent = nil
+                }
+                .ignoresSafeArea()
+            }
+        }
         .confirmationDialog(
             "Accept the proposed reschedule?",
             isPresented: $showAcceptRescheduleConfirmation,
@@ -238,6 +252,18 @@ struct UpcomingBookingView: View {
                     UpcomingBookingPrepNotesCard(
                         preparationNote: viewModel.preparationNote
                     )
+                }
+
+                // Ticks once a minute so the button goes when the session ends,
+                // like Cancel below.
+                if BookingCalendarEventContent.offeredStatuses.contains(viewModel.bookingStatus) {
+                    TimelineView(.periodic(from: .now, by: 60)) { context in
+                        if viewModel.showsAddToCalendar(at: context.date) {
+                            UpcomingBookingAddToCalendarButton {
+                                pendingCalendarEvent = viewModel.calendarEvent
+                            }
+                        }
+                    }
                 }
 
                 // Cancel and Reschedule hide once the server would refuse them

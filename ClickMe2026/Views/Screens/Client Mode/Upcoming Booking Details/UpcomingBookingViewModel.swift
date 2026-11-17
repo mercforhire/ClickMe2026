@@ -217,6 +217,31 @@ final class UpcomingBookingViewModel: ObservableObject {
         )
     }
 
+    // MARK: Add to Calendar (G-06-1-summary-calendar)
+
+    /// The event Add to Calendar puts on the client's calendar, titled
+    /// `ClickMe · {topic} with {expert name}`, with the meeting type and the
+    /// client's own note as notes. `nil` until both times are known.
+    var calendarEvent: BookingCalendarPayload? {
+        guard let startTime, let endTime else { return nil }
+        return BookingCalendarEventContent.clientEvent(
+            topic: topic,
+            expertName: expertName,
+            start: startTime,
+            end: endTime,
+            meetingType: meetingType,
+            clientMessage: preparationNote
+        )
+    }
+
+    /// True when the Add to Calendar button is offered at `now`: a booked status
+    /// whose end is still ahead. A display gate only; the 60 s timeline passes
+    /// `now` so the button goes when the session ends.
+    func showsAddToCalendar(at now: Date) -> Bool {
+        guard calendarEvent != nil else { return false }
+        return BookingCalendarEventContent.isOffered(status: bookingStatus, end: endTime, now: now)
+    }
+
     /// Starts the call for this booking through `CallCenter`, the one path that
     /// reports `POST /join` and `/end`, whichever screen opened the details
     /// (CALL-03). Also the path a Skype/Zoom booking takes (D-10, CALL-08).

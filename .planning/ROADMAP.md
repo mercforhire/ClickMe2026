@@ -427,7 +427,36 @@ Plans:
   4. Reports from chat reach the backend as report-reason enum values, the same as profile reports.
   5. The "Read" label updates live while a chat is open, or CHAT-08 is closed as not reproducible after the device re-test.
 
-**Plans**: TBD
+**Plans**: 9 plans in 9 waves (iOS only, no backend or Android change; plans run one at a time because they share one tree and simulator; the only user stop is the D-18 decision in the last plan)
+
+Plans:
+**Wave 1**
+- [ ] 07-01-PLAN.md — CHAT-01 tracer: optimistic send (pending, ack in place, Failed on network/5xx, refused text restored); ThreadReducer port so reloads and live events never drop or duplicate bubbles (D-01 to D-03)
+
+**Wave 2** *(after 07-01)*
+- [ ] 07-02-PLAN.md — CHAT-01: tap to retry with the same client_msg_id, long-press Delete; composer capped at 10,000 with a counter from 9,000 (D-01, D-02, D-04)
+
+**Wave 3** *(after 07-02)*
+- [ ] 07-03-PLAN.md — CHAT-05/06/07: thread-open GET /chats scan seeds the peer id; loadEarlier de-duplicated; read receipts per page, held until the socket connects (D-10, D-11, D-16)
+
+**Wave 4** *(after 07-03)*
+- [ ] 07-04-PLAN.md — CHAT-03: ChatBlockState; banner replaces the composer; blocked/unavailable sends switch to it; banner Unblock for the blocker only; state-aware menu (D-03, D-07, D-08)
+
+**Wave 5** *(after 07-04)*
+- [ ] 07-05-PLAN.md — CHAT-02/03/04: Block & Report card matrix with truthful copy and state back to the thread; report reason enum; details cap 1,000; blocked_by_me defaults to false (D-05, D-07 to D-09, D-19)
+
+**Wave 6** *(after 07-05)*
+- [ ] 07-06-PLAN.md — CHAT-04: Expert Profile Block confirm alert, initiate then block, toast, error copy, accessible scrim (D-05, D-06)
+
+**Wave 7** *(after 07-06)*
+- [ ] 07-07-PLAN.md — CHAT-07: unread pill on conversation rows, +1 for peer messages on closed threads, cleared on open by any route via an observable ChatPresence (D-12 to D-15)
+
+**Wave 8** *(after 07-01 to 07-07)*
+- [ ] 07-08-PLAN.md — Phase gate: full suite, grep gates, device UAT checklist (C1 to C10), CHAT-08 closed as not reproducible (D-17), validation sign-off
+
+**Wave 9** *(after 07-08)*
+- [ ] 07-09-PLAN.md — D-18 folded todo: decision checkpoint, then expert chat booking rows open the expert Booking Summary; todo closed; dual-role follow-up logged
+
 **UI hint**: yes
 **Notes**:
 - Q8: re-test CHAT-08 on a device before planning this phase. If it still fails, the plan traces `message.read` delivery on the backend.
@@ -464,7 +493,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
-| 7. Chat | 0/TBD | Not started | - |
+| 7. Chat | 0/9 | Planned | - |
 | 8. Release | 0/TBD | Not started | - |
 
 ---

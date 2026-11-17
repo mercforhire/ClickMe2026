@@ -113,4 +113,29 @@ struct TopicPriceRulesTests {
         #expect(TopicPriceRules.isBelowFloor(minor: 0, floorMinor: 500) == false)
         #expect(TopicPriceRules.isBelowFloor(minor: 500, floorMinor: 500) == false)
     }
+
+    // MARK: - validCurrencyCode (G-06-1-currency)
+
+    @Test("a stored currency code is trimmed, three ASCII letters, uppercased, else none", arguments: [
+        ("CAD", "CAD" as String?),
+        ("usd", "USD"),
+        (" cad ", "CAD"),
+        ("\tUSD\n", "USD"),
+        ("", nil),
+        ("   ", nil),
+        ("US", nil),
+        ("USDX", nil),
+        ("U5D", nil),
+        ("CA$", nil),
+        ("C D", nil),
+        ("\u{DC}SD", nil)
+    ])
+    func validCurrencyCodeTable(raw: String, expected: String?) {
+        #expect(TopicPriceRules.validCurrencyCode(raw) == expected)
+    }
+
+    @Test("a missing stored currency code is none")
+    func validCurrencyCodeNil() {
+        #expect(TopicPriceRules.validCurrencyCode(nil) == nil)
+    }
 }

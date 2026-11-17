@@ -198,6 +198,99 @@ struct TopicCurrencyTests {
         #expect(whole.validate()?.currency == "CAD")
     }
 
+    // MARK: - Blank stored currency (G-06-1-currency, WR-02)
+
+    @Test("a free topic stored with a blank currency opens on the default, unlocked, with a clean picker")
+    func freeBlankCurrencyOpensOnDefault() throws {
+        let topic = try Self.topic(Self.freeBlankWire)
+        #expect(topic.storedCurrency == nil)
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "CAD") == "CAD")
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "USD") == "USD")
+        #expect(!TopicEditorViewModel.isCurrencyLocked(topic: topic))
+
+        let vm = TopicEditorViewModel(topic: topic)
+        #expect(vm.currency == vm.defaultCurrency)
+        #expect(vm.pickableCurrencies == [vm.defaultCurrency])
+        #expect(vm.rate == "0")
+        let validated = vm.validate()
+        #expect(validated?.hourlyRateAmount == 0)
+        #expect(validated?.currency == vm.defaultCurrency)
+    }
+
+    @Test("a whitespace-only stored currency reads the same as a blank one")
+    func freeWhitespaceCurrencyOpensOnDefault() throws {
+        let topic = try Self.topic(Self.freeWhitespaceWire)
+        #expect(topic.storedCurrency == nil)
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "CAD") == "CAD")
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "USD") == "USD")
+        #expect(!TopicEditorViewModel.isCurrencyLocked(topic: topic))
+
+        let vm = TopicEditorViewModel(topic: topic)
+        #expect(vm.currency == vm.defaultCurrency)
+        #expect(vm.pickableCurrencies == [vm.defaultCurrency])
+        #expect(vm.rate == "0")
+        #expect(vm.validate()?.hourlyRateAmount == 0)
+        #expect(vm.validate()?.currency == vm.defaultCurrency)
+    }
+
+    @Test("a padded lowercase stored code resolves to the real code and a free topic stays unlocked")
+    func freePaddedLowercaseCurrency() throws {
+        let topic = try Self.topic(Self.freePaddedLowercaseUSDWire)
+        #expect(topic.storedCurrency == "USD")
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "CAD") == "USD")
+        #expect(!TopicEditorViewModel.isCurrencyLocked(topic: topic))
+    }
+
+    @Test("a malformed stored code resolves to the default")
+    func freeMalformedCurrencyOpensOnDefault() throws {
+        let topic = try Self.topic(Self.freeMalformedWire)
+        #expect(topic.storedCurrency == nil)
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "CAD") == "CAD")
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "USD") == "USD")
+        let vm = TopicEditorViewModel(topic: topic)
+        #expect(vm.pickableCurrencies == vm.allowedCurrencies)
+    }
+
+    @Test("a paid topic with a blank stored code is unlocked on the default and keeps its amount")
+    func paidBlankCurrencyIsUnlocked() throws {
+        let topic = try Self.topic(Self.paidBlankWire)
+        #expect(!TopicEditorViewModel.isCurrencyLocked(topic: topic))
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "CAD") == "CAD")
+
+        let vm = TopicEditorViewModel(topic: topic)
+        #expect(!vm.isCurrencyLocked)
+        #expect(vm.currency == vm.defaultCurrency)
+        let validated = vm.validate()
+        #expect(validated?.hourlyRateAmount == 12550)
+        #expect(validated?.currency == vm.defaultCurrency)
+    }
+
+    @Test("a paid topic in the real wire shape with a real code stays locked on it")
+    func paidWireUSDStaysLocked() throws {
+        let topic = try Self.topic(Self.paidUSDWire)
+        #expect(topic.storedCurrency == "USD")
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "CAD") == "USD")
+        #expect(TopicEditorViewModel.isCurrencyLocked(topic: topic))
+    }
+
+    @Test("an invalid default currency falls back to CAD for a topic with no stored code")
+    func invalidDefaultFallsBackToCAD() throws {
+        let topic = try Self.topic(Self.freeBlankWire)
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: "") == "CAD")
+        #expect(TopicEditorViewModel.resolveInitialCurrency(topic: nil, defaultCurrency: "  ") == "CAD")
+    }
+
+    @Test("the picker never appends a blank or malformed currency but still appends a real off-list one")
+    func pickerAppendsOnlyValidCodes() throws {
+        let vm = TopicEditorViewModel(topic: nil)
+        vm.currency = ""
+        #expect(vm.pickableCurrencies == vm.allowedCurrencies)
+        vm.currency = "CA$"
+        #expect(vm.pickableCurrencies == vm.allowedCurrencies)
+        vm.currency = "EUR"
+        #expect(vm.pickableCurrencies == vm.allowedCurrencies + ["EUR"])
+    }
+
     // MARK: - Fixtures
 
     private static func decoder() -> JSONDecoder {
@@ -277,6 +370,75 @@ struct TopicCurrencyTests {
       "id": "44444444-4444-4444-4444-444444444444",
       "title": "Portfolio review",
       "price": { "amount": 12550, "is_free": false }
+    }
+    """
+
+    // Real wire shape the server sends today: no `hourly_rate` key, and a topic
+    // stored with no currency comes back as `price.currency: ""`.
+
+    private static let freeBlankWire = """
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "title": "Intro chat",
+      "duration_mins": 30,
+      "description": null,
+      "icon_slug": null,
+      "price": { "amount": 0, "currency": "", "is_free": true, "label": "Free" }
+    }
+    """
+
+    private static let freeWhitespaceWire = """
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "title": "Intro chat",
+      "duration_mins": 30,
+      "description": null,
+      "icon_slug": null,
+      "price": { "amount": 0, "currency": "   ", "is_free": true, "label": "Free" }
+    }
+    """
+
+    private static let freePaddedLowercaseUSDWire = """
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "title": "Intro chat",
+      "duration_mins": 30,
+      "description": null,
+      "icon_slug": null,
+      "price": { "amount": 0, "currency": " usd ", "is_free": true, "label": "Free" }
+    }
+    """
+
+    private static let freeMalformedWire = """
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "title": "Intro chat",
+      "duration_mins": 30,
+      "description": null,
+      "icon_slug": null,
+      "price": { "amount": 0, "currency": "CA$", "is_free": true, "label": "Free" }
+    }
+    """
+
+    private static let paidBlankWire = """
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "title": "Intro chat",
+      "duration_mins": 30,
+      "description": null,
+      "icon_slug": null,
+      "price": { "amount": 12550, "currency": "", "is_free": false, "label": "$125.5 / session" }
+    }
+    """
+
+    private static let paidUSDWire = """
+    {
+      "id": "88888888-8888-8888-8888-888888888888",
+      "title": "Intro chat",
+      "duration_mins": 30,
+      "description": null,
+      "icon_slug": null,
+      "price": { "amount": 12550, "currency": "USD", "is_free": false, "label": "US$125.5 / session" }
     }
     """
 }

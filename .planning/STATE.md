@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-14-PLAN.md
-last_updated: "2026-11-17T05:38:52.101Z"
+stopped_at: Completed 06-16-PLAN.md
+last_updated: "2026-11-17T05:44:07.569Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 06 execution started
-state_head: 20a0c53e9ae838630f33fba78be81ec119ad7413
+state_head: af249a2ac4ce08e3b15dc938b58437202c0b8620
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 115
-  completed_plans: 113
+  completed_plans: 114
   percent: 38
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 06-14 complete; 16 of 18 plans have a SUMMARY (06-15 ran early). Remaining: 06-16, 06-17 (order 06-16 then 06-17)
+Plan: 06-16 complete; 17 of 18 plans have a SUMMARY. Remaining: 06-17 (optional backend null-currency decision; deploys nothing). Device re-check R1 to R8 awaits the user's Results in 06-DEVICE-UAT-CHECKLIST.md
 Status: Ready to execute
-Last activity: 2026-11-17 — 06-14 complete
+Last activity: 2026-11-17 — 06-16 complete
 
 Progress: [████░░░░░░] 38%
 
@@ -170,6 +170,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P13 | 12 min | 1 tasks | 5 files |
 | Phase 06 P18 | 9 min | 2 tasks | 5 files |
 | Phase 06 P14 | 8 min | 2 tasks | 4 files |
+| Phase 06 P16 | 15min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -368,6 +369,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-13: CalendarEventEditorSheet takes a plain BookingCalendarPayload (title, notes, start, end); BookingConfirmation derives calendarTitle and calendarNotes from it, and plan 06-18 builds the Booking Summary button on CalendarEventEditorSheet(event:onDismiss:)
 - [Phase 06]: 06-18: the expert Booking Summary calendar sheet is presented from the content router (own presenter), so the cancellation sheet stays byte-identical; BookingCalendarEventContent holds the shared title, notes, expertEvent, clientEvent and isOffered rule, which plan 06-14 reuses
 - [Phase 06]: 06-14: client Upcoming Booking offers Add to Calendar through BookingCalendarEventContent.clientEvent and isOffered on a 60 s timeline, with the sheet on UpcomingBookingView.body; the client Session Summary stays without a calendar button; device check R5 owned by 06-16
+- [Phase 06]: 06-16: gap-closure gate passed (994 tests, clean Debug build, all grep gates); device re-check R1 to R8 appended to the Phase 6 checklist, earlier 35 Results untouched
 
 ### Pending Todos
 
@@ -468,6 +470,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-17T05:38:51.189Z
-Stopped at: Completed 06-14-PLAN.md
+Last session: 2026-11-17T05:43:58.197Z
+Stopped at: Completed 06-16-PLAN.md
 Resume file: None

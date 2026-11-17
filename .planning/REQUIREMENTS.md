@@ -75,15 +75,15 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 ### Expert Mode
 
 - [ ] **EXP-01** [E1]: Deleting a topic asks for confirmation
-- [ ] **EXP-02** [E2] **[major]**: Expert can enter a topic price with decimals (e.g. 12.50) in the topic's currency
-- [ ] **EXP-03** [E3] **[major]**: Editing a topic keeps the topic's own currency
+- [x] **EXP-02** [E2] **[major]**: Expert can enter a topic price with decimals (e.g. 12.50) in the topic's currency
+- [x] **EXP-03** [E3] **[major]**: Editing a topic keeps the topic's own currency
 - [ ] **EXP-04** [E4]: Expert can clear a topic's icon or description
 - [ ] **EXP-05** [E5]: Cancelling the availability time-range picker reverts the change
 - [ ] **EXP-06** [E6]: Availability never produces an end time the picker can't show (24:00 displays correctly or is capped)
 - [ ] **EXP-07** [E7]: An off-grid stored time (e.g. 09:15) still shows as selected in the picker
 - [ ] **EXP-08** [E8]: The stale 409 comment on topic delete is corrected
 - [ ] **EXP-09** [E11]: Accepting a request shows the booking-confirmed screen
-- [ ] **EXP-10** [E12]: The calendar event created from a confirmed booking is titled with the client's name
+- [x] **EXP-10** [E12]: The calendar event created from a confirmed booking is titled with the client's name
 - [x] **EXP-11** [E13] **[major]**: The expert cancel screen states the client's refund correctly — policy per decision Q2
 - [ ] **EXP-12** [E14] (likely): Expired request cards stay readable (no 55% dim on text)
 - [x] **EXP-13** [E15] **[major]**: Reschedule on an expert Upcoming card opens the expert reschedule flow
@@ -228,15 +228,15 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | SIGN-05 | Phase 5 | Complete |
 | SIGN-06 | Phase 5 | Complete |
 | EXP-01 | Phase 6 | Pending |
-| EXP-02 | Phase 6 | Pending |
-| EXP-03 | Phase 6 | Pending |
+| EXP-02 | Phase 6 | Complete |
+| EXP-03 | Phase 6 | Complete |
 | EXP-04 | Phase 6 | Pending |
 | EXP-05 | Phase 6 | Pending |
 | EXP-06 | Phase 6 | Pending |
 | EXP-07 | Phase 6 | Pending |
 | EXP-08 | Phase 6 | Pending |
 | EXP-09 | Phase 6 | Pending |
-| EXP-10 | Phase 6 | Pending |
+| EXP-10 | Phase 6 | Complete |
 | EXP-11 | Phase 3 | Complete |
 | EXP-12 | Phase 6 | Pending |
 | EXP-13 | Phase 3 | Complete |

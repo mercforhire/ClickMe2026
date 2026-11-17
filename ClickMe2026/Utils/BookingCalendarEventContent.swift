@@ -74,8 +74,7 @@ enum BookingCalendarEventContent {
     static let expertFallback = "Expert"
 
     /// The event a client adds for a booking with an expert, titled
-    /// `ClickMe · {topic} with {expert name}`. Plan 06-14 calls it from the
-    /// client Upcoming Booking screen.
+    /// `ClickMe · {topic} with {expert name}`. Used by the client Upcoming Booking screen.
     ///
     /// - Parameters:
     ///   - topic: The booking topic; blank reads `Session`.

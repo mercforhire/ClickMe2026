@@ -477,3 +477,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-09 during /gsd-verify-work 01 session completion
 **Follow-ups:**
 - [ ] Test 4: defer (Run BACK-15 with a real hold during Phase 4 payment UAT. A normal retry tap only proves one booking and one hold, not the confirm replay code; on iOS only the retry after 3D Secure calls confirm again) (deferred 2026-11-09)
+
+### Phase 999.3: Follow-up — Phase 06 deferred UAT follow-up: Test 6 (BACKLOG)
+
+**Goal:** Resolve the UAT checkpoint deferred during Phase 06 verification
+**Source phase:** 06
+**Deferred at:** 2026-11-16 during /gsd-verify-work 06 session completion
+**Follow-ups:**
+- [ ] Test 6: Set a reasonable maximum topic price (iOS, Android and backend validation), which would also bound the WR-03 grouped-paste misread (deferred 2026-11-16)

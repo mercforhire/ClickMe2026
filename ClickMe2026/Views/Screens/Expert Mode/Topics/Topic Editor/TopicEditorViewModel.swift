@@ -31,10 +31,11 @@ final class TopicEditorViewModel: ObservableObject {
     /// `updateRate(_:)`, which filters the text first.
     @Published var rate: String
     /// The currency this topic is priced in. Seeded from the topic's own
-    /// stored currency (never the account default) or, for a new topic, from
-    /// the backend default. Picked from `pickableCurrencies` unless
-    /// `isCurrencyLocked`. Sent with every save, on typed and untouched
-    /// prices alike.
+    /// stored currency (never the account default) or, for a new topic or a
+    /// topic that carries none, from the backend default. A blank or malformed
+    /// stored code counts as no currency (G-06-1-currency). Picked from
+    /// `pickableCurrencies` unless `isCurrencyLocked`. Sent with every save,
+    /// on typed and untouched prices alike, and always a 3-letter code.
     @Published var currency: String
     /// Session length in whole minutes. Edited via a stepper in 30-min
     /// increments; defaults to 60 (one hour).
@@ -100,10 +101,15 @@ final class TopicEditorViewModel: ObservableObject {
 
     /// Currencies shown in the picker: `allowedCurrencies` plus the current
     /// `currency` when it is missing from the list, so the selection always
-    /// renders and an edit never blocks (same idea as `pickableSlugs`).
+    /// renders and an edit never blocks (same idea as `pickableSlugs`). A
+    /// blank or malformed `currency` is never appended (G-06-1-currency), so
+    /// the picker has no invisible extra segment.
     var pickableCurrencies: [String] {
         let allowed = allowedCurrencies
-        return allowed.contains(currency) ? allowed : allowed + [currency]
+        guard !allowed.contains(currency), TopicPriceRules.validCurrencyCode(currency) != nil else {
+            return allowed
+        }
+        return allowed + [currency]
     }
 
     /// Short symbol for the price field label: `US$`, `CA$`, else the ISO code.
@@ -158,20 +164,21 @@ final class TopicEditorViewModel: ObservableObject {
     // MARK: Currency resolution (backend Phase 34 D-18)
 
     /// The currency the editor starts on, uppercased: the topic's own stored
-    /// currency (`hourlyRate.currency`, else `price.currency`), or
-    /// `defaultCurrency` when the topic has none (or is nil, a new topic).
+    /// currency (`ExpertTopicItem.storedCurrency`), else `defaultCurrency`
+    /// when it is a valid code, else `CAD` (Android `resolveCurrency` parity).
+    /// A blank or malformed stored code counts as no currency (G-06-1-currency).
     /// Never the account default for a topic that carries a currency; that
     /// was the bug that re-priced a USD topic in CAD on a retyped price.
     static func resolveInitialCurrency(topic: ExpertTopicItem?, defaultCurrency: String) -> String {
-        let stored = topic?.hourlyRate?.currency ?? topic?.price.currency
-        return (stored ?? defaultCurrency).uppercased()
+        topic?.storedCurrency ?? TopicPriceRules.validCurrencyCode(defaultCurrency) ?? "CAD"
     }
 
-    /// True for an existing topic that is paid and carries a stored currency.
+    /// True for an existing topic that is paid and carries a valid stored
+    /// currency. A paid topic with a blank or malformed code is unlocked on
+    /// the default (G-06-1-currency).
     static func isCurrencyLocked(topic: ExpertTopicItem?) -> Bool {
         guard let topic else { return false }
-        let stored = topic.hourlyRate?.currency ?? topic.price.currency
-        return !topic.price.isFree && stored != nil
+        return !topic.price.isFree && topic.storedCurrency != nil
     }
 
     private static func accountDefaultCurrency(_ me: MeData?) -> String {
@@ -199,13 +206,14 @@ final class TopicEditorViewModel: ObservableObject {
         // `price.amount` when older/public payloads omit it. The field shows
         // the stored amount without loss, using the digit count of the
         // topic's own currency (or the account default when the topic has
-        // none, which is the currency the backend assumes for it). The seed
-        // and the stored amount are kept so an untouched save can send the
-        // amount back unchanged (D-19). The currency starts on the topic's
+        // none or a blank one, which is the currency the backend assumes for
+        // it). The seed and the stored amount are kept so an untouched save
+        // can send the amount back unchanged (D-19). The currency starts on the topic's
         // own stored currency, never the account default (backend Phase 34
-        // D-18); only a topic with none, or a new topic, takes the default.
+        // D-18); only a topic with none (a blank or malformed stored code
+        // counts as none, G-06-1-currency), or a new topic, takes the default.
         let minorAmount = topic?.hourlyRate?.amount ?? topic?.price.amount
-        let storedCurrency = topic?.hourlyRate?.currency ?? topic?.price.currency
+        let storedCurrency = topic?.storedCurrency
         let accountDefault = Self.accountDefaultCurrency(userManager.me)
         let seedCurrency = storedCurrency ?? accountDefault
         let seed = minorAmount.map { Self.editableAmount(minorUnits: $0, currency: seedCurrency) } ?? ""

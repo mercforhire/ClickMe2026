@@ -120,7 +120,31 @@ nonisolated enum TopicPriceRules {
         return isBelowFloor(minor: minor, floorMinor: floorMinor)
     }
 
+    // MARK: - Stored currency (G-06-1-currency)
+
+    /// The stored currency code a topic really carries, or nil. Trims
+    /// whitespace and newlines, then accepts only exactly three ASCII letters
+    /// and returns them uppercased. Blank, whitespace-only and malformed codes
+    /// all read as no currency.
+    ///
+    /// Mirrors Android `TopicPrice.validCode`. The backend sends
+    /// `price.currency: ""` for a topic stored with no currency
+    /// (`expertTopics.controller.js` `serializeTopic`), and a blank code on a
+    /// save is a 422. The server allowlist (CAD, USD) stays authoritative.
+    /// - Parameter raw: The code as the server sent it, or nil.
+    static func validCurrencyCode(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        let scalars = trimmed.unicodeScalars
+        guard scalars.count == 3, scalars.allSatisfy(isASCIILetter) else { return nil }
+        return trimmed.uppercased()
+    }
+
     // MARK: - Helpers
+
+    private static func isASCIILetter(_ scalar: Unicode.Scalar) -> Bool {
+        (scalar.value >= 0x41 && scalar.value <= 0x5A) || (scalar.value >= 0x61 && scalar.value <= 0x7A)
+    }
 
     private static func isASCIIDigit(_ character: Character) -> Bool {
         character.isASCII && ("0"..."9").contains(character)

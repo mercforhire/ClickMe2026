@@ -43,3 +43,14 @@ struct ExpertTopicItem: Decodable {
     /// per-topic tag rollout.
     let expertiseTags: [ExpertiseTagItem]?
 }
+
+extension ExpertTopicItem {
+    /// The topic's own currency: the hourly-rate code when valid, else the
+    /// price code. Nil for a free topic created without one, where the server
+    /// sends `price.currency: ""` (G-06-1-currency). Android
+    /// `ExpertTopicItem.storedCurrency` parity.
+    var storedCurrency: String? {
+        TopicPriceRules.validCurrencyCode(hourlyRate?.currency)
+            ?? TopicPriceRules.validCurrencyCode(price.currency)
+    }
+}

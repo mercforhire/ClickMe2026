@@ -127,6 +127,62 @@ struct TopicsSetupMutationTests {
         #expect(body["title"] as? String == "Portfolio review")
     }
 
+    // MARK: - Free topic stored with no currency (G-06-1-currency)
+
+    /// The wire shape the backend sends for a free topic stored with no
+    /// currency: `price.currency` is `""` and there is no `hourly_rate` key.
+    nonisolated private static let blankCurrencyFreeTopicJSON = """
+    {
+      "id": "\(topicId)",
+      "title": "Intro chat",
+      "duration_mins": 30,
+      "description": null,
+      "icon_slug": null,
+      "price": { "amount": 0, "currency": "", "is_free": true, "label": "Free" }
+    }
+    """
+
+    @Test("G-06-1-currency: a free topic stored with no currency opens on the default and saves a 3-letter code")
+    func blankCurrencyFreeTopicSavesARealCurrency() async throws {
+        let stored = try Self.decodeTopic(Self.blankCurrencyFreeTopicJSON)
+        #expect(stored.storedCurrency == nil)
+
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: Self.topicEnvelope(Self.blankCurrencyFreeTopicJSON))
+        }
+        let editor = TopicEditorViewModel(topic: stored, api: api)
+        #expect(editor.currency == editor.defaultCurrency)
+        #expect(editor.isCurrencyLocked == false)
+        #expect(editor.pickableCurrencies.contains("") == false)
+        #expect(editor.pickableCurrencies == editor.allowedCurrencies)
+
+        let validated = try #require(editor.validate())
+        #expect(validated.currency == editor.defaultCurrency)
+
+        let viewModel = TopicsSetupViewModel(api: api)
+        viewModel.topics = [stored]
+        viewModel.editTopic(stored)
+        let error = await viewModel.saveTopic(
+            title: validated.title,
+            description: validated.description,
+            durationMins: validated.durationMinutes,
+            hourlyRateAmount: validated.hourlyRateAmount,
+            currency: validated.currency,
+            iconSlug: validated.iconSlug,
+            expertiseTagIds: validated.expertiseTagIds
+        )
+
+        #expect(error == nil)
+        let sent = Self.patches()
+        #expect(sent.count == 1)
+        let body = try #require(sent.first?.jsonBodyForTest())
+        let rate = try #require(body["hourly_rate"] as? [String: Any])
+        let currency = try #require(rate["currency"] as? String)
+        #expect(currency == editor.defaultCurrency)
+        #expect(currency.count == 3)
+        #expect(body["is_free"] as? Bool == true)
+    }
+
     // MARK: - Delete confirmation (EXP-01, D-14) and removal after 2xx (EXP-08)
 
     nonisolated private static func deletes() -> [URLRequest] {

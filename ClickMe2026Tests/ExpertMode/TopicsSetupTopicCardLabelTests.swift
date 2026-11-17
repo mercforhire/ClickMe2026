@@ -69,19 +69,33 @@ struct TopicsSetupTopicCardLabelTests {
         #expect(Self.label(topic) == "Free")
     }
 
-    @Test("card and editor agree on a paid topic that carries no currency")
+    @Test("card and editor agree on a paid topic that carries no currency, whatever the account default")
     func cardAndEditorAgreeOnBlankCurrency() throws {
         let topic = try Self.topic(
             price: #"{"amount":12500,"currency":"","is_free":false,"label":"$125 / session"}"#
         )
-        let editor = TopicEditorViewModel(topic: topic)
-        let defaultCurrency = TopicEditorViewModel.newTopicDefaultCurrency(in: UserManager.shared.me)
-        let card = TopicsSetupTopicCard.priceLabel(for: topic, defaultCurrency: defaultCurrency)
+        // Each account is injected into the editor, so the result does not
+        // depend on the state of the shared user manager (06-REVIEW IN-07).
+        let usdDefault = try MeDataFixtures.me(defaultCurrency: "USD", allowedCurrencies: ["CAD", "USD"])
+        let jpyDefault = try MeDataFixtures.me(defaultCurrency: "JPY", allowedCurrencies: ["CAD", "USD"])
+        let cases: [(me: MeData?, currency: String, card: String)] = [
+            (nil, "CAD", "CA$125.00 / session"),          // no /me yet
+            (usdDefault, "USD", "US$125.00 / session"),   // default is pickable
+            (jpyDefault, "CAD", "CA$125.00 / session")    // default not allowed: first allowed
+        ]
 
-        #expect(editor.currency == "CAD")
-        #expect(editor.currencySymbol == "CA$")
-        #expect(card == "CA$125.00 / session")
-        #expect(card.hasPrefix(editor.currencySymbol))
+        for testCase in cases {
+            let me = testCase.me
+            let editor = TopicEditorViewModel(topic: topic, meProvider: { me })
+            let defaultCurrency = TopicEditorViewModel.newTopicDefaultCurrency(in: me)
+            let card = TopicsSetupTopicCard.priceLabel(for: topic, defaultCurrency: defaultCurrency)
+
+            #expect(editor.currency == testCase.currency)
+            #expect(editor.defaultCurrency == testCase.currency)
+            #expect(editor.rate == "125")
+            #expect(card == testCase.card)
+            #expect(card.hasPrefix(editor.currencySymbol))
+        }
     }
 
     // MARK: - Fallbacks and tolerance

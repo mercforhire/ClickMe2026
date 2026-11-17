@@ -150,14 +150,18 @@ struct TopicsSetupMutationTests {
         let api = APITestFactory.make { request in
             Fixtures.response(for: request, body: Self.topicEnvelope(Self.blankCurrencyFreeTopicJSON))
         }
-        let editor = TopicEditorViewModel(topic: stored, api: api)
-        #expect(editor.currency == editor.defaultCurrency)
+        // The account is injected so the result does not depend on the shared
+        // user manager (06-REVIEW IN-07). USD, not CAD, so a hidden CAD fallback fails.
+        let me = try MeDataFixtures.me(defaultCurrency: "USD", allowedCurrencies: ["CAD", "USD"])
+        let editor = TopicEditorViewModel(topic: stored, api: api, meProvider: { me })
+        #expect(editor.currency == "USD")
+        #expect(editor.defaultCurrency == "USD")
         #expect(editor.isCurrencyLocked == false)
         #expect(editor.pickableCurrencies.contains("") == false)
-        #expect(editor.pickableCurrencies == editor.allowedCurrencies)
+        #expect(editor.pickableCurrencies == ["CAD", "USD"])
 
         let validated = try #require(editor.validate())
-        #expect(validated.currency == editor.defaultCurrency)
+        #expect(validated.currency == "USD")
 
         let viewModel = TopicsSetupViewModel(api: api)
         viewModel.topics = [stored]
@@ -178,7 +182,7 @@ struct TopicsSetupMutationTests {
         let body = try #require(sent.first?.jsonBodyForTest())
         let rate = try #require(body["hourly_rate"] as? [String: Any])
         let currency = try #require(rate["currency"] as? String)
-        #expect(currency == editor.defaultCurrency)
+        #expect(currency == "USD")
         #expect(currency.count == 3)
         #expect(body["is_free"] as? Bool == true)
     }

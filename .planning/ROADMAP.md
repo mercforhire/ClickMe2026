@@ -367,7 +367,7 @@ Plans:
   4. Expired request cards stay readable. The expert-side Client Profile shows real earnings in the booking currency. The hub online dot reflects real presence, or is removed.
   5. The private booking note is capped at 5000 characters with a counter, saves whitespace-only text as empty (other text is sent as typed), and asks before discarding unsaved edits.
 
-**Plans**: 18 plans: 10/10 executed in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change), plus 8 gap-closure plans (06-11 to 06-18) in 7 waves from UAT 06 Test 1 (gaps G-06-1-currency, G-06-1-card-cents, G-06-1-summary-calendar)
+**Plans**: 11/18 plans executed: 10/10 executed in 9 waves (iOS plans run one at a time because they share one tree and simulator; the Android plan runs alongside 06-01 in `../ClickMe_Android`; no backend change), plus 8 gap-closure plans (06-11 to 06-18) in 7 waves from UAT 06 Test 1 (gaps G-06-1-currency, G-06-1-card-cents, G-06-1-summary-calendar)
 
 Plans:
 **Wave 1**
@@ -399,7 +399,7 @@ Plans:
 - [x] 06-10-PLAN.md — Phase gate: full suite, grep gates, device UAT checklist, follow-up todos
 
 **Gap closure (UAT 06 Test 1)** — iOS plans run one at a time; the Android plan runs alongside 06-11; the optional backend plan is last so the run's one user stop comes at the end
-- [ ] 06-11-PLAN.md — (gap wave 1) G-06-1-currency: a blank stored topic currency reads as none; free topics open on CAD | USD and save (blocker)
+- [x] 06-11-PLAN.md — (gap wave 1) G-06-1-currency: a blank stored topic currency reads as none; free topics open on CAD | USD and save (blocker)
 - [ ] 06-15-PLAN.md — (gap wave 1) G-06-1-summary-calendar Android: Add to Calendar on Booking Summary and Upcoming Booking (one Android commit)
 - [ ] 06-12-PLAN.md — (gap wave 2, after 06-11) G-06-1-card-cents: Topics tab cards show the price to the cent
 - [ ] 06-13-PLAN.md — (gap wave 3, after 06-12) G-06-1-summary-calendar: calendar sheet on a plain event value; Booking Confirmed unchanged
@@ -463,7 +463,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Booked Sessions and Joining | 17/17 | In Progress | - |
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
-| 6. Expert Mode | 10/10 | In Progress | - |
+| 6. Expert Mode | 11/18 | In Progress | - |
 | 7. Chat | 0/TBD | Not started | - |
 | 8. Release | 0/TBD | Not started | - |
 

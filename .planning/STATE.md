@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-12-PLAN.md
-last_updated: "2026-11-17T05:22:56.793Z"
+stopped_at: Completed 06-13-PLAN.md
+last_updated: "2026-11-17T05:27:03.807Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 06 execution started
-state_head: 113a8462087a3a56eded7d113c07b190e063300a
+state_head: 75a84e7e316ab153c0c060cc5fa4717ff30ce806
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 115
-  completed_plans: 110
+  completed_plans: 111
   percent: 38
 ---
 
@@ -28,9 +28,9 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 14 of 18
+Plan: 06-13 complete; 14 of 18 plans have a SUMMARY (06-15 ran early). Remaining: 06-18, 06-14, 06-16, 06-17 (order 06-18 then 06-14 then 06-16)
 Status: Ready to execute
-Last activity: 2026-11-17 — Phase 06 execution started
+Last activity: 2026-11-17 — 06-13 complete
 
 Progress: [████░░░░░░] 38%
 
@@ -167,6 +167,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P11 | 20 min | 2 tasks | 6 files |
 | Phase 06 P15 | 25 min | 2 tasks | 8 files |
 | Phase 06 P12 | 6 min | 2 tasks | 4 files |
+| Phase 06 P13 | 12 min | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -362,6 +363,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-11: a stored topic currency is valid only as trimmed exactly 3 ASCII letters (uppercased); blank or malformed reads as none and the editor falls back to the default, then CAD
 - [Phase 06]: 06-15: Android Add to Calendar on expert Booking Summary and client Upcoming Booking via shared rememberCalendarInsertLauncher and isCalendarEventOffered (iOS parity); one Android commit 69c4e159
 - [Phase 06]: 06-12: the topic card keeps US$ for USD and prices a topic with no valid stored currency in the editor's default (newTopicDefaultCurrency); the server label is used only when the amount is missing or negative
+- [Phase 06]: 06-13: CalendarEventEditorSheet takes a plain BookingCalendarPayload (title, notes, start, end); BookingConfirmation derives calendarTitle and calendarNotes from it, and plan 06-18 builds the Booking Summary button on CalendarEventEditorSheet(event:onDismiss:)
 
 ### Pending Todos
 
@@ -462,6 +464,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-17T05:22:55.880Z
-Stopped at: Completed 06-12-PLAN.md
+Last session: 2026-11-17T05:27:02.837Z
+Stopped at: Completed 06-13-PLAN.md
 Resume file: None

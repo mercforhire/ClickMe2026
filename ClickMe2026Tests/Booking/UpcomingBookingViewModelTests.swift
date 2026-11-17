@@ -131,9 +131,10 @@ struct UpcomingBookingViewModelTests {
         status: String = "confirmed",
         start: Date,
         end: Date,
-        canJoin: String = "null"
+        canJoin: String = "null",
+        meetingType: String = "in_app_voice"
     ) async -> UpcomingBookingViewModel {
-        let body = Fixtures.detailJSON(status: status, start: start, end: end, canJoin: canJoin)
+        let body = Fixtures.detailJSON(status: status, start: start, end: end, meetingType: meetingType, canJoin: canJoin)
         let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: detailAPI(body: body))
         await vm.load()
         return vm
@@ -221,6 +222,68 @@ struct UpcomingBookingViewModelTests {
         let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: detailAPI(body: Fixtures.detailJSON()))
         #expect(vm.calendarEvent == nil)
         #expect(!vm.showsAddToCalendar(at: now))
+    }
+
+    nonisolated private static let hiddenStatuses = [
+        "pending_approval", "completed", "cancelled", "declined", "missed", "expired", "on_hold"
+    ]
+
+    @Test("no calendar button for a pending request, a finished booking or an unknown status, even before the end",
+          arguments: hiddenStatuses)
+    func calendarHiddenForStatus(status: String) async {
+        let vm = await loadedModel(
+            status: status,
+            start: now.addingTimeInterval(1800),
+            end: now.addingTimeInterval(3600)
+        )
+        #expect(!vm.showsAddToCalendar(at: now))
+        if status == "on_hold" { #expect(vm.bookingStatus == .unknown) }
+    }
+
+    @Test("pending_reschedule and in_progress bookings with the end ahead offer the button",
+          arguments: ["pending_reschedule", "in_progress"])
+    func calendarOfferedForBookedStatus(status: String) async {
+        let vm = await loadedModel(
+            status: status,
+            start: now.addingTimeInterval(-600),
+            end: now.addingTimeInterval(3600)
+        )
+        #expect(vm.showsAddToCalendar(at: now))
+    }
+
+    @Test("the button goes at the scheduled end")
+    func calendarGoesAtEnd() async {
+        let end = now.addingTimeInterval(3600)
+        let vm = await loadedModel(start: now.addingTimeInterval(1800), end: end)
+        #expect(vm.showsAddToCalendar(at: end.addingTimeInterval(-1)))
+        #expect(!vm.showsAddToCalendar(at: end))
+        #expect(!vm.showsAddToCalendar(at: end.addingTimeInterval(60)))
+    }
+
+    @Test("a Skype/Zoom booking puts Skype/Zoom in the event notes")
+    func calendarNotesNameSkypeZoom() async {
+        let vm = await loadedModel(
+            start: now.addingTimeInterval(1800),
+            end: now.addingTimeInterval(5400),
+            meetingType: "skype_zoom"
+        )
+        #expect(vm.calendarEvent?.notes == "Skype/Zoom")
+    }
+
+    @Test("a blank expert name reads Expert and the client's own note follows the meeting type")
+    func calendarFallbackAndNotes() {
+        let start = now.addingTimeInterval(1800)
+        let vm = UpcomingBookingViewModel.previewSeed(
+            expertName: "  ",
+            topic: "Career coaching",
+            meetingType: .skypeZoom,
+            preparationNote: " Bring your CV ",
+            bookingStatus: .confirmed,
+            startTime: start,
+            endTime: start.addingTimeInterval(3600)
+        )
+        #expect(vm.calendarEvent?.title == "ClickMe \u{00B7} Career coaching with Expert")
+        #expect(vm.calendarEvent?.notes == "Skype/Zoom\nBring your CV")
     }
 
     // MARK: Accept in place

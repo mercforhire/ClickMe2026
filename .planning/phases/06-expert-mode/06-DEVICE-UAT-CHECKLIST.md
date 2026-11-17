@@ -94,7 +94,7 @@ Steps: edit a free topic (price blank or `0`). Tap `USD`, then `CAD`.
 
 Expected: the picker is enabled. While USD is selected the notice reads `Clients will pay in US dollars. If your payout bank account is in Canadian dollars, Stripe converts each payment and keeps a currency conversion fee of about 2%. You may be able to avoid this by adding a USD bank account in your Stripe Express dashboard.` and it disappears on CAD.
 
-Result: FAIL (2026-11-16): some topics show a third, invisible (blank) currency segment in the picker. The user suspects the backend. This reproduces review finding WR-02: the backend serializes a NULL `price_currency` as `''` (`expertTopics.controller.js:95`), and iOS keeps `""` as a pickable, selected currency, so Save sends `currency: ""` and gets a 422. Android already treats a non-3-letter code as absent. Severity: major. Update (item 8): the user reports that by default **every** free topic opens on the unknown currency, and Save fails. Free topics cannot be edited on this build.
+Result: PASS (re-checked as R2 on 2026-11-17 after gap closure G-06-1-currency, plans 06-11 to 06-15). Original result, kept as history: FAIL (2026-11-16): some topics show a third, invisible (blank) currency segment in the picker. The user suspects the backend. This reproduces review finding WR-02: the backend serializes a NULL `price_currency` as `''` (`expertTopics.controller.js:95`), and iOS keeps `""` as a pickable, selected currency, so Save sends `currency: ""` and gets a 422. Android already treats a non-3-letter code as absent. Severity: major. Update (item 8): the user reports that by default **every** free topic opens on the unknown currency, and Save fails. Free topics cannot be edited on this build.
 
 ### 5. EXP-03 — switching currency keeps the typed number and updates the hint (06-01)
 
@@ -178,6 +178,7 @@ Steps: this needs slots the app cannot create: set one slot to start at `09:15` 
 Expected: the sheet opens with `9:15 AM` selected in the start list and `12:00 AM` selected in the end list (24:00 reads `12:00 AM`); no other row changes; after Done and Save the day row still reads `09:15` and `24:00`. `12:00 AM` is not offered as a new End choice on a normal slot.
 
 Result: SKIPPED (no such slot) (2026-11-16)
+reason: Deferred follow-up: no app screen can create a 09:15 or 24:00 slot; AvailabilitySlotRulesTests is accepted as the EXP-07 evidence (decided 2026-11-17)
 
 ### 13. EXP-05 — Availability Save is readable with Reduce Transparency and Liquid Glass Tinted (06-03, D2)
 
@@ -187,7 +188,8 @@ Steps: on an iOS 26 iPhone, Light appearance. Settings > Accessibility > Display
 
 Expected: the `Save` label in the navigation bar and the back chevron are readable in both settings (not white on white). Put the settings back afterwards.
 
-Result: SKIPPED (2026-11-16, no reason given)
+Result: SKIPPED (2026-11-16)
+reason: Deferred follow-up: iOS 26 Liquid Glass readability check recorded as unchecked; run before Phase 8 (ROADMAP backlog, decided 2026-11-17)
 
 ### 14. EXP-09 — Accept lands on Booking Confirmed with no Accepted frame, and Back shows the refreshed list (06-05, N1)
 
@@ -217,7 +219,8 @@ Steps: on a Booking Confirmed screen, look at the navigation bar with Reduce Tra
 
 Expected: the back chevron and the `Booking Confirmed` title are readable in both settings. Put the settings back afterwards.
 
-Result: SKIPPED (2026-11-16, no reason given)
+Result: SKIPPED (2026-11-16)
+reason: Deferred follow-up: iOS 26 Liquid Glass readability check recorded as unchecked; run before Phase 8 (ROADMAP backlog, decided 2026-11-17)
 
 ### 17. EXP-10 — Add to Calendar opens the system editor pre-filled with the client and topic (06-04, 06-05, D5)
 
@@ -399,7 +402,7 @@ Steps: open the self-preview from the Expert Profile hub and compare with how a 
 
 Expected: judge whether a preview with no dot is what you want.
 
-Result: KEEP (2026-11-16)
+Result: PASS — KEEP (2026-11-16): the self-preview with no dot is what the user wants.
 
 ### 35. Assumption — EXP-12 is only LIKELY: is the expired card a real problem on build 6? (06-06)
 
@@ -411,7 +414,7 @@ Steps: use the results of items 21 and 22.
 
 Expected: say whether the before-state was a real readability problem and whether the after-state is acceptable.
 
-Result: KEEP (2026-11-16): the before-state on build 6 was a real readability problem (item 21), and the after-state is acceptable (item 22). EXP-12 closes on item 22.
+Result: PASS — KEEP (2026-11-16): the before-state on build 6 was a real readability problem (item 21), and the after-state is acceptable (item 22). EXP-12 closes on item 22.
 
 ---
 
@@ -468,7 +471,7 @@ Expected:
 
 Note: USD keeps the `US$` the card showed before, so a USD card reads `US$5.00 / session` while other `Money` surfaces (for example the Client Profile history rows) read `$5.00`. That difference is expected until the open USD-symbol todo (`2026-11-16-usd-symbol-us-dollar-prefix.md`) is decided, and is not a fail.
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)
 
 ### R2. Re-check item 4 — G-06-1-currency: a free topic opens on CAD | USD and saves (06-11)
 
@@ -482,7 +485,7 @@ Expected:
 - Save succeeds, with no `Topics can be priced in CAD or USD only.` message.
 - Reopening shows `CAD` selected again. That is expected, because the server keeps no currency on a free topic.
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)
 
 ### R3. Re-check item 8 — G-06-1-currency: clearing the icon and description on a free topic sticks (06-11)
 
@@ -492,7 +495,7 @@ Steps: item 8's steps, on a free topic. Edit the topic, tap the selected icon ch
 
 Expected: as item 8. After the first Save the icon and description stay cleared. The second Save, which changes the title only, does not bring them back and does not clear anything else. Save works on a free topic (it failed on the earlier build, item 4).
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)
 
 ### R4. Re-check item 17 — G-06-1-summary-calendar: the expert Booking Summary has Add to Calendar, and its Cancel sheet still works (06-18)
 
@@ -514,7 +517,7 @@ Expected:
 - The past booking shows no button.
 - A pending reschedule shows the button with the current time. An event added then keeps that time if the new time is accepted later (the app cannot update a calendar event).
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)
 
 ### R5. Re-check item 17 — G-06-1-summary-calendar: the client Upcoming Booking has Add to Calendar (06-14)
 
@@ -527,7 +530,7 @@ Expected:
 - The pending request shows no `Add to Calendar` button.
 - The Session Summary of a past booking shows no `Add to Calendar` button.
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)
 
 ### R6. Regression — G-06-1-summary-calendar: Booking Confirmed still adds the same event (06-13, 06-18)
 
@@ -537,7 +540,7 @@ Steps: as the test expert, accept a free-topic request (item 14) and tap `Add to
 
 Expected: exactly the event of item 17: title `ClickMe · {topic} with {client name}`, the booking's start and end, one 15-minute alert, the meeting type and the client's message in the notes, no location.
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)
 
 ### R7. Android — G-06-1-summary-calendar: Booking Summary and Upcoming Booking on Android (06-15)
 
@@ -547,7 +550,7 @@ Steps: on the Android build named in the setup, run the 06-15 human check: the e
 
 Expected: the same titles and offer rule as R4 to R6 (`ClickMe · {topic} with {client name}` for the expert, `ClickMe · {topic} with {expert name}` for the client, no button on a past booking or a pending request, Booking Confirmed unchanged). Tapping `Add to Calendar` opens the device's calendar app pre-filled with that event.
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)
 
 ### R8. Optional — G-06-1-summary-calendar: the button goes when the session ends (06-18, 06-14)
 
@@ -557,4 +560,4 @@ Steps: keep an expert Booking Summary or a client Upcoming Booking open across a
 
 Expected: the `Add to Calendar` button disappears within about a minute of the scheduled end, without a refresh.
 
-Result:
+Result: PASS (2026-11-17, /gsd-verify-work 06 session)

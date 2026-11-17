@@ -3,16 +3,16 @@ gsd_state_version: "1.0"
 current_phase: 06
 current_phase_name: Expert Mode
 status: executing
-stopped_at: Completed 06-15-PLAN.md
-last_updated: "2026-11-17T05:17:22.476Z"
+stopped_at: Completed 06-12-PLAN.md
+last_updated: "2026-11-17T05:22:56.793Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 06 execution started
-state_head: 9b4f46cc9bd3cfbfdacc741d0b06fd8340ab0a78
+state_head: 113a8462087a3a56eded7d113c07b190e063300a
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 115
-  completed_plans: 109
+  completed_plans: 110
   percent: 38
 ---
 
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 06 (Expert Mode) — EXECUTING
-Plan: 13 of 18
+Plan: 14 of 18
 Status: Ready to execute
 Last activity: 2026-11-17 — Phase 06 execution started
 
@@ -166,6 +166,7 @@ Progress: [████░░░░░░] 38%
 | Phase 06 P10 | 8 min | 2 tasks | 6 files |
 | Phase 06 P11 | 20 min | 2 tasks | 6 files |
 | Phase 06 P15 | 25 min | 2 tasks | 8 files |
+| Phase 06 P12 | 6 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -360,6 +361,7 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-10: Phase 6 gate green (952 tests in 93 suites, build clean, 9 grep gates); known flake MakeABookingAvailabilityTests failed once at :154 and passed on rerun, recorded not gated; no requirement box ticked, left to /gsd-verify-work 06 (device checklist has 35 items)
 - [Phase 06]: 06-11: a stored topic currency is valid only as trimmed exactly 3 ASCII letters (uppercased); blank or malformed reads as none and the editor falls back to the default, then CAD
 - [Phase 06]: 06-15: Android Add to Calendar on expert Booking Summary and client Upcoming Booking via shared rememberCalendarInsertLauncher and isCalendarEventOffered (iOS parity); one Android commit 69c4e159
+- [Phase 06]: 06-12: the topic card keeps US$ for USD and prices a topic with no valid stored currency in the editor's default (newTopicDefaultCurrency); the server label is used only when the amount is missing or negative
 
 ### Pending Todos
 
@@ -460,6 +462,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-17T05:17:17.279Z
-Stopped at: Completed 06-15-PLAN.md
+Last session: 2026-11-17T05:22:55.880Z
+Stopped at: Completed 06-12-PLAN.md
 Resume file: None

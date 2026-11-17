@@ -83,4 +83,90 @@ struct TopicsSetupTopicCardLabelTests {
         #expect(card == "CA$125.00 / session")
         #expect(card.hasPrefix(editor.currencySymbol))
     }
+
+    // MARK: - Fallbacks and tolerance
+
+    @Test("amounts keep their cents and whole amounts keep two zeros")
+    func centsAndWholeAmounts() throws {
+        let cents = try Self.topic(
+            price: #"{"amount":1250,"currency":"CAD","is_free":false,"label":"CA$12.5 / session"}"#
+        )
+        let whole = try Self.topic(
+            price: #"{"amount":12000,"currency":"CAD","is_free":false,"label":"CA$120 / session"}"#
+        )
+        #expect(Self.label(cents) == "CA$12.50 / session")
+        #expect(Self.label(whole) == "CA$120.00 / session")
+    }
+
+    @Test("a free topic reads Free whatever amount and currency it carries")
+    func freeIgnoresAmount() throws {
+        let topic = try Self.topic(
+            price: #"{"amount":500,"currency":"CAD","is_free":true,"label":"Free"}"#
+        )
+        #expect(Self.label(topic) == "Free")
+    }
+
+    @Test("a paid topic with a blank currency is formatted in the editor's default, never the trimmed label")
+    func blankCurrencyFollowsDefault() throws {
+        let topic = try Self.topic(
+            price: #"{"amount":12550,"currency":"","is_free":false,"label":"$125.5 / session"}"#
+        )
+        #expect(Self.label(topic, defaultCurrency: "CAD") == "CA$125.50 / session")
+        #expect(Self.label(topic, defaultCurrency: "USD") == "US$125.50 / session")
+    }
+
+    @Test("a paid topic with no amount keeps the server label")
+    func missingAmountKeepsLabel() throws {
+        let topic = try Self.topic(
+            price: #"{"amount":null,"currency":"CAD","is_free":false,"label":"CA$50 / session"}"#
+        )
+        #expect(Self.label(topic) == "CA$50 / session")
+    }
+
+    @Test("a paid topic with no amount and no label reads empty")
+    func missingAmountAndLabelReadsEmpty() throws {
+        let topic = try Self.topic(price: #"{"amount":null,"currency":"","is_free":false}"#)
+        #expect(Self.label(topic) == "")
+    }
+
+    @Test("a lowercase currency code is normalized")
+    func lowercaseCurrency() throws {
+        let topic = try Self.topic(
+            price: #"{"amount":5000,"currency":"cad","is_free":false,"label":"CA$50 / session"}"#
+        )
+        #expect(Self.label(topic) == "CA$50.00 / session")
+    }
+
+    @Test("an hourly rate on the payload is formatted the same way")
+    func hourlyRateBranch() throws {
+        let topic = try Self.topic(
+            price: #"{"amount":18050,"currency":"USD","is_free":false,"label":"US$180.5 / session"}"#,
+            extra: #""hourly_rate": {"amount":18050,"currency":"USD"},"#
+        )
+        #expect(Self.label(topic) == "US$180.50 / session")
+    }
+
+    @Test("a free topic with a null currency decodes and reads Free")
+    func freeNullCurrency() throws {
+        let topic = try Self.topic(price: #"{"amount":0,"currency":null,"is_free":true,"label":"Free"}"#)
+        #expect(topic.storedCurrency == nil)
+        #expect(Self.label(topic) == "Free")
+    }
+
+    @Test("a paid topic with a null currency decodes and is formatted in the editor's default")
+    func paidNullCurrency() throws {
+        let topic = try Self.topic(
+            price: #"{"amount":5000,"currency":null,"is_free":false,"label":"CA$50 / session"}"#
+        )
+        #expect(topic.storedCurrency == nil)
+        #expect(Self.label(topic, defaultCurrency: "CAD") == "CA$50.00 / session")
+    }
+
+    @Test("a negative amount keeps the server label")
+    func negativeAmountKeepsLabel() throws {
+        let topic = try Self.topic(
+            price: #"{"amount":-500,"currency":"USD","is_free":false,"label":"US$5 / session"}"#
+        )
+        #expect(Self.label(topic) == "US$5 / session")
+    }
 }

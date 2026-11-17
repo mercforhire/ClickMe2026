@@ -81,15 +81,17 @@ final class TopicEditorViewModel: ObservableObject {
     /// topic, new or existing, may pick any allowed currency.
     let isCurrencyLocked: Bool
 
-    /// Default currency for new topics. Backend controls this now via
-    /// `PricingLimits.minSessionAmount.defaultCurrency` (per the Pricing
-    /// Limits spec §1). The hard-coded `"CAD"` is used only as an
-    /// absolute fallback when `/me` hasn't landed yet on cold launch —
-    /// the server rejects sub-minimum saves independently with
+    /// Default currency for new topics: the same rule as
+    /// `newTopicDefaultCurrency(in:)`, shared by this init and the Topics tab
+    /// card. It is the backend default
+    /// (`PricingLimits.minSessionAmount.defaultCurrency`, Pricing Limits spec
+    /// §1) when that is pickable, else the first allowed currency, with `"CAD"`
+    /// as the absolute fallback when `/me` hasn't landed yet on cold launch.
+    /// The server rejects sub-minimum saves independently with
     /// `PRICE_BELOW_MINIMUM`, so we're not authoritative here. Only a seed
     /// for a new topic; an existing topic keeps its own `currency`.
     var defaultCurrency: String {
-        Self.accountDefaultCurrency(currentMe)
+        Self.newTopicDefaultCurrency(in: currentMe)
     }
 
     /// Currencies a topic may be priced in: `pricing_limits.allowed_currencies`,
@@ -228,27 +230,26 @@ final class TopicEditorViewModel: ObservableObject {
         self.descriptionText = topic?.description ?? ""
         // Server sends the amount in minor units. Prefer `hourlyRate`
         // (present on the expert's own topic list) but fall back to
-        // `price.amount` when older/public payloads omit it. The field shows
-        // the stored amount without loss, using the digit count of the
-        // topic's own currency (or the account default when the topic has
-        // none or a blank one, which is the currency the backend assumes for
-        // it). The seed and the stored amount are kept so an untouched save
-        // can send the amount back unchanged (D-19). The currency starts on the topic's
-        // own stored currency, never the account default (backend Phase 34
-        // D-18); only a topic with none (a blank or malformed stored code
-        // counts as none, G-06-1-currency), or a new topic, takes the default.
+        // `price.amount` when older/public payloads omit it. The currency is
+        // resolved once, and both the price seed and `currency` use it, so the
+        // text and the selected currency always agree (06-REVIEW WR-01). It
+        // starts on the topic's own stored currency, never the account default
+        // (backend Phase 34 D-18); only a topic with none (a blank or
+        // malformed stored code counts as none, G-06-1-currency), or a new
+        // topic, takes `newTopicDefaultCurrency`. The field shows the stored
+        // amount without loss, using that currency's digit count. The seed and
+        // the stored amount are kept so an untouched save can send the amount
+        // back unchanged (D-19).
         let minorAmount = topic?.hourlyRate?.amount ?? topic?.price.amount
-        let storedCurrency = topic?.storedCurrency
-        let accountDefault = Self.accountDefaultCurrency(me)
-        let seedCurrency = storedCurrency ?? accountDefault
-        let seed = minorAmount.map { Self.editableAmount(minorUnits: $0, currency: seedCurrency) } ?? ""
-        self.rate = seed
-        self.seededRate = seed
-        self.seededRateMinor = minorAmount
-        self.currency = Self.resolveInitialCurrency(
+        let resolvedCurrency = Self.resolveInitialCurrency(
             topic: topic,
             defaultCurrency: Self.newTopicDefaultCurrency(in: me)
         )
+        let seed = minorAmount.map { Self.editableAmount(minorUnits: $0, currency: resolvedCurrency) } ?? ""
+        self.rate = seed
+        self.seededRate = seed
+        self.seededRateMinor = minorAmount
+        self.currency = resolvedCurrency
         self.isCurrencyLocked = Self.isCurrencyLocked(topic: topic)
         self.durationMinutes = topic?.durationMins ?? 60
         self.iconSlug = topic?.iconSlug

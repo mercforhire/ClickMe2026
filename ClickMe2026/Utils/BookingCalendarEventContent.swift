@@ -70,6 +70,33 @@ enum BookingCalendarEventContent {
         )
     }
 
+    /// Shown in place of a missing or blank expert name (client side).
+    static let expertFallback = "Expert"
+
+    /// The event a client adds for a booking with an expert, titled
+    /// `ClickMe · {topic} with {expert name}`. Plan 06-14 calls it from the
+    /// client Upcoming Booking screen.
+    ///
+    /// - Parameters:
+    ///   - topic: The booking topic; blank reads `Session`.
+    ///   - expertName: The expert's name; blank reads `Expert`.
+    ///   - clientMessage: The client's own note on the booking, used only in the notes.
+    static func clientEvent(
+        topic: String?,
+        expertName: String?,
+        start: Date,
+        end: Date,
+        meetingType: MeetingType,
+        clientMessage: String?
+    ) -> BookingCalendarPayload {
+        BookingCalendarPayload(
+            title: title(topic: topic, counterpartName: expertName, counterpartFallback: expertFallback),
+            notes: notes(meetingType: meetingType, message: clientMessage),
+            startDate: start,
+            endDate: end
+        )
+    }
+
     // MARK: - Offer rule
 
     /// Statuses for which Add to Calendar is offered: booked and not over, the

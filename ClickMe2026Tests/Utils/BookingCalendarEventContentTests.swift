@@ -118,4 +118,81 @@ struct BookingCalendarEventContentTests {
         viewModel.detail = try Self.decodeDetail(status: "completed", preparationText: "See you")
         #expect(viewModel.showsAddToCalendar(at: Self.summaryStart.addingTimeInterval(-3_600)) == false)
     }
+
+    // MARK: - Wording and offer rule
+
+    @Test("title: topic and name trimmed, fallbacks for nil or blank, emoji and accents kept")
+    func titleWording() {
+        #expect(BookingCalendarEventContent.title(
+            topic: "Career coaching", counterpartName: "Jane D.", counterpartFallback: "Client"
+        ) == "ClickMe \u{00B7} Career coaching with Jane D.")
+        #expect(BookingCalendarEventContent.title(
+            topic: nil, counterpartName: "Jane", counterpartFallback: "Client"
+        ) == "ClickMe \u{00B7} Session with Jane")
+        #expect(BookingCalendarEventContent.title(
+            topic: "   ", counterpartName: nil, counterpartFallback: "Client"
+        ) == "ClickMe \u{00B7} Session with Client")
+        #expect(BookingCalendarEventContent.title(
+            topic: "  Maths  ", counterpartName: " \n ", counterpartFallback: "Expert"
+        ) == "ClickMe \u{00B7} Maths with Expert")
+        #expect(BookingCalendarEventContent.title(
+            topic: " Café \u{1F680} ", counterpartName: " José \u{00C9}lan ", counterpartFallback: "Client"
+        ) == "ClickMe \u{00B7} Café \u{1F680} with José \u{00C9}lan")
+    }
+
+    @Test("notes: the meeting type, then the trimmed message on a new line only when not blank")
+    func notesWording() {
+        #expect(BookingCalendarEventContent.notes(meetingType: .inAppVoice, message: nil) == "In-App Voice")
+        #expect(BookingCalendarEventContent.notes(meetingType: .inAppVoice, message: "  ") == "In-App Voice")
+        #expect(BookingCalendarEventContent.notes(meetingType: .skypeZoom, message: " See you ") == "Skype/Zoom\nSee you")
+    }
+
+    @Test("the client event reads the expert's name, with Expert and Session fallbacks")
+    func clientEventWording() {
+        let event = BookingCalendarEventContent.clientEvent(
+            topic: "Free chat",
+            expertName: "Ada Lovelace",
+            start: start,
+            end: end60,
+            meetingType: .inAppVoice,
+            clientMessage: "Looking forward"
+        )
+        #expect(event.title == "ClickMe \u{00B7} Free chat with Ada Lovelace")
+        #expect(event.notes == "In-App Voice\nLooking forward")
+        #expect(event.startDate == start)
+        #expect(event.endDate == end60)
+
+        let fallback = BookingCalendarEventContent.clientEvent(
+            topic: nil,
+            expertName: "  ",
+            start: start,
+            end: end60,
+            meetingType: .skypeZoom,
+            clientMessage: nil
+        )
+        #expect(fallback.title == "ClickMe \u{00B7} Session with Expert")
+        #expect(fallback.notes == "Skype/Zoom")
+    }
+
+    nonisolated private static let offered: [BookingStatus] = [.confirmed, .pendingReschedule, .inProgress]
+    nonisolated private static let notOffered: [BookingStatus] = [
+        .pendingApproval, .completed, .cancelled, .declined, .missed, .expired, .rescheduled, .unknown
+    ]
+
+    @Test("offered for the three booked statuses while the end is after now", arguments: offered)
+    func offeredStatuses(status: BookingStatus) {
+        #expect(BookingCalendarEventContent.isOffered(status: status, end: start.addingTimeInterval(60), now: start))
+    }
+
+    @Test("never offered for any other status, even before the end", arguments: notOffered)
+    func notOfferedStatuses(status: BookingStatus) {
+        #expect(!BookingCalendarEventContent.isOffered(status: status, end: start.addingTimeInterval(60), now: start))
+    }
+
+    @Test("not offered at or after the end, or when the end is unknown", arguments: offered)
+    func timeGate(status: BookingStatus) {
+        #expect(!BookingCalendarEventContent.isOffered(status: status, end: start, now: start))
+        #expect(!BookingCalendarEventContent.isOffered(status: status, end: start.addingTimeInterval(-1), now: start))
+        #expect(!BookingCalendarEventContent.isOffered(status: status, end: nil, now: start))
+    }
 }

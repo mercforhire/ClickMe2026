@@ -284,6 +284,11 @@ final class ChattingViewModel: ObservableObject {
     var composerMode: ChatBlockState.ComposerMode { blockSession.composerMode }
     /// Bumped when a send is refused as blocked or unavailable; the view announces the banner.
     @Published private(set) var refusedBannerToken = 0
+    @Published private(set) var isUnblocking = false
+    @Published var unblockError: String?
+    var isSelfThread: Bool { false }
+    func adoptBlockState(_ state: ChatBlockState) {}
+    func unblockFromBanner() async {}
 
     // MARK: - Thread info (D-10)
 

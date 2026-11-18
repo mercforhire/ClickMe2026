@@ -5,6 +5,8 @@
 //  CHAT-01 (D-01, D-03): a sent message appears at once as a pending bubble,
 //  the 201 ack updates that same bubble in place, a network or server failure
 //  leaves a Failed bubble, and a refused send returns its text to the composer.
+//  Reloads and live events merge through ChatThreadReducer, so they never drop
+//  a pending or failed bubble and never add a message twice.
 //
 
 import Foundation
@@ -35,12 +37,14 @@ struct ChattingViewModelSendTests {
     }
 
     /// A 201 ack whose message id is the request's own `client_msg_id`, so every send gets its own id.
+    /// The server time is `ackTime`, plus one second for the text "b", so two sends have distinct
+    /// server times in send order however their acks interleave.
     nonisolated private static let ackResponder: Responder = { request in
-        let clientMsgId = request.jsonBodyForTest()?["client_msg_id"] as? String ?? ""
+        let json = request.jsonBodyForTest()
+        let clientMsgId = json?["client_msg_id"] as? String ?? ""
         let messageId = UUID(uuidString: clientMsgId) ?? UUID()
-        let body = Data(
-            #"{"status":"success","data":{"message_id":"\#(messageId.uuidString)","status":"sent","timestamp":"\#(Fixtures.iso(ackTime))"}}"#.utf8
-        )
+        let time = ackTime.addingTimeInterval(json?["content"] as? String == "b" ? 1 : 0)
+        let body = ChatFixtures.ack(messageId: messageId, timestamp: time)
         return Fixtures.response(for: request, status: 201, body: body)
     }
 
@@ -54,9 +58,17 @@ struct ChattingViewModelSendTests {
         throw URLError(.notConnectedToInternet)
     }
 
-    private static func makeAPI(onSend: @escaping Responder) -> ClickMeAPI {
+    nonisolated private static func isMessagesGet(_ request: URLRequest) -> Bool {
+        request.httpMethod == "GET" && request.url?.path.hasSuffix("/messages") == true
+    }
+
+    private static func makeAPI(
+        onSend: @escaping Responder,
+        onMessages: Responder? = nil
+    ) -> ClickMeAPI {
         APITestFactory.make { request in
             if isSend(request) { return try onSend(request) }
+            if isMessagesGet(request), let onMessages { return try onMessages(request) }
             return Fixtures.response(
                 for: request,
                 status: 404,
@@ -66,12 +78,12 @@ struct ChattingViewModelSendTests {
     }
 
     /// A view model with a non-empty identity, so no `/me` or `/user/profile` request is made.
-    private func makeViewModel(onSend: @escaping Responder) -> ChattingViewModel {
+    private func makeViewModel(onSend: @escaping Responder, onMessages: Responder? = nil) -> ChattingViewModel {
         ChattingViewModel(
             threadId: Self.threadId,
             peerName: "Peer",
             peerAvatarURL: "",
-            api: Self.makeAPI(onSend: onSend),
+            api: Self.makeAPI(onSend: onSend, onMessages: onMessages),
             myUserId: Self.myId,
             myName: "Me",
             myAvatarURL: "https://example.invalid/me.png"
@@ -249,5 +261,147 @@ struct ChattingViewModelSendTests {
 
         #expect(!coordinator.isInFlight(clientMsgId))
         #expect(Self.sendPosts().count == 1)
+    }
+
+    // MARK: Reload and live events (Pitfall 1)
+
+    /// Carries a value from the test body into a `@Sendable` stub closure.
+    private final class Box: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: String?
+        var value: String? {
+            get { lock.withLock { stored } }
+            set { lock.withLock { stored = newValue } }
+        }
+    }
+
+    nonisolated private static let peerId = UUID(uuidString: "cccccccc-cccc-4ccc-8ccc-cccccccccccc")!
+    nonisolated private static let pageTime = Date(timeIntervalSince1970: 1_800_000_100)
+
+    nonisolated private static func peerRow(_ n: Int, at offset: TimeInterval) -> String {
+        ChatFixtures.message(
+            id: UUID(uuidString: String(format: "00000000-0000-4000-8000-%012d", n))!,
+            senderId: peerId,
+            content: "peer \(n)",
+            createdAt: pageTime.addingTimeInterval(offset)
+        )
+    }
+
+    private func newEvent(
+        id: UUID = UUID(),
+        threadId: UUID = ChattingViewModelSendTests.threadId,
+        senderId: UUID = ChattingViewModelSendTests.peerId
+    ) -> RealtimeMessageNewEvent {
+        RealtimeMessageNewEvent(
+            messageId: id,
+            threadId: threadId,
+            senderId: senderId,
+            type: .text,
+            content: "live",
+            timestamp: Self.pageTime,
+            status: .sent
+        )
+    }
+
+    @Test("a reload whose page holds a pending bubble's client_msg_id keeps one row, with the bubble's id")
+    func reloadCollapsesIntoThePendingBubble() async throws {
+        let clientMsgId = Box()
+        let viewModel = makeViewModel(onSend: Self.ackResponder) { request in
+            // The server has the message: the page carries the sender's own row.
+            let mineId = UUID(uuidString: clientMsgId.value ?? "") ?? UUID()
+            let row = ChatFixtures.message(
+                id: mineId,
+                senderId: Self.myId,
+                content: "hello",
+                clientMsgId: clientMsgId.value,
+                createdAt: Self.ackTime
+            )
+            return Fixtures.response(for: request, body: ChatFixtures.messagesPage([row]))
+        }
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+        let pending = try #require(messages(viewModel).last)
+        clientMsgId.value = pending.clientMsgId
+
+        await viewModel.reload()
+        await viewModel.awaitInFlightSends()
+
+        let rows = messages(viewModel)
+        #expect(rows.count == 1)
+        #expect(rows.first?.id == pending.id)
+        #expect(rows.first?.sendState == .sent)
+        #expect(rows.first?.serverId != nil)
+    }
+
+    @Test("a reload without a failed bubble keeps it, after the server rows")
+    func reloadKeepsAFailedBubble() async throws {
+        let viewModel = makeViewModel(
+            onSend: Self.errorResponder(status: 500, code: "INTERNAL_ERROR", message: "Boom")
+        ) { request in
+            Fixtures.response(
+                for: request,
+                body: ChatFixtures.messagesPage([Self.peerRow(1, at: 0), Self.peerRow(2, at: 10)])
+            )
+        }
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+        await viewModel.awaitInFlightSends()
+        let failedId = try #require(messages(viewModel).last).id
+
+        await viewModel.reload()
+
+        let rows = messages(viewModel)
+        #expect(rows.map(\.body) == ["peer 1", "peer 2", "hello"])
+        #expect(rows.last?.id == failedId)
+        #expect(rows.last?.sendState == .failed)
+    }
+
+    @Test("a live message for another thread, from me, or already shown adds no row")
+    func liveMessageIgnoresForeignOwnAndKnownIds() async throws {
+        let shown = UUID(uuidString: "00000000-0000-4000-8000-000000000001")!
+        let viewModel = makeViewModel(onSend: Self.ackResponder) { request in
+            Fixtures.response(for: request, body: ChatFixtures.messagesPage([Self.peerRow(1, at: 0)]))
+        }
+        await viewModel.load()
+        #expect(messages(viewModel).count == 1)
+
+        viewModel.handleMessageNew(newEvent(threadId: UUID()))
+        viewModel.handleMessageNew(newEvent(senderId: Self.myId))
+        viewModel.handleMessageNew(newEvent(id: shown))
+        #expect(messages(viewModel).count == 1)
+
+        viewModel.handleMessageNew(newEvent())
+        #expect(messages(viewModel).count == 2)
+    }
+
+    @Test("load maps client_msg_id onto a message row and the id and time onto an event row")
+    func loadCarriesClientMsgIdAndEventIds() async throws {
+        let mineId = UUID(uuidString: "00000000-0000-4000-8000-0000000000a1")!
+        let eventId = UUID(uuidString: "00000000-0000-4000-8000-0000000000e1")!
+        let eventTime = Self.pageTime.addingTimeInterval(5)
+        let viewModel = makeViewModel(onSend: Self.ackResponder) { request in
+            let rows = [
+                ChatFixtures.message(
+                    id: mineId, senderId: Self.myId, content: "mine", clientMsgId: "abc", createdAt: Self.pageTime
+                ),
+                ChatFixtures.event(id: eventId, createdAt: eventTime)
+            ]
+            return Fixtures.response(for: request, body: ChatFixtures.messagesPage(rows))
+        }
+
+        await viewModel.load()
+
+        let message = try #require(messages(viewModel).first)
+        #expect(message.clientMsgId == "abc")
+        #expect(message.sender == .me)
+        let event = try #require(viewModel.items.compactMap { item -> BookingEvent? in
+            if case let .systemEvent(event) = item { return event }
+            return nil
+        }.first)
+        #expect(event.serverId == eventId)
+        #expect(event.createdAt == eventTime)
+        let eventItem = try #require(viewModel.items.last)
+        #expect(eventItem.serverId == eventId)
+        #expect(eventItem.orderDate == eventTime)
     }
 }

@@ -95,6 +95,12 @@ enum ChatThreadReducer {
         updateLocal(items, clientMsgId: clientMsgId, from: .sending, to: .failed)
     }
 
+    /// Retry: the `.failed` bubble goes back to `.sending` with the same
+    /// `client_msg_id` (D-01).
+    static func retry(_ items: [ChatItem], clientMsgId: String) -> [ChatItem] {
+        updateLocal(items, clientMsgId: clientMsgId, from: .failed, to: .sending)
+    }
+
     /// Deletes a local unsent bubble. A row that already has a server id is
     /// never removed.
     static func remove(_ items: [ChatItem], clientMsgId: String) -> [ChatItem] {
@@ -114,6 +120,55 @@ enum ChatThreadReducer {
               case let .message(message) = items[index]
         else { return nil }
         return message
+    }
+
+    // MARK: - Server rows
+
+    /// Merges a page of server rows into `items` without dropping or
+    /// duplicating anything (Pitfall 1). A page row is matched to an existing
+    /// row by server id first, then, for my own messages, by `client_msg_id`. A
+    /// match is reconciled in place, keeping the existing row's `id`; no match
+    /// appends. Existing rows nothing matches (older pages, pending and failed
+    /// bubbles) are kept.
+    static func mergePage(_ items: [ChatItem], page: [ChatItem]) -> [ChatItem] {
+        var result = items
+        for incoming in page {
+            if let index = indexOfMatch(result, incoming: incoming) {
+                result[index] = reconcile(existing: result[index], incoming: incoming)
+            } else {
+                result.append(incoming)
+            }
+        }
+        return order(result)
+    }
+
+    /// A `message.new` socket event. Ignored when `myId` sent it (the sender is
+    /// never echoed, but be safe) or when the server id is already shown;
+    /// otherwise it is added in server-time order.
+    static func onIncoming(
+        _ items: [ChatItem],
+        _ message: ChatMessage,
+        senderId: UUID?,
+        myId: UUID?
+    ) -> [ChatItem] {
+        if let senderId, senderId == myId { return items }
+        if let serverId = message.serverId, items.contains(where: { $0.serverId == serverId }) { return items }
+        return order(items + [.message(message)])
+    }
+
+    /// Server ids of peer messages that are not Read yet and not in
+    /// `alreadyEmitted`, in list order. The caller emits a read receipt for them
+    /// (plan 07-03).
+    static func unreadPeerIds(_ items: [ChatItem], alreadyEmitted: Set<UUID>) -> [UUID] {
+        items.compactMap { item in
+            guard case let .message(message) = item,
+                  message.sender == .them,
+                  message.status != .read,
+                  let serverId = message.serverId,
+                  !alreadyEmitted.contains(serverId)
+            else { return nil }
+            return serverId
+        }
     }
 
     // MARK: - Order
@@ -162,6 +217,40 @@ enum ChatThreadReducer {
             result[index] = .message(message)
         }
         return result
+    }
+
+    private static func indexOfMatch(_ existing: [ChatItem], incoming: ChatItem) -> Int? {
+        if let serverId = incoming.serverId,
+           let index = existing.firstIndex(where: { $0.serverId == serverId }) {
+            return index
+        }
+        guard case let .message(message) = incoming,
+              message.sender == .me,
+              let clientMsgId = message.clientMsgId
+        else { return nil }
+        return indexOfMine(existing, clientMsgId: clientMsgId)
+    }
+
+    /// The matched row becomes the server's version of itself but keeps its
+    /// `id`, so the list key does not change and the row is not recreated. A
+    /// message keeps the `client_msg_id` it already had and never goes from Read
+    /// back to Sent.
+    private static func reconcile(existing: ChatItem, incoming: ChatItem) -> ChatItem {
+        switch (existing, incoming) {
+        case let (.message(old), .message(new)):
+            var merged = new
+            merged.id = old.id
+            merged.clientMsgId = old.clientMsgId ?? new.clientMsgId
+            if old.status == .read { merged.status = .read }
+            merged.sendState = .sent
+            return .message(merged)
+        case let (.systemEvent(old), .systemEvent(new)):
+            var merged = new
+            merged.id = old.id
+            return .systemEvent(merged)
+        default:
+            return incoming
+        }
     }
 
     private static func indexOfMine(_ items: [ChatItem], clientMsgId: String) -> Int? {

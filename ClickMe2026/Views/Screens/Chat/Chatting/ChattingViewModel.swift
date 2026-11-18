@@ -186,7 +186,9 @@ final class ChattingViewModel: ObservableObject {
             // oldest-first *within* the page — exactly the display order.
             // Rendered top-to-bottom that puts the latest message at the
             // bottom of the scroll view.
-            items = response.data.messages.map(mapToChatItem(_:))
+            // Merge, don't replace: a pending or failed bubble is not on the
+            // server yet and must survive a reload (Pitfall 1).
+            items = ChatThreadReducer.mergePage(items, page: response.data.messages.map(mapToChatItem(_:)))
             hydratePeerUserIdIfNeeded(from: response.data.messages)
             loadState = .loaded
             scrollToBottomToken &+= 1
@@ -368,19 +370,11 @@ final class ChattingViewModel: ObservableObject {
     /// Live message arrived. Ignore anything not in this thread. Peer
     /// messages are appended, scrolled to, and immediately acked with
     /// a `message.read` so the sender's ticks flip in real time.
-    /// My own echoes are dropped — the send-ack already appended the
-    /// local bubble; re-adding here would duplicate.
-    private func handleMessageNew(_ event: RealtimeMessageNewEvent) {
+    /// My own echoes and a server id already shown add nothing
+    /// (`ChatThreadReducer.onIncoming`); re-adding would duplicate.
+    /// Internal so tests can drive it.
+    func handleMessageNew(_ event: RealtimeMessageNewEvent) {
         guard event.threadId == threadId else { return }
-        if event.senderId == myUserId { return }
-        // Dedupe against any bubble we already have with this id
-        // (e.g. a race between the socket event and a load that
-        // happens to include the same message).
-        if items.contains(where: {
-            if case let .message(m) = $0 { return m.serverId == event.messageId }
-            return false
-        }) { return }
-
         let bubble = ChatMessage(
             serverId: event.messageId,
             sender: .them,
@@ -390,8 +384,13 @@ final class ChattingViewModel: ObservableObject {
             timestamp: event.timestamp,
             status: event.status
         )
+        let updated = ChatThreadReducer.onIncoming(
+            items, bubble, senderId: event.senderId, myId: myUserId
+        )
+        // The reducer returns `items` untouched when it ignores the event.
+        guard updated.count != items.count else { return }
         withAnimation(.easeInOut(duration: 0.2)) {
-            items.append(.message(bubble))
+            items = updated
         }
         if peerUserId == nil { peerUserId = event.senderId }
         scrollToBottomToken &+= 1

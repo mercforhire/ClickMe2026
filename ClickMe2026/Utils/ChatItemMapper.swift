@@ -152,12 +152,14 @@ enum ChatItemMapper {
 
     /// Reads an integer field from `event_data`. Accepts both raw ints
     /// and stringly-typed numbers (some backends stringify small ints).
+    /// A double that is not a whole number in `Int` range (fractional, NaN,
+    /// infinite, or too large) reads as nil rather than trapping.
     private static func extractInt(from data: JSONValue?, key: String) -> Int? {
         guard case let .object(dict) = data else { return nil }
         switch dict[key] {
         case .int(let v): return v
         case .string(let s): return Int(s)
-        case .double(let d): return Int(d)
+        case .double(let d): return Int(exactly: d)
         default: return nil
         }
     }

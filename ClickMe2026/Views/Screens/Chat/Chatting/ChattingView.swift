@@ -144,9 +144,11 @@ struct ChatView: View {
             }
             ChattingInputBar(
                 myAvatarURL: viewModel.myAvatarURL,
-                text: $viewModel.messageText,
+                text: Binding(
+                    get: { viewModel.messageText },
+                    set: { viewModel.updateMessageText($0) }
+                ),
                 inputFocused: $inputFocused,
-                isSending: viewModel.isSending,
                 onSend: { Task { await viewModel.sendMessage() } }
             )
         }

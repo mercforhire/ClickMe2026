@@ -36,9 +36,6 @@ final class ChattingViewModel: ObservableObject {
     @Published var showMenu: Bool
 
     @Published var loadState: LoadState = .idle
-    /// No longer set: sends are optimistic (D-01) and the composer stays
-    /// usable. Plan 07-02 deletes this flag with the input bar's spinner.
-    @Published var isSending: Bool = false
     /// Non-fatal error surfaced from the send-message call.
     @Published var sendError: String?
     /// True while paginating older history in via `loadEarlier()`.
@@ -334,9 +331,16 @@ final class ChattingViewModel: ObservableObject {
             // away and put the text back, ahead of anything typed since.
             // Plan 07-04 splits this branch by error code.
             items = ChatThreadReducer.remove(items, clientMsgId: clientMsgId)
-            messageText = ChatSendCoordinator.restoredText(refused: text, draft: messageText)
+            updateMessageText(ChatSendCoordinator.restoredText(refused: text, draft: messageText))
             sendError = message
         }
+    }
+
+    /// Applies typed, pasted or restored text to the composer, cut at 10,000 UTF-16
+    /// units on a whole-character boundary so the server never refuses a message
+    /// for length (D-04). The text a refused send puts back goes through here too.
+    func updateMessageText(_ raw: String) {
+        messageText = ChatComposerRules.cap(raw)
     }
 
     // MARK: - Retry and delete (D-01)

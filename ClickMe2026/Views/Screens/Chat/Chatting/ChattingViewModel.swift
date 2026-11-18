@@ -276,6 +276,13 @@ final class ChattingViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Block state (D-07, D-08)
+
+    /// The per-thread block bookkeeping, held as one value (07-CONTEXT size rule).
+    @Published private(set) var blockSession = ChatBlockState.Session()
+    var blockState: ChatBlockState { blockSession.block }
+    var composerMode: ChatBlockState.ComposerMode { blockSession.composerMode }
+
     // MARK: - Thread info (D-10)
 
     /// Looks this thread up in `GET /chats` and takes the other person's id from

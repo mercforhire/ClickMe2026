@@ -36,6 +36,11 @@ final class RealtimeService {
     /// blow away the manager cleanly on a token change.
     private var connectedToken: String?
 
+    /// True while the socket is connected. An `emit` made at any other time is
+    /// dropped by socket.io-client-swift, so callers that must not lose one hold
+    /// it until this is true.
+    var isConnected: Bool { socket?.status == .connected }
+
     // MARK: Subscribers
 
     /// Handlers are stored per event by token. Emitting an event walks

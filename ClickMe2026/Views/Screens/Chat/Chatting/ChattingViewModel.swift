@@ -59,6 +59,11 @@ final class ChattingViewModel: ObservableObject {
     private let pageSize: Int = 30
     /// Owns every send in flight, so this type keeps no send bookkeeping.
     private let sendCoordinator: ChatSendCoordinator
+    /// Test seams for read receipts; production reads the live socket.
+    private let isRealtimeConnected: () -> Bool
+    private let emitMessageRead: (UUID, [UUID]) -> Void
+    /// Peer message ids a `message.read` has already gone out for in this thread session.
+    private var emittedReadIds: Set<UUID> = []
 
     /// Live subscriptions to `RealtimeService`. Auto-cancel when the
     /// VM is deallocated because each `RealtimeSubscription` fires its
@@ -86,8 +91,9 @@ final class ChattingViewModel: ObservableObject {
 
     /// Runtime init — fetches messages from `GET /chats/:id/messages`.
     ///
-    /// The three identity parameters are a test seam: `ChatView` keeps calling
-    /// the four-argument form and gets the signed-in user.
+    /// The three identity parameters and the two realtime parameters are test
+    /// seams: `ChatView` keeps calling the four-argument form and gets the
+    /// signed-in user and the live socket.
     init(
         threadId: UUID,
         peerName: String,
@@ -95,8 +101,14 @@ final class ChattingViewModel: ObservableObject {
         api: ClickMeAPI = .shared,
         myUserId: UUID? = UserManager.shared.authUser?.id,
         myName: String = UserManager.shared.authUser?.firstName ?? "You",
-        myAvatarURL: String = UserManager.shared.authUser?.avatarUrl ?? ""
+        myAvatarURL: String = UserManager.shared.authUser?.avatarUrl ?? "",
+        isRealtimeConnected: @escaping () -> Bool = { RealtimeService.shared.isConnected },
+        emitMessageRead: @escaping (UUID, [UUID]) -> Void = {
+            RealtimeService.shared.emitMessageRead(threadId: $0, messageIds: $1)
+        }
     ) {
+        self.isRealtimeConnected = isRealtimeConnected
+        self.emitMessageRead = emitMessageRead
         self.threadId = threadId
         self.peerName = peerName
         self.peerAvatarURL = peerAvatarURL
@@ -123,6 +135,8 @@ final class ChattingViewModel: ObservableObject {
         messageText: String = "",
         showMenu: Bool = false
     ) {
+        self.isRealtimeConnected = { false }
+        self.emitMessageRead = { _, _ in }
         self.threadId = nil
         self.peerName = peerName
         self.peerAvatarURL = peerAvatarURL
@@ -280,6 +294,9 @@ final class ChattingViewModel: ObservableObject {
         guard case .loaded = loadState else { return }
         Task { await refreshThreadInfo() }
     }
+
+    /// The socket connected or reconnected. Compile stub until the receipts are held.
+    func realtimeDidConnect() {}
 
     // MARK: - Send (optimistic, D-01)
 

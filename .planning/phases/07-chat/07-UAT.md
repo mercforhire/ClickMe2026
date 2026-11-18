@@ -38,12 +38,16 @@ result: [pending]
 expected: A KEEP or CHANGE answer for each of the three judgements (120 s Sending on a dead network, a count reappearing after a very quick pop, toast height), and the sweep shows no visual regressions.
 result: [pending]
 
+### 6. Chats list and bubble behavior after the code-review fixes (WR-02, WR-05, WR-06, IN-04)
+expected: With phone A on the Chats list, a message from phone B in an existing thread moves that row to the top with the new preview, time and unread pill, and a pull-to-refresh right after does not put back the old preview or order. A first message from an account phone A has never chatted with shows up as a new row, even if it arrives while phone A is pulling to refresh. Opening a thread clears its pill and it does not come back after the list reloads. With VoiceOver on, a delivered bubble is not read as pending or sending. If a recipient shows the unavailable state, pulling to refresh in that chat re-enables the composer once they can receive messages again.
+result: [pending]
+
 ## Summary
 
-total: 5
+total: 6
 passed: 0
 issues: 0
-pending: 5
+pending: 6
 skipped: 0
 blocked: 0
 

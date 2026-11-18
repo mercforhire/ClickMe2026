@@ -62,6 +62,10 @@ struct ChatView: View {
             if let threadId = viewModel.threadId { ChatPresence.shared.chatDisappeared(threadId: threadId) }
         }
         .refreshable { await viewModel.reload() }
+        .onChange(of: viewModel.composerMode) { _, mode in
+            // The banner has no text field: drop focus so the keyboard hides.
+            if mode != .normal { inputFocused = false }
+        }
         .navigationTitle(viewModel.peerName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(ChattingBrand.navBg, for: .navigationBar)
@@ -117,12 +121,12 @@ struct ChatView: View {
         case .idle, .loading:
             VStack {
                 loadingContent
-                inputBar
+                composerSlot
             }
         case .failed(let message):
             VStack {
                 errorContent(message: message)
-                inputBar
+                composerSlot
             }
         case .loaded:
             VStack(spacing: 0) {
@@ -131,12 +135,25 @@ struct ChatView: View {
                 } else {
                     messageList
                 }
-                inputBar
+                composerSlot
             }
         }
     }
 
     // MARK: - Sub-content
+
+    /// The composer, or the banner that replaces it (typing strip included) when the
+    /// thread is blocked or the other person is unavailable (D-07).
+    private var composerSlot: some View {
+        Group {
+            if viewModel.composerMode == .normal {
+                inputBar.transition(.opacity)
+            } else {
+                ChattingBlockedBanner(mode: viewModel.composerMode).transition(.opacity)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.composerMode)
+    }
 
     private var inputBar: some View {
         VStack(spacing: 0) {

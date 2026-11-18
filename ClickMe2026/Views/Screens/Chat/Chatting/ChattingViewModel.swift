@@ -285,16 +285,20 @@ final class ChattingViewModel: ObservableObject {
 
     // MARK: - Thread info (D-10)
 
-    /// Looks this thread up in `GET /chats` and takes the other person's id from
-    /// `partner.id`, so View Profile and typing work before any peer message
-    /// arrives (D-10). Best effort: a failed or empty scan changes nothing on
-    /// screen and shows no error (UI-SPEC L2); the first-sender rule in
-    /// `hydratePeerUserIdIfNeeded` stands in. Plan 07-04 extends this with the
-    /// block state.
+    /// Looks this thread up in `GET /chats`. A listed thread gives the other
+    /// person's id from `partner.id`, so View Profile and typing work before any
+    /// peer message arrives (D-10), and its block flags (D-07, D-08). An unlisted
+    /// thread keeps its block state (an empty thread is not listed); a failed scan
+    /// changes nothing and shows no error (UI-SPEC L2). The first-sender rule in
+    /// `hydratePeerUserIdIfNeeded` stands in for the id.
     func refreshThreadInfo() async {
         guard let threadId else { return }
-        if let thread = try? await ChatThreadLookup.find(threadId: threadId, api: api) {
-            peerUserId = thread.partner.id
+        do {
+            let thread = try await ChatThreadLookup.find(threadId: threadId, api: api)
+            if let thread { peerUserId = thread.partner.id }
+            blockSession.applyScan(found: thread.map(ChatBlockState.ScannedBlock.init(thread:)))
+        } catch {
+            // Lookup failure keeps the composer; the server still enforces the block.
         }
     }
 

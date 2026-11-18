@@ -172,6 +172,12 @@ final class ChatConversationsViewModel: ObservableObject {
         chats.insert(updated, at: 0)
     }
 
+    /// The thread for `threadId` just became the visible thread, from any
+    /// route: set its row's count to 0 locally with no request (CHAT-07,
+    /// D-12). The next quiet `GET /chats` re-syncs with the server.
+    func markOpened(threadId: UUID) {
+    }
+
     /// A conversation partner's presence changed. Flip the matching row's
     /// online dot in place — we don't need a full refetch for this.
     private func handleUserStatus(_ event: RealtimeUserStatusEvent) {

@@ -174,4 +174,46 @@ struct ChatConversationsUnreadTests {
 
         #expect(count(viewModel, Self.threadB) == 2)
     }
+
+    // MARK: D-12 opening a thread zeroes its row
+
+    @Test("markOpened zeroes the opened row, leaves the others, and sends no request")
+    func markOpenedZeroesRow() async {
+        let server = ChatsServer(Self.page(aUnread: 4, bUnread: 3))
+        let viewModel = Self.makeViewModel(server: server)
+        await viewModel.load()
+        let requestsBefore = MockURLProtocol.recordedRequests.count
+
+        viewModel.markOpened(threadId: Self.threadB)
+
+        #expect(count(viewModel, Self.threadB) == 0)
+        #expect(count(viewModel, Self.threadA) == 4)
+        #expect(MockURLProtocol.recordedRequests.count == requestsBefore)
+    }
+
+    @Test("markOpened for a thread that is not in the list changes nothing")
+    func markOpenedUnknownThread() async {
+        let server = ChatsServer(Self.page(aUnread: 4, bUnread: 3))
+        let viewModel = Self.makeViewModel(server: server)
+        await viewModel.load()
+        let before = viewModel.chats
+
+        viewModel.markOpened(threadId: Self.threadC)
+
+        #expect(viewModel.chats == before)
+    }
+
+    @Test("after markOpened, a quiet reload puts the server's count back")
+    func markOpenedThenReloadServerWins() async {
+        let server = ChatsServer(Self.page(aUnread: 0, bUnread: 3))
+        let viewModel = Self.makeViewModel(server: server)
+        await viewModel.load()
+        viewModel.markOpened(threadId: Self.threadB)
+        #expect(count(viewModel, Self.threadB) == 0)
+
+        server.body = Self.page(aUnread: 0, bUnread: 1)
+        await viewModel.silentReload()
+
+        #expect(count(viewModel, Self.threadB) == 1)
+    }
 }

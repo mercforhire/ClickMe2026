@@ -60,6 +60,8 @@ final class ChattingViewModel: ObservableObject {
 
     private let api: ClickMeAPI
     private let pageSize: Int = 30
+    /// Owns every send in flight, so this type keeps no send bookkeeping.
+    private let sendCoordinator: ChatSendCoordinator
 
     /// Live subscriptions to `RealtimeService`. Auto-cancel when the
     /// VM is deallocated because each `RealtimeSubscription` fires its
@@ -86,23 +88,30 @@ final class ChattingViewModel: ObservableObject {
     // MARK: - Runtime init
 
     /// Runtime init — fetches messages from `GET /chats/:id/messages`.
+    ///
+    /// The three identity parameters are a test seam: `ChatView` keeps calling
+    /// the four-argument form and gets the signed-in user.
     init(
         threadId: UUID,
         peerName: String,
         peerAvatarURL: String,
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        myUserId: UUID? = UserManager.shared.authUser?.id,
+        myName: String = UserManager.shared.authUser?.firstName ?? "You",
+        myAvatarURL: String = UserManager.shared.authUser?.avatarUrl ?? ""
     ) {
         self.threadId = threadId
         self.peerName = peerName
         self.peerAvatarURL = peerAvatarURL
-        self.myAvatarURL = UserManager.shared.authUser?.avatarUrl ?? ""
-        self.myName = UserManager.shared.authUser?.firstName ?? "You"
-        self.myUserId = UserManager.shared.authUser?.id
+        self.myAvatarURL = myAvatarURL
+        self.myName = myName
+        self.myUserId = myUserId
         self.peerUserId = nil
         self.items = []
         self.messageText = ""
         self.showMenu = false
         self.api = api
+        self.sendCoordinator = ChatSendCoordinator(api: api)
     }
 
     // MARK: - Preview init
@@ -128,6 +137,7 @@ final class ChattingViewModel: ObservableObject {
         self.messageText = messageText
         self.showMenu = showMenu
         self.api = .shared
+        self.sendCoordinator = ChatSendCoordinator(api: .shared)
     }
 
     /// Preview seam — installs the canned conversation and marks
@@ -317,6 +327,11 @@ final class ChattingViewModel: ObservableObject {
         } catch {
             sendError = error.userMessage
         }
+    }
+
+    /// Awaits every send in flight. Used by tests.
+    func awaitInFlightSends() async {
+        await sendCoordinator.awaitAll()
     }
 
     // MARK: - Realtime (Socket.IO)

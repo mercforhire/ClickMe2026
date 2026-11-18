@@ -282,6 +282,8 @@ final class ChattingViewModel: ObservableObject {
     @Published private(set) var blockSession = ChatBlockState.Session()
     var blockState: ChatBlockState { blockSession.block }
     var composerMode: ChatBlockState.ComposerMode { blockSession.composerMode }
+    /// Bumped when a send is refused as blocked or unavailable; the view announces the banner.
+    @Published private(set) var refusedBannerToken = 0
 
     // MARK: - Thread info (D-10)
 
@@ -379,13 +381,15 @@ final class ChattingViewModel: ObservableObject {
             }
         case .keptAsFailed:
             items = ChatThreadReducer.fail(items, clientMsgId: clientMsgId)
-        case let .refused(_, message):
+        case let .refused(code, message):
             // D-03: the server will never accept this text. Take the bubble
-            // away and put the text back, ahead of anything typed since.
-            // Plan 07-04 splits this branch by error code.
+            // away and put the text back, ahead of anything typed since. A blocked
+            // or unavailable answer switches to the banner and rescans, no alert.
             items = ChatThreadReducer.remove(items, clientMsgId: clientMsgId)
             updateMessageText(ChatSendCoordinator.restoredText(refused: text, draft: messageText))
-            sendError = message
+            guard blockSession.applySendRefusal(code) else { sendError = message; return }
+            refusedBannerToken &+= 1
+            await refreshThreadInfo()
         }
     }
 
@@ -403,9 +407,9 @@ final class ChattingViewModel: ObservableObject {
     /// duplicate if the first attempt did reach it (D-01). The bubble keeps its id,
     /// goes back to Sending and becomes Sent on the ack. Does nothing for a bubble
     /// that is not Failed or whose send is still in flight, so a second tap never
-    /// starts a second request.
+    /// starts a second request, nor while a banner replaces the composer.
     func retrySend(clientMsgId: String) {
-        guard let threadId,
+        guard let threadId, composerMode == .normal,
               let bubble = ChatThreadReducer.findMine(items, clientMsgId: clientMsgId),
               bubble.sendState == .failed,
               !sendCoordinator.isInFlight(clientMsgId)

@@ -66,6 +66,13 @@ struct ChatView: View {
             // The banner has no text field: drop focus so the keyboard hides.
             if mode != .normal { inputFocused = false }
         }
+        .onChange(of: viewModel.refusedBannerToken) {
+            // A refused send: hide the keyboard and say why once (UI-SPEC Accessibility).
+            inputFocused = false
+            if let title = ChatBlockState.bannerTitle(for: viewModel.composerMode) {
+                AccessibilityNotification.Announcement(title).post()
+            }
+        }
         .navigationTitle(viewModel.peerName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(ChattingBrand.navBg, for: .navigationBar)

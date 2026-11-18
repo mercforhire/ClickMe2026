@@ -14,6 +14,11 @@ struct ChatConversationRow: View {
     let chat: ChatPreview
     let action: () -> Void
 
+    /// The pill's minimum size, scaled with Dynamic Type (CHAT-07, D-14).
+    @ScaledMetric private var pillSize: CGFloat = 24
+
+    private var isUnread: Bool { chat.unreadCount > 0 }
+
     var body: some View {
         Button(action: action) {
             HStack(alignment: .top, spacing: 14) {
@@ -41,12 +46,22 @@ struct ChatConversationRow: View {
                         }
                     }
 
-                    Text(chat.lastMessage)
-                        .font(.brand(.subheadline, weight: .regular))
-                        .foregroundColor(ChatConversationsBrand.onSurfaceVar)
-                        .lineLimit(2)
-                        .lineSpacing(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(chat.lastMessage)
+                            .font(.brand(.subheadline, weight: isUnread ? .bold : .regular))
+                            .foregroundColor(
+                                isUnread ? ChatConversationsBrand.onSurface : ChatConversationsBrand.onSurfaceVar
+                            )
+                            .lineLimit(2)
+                            .lineSpacing(2)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Spacer(minLength: 0)
+
+                        if let label = ChatUnreadRules.badgeLabel(count: chat.unreadCount) {
+                            unreadPill(label)
+                        }
+                    }
                 }
             }
             .padding(14)
@@ -60,5 +75,32 @@ struct ChatConversationRow: View {
             )
         }
         .buttonStyle(ChatRowStyle())
+        .animation(.easeInOut(duration: 0.2), value: chat.unreadCount)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            ChatUnreadRules.rowAccessibilityLabel(
+                name: chat.name,
+                count: chat.unreadCount,
+                preview: chat.lastMessage,
+                time: chat.timeLabel,
+                isOnline: chat.isOnline
+            )
+        )
+        .accessibilityAddTraits(.isButton)
+    }
+
+    // MARK: - Unread pill
+
+    /// Brand capsule with the count. `.fixedSize()` so the pill never
+    /// truncates; the preview beside it gives way instead.
+    private func unreadPill(_ label: String) -> some View {
+        Text(label)
+            .font(.brand(.caption, weight: .bold))
+            .foregroundColor(Brand.onPrimary)
+            .padding(.horizontal, 8)
+            .frame(minWidth: pillSize, minHeight: pillSize)
+            .background(Capsule().fill(Brand.primary))
+            .fixedSize()
+            .transition(.opacity)
     }
 }

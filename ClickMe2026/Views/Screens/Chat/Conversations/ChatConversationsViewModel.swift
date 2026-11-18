@@ -136,16 +136,15 @@ final class ChatConversationsViewModel: ObservableObject {
 
     // MARK: - Realtime
 
-    /// Patches the matching thread's preview to reflect a live-arrived
-    /// message: swap `lastMessage`, refresh `timeLabel`, and move the
-    /// row to the top so the list stays sorted by most-recent activity.
+    /// Patches the matching thread's row for a live-arrived message: swap
+    /// `lastMessage`, refresh `timeLabel`, and move the row to the top so the
+    /// list stays sorted by most-recent activity.
     ///
-    /// Unread accounting is intentionally left to the server-sourced
-    /// value refreshed by `silentReload()` on pop-back. The backend
-    /// team's contract notes `unread_count` isn't reliably maintained
-    /// today, so we don't try to increment locally — the ChatView
-    /// itself emits `message.read` on message arrival, which will
-    /// often zero the count before this list ever re-fetches.
+    /// Unread count (CHAT-07, D-13): the server's `unread_count` is the
+    /// authority and every `GET /chats` replaces the local value. Between
+    /// fetches the row adds 1 only for a message from someone other than the
+    /// signed-in user on a thread that is not on screen. A message for the
+    /// open thread, or one the user sent, leaves the count as it was.
     func handleMessageNew(_ event: RealtimeMessageNewEvent) {
         guard let idx = chats.firstIndex(where: { $0.threadId == event.threadId }) else {
             // Unknown thread — probably a first-message-from-new-peer
@@ -155,6 +154,8 @@ final class ChatConversationsViewModel: ObservableObject {
             return
         }
         let existing = chats[idx]
+        let isPeerMessageOnClosedThread = event.threadId != visibleThreadId()
+            && event.senderId != currentUserId()
         let updated = ChatPreview(
             threadId: existing.threadId,
             partnerId: existing.partnerId,
@@ -163,7 +164,9 @@ final class ChatConversationsViewModel: ObservableObject {
             timeLabel: Self.relativeTimeLabel(from: event.timestamp),
             imageURL: existing.imageURL,
             isOnline: existing.isOnline,
-            unreadCount: existing.unreadCount
+            unreadCount: isPeerMessageOnClosedThread
+                ? ChatUnreadRules.afterPeerMessage(count: existing.unreadCount)
+                : existing.unreadCount
         )
         chats.remove(at: idx)
         chats.insert(updated, at: 0)

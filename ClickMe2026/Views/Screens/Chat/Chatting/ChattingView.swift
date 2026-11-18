@@ -106,10 +106,13 @@ struct ChatView: View {
                 ReportChatView(
                     threadId: threadId,
                     userName: viewModel.peerName,
+                    initialIsBlocked: viewModel.blockState.isBlocked,
+                    initialBlockedByMe: viewModel.blockState.blockedByMe,
                     onBlock: { _ in showingBlockReport = false },
                     onReport: { _, _ in },
                     onUnblock: { _ in showingBlockReport = false },
-                    onDismiss: { showingBlockReport = false }
+                    onDismiss: { showingBlockReport = false },
+                    onBlockStateChange: { viewModel.adoptBlockState($0) }
                 )
             }
         }

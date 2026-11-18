@@ -10,26 +10,23 @@ import SwiftUI
 
 // MARK: - Block / Unblock card
 //
-// Three visual states — looser than `docs/ios/CHAT-UNBLOCK.md` §5
-// because legacy pre-2026-10-17 blocks (§7) have no recorded blocker
-// and would otherwise leave the user stranded. We ALWAYS surface an
-// Unblock button on a blocked thread and let the server adjudicate —
-// 200 unblocks, 403 NOT_BLOCKER reconciles state so the button goes
-// away on the next render.
+// Three rows, per `docs/ios/CHAT-UNBLOCK.md` §5. Unblock is offered only to the
+// person who blocked; a legacy block (§7, no recorded blocker) reads as blocked
+// by the other person, and so does the state after a `403 NOT_BLOCKER` (§6).
+// Copy describes only what blocking does here: it stops new messages in this
+// conversation (D-05).
 //
-// | isBlocked | blockedByMe | Rendered state |
-// |-----------|-------------|----------------|
-// | false     | n/a         | "Block User" primary CTA |
-// | true      | true        | "You blocked this" + Unblock button |
-// | true      | false       | "Blocked by the other party" + Unblock button (legacy-safe) |
+// | isBlocked | blockedByMe | Rendered state                                     |
+// |-----------|-------------|----------------------------------------------------|
+// | false     | n/a         | "Block User" card with a red Block User button      |
+// | true      | true        | "You blocked this conversation" + Unblock User      |
+// | true      | false       | "You can't reply to this conversation", no button   |
 
 struct ReportChatBlockCard: View {
-    let isBlocked: Bool
-    let blockedByMe: Bool
+    let state: ChatBlockState
+    /// The other person's name, used in the blocked-by-me body.
+    let peerName: String
     let isWorking: Bool
-    /// True after a `403 NOT_BLOCKER` denial — hide the Unblock button
-    /// so the user can't thrash on it.
-    var unblockDenied: Bool = false
     let onBlockTap: () -> Void
     let onUnblockTap: () -> Void
 
@@ -50,14 +47,14 @@ struct ReportChatBlockCard: View {
             if shouldShowButton {
                 HStack {
                     Spacer()
-                    Button(action: isBlocked ? onUnblockTap : onBlockTap) {
+                    Button(action: state.isBlocked ? onUnblockTap : onBlockTap) {
                         Text(buttonText)
                             .font(.brand(.subheadline, weight: .bold))
-                            .foregroundColor(ReportChatBrand.errorRed)
+                            .foregroundColor(buttonTint)
                             .padding(.horizontal, 20)
                             .frame(height: 42)
                             .overlay(
-                                Capsule().stroke(ReportChatBrand.errorBorder, lineWidth: 1.5)
+                                Capsule().stroke(buttonStroke, lineWidth: 1.5)
                             )
                     }
                     .buttonStyle(PressScaleButtonStyle())
@@ -69,36 +66,42 @@ struct ReportChatBlockCard: View {
         .background(ReportChatGlassCard())
     }
 
-    /// Hide the button only after the server has definitively denied an
-    /// unblock. Otherwise always show it so legacy blocks (§7) can be
-    /// lifted via server adjudication.
+    /// Block when nothing is blocked, Unblock for the blocker, nothing for the other side.
     private var shouldShowButton: Bool {
-        !(isBlocked && unblockDenied)
+        !state.isBlocked || state.showsUnblock
     }
 
     // MARK: - Derived copy
 
     private var headlineText: String {
-        if isBlocked && unblockDenied { return "This conversation was blocked by the other person" }
-        if isBlocked && blockedByMe   { return "You blocked this conversation" }
-        if isBlocked                  { return "This conversation is blocked" }
-        return "Block User"
+        guard state.isBlocked else { return "Block User" }
+        return state.showsUnblock ? "You blocked this conversation" : "You can't reply to this conversation"
     }
 
     private var bodyText: String {
-        if isBlocked && unblockDenied {
-            return "You can still see earlier messages, but neither of you can send new ones. Only the person who blocked this conversation can lift it."
+        guard state.isBlocked else {
+            return "Blocking stops both of you from sending new messages in this conversation. "
+                + "You can still see earlier messages. They won't be notified."
         }
-        if isBlocked && blockedByMe {
-            return "Unblocking will let this user see your profile, send you messages, and book appointments with you again."
+        if state.showsUnblock {
+            let trimmed = peerName.trimmingCharacters(in: .whitespacesAndNewlines)
+            let name = trimmed.isEmpty ? "this user" : trimmed
+            return "Unblocking lets you and \(name) send messages in this conversation again."
         }
-        if isBlocked {
-            return "You can still see earlier messages, but neither of you can send new ones. If you blocked this conversation, you can lift the block below."
-        }
-        return "Blocking this user will prevent them from seeing your profile, sending you messages, or booking appointments with you. They will not be notified that you have blocked them."
+        return "You can still see earlier messages, but neither of you can send new ones. "
+            + "Only the person who blocked this conversation can lift it."
     }
 
     private var buttonText: String {
-        isBlocked ? "Unblock User" : "Block User"
+        state.isBlocked ? "Unblock User" : "Block User"
+    }
+
+    /// Unblock uses the accent style (UI-SPEC A7); Block stays red.
+    private var buttonTint: Color {
+        state.isBlocked ? ReportChatBrand.brandGreen : ReportChatBrand.errorRed
+    }
+
+    private var buttonStroke: Color {
+        state.isBlocked ? ReportChatBrand.brandGreen : ReportChatBrand.errorBorder
     }
 }

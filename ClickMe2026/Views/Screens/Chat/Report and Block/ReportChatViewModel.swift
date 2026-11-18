@@ -25,29 +25,18 @@ final class ReportChatViewModel: ObservableObject {
     @Published var showReasonError: Bool
 
     // MARK: Block state (synced from `GET /chats` on `loadBlockState`)
-    /// `true` when the backing thread is blocked by either party. Drives
-    /// the composer-disabled + banner states in `ReportChatBlockCard`.
-    @Published var isBlocked: Bool
-    /// `true` only when the caller is the recorded blocker, per
-    /// `docs/ios/CHAT-UNBLOCK.md` §5.
-    @Published var blockedByMe: Bool
-    /// Set to `true` after a `403 NOT_BLOCKER` response — prevents the
-    /// user from re-tapping Unblock and re-triggering the same denial.
-    /// Legacy-block (§7) escape hatch: we still show Unblock when
-    /// `blockedByMe` is false, but one rejection latches the button off
-    /// for the remainder of this screen session.
-    @Published var unblockDenied: Bool = false
-
-    /// Compile seam for the tests; wired in the next commit.
+    /// Who blocked this conversation, per `docs/ios/CHAT-UNBLOCK.md` §5. Every
+    /// change is also handed to `onBlockStateChange`, so the thread behind this
+    /// screen shows the new banner or composer without a reload (UI N1).
     @Published private(set) var blockState: ChatBlockState
+
+    /// Title of the alert shown for `apiError`: one per action.
     @Published private(set) var apiErrorTitle = "Couldn't block user"
-    private let onBlockStateChange: (ChatBlockState) -> Void
-    private(set) var actionTask: Task<Void, Never>?
-
-    func awaitPendingAction() async { await actionTask?.value }
-
-    /// Alert copy shown on either block or report failure.
+    /// Alert copy shown on a block, unblock or report failure.
     @Published var apiError: String?
+
+    /// The Task of the latest block, unblock or report, kept so tests can await it.
+    private(set) var actionTask: Task<Void, Never>?
 
     let reasons: [String]
 
@@ -59,6 +48,10 @@ final class ReportChatViewModel: ObservableObject {
     // MARK: Dependencies
 
     private let api: ClickMeAPI
+    private let onBlockStateChange: (ChatBlockState) -> Void
+    /// Bumped on every state change, so a lookup that started earlier cannot
+    /// overwrite a block or unblock that finished while it was running.
+    private var stateRevision = 0
 
     // MARK: Init
 
@@ -78,8 +71,6 @@ final class ReportChatViewModel: ObservableObject {
         api: ClickMeAPI = .shared,
         onBlockStateChange: @escaping (ChatBlockState) -> Void = { _ in }
     ) {
-        self.blockState = ChatBlockState(isBlocked: isBlocked, blockedByMe: blockedByMe)
-        self.onBlockStateChange = onBlockStateChange
         self.threadId = threadId
         self.userName = userName
         self.selectedReason = selectedReason
@@ -89,31 +80,38 @@ final class ReportChatViewModel: ObservableObject {
         self.didSubmit = didSubmit
         self.isBlocking = isBlocking
         self.showReasonError = showReasonError
-        self.isBlocked = isBlocked
-        self.blockedByMe = blockedByMe
+        self.blockState = ChatBlockState(isBlocked: isBlocked, blockedByMe: blockedByMe)
         self.reasons = reasons
         self.api = api
+        self.onBlockStateChange = onBlockStateChange
     }
 
     // MARK: - Block-state sync
 
-    /// Fetches `GET /chats` once on view appear and extracts THIS
-    /// thread's `isBlocked` + `blockedByMe` flags. There's no
-    /// single-thread read endpoint, so we scan the list. Silent on
-    /// failure — the card falls back to the "unknown ⇒ show Block"
-    /// default, which is the safest wrong answer (an extra Block tap
-    /// on an already-blocked thread is a documented 200 no-op).
+    /// Reads this thread's block flags from `GET /chats` (limit 100, up to 3 pages)
+    /// on appear. A thread the lookup does not list, or a lookup that fails, leaves
+    /// the state alone: a miss never reads as "not blocked" (CHAT-UNBLOCK §6), and
+    /// an extra Block tap on a blocked thread is a documented 200 no-op.
     func loadBlockState() async {
         guard let threadId else { return }
+        let revision = stateRevision
         do {
-            let response = try await api.getChats(page: 1, limit: 50)
-            if let thread = response.data.threads.first(where: { $0.threadId == threadId }) {
-                isBlocked = thread.isBlocked
-                blockedByMe = thread.blockedByMe ?? false
-            }
+            guard let found = try await ChatThreadLookup.find(threadId: threadId, api: api) else { return }
+            guard revision == stateRevision else { return }
+            apply(blockState.applyScan(found: ChatBlockState.ScannedBlock(thread: found), sessionBlockedByMe: false))
         } catch {
             // Silent — see docstring.
         }
+    }
+
+    /// Waits for the latest block, unblock or report request (test seam).
+    func awaitPendingAction() async { await actionTask?.value }
+
+    /// Takes a new state and tells the thread behind this screen.
+    private func apply(_ state: ChatBlockState) {
+        stateRevision += 1
+        blockState = state
+        onBlockStateChange(state)
     }
 
     // MARK: - Reason selection
@@ -172,6 +170,7 @@ final class ReportChatViewModel: ObservableObject {
                 onReport(reason, details)
             } catch {
                 withAnimation { self.isSubmitting = false }
+                self.apiErrorTitle = "Couldn't send report"
                 self.apiError = error.userMessage
             }
         }
@@ -179,17 +178,15 @@ final class ReportChatViewModel: ObservableObject {
 
     // MARK: - Block
 
-    /// POSTs `chat_action = "block"`. Fires the caller's `onBlock` closure
-    /// on success so the chat view can dismiss. Locally reconciles state
-    /// per `docs/ios/CHAT-UNBLOCK.md` §6 — if the peer actually blocked
-    /// first, the next `GET /chats` will correct us.
+    /// POSTs `chat_action = "block"`. A 200 is blocked by me (CHAT-UNBLOCK §6); the
+    /// thread is told, then the caller's `onBlock` closure runs so the chat view can
+    /// dismiss. If the peer blocked first, the next `GET /chats` corrects the state.
     func blockUser(onBlock: @escaping (String) -> Void) {
         guard !isBlocking else { return }
 
         // Preview / design path — immediate callback, no network.
         guard let threadId else {
-            isBlocked = true
-            blockedByMe = true
+            apply(blockState.onBlockSucceeded())
             onBlock(userName)
             return
         }
@@ -202,29 +199,26 @@ final class ReportChatViewModel: ObservableObject {
             defer { self.isBlocking = false }
             do {
                 _ = try await self.api.chatAction(id: threadId, action: "block")
-                self.isBlocked = true
-                self.blockedByMe = true
+                self.apply(self.blockState.onBlockSucceeded())
                 onBlock(self.userName)
             } catch {
-                self.apiError = error.userMessage
+                self.apiErrorTitle = "Couldn't block user"
+                self.apiError = ChatBlockState.actionErrorMessage(for: error)
             }
         }
     }
 
     // MARK: - Unblock
 
-    /// POSTs `chat_action = "unblock"`. Only valid for the recorded
-    /// blocker; the server returns `403 NOT_BLOCKER` otherwise, which
-    /// we reconcile per `docs/ios/CHAT-UNBLOCK.md` §6
-    /// (`is_blocked = true, blocked_by_me = false`) so the UI drops the
-    /// Unblock affordance and shows the "You can't reply" banner.
+    /// POSTs `chat_action = "unblock"`. Only the recorded blocker can; the server
+    /// answers `403 NOT_BLOCKER` otherwise, which moves the state to blocked by the
+    /// peer (CHAT-UNBLOCK §6) so the card drops its Unblock button.
     func unblockUser(onUnblock: @escaping (String) -> Void) {
         guard !isBlocking else { return }
 
         // Preview / design path — immediate callback, no network.
         guard let threadId else {
-            isBlocked = false
-            blockedByMe = false
+            apply(blockState.onUnblockSucceeded())
             onUnblock(userName)
             return
         }
@@ -237,30 +231,17 @@ final class ReportChatViewModel: ObservableObject {
             defer { self.isBlocking = false }
             do {
                 _ = try await self.api.chatAction(id: threadId, action: "unblock")
-                self.isBlocked = false
-                self.blockedByMe = false
+                self.apply(self.blockState.onUnblockSucceeded())
                 onUnblock(self.userName)
             } catch {
-                // 403 NOT_BLOCKER → stay blocked but by the other party.
-                // We'd never show the Unblock button in that state, so
-                // this is defense-in-depth against race conditions
-                // (e.g. the peer blocked between our last load and now).
-                if case let NetworkError.httpError(status, data) = error,
-                   status == 403,
-                   let envelope = try? JSONDecoder().decode(StandardErrorResponse.self, from: data),
-                   envelope.code == .notBlocker
-                {
-                    self.isBlocked = true
-                    self.blockedByMe = false
-                    self.unblockDenied = true
+                if BookingErrorMapper.code(for: error) == .notBlocker {
+                    self.apply(self.blockState.onNotBlocker())
                 }
-                self.apiError = error.userMessage
+                self.apiErrorTitle = "Couldn't unblock user"
+                self.apiError = ChatBlockState.actionErrorMessage(for: error)
             }
         }
     }
-
-    // MARK: - Error mapping
-
 
     // MARK: Defaults
 

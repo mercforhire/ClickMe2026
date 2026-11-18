@@ -31,6 +31,8 @@ struct ReportChatView: View {
     /// card lands in the correct state (Block vs Unblock vs "blocked
     /// by them"). Pass `initialIsBlocked` / `initialBlockedByMe` when
     /// the caller already knows (saves one `GET /chats`).
+    /// `onBlockStateChange` receives the new state after every block, unblock
+    /// or `NOT_BLOCKER` outcome, so the thread can update without a reload.
     init(
         threadId: UUID,
         userName: String,
@@ -39,13 +41,15 @@ struct ReportChatView: View {
         onBlock: @escaping (String) -> Void = { _ in },
         onReport: @escaping (String, String) -> Void = { _, _ in },
         onUnblock: @escaping (String) -> Void = { _ in },
-        onDismiss: @escaping () -> Void = {}
+        onDismiss: @escaping () -> Void = {},
+        onBlockStateChange: @escaping (ChatBlockState) -> Void = { _ in }
     ) {
         _viewModel = StateObject(wrappedValue: ReportChatViewModel(
             threadId: threadId,
             userName: userName,
             isBlocked: initialIsBlocked,
-            blockedByMe: initialBlockedByMe
+            blockedByMe: initialBlockedByMe,
+            onBlockStateChange: onBlockStateChange
         ))
         self.onBlock = onBlock
         self.onReport = onReport
@@ -77,10 +81,9 @@ struct ReportChatView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     ReportChatBlockCard(
-                        isBlocked: viewModel.isBlocked,
-                        blockedByMe: viewModel.blockedByMe,
+                        state: viewModel.blockState,
+                        peerName: viewModel.userName,
                         isWorking: viewModel.isBlocking,
-                        unblockDenied: viewModel.unblockDenied,
                         onBlockTap: { viewModel.showBlockConfirm = true },
                         onUnblockTap: {
                             viewModel.unblockUser { name in
@@ -125,10 +128,10 @@ struct ReportChatView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("They won't be able to contact you or see your profile. They won't be notified.")
+            Text("They won't be able to message you. They won't be notified.")
         }
         .alert(
-            "Something went wrong",
+            viewModel.apiErrorTitle,
             isPresented: Binding(
                 get: { viewModel.apiError != nil },
                 set: { if !$0 { viewModel.apiError = nil } }

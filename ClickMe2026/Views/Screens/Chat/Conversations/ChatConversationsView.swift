@@ -64,11 +64,14 @@ struct ChatConversationsView: View {
                 peerAvatarURL: chat.imageURL
             )
         }
-        // When `pushedChat` flips non-nil → nil, the user just popped back
-        // from a `ChatView`. Silently refresh so the row's last-message
-        // preview and unread badge reflect what happened in there.
-        .onChange(of: pushedChat) { oldValue, newValue in
-            if oldValue != nil, newValue == nil {
+        // Any route that opens a thread (row tap, push tap, profile Message
+        // button, `HomeRoute.chat`) goes through `ChatPresence`. Opening
+        // zeroes the row at once; when no thread is visible any more the list
+        // quietly re-syncs with the server (CHAT-07, D-12).
+        .onChange(of: ChatPresence.shared.visibleThreadId) { oldValue, newValue in
+            if let newValue {
+                viewModel.markOpened(threadId: newValue)
+            } else if oldValue != nil {
                 Task { await viewModel.silentReload() }
             }
         }

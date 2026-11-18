@@ -6,13 +6,16 @@
 //
 
 import Foundation
+import Observation
 
 /// Which chat thread is on screen right now.
 ///
-/// Read by the foreground push policy (`PushForegroundPolicy`) so a
-/// `message` push for the thread the user is already reading shows no
-/// banner (CHAT-09). This is not observable UI state: nothing renders
-/// from it, so it is a plain main-actor holder rather than `@Observable`.
+/// Observed by the Chats list (CHAT-07, D-12): a thread opened by any route
+/// (list row, push tap, profile Message button, `HomeRoute.chat`) zeroes its
+/// row, and when no thread is visible any more the list quietly re-fetches
+/// `GET /chats`. Still read by the foreground push policy
+/// (`PushForegroundPolicy`) so a `message` push for the thread the user is
+/// already reading shows no banner (CHAT-09).
 ///
 /// `ChatView` reports itself in `.onAppear` and `.onDisappear`. The same
 /// rule as Android's `ChatSessionState.onThreadHidden`: a disappearing
@@ -20,6 +23,7 @@ import Foundation
 /// second chat pushed on top of the first, then popped, leaves the first
 /// thread marked again when its own `.onAppear` fires.
 @MainActor
+@Observable
 final class ChatPresence {
 
     static let shared = ChatPresence()

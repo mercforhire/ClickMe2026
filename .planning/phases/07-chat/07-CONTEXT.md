@@ -36,7 +36,7 @@ Android: Android Phase 12 already implements most of this behaviour, and iOS is 
   - The Report & Block screen (⋯ menu) follows the same rules: Unblock only for the blocker. Local state after each outcome follows §6, including `403 NOT_BLOCKER`.
 - **D-08:** **Legacy blocks follow CHAT-UNBLOCK §7.** `blocked_by_me` missing or false on a blocked thread means "You can't reply…" and no Unblock for either side. This removes iOS's current "legacy-safe" Unblock for the blocked side (inventory H3). `blocked_by_me` decodes with a default of `false`.
 - **D-09:** **CHAT-02:** chat reports send `UserReportReason` raw values (as the profile report already does), not display labels.
-  - **Note 2026-11-17:** the UI-SPEC (assumption A13, not yet confirmed by the user) has the chat report picker show the six `UserReportReason` labels in enum order, replacing the current chat-only labels that don't map to the enum.
+  - **Note 2026-11-17 (confirmed):** the UI-SPEC assumption A13 was confirmed by the user at plan-check on 2026-11-17. The chat report picker shows the six `UserReportReason` labels in enum order, replacing the current chat-only labels that don't map to the enum. This is no longer a device-UAT judgement item.
 - **D-19 (added 2026-11-17, user decision at the UI-SPEC probe):** the Report & Block details field is capped at **1,000 characters** with an always-visible `{n}/1000` counter and trimmed on submit, matching Android and the profile `ReportUserSheet`. The backend allows 2,000; an uncapped iOS field could get a 422.
 
 ### Thread open (CHAT-05, CHAT-06)

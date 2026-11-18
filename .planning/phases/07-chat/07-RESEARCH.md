@@ -427,12 +427,16 @@ Not a rename or migration phase. Omitted per the protocol. For completeness: no 
 | A5 | Scanning up to 3 pages of `GET /chats?limit=100` is enough to find any thread | Pattern 2 | A user with more than 300 threads could miss a block state; the composer stays normal and the server still rejects the send |
 | A6 | Making the profile-block confirm an `.alert` (UI-SPEC) shows correctly from a `Menu` source on iPad | Pattern 6 | Presentation only; checked by C3 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Hold `message.read` until the socket is connected (Pitfall 4).** D-16 only says to emit on every page. The silent-drop behaviour is verified in the library source and Android already guards against it. Recommendation: include it (expose `isConnected` on `RealtimeService`, `emittedReadIds` in the thread VM, replay on connect). Low cost, no contract change. Needs the planner's go-ahead because it widens D-16 slightly.
+   - **Disposition:** taken in plan 07-03 (Task 2: `RealtimeService.isConnected` and `onConnect`, `emittedReadIds`, replay on connect).
 2. **Dual-role users in the D-18 route.** A user in the expert shell can have a booking where they are the client (and vice versa in the client shell, where `.expertBookingSummary` is an `EmptyView`). The shell flag is right for single-role threads. If the device check shows dual-role breakage, route by comparing `event_data.expert_id` with the signed-in user id and add the expert case to the client shell. Recommendation: shell flag only for this phase (the CONTEXT's instruction); log the edge.
+   - **Disposition:** shell flag only (plan 07-09 Task 2); the dual-role edge is logged as a pending todo by plan 07-09 Task 3 and not built.
 3. **Send timeout.** The 120 s request timeout (`NetworkService.swift:63`) delays the Failed state on a dead connection. A per-request shorter timeout (about 15 to 20 s) would show Failed sooner, and retry is idempotent so a late success is harmless. Needs a small `NetworkService` option; not required by any decision. Recommendation: leave at 120 s unless the C1 device check feels wrong, because a shorter timeout creates duplicate-delivery risk that only the dedupe covers.
+   - **Disposition:** keep the 120 s timeout this phase (plan 07-01 assumptions). Device check C1 records how it feels, as a KEEP or CHANGE item in the 07-08 checklist; a CHANGE answer becomes a follow-up todo, not a Phase 7 code change.
 4. **Seed from `ChatPreview`.** Adding `isBlocked` / `blockedByMe` to `ChatPreview` and a `ChatView` init parameter avoids a one-frame composer before the banner. Optional polish; UI-SPEC L2 accepts the flash.
+   - **Disposition:** not taken (plan 07-03 assumptions); UI-SPEC L2 accepts the composer showing until the scan answers.
 
 ## Environment Availability
 

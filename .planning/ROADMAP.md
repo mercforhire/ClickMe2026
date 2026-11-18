@@ -443,10 +443,10 @@ Plans:
 - [ ] 07-04-PLAN.md — CHAT-03: ChatBlockState; banner replaces the composer; blocked/unavailable sends switch to it; banner Unblock for the blocker only; state-aware menu (D-03, D-07, D-08)
 
 **Wave 5** *(after 07-04)*
-- [ ] 07-05-PLAN.md — CHAT-02/03/04: Block & Report card matrix with truthful copy and state back to the thread; report reason enum; details cap 1,000; blocked_by_me defaults to false (D-05, D-07 to D-09, D-19)
+- [ ] 07-05-PLAN.md — CHAT-02/03/04: Block & Report card matrix with truthful copy and state back to the thread; report reason enum; details cap 1,000 (D-05, D-07 to D-09, D-19)
 
 **Wave 6** *(after 07-05)*
-- [ ] 07-06-PLAN.md — CHAT-04: Expert Profile Block confirm alert, initiate then block, toast, error copy, accessible scrim (D-05, D-06)
+- [ ] 07-06-PLAN.md — CHAT-04: Expert Profile Block confirm alert, initiate then block, toast, error copy, accessible scrim; CHAT-03: blocked_by_me defaults to false (D-05, D-06, D-08)
 
 **Wave 7** *(after 07-06)*
 - [ ] 07-07-PLAN.md — CHAT-07: unread pill on conversation rows, +1 for peer messages on closed threads, cleared on open by any route via an observable ChatPresence (D-12 to D-15)

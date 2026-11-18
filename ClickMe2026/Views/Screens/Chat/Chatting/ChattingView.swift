@@ -56,6 +56,7 @@ struct ChatView: View {
             // CHAT-09: mark this thread as on screen so a foreground push for
             // it shows no banner. Preview seeds have no thread id and mark nothing.
             if let threadId = viewModel.threadId { ChatPresence.shared.chatAppeared(threadId: threadId) }
+            viewModel.viewDidAppear()
         }
         .onDisappear {
             if let threadId = viewModel.threadId { ChatPresence.shared.chatDisappeared(threadId: threadId) }

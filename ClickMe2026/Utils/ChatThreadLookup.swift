@@ -31,6 +31,18 @@ enum ChatThreadLookup {
         api: ClickMeAPI,
         maxPages: Int = maxPages
     ) async throws -> ChatThreadItem? {
+        var page = 1
+        while page <= maxPages {
+            let payload = try await api.getChats(page: page, limit: pageSize).data
+            if let thread = payload.threads.first(where: { $0.threadId == threadId }) {
+                return thread
+            }
+            guard !payload.threads.isEmpty,
+                  let pagination = payload.pagination,
+                  pagination.currentPage < pagination.totalPages
+            else { return nil }
+            page += 1
+        }
         return nil
     }
 }

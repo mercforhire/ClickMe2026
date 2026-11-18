@@ -193,7 +193,10 @@ final class ChattingViewModel: ObservableObject {
             emitReadForVisiblePeerMessages()
         } catch {
             loadState = .failed(error.userMessage)
+            return
         }
+        // After the messages are on screen, so the scan never delays them.
+        await refreshThreadInfo()
     }
 
     /// Populates `myUserId`, `myAvatarURL`, and `myName` when the auth
@@ -258,9 +261,25 @@ final class ChattingViewModel: ObservableObject {
 
     // MARK: - Thread info (D-10)
 
-    func refreshThreadInfo() async {}
+    /// Looks this thread up in `GET /chats` and takes the other person's id from
+    /// `partner.id`, so View Profile and typing work before any peer message
+    /// arrives (D-10). Best effort: a failed or empty scan changes nothing on
+    /// screen and shows no error (UI-SPEC L2); the first-sender rule in
+    /// `hydratePeerUserIdIfNeeded` stands in. Plan 07-04 extends this with the
+    /// block state.
+    func refreshThreadInfo() async {
+        guard let threadId else { return }
+        if let thread = try? await ChatThreadLookup.find(threadId: threadId, api: api) {
+            peerUserId = thread.partner.id
+        }
+    }
 
-    func viewDidAppear() {}
+    /// The chat view reappeared, for example after Report & Block or a profile.
+    /// Scans again once the thread has loaded; before that `forceLoad` does it.
+    func viewDidAppear() {
+        guard case .loaded = loadState else { return }
+        Task { await refreshThreadInfo() }
+    }
 
     // MARK: - Send (optimistic, D-01)
 

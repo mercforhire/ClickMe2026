@@ -21,6 +21,10 @@ import SwiftUI
 @MainActor
 final class ExpertProfileBlockViewModel: ObservableObject {
 
+    /// Shown when `POST /chats/initiate` answers 404: the backend refuses a new thread
+    /// with a suspended or removed peer.
+    static let unavailableMessage = "This user is unavailable."
+
     /// True while the initiate and block requests run. The view shows a scrim and
     /// disables the menu, and `block` ignores repeat calls (D-06).
     @Published private(set) var isBlocking = false

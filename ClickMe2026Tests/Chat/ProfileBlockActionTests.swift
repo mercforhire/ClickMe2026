@@ -169,4 +169,88 @@ struct ProfileBlockActionTests {
         await viewModel.awaitBlock()
         #expect(viewModel.isBlocking == false)
     }
+
+    // MARK: Failure copy
+
+    @Test("a 404 on initiate reads as this user is unavailable and sends no block request")
+    func initiateNotFound() async {
+        let toasts = Self.newToasts()
+        let viewModel = makeViewModel(
+            api: Self.makeAPI(
+                onInitiate: Self.fail(404, code: "NOT_FOUND", message: "User not found."),
+                onAction: Self.actionOK
+            ),
+            toasts: toasts
+        )
+
+        viewModel.block(peerId: Self.expertId, peerName: "Dr. Test")
+        await viewModel.awaitBlock()
+
+        #expect(viewModel.apiError == "This user is unavailable.")
+        #expect(ExpertProfileBlockViewModel.unavailableMessage == "This user is unavailable.")
+        #expect(MockURLProtocol.recordedRequests.filter(Self.isAction).isEmpty)
+        #expect(toasts.current == nil)
+    }
+
+    @Test("a transport error on initiate reads as a connection problem")
+    func initiateTransportError() async {
+        let toasts = Self.newToasts()
+        let viewModel = makeViewModel(
+            api: Self.makeAPI(onInitiate: { _ in throw URLError(.notConnectedToInternet) }, onAction: Self.actionOK),
+            toasts: toasts
+        )
+
+        viewModel.block(peerId: Self.expertId, peerName: "Dr. Test")
+        await viewModel.awaitBlock()
+
+        #expect(viewModel.apiError == "Check your connection and try again.")
+        #expect(toasts.current == nil)
+    }
+
+    @Test("a transport error on the block step reads as a connection problem")
+    func actionTransportError() async {
+        let viewModel = makeViewModel(
+            api: Self.makeAPI(onInitiate: Self.initiateOK, onAction: { _ in throw URLError(.timedOut) }),
+            toasts: Self.newToasts()
+        )
+
+        viewModel.block(peerId: Self.expertId, peerName: "Dr. Test")
+        await viewModel.awaitBlock()
+
+        #expect(viewModel.apiError == "Check your connection and try again.")
+    }
+
+    @Test("a 404 on the block step shows the server message, not the unavailable copy")
+    func actionNotFound() async {
+        let viewModel = makeViewModel(
+            api: Self.makeAPI(
+                onInitiate: Self.initiateOK,
+                onAction: Self.fail(404, code: "NOT_FOUND", message: "Thread not found.")
+            ),
+            toasts: Self.newToasts()
+        )
+
+        viewModel.block(peerId: Self.expertId, peerName: "Dr. Test")
+        await viewModel.awaitBlock()
+
+        #expect(viewModel.apiError == "Thread not found.")
+    }
+
+    // MARK: Repeat taps
+
+    @Test("block called twice before the first finishes sends one initiate and one block")
+    func repeatBlockSendsOnce() async {
+        let viewModel = makeViewModel(
+            api: Self.makeAPI(onInitiate: Self.initiateOK, onAction: Self.actionOK),
+            toasts: Self.newToasts()
+        )
+
+        viewModel.block(peerId: Self.expertId, peerName: "Dr. Test")
+        viewModel.block(peerId: Self.expertId, peerName: "Dr. Test")
+        await viewModel.awaitBlock()
+
+        let requests = MockURLProtocol.recordedRequests
+        #expect(requests.filter(Self.isInitiate).count == 1)
+        #expect(requests.filter(Self.isAction).count == 1)
+    }
 }

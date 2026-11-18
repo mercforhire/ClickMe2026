@@ -16,3 +16,7 @@ Found by the Phase 06 UAT diagnosis (debug session `booking-summary-add-to-calen
 ## Solution
 
 TBD. Confirm on a device first: as an expert, open a chat with a booking and tap its booking row. If it reproduces, route expert-mode chat rows to `ExpertBookingSummaryView`, matching Android. This is an iOS-only change; the backend and Android need none.
+
+## Resolution
+
+The device check (D-18) was run on 2026-11-18 on App Store build 6 as the test expert and the user reported "reproduced". Fixed by plan 07-09 in commit `491b600`: `ChatBookingRowRoute.route(isTerminal:bookingId:hostsClientBookingFlows:)` sends the expert shell (`hostsClientBookingFlows` false) to `HomeRoute.expertBookingSummary` for active and finished bookings, and `ChattingView.openBookingDetail(for:)` pushes that route. The client shell keeps `bookingSummary` (finished) and `upcomingBooking` (active). The after-fix device check is item 14 (C10) in `.planning/phases/07-chat/07-DEVICE-UAT-CHECKLIST.md`. A user who is the client on a booking but opens its row in the expert shell is not covered; see `2026-11-17-chat-booking-row-dual-role-route.md`.

@@ -5,7 +5,7 @@ Every device check Phase 7 (Chat) left open, in one list, plus the planner and U
 ## Setup
 
 - **Devices:** two real iPhones on iOS 18 or later, not the simulator. Airplane mode, the keyboard, VoiceOver, Dynamic Type, push and live sockets need hardware. In this list **Phone 1** is signed in as the test client and **Phone 2** as the test expert unless an item says otherwise.
-- **Build:** a build at or after `7452bc0`, the last Phase 7 app commit when this list was written (`git log -1 --format=%h -- ClickMe2026`). Plan 07-09 (D-18, the expert booking-row route) runs after this plan; if it adds an app commit, install a build at or after that commit before the "after" step of item 14. The working tree also carries uncommitted edits to `ClickMe2026/Localizable.xcstrings` that Phase 7 did not make (Xcode rewrites it on every build); for a build that is exactly Phase 7, build from a clean checkout of the commit.
+- **Build:** a build at or after `491b600`, the last Phase 7 app commit (plan 07-09, D-18, the expert booking-row route; `git log -1 --format=%h -- ClickMe2026`). Item 14's "before" step uses App Store build 6 instead, and its "after" step needs a build at or after `491b600`. The working tree also carries uncommitted edits to `ClickMe2026/Localizable.xcstrings` that Phase 7 did not make (Xcode rewrites it on every build); for a build that is exactly Phase 7, build from a clean checkout of the commit.
 - **Backend:** production (`https://clickme-backend-production.up.railway.app/api/v1`). Phase 7 made no backend change. Before you start, check read-only that `/health` answers and note the commit it reports; nothing else needs to be called by hand.
 - **Accounts (yours, named by role only):**
   - a **test client** (Phone 1) and a **test expert** (Phone 2) with a thread between them that has more than 60 messages (for Load earlier) and at least one booking system row in it (item 14 needs an expert-side thread with a booking row);
@@ -27,10 +27,10 @@ Every device check Phase 7 (Chat) left open, in one list, plus the planner and U
 
 ## Automated evidence
 
-Run by plan 07-08 on 2026-11-18 at HEAD `003aff8` (the last Phase 7 app commit is `7452bc0`; every later Phase 7 commit is tests or docs), simulator `iPhone 17`, Debug:
+Run by plan 07-08 on 2026-11-18 and re-run in full by plan 07-09 on 2026-11-18 at HEAD `491b600`, the last Phase 7 app commit (07-09 added `ChatBookingRowRoute` and its call site after the 07-08 run; every Phase 7 commit after it is docs), simulator `iPhone 17`, Debug. The figures below are the 07-09 re-run at `491b600`; the 07-08 run at `003aff8` gave 1168 tests in 107 suites and the same pass results:
 
-- **Phase gate suite (the full unit suite in one xcodebuild invocation, smoke suites and the known flake skipped):** `✔ Test run with 1168 tests in 107 suites passed after 8.784 seconds.` and `** TEST SUCCEEDED **` (log `/tmp/07-08-full.log`). Skipped: `AuthSmokeTests` and `SignupSmokeTests` hit production and were not run; `MakeABookingAvailabilityTests` is the known flaky suite (todo `2026-11-13-flaky-make-a-booking-availability-test.md`) and was run separately below. `LoginTests` is compiled and run in this invocation (it passes; the old STATE.md concern that it does not compile was fixed by `be79868`). This run includes every Phase 7 stubbed `.serialized` suite alongside the others.
-- **Known-flaky record run (`MakeABookingAvailabilityTests` alone, not part of the verdict):** run 1 passed: `✔ Test run with 5 tests in 1 suite passed after 0.724 seconds.` and `** TEST SUCCEEDED **`; no second run was needed. No Phase 7 commit touches the Make a Booking folder or its test file (0 commits in `16fe88e..HEAD`). Log `/tmp/07-08-flaky-1.log`; the outcome is appended to the todo.
+- **Phase gate suite (the full unit suite in one xcodebuild invocation, smoke suites and the known flake skipped):** `✔ Test run with 1172 tests in 108 suites passed after 9.916 seconds.` and `** TEST SUCCEEDED **` (log `/tmp/07-08-full.log`, rewritten by the re-run). Skipped: `AuthSmokeTests` and `SignupSmokeTests` hit production and were not run; `MakeABookingAvailabilityTests` is the known flaky suite (todo `2026-11-13-flaky-make-a-booking-availability-test.md`) and was run separately below. `LoginTests` is compiled and run in this invocation (it passes; the old STATE.md concern that it does not compile was fixed by `be79868`). This run includes every Phase 7 stubbed `.serialized` suite alongside the others.
+- **Known-flaky record run (`MakeABookingAvailabilityTests` alone, not part of the verdict):** in the 07-09 re-run, run 1 failed with 1 issue (`✘ Test run with 5 tests in 1 suite failed after 0.776 seconds with 1 issue.`, the known flake) and run 2 passed (`✔ Test run with 5 tests in 1 suite passed after 0.743 seconds.`); in the 07-08 run, run 1 passed. No Phase 7 commit touches the Make a Booking folder or its test file (0 commits in `16fe88e..HEAD`). Logs `/tmp/07-08-flaky-1.log` and `/tmp/07-08-flaky-2.log`; the outcome is appended to the todo.
 - **Debug build:** `** BUILD SUCCEEDED **`; the only `warning:` line in the log is the build system's own "Metadata extraction skipped. No AppIntents.framework dependency found." (log `/tmp/07-08-build.log`).
 - **Grep gates (all PASS; comment lines filtered out of every whole-tree count):**
   - no block copy claiming profile or booking hiding (`your profile`, `appointment`) in the Chat screens, `ExpertProfileView.swift` or `ExpertProfileBlockViewModel.swift`: 0 matches (3 at the base);
@@ -44,7 +44,7 @@ Run by plan 07-08 on 2026-11-18 at HEAD `003aff8` (the last Phase 7 app commit i
   - no `message.contains`, `message.hasPrefix` or `localizedCaseInsensitiveContains` in `ChattingViewModel.swift`, `ReportChatViewModel.swift` or `ExpertProfileBlockViewModel.swift`: 0;
   - no `.badge(` in `ClickMe2026` outside comments: 0 (D-15);
   - the `toolbarColorScheme(.dark, for: .navigationBar)` pin appears once in `ChattingView.swift` and once in `ReportChatView.swift`.
-- **D-17 Read-handler guard:** `ChattingViewModel.handleMessageRead(_:)` is byte-identical to the phase base `16fe88e` (13-line extract compared with `cmp`, PASS). No Phase 7 plan edited the sender-side Read handler.
+- **D-17 Read-handler guard:** `ChattingViewModel.handleMessageRead(_:)` is byte-identical to the phase base `16fe88e` (13-line extract compared with `cmp`, PASS), re-checked at `491b600`. No Phase 7 plan edited the sender-side Read handler.
 - **View-model size ceiling:** `ChattingViewModel.swift` is 624 lines, at the ceiling of 624 (its length at the phase base `16fe88e`). Where the new logic went: `ChatSendCoordinator.swift` 123 lines, `ChatItemMapper.swift` 182 lines, `ChatBlockState.swift` 224 lines.
 - **Backend and Android:** Phase 7 made no backend change and no Android change (07-RESEARCH "Android parity").
 - **What the automation does not cover:** every item below.
@@ -239,7 +239,7 @@ Before step (App Store build 6, signed in as the test expert): open a chat that 
 
 After step (only if plan 07-09 changed the route; install a build at or after its app commit): repeat the tap as the test expert. Expected: it opens the expert booking summary with no load error. As the test client, the same row still opens the client's own booking screens as before.
 
-07-09 outcome:
+07-09 outcome: reproduced. On 2026-11-18 the user ran the "before" step on App Store build 6 as the test expert (chat booking row) and reported "reproduced" at the plan's decision checkpoint: the row opened the wrong screen or failed to load. Plan 07-09 then changed the route in commit `491b600`: in the expert shell a booking row opens the expert Booking Summary for active and finished bookings alike; the client shell is unchanged. The "after" step (a build at or after `491b600`, as the test expert, then as the test client) has not been run on a device yet.
 
 Result:
 

@@ -329,6 +329,17 @@ struct ChatThreadReducerTests {
 
     // MARK: Send-failure classification
 
+    @Test("408 and 429 keep the bubble as failed so Retry stays available")
+    func timeoutAndRateLimitKeepTheBubble() {
+        for status in [408, 429] {
+            let error = NetworkError.httpError(statusCode: status, data: Data())
+            #expect(ChatThreadReducer.sendFailure(for: error) == .keepAsFailed)
+        }
+        // The neighbours are still refusals.
+        #expect(ChatThreadReducer.sendFailure(for: NetworkError.httpError(statusCode: 409, data: Data())) == .refused(nil))
+        #expect(ChatThreadReducer.sendFailure(for: NetworkError.httpError(statusCode: 428, data: Data())) == .refused(nil))
+    }
+
     @Test("an HTTP 4xx is a refusal that carries the error code; everything else keeps the bubble as failed")
     func sendFailureClassification() {
         let validation = NetworkError.httpError(
@@ -345,6 +356,12 @@ struct ChatThreadReducerTests {
 
         let noBody = NetworkError.httpError(statusCode: 400, data: Data())
         #expect(ChatThreadReducer.sendFailure(for: noBody) == .refused(nil))
+
+        let notFound = NetworkError.httpError(
+            statusCode: 404,
+            data: ClientBookingFixtures.errorBody(code: "NOT_FOUND", message: "Gone")
+        )
+        #expect(ChatThreadReducer.sendFailure(for: notFound) == .refused(.notFound))
 
         let server = NetworkError.httpError(
             statusCode: 500,

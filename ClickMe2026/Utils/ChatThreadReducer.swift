@@ -32,21 +32,34 @@ enum ChatThreadReducer {
     enum SendFailure: Equatable {
         /// Keep the bubble on screen as Failed; a retry can still succeed.
         case keepAsFailed
-        /// The server refused the message. Remove the bubble and give the text
-        /// back; the code, when the body carried one, is for callers that
-        /// branch on it.
+        /// The server refused the message (an HTTP 4xx that retrying the same
+        /// text cannot fix: 403 `THREAD_BLOCKED` or `RECIPIENT_UNAVAILABLE`,
+        /// 404, 422). Remove the bubble and give the text back; the code, when
+        /// the body carried one, is for callers that branch on it.
         case refused(ErrorCode?)
     }
 
-    /// Splits a failed send the way Android does (`SERVER_ERROR_FROM = 500`):
-    /// an HTTP 4xx is a refusal, and everything else (5xx, a transport error,
-    /// an undecodable or invalid response) keeps the bubble as Failed.
+    /// Splits a failed send. Android treats every status below 500
+    /// (`SERVER_ERROR_FROM = 500`) as a refusal. iOS also keeps 408 and 429 as
+    /// Failed: both say "try again later", not "this message is refused", and
+    /// the send is idempotent on `client_msg_id`, so Retry is safe. The send
+    /// route documents only 401, 403, 404 and 422, so these two would come
+    /// from infrastructure in front of the API.
+    ///
+    /// Any other HTTP 4xx is a refusal. Everything else (5xx, a transport
+    /// error, an undecodable or invalid response) keeps the bubble as Failed.
+    /// A 401 that reaches here has already survived the token refresh, so the
+    /// session handling logs the user out; the refusal path only restores the text.
     static func sendFailure(for error: Error) -> SendFailure {
         guard case let NetworkError.httpError(statusCode, _) = error,
-              (400...499).contains(statusCode)
+              (400...499).contains(statusCode),
+              !retryableStatusCodes.contains(statusCode)
         else { return .keepAsFailed }
         return .refused(BookingErrorMapper.code(for: error))
     }
+
+    /// 4xx statuses that mean "try again", not "refused".
+    private static let retryableStatusCodes: Set<Int> = [408, 429]
 
     // MARK: - Local bubble lifecycle
 

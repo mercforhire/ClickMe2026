@@ -104,7 +104,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [ ] **CHAT-05** [H5]: Typing indicators and View Profile work as soon as a chat opens
 - [ ] **CHAT-06** [H6]: Loading earlier messages never duplicates messages
 - [ ] **CHAT-07** [H7] **[major]**: Conversation rows show an unread badge (backend increments on send and resets on read; iOS shows the badge)
-- [ ] **CHAT-08** [H8] (likely, re-test first per Q8): The "Read" label updates live while the chat is open
+- [ ] **CHAT-08** [H8] (likely, re-test first per Q8): The "Read" label updates live while the chat is open *(Closed as not reproducible 2026-11-17: the user's device re-test after Phase 1 shipped showed the live Read label working (Q8, 07-CONTEXT D-17). No CHAT-08 fix was made: the sender-side Read handler (ChattingViewModel.handleMessageRead) is byte-identical to the phase base. Two Phase 7 changes sit next to that path: plan 07-01 keeps an own Read bubble from reverting on reload, and plan 07-03 changes when the receiving side emits message.read (D-16, for CHAT-07). Regression row in item C6 of 07-DEVICE-UAT-CHECKLIST.md. The box is left for /gsd-verify-work 07.)*
 - [x] **CHAT-09** [H9]: No foreground push banner appears for the chat currently on screen
 
 ### Push

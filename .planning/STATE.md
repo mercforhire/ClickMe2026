@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 07
 current_phase_name: Chat
-current_plan: 17
+current_plan: 2
 status: executing
-stopped_at: Phase 7 UI-SPEC approved
-last_updated: "2026-11-18T04:44:51.520Z"
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-11-18T05:08:15.366Z"
 last_activity: 2026-11-17
-last_activity_desc: Phase 06 complete, transitioned to Phase 3
-state_head: 9768a418aa7e955b955bb1f333bb06fcf179c305
+last_activity_desc: Phase 07 execution started
+state_head: bde01177c67b4a54ea3e6150b649e36c1ecc3040
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 124
-  completed_plans: 115
+  completed_plans: 116
   percent: 50
 ---
 
@@ -24,15 +24,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-15)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 06 — Expert Mode
+**Current focus:** Phase 07 — Chat
 
 ## Current Position
 
-Phase: 07 (Chat) — READY TO EXECUTE
-Current Plan: 17
+Phase: 07 (Chat) — EXECUTING
+Current Plan: 2
 Total Plans in Phase: 9
 Status: Ready to execute
-Last activity: 2026-11-17 — Phase 06 complete, transitioned to Phase 3
+Last activity: 2026-11-17 — Phase 07 execution started
 
 Progress: [█████░░░░░] 50%
 
@@ -175,6 +175,7 @@ Progress: [█████░░░░░] 50%
 | Phase 06 P14 | 8 min | 2 tasks | 4 files |
 | Phase 06 P16 | 15min | 2 tasks | 2 files |
 | Phase 06 P17 | 3 min | 3 tasks | 1 files |
+| Phase 07 P01 | 18 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -375,6 +376,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-14: client Upcoming Booking offers Add to Calendar through BookingCalendarEventContent.clientEvent and isOffered on a 60 s timeline, with the sheet on UpcomingBookingView.body; the client Session Summary stays without a calendar button; device check R5 owned by 06-16
 - [Phase 06]: 06-16: gap-closure gate passed (994 tests, clean Debug build, all grep gates); device re-check R1 to R8 appended to the Phase 6 checklist, earlier 35 Results untouched
 - [Phase 06]: 06-17: user chose skip (2026-11-17) for the optional backend null topic currency; backend untouched, no worktree or branch; the iOS fix in 06-11 closes G-06-1-currency either way, todo 2026-11-16-backend-null-topic-currency.md records the value change and the client tolerance gate to rerun first
+- [Phase 07]: 07-01: HTTP 4xx send failures are refusals (bubble removed, text restored); 5xx, transport, decode and invalid-response failures keep the bubble as Failed with no alert
+- [Phase 07]: 07-01: failed-bubble glyph is an overlay offset 28 pt left of the bubble, not an HStack sibling, so the 260 pt frame does not re-wrap text between Sending and Failed
 
 ### Pending Todos
 
@@ -476,6 +479,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-17T16:48:04.049Z
-Stopped at: Phase 7 UI-SPEC approved
-Resume file: .planning/phases/07-chat/07-UI-SPEC.md
+Last session: 2026-11-18T05:08:14.600Z
+Stopped at: Completed 07-01-PLAN.md
+Resume file: None

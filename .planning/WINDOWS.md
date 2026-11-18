@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 34
+open_count: 35
 waived_count: 0
 fixed_count: 7
-total_count: 41
-last_updated: 2026-11-18T06:19:17.017Z
+total_count: 42
+last_updated: 2026-11-18T06:34:16.857Z
 ---
 
 # Broken Windows Ledger
@@ -56,6 +56,7 @@ last_updated: 2026-11-18T06:19:17.017Z
 | 39 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/ChattingViewModel.swift |  | 07-03 Task 2 device check C6 (open-clears, two accounts, cold-launch push open, Load earlier twice) deferred to end-of-phase UAT | open |  | 2026-11-18T05:42:11.755Z |  |
 | 40 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingBlockedBanner.swift |  | 07-04 Task 3 device checks C4, C5, C9 (banner) and C8 (banner): two accounts, block/unblock, B sends while blocked, largest text size and VoiceOver; deferred to end-of-phase UAT | open |  | 2026-11-18T06:03:49.550Z |  |
 | 41 | 7 | unrun-verify | ClickMe2026/Views/Screens/Chat/Report and Block/ReportChatView.swift |  | 07-05 Task 2 human-check deferred to end-of-phase UAT: Block & Report card rows, reason picker order, 1000/1000 counter and a live report on two accounts (device checks C3, C4 card part, report part) | open |  | 2026-11-18T06:19:17.017Z |  |
+| 42 | 7 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift |  | 07-06 Task 2 human-check deferred to end-of-phase UAT: profile Block alert, Blocking scrim with VoiceOver, You blocked {name} toast placement and a live block on two accounts (device checks C3 profile part, C7) | open |  | 2026-11-18T06:34:16.857Z |  |
 
 ````json
 [
@@ -589,6 +590,19 @@ last_updated: 2026-11-18T06:19:17.017Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-18T06:19:17.017Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 42,
+    "kind": "unrun-verify",
+    "phase": "7",
+    "file": "ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift",
+    "line": null,
+    "description": "07-06 Task 2 human-check deferred to end-of-phase UAT: profile Block alert, Blocking scrim with VoiceOver, You blocked {name} toast placement and a live block on two accounts (device checks C3 profile part, C7)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-18T06:34:16.857Z",
     "resolved_at": null,
     "milestone": null
   }

@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 07
 current_phase_name: Chat
-current_plan: 6
+current_plan: 7
 status: executing
-stopped_at: Completed 07-05-PLAN.md
-last_updated: "2026-11-18T06:20:12.128Z"
+stopped_at: Completed 07-06-PLAN.md
+last_updated: "2026-11-18T06:35:10.878Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 07 execution started
-state_head: 367665129942bf8a7470fb8c9db20d9cccd39781
+state_head: 67fd0bad944db53497ec46ce3a5cff6bb102fdbc
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 124
-  completed_plans: 120
+  completed_plans: 121
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 07 (Chat) — EXECUTING
-Current Plan: 6
+Current Plan: 7
 Total Plans in Phase: 9
 Status: Ready to execute
 Last activity: 2026-11-17 — Phase 07 execution started
@@ -180,6 +180,7 @@ Progress: [█████░░░░░] 50%
 | Phase 07 P03 | 13 min | 2 tasks | 7 files |
 | Phase 07 P04 | 22 min | 3 tasks | 8 files |
 | Phase 07 P05 | 14 min | 2 tasks | 8 files |
+| Phase 07 P06 | 13 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -388,6 +389,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-03: message.read ids are recorded as sent only while the socket is connected and replayed from an onConnect subscription (socket.io drops emits made while disconnected)
 - [Phase 07]: 07-04: no unblock latch; blockedByMe false after NOT_BLOCKER hides Unblock. Block bookkeeping (scan, refusal, unblock, hand-back) lives in ChatBlockState.Session; ChattingViewModel.swift at its 624-line ceiling
 - [Phase 07]: 07-05: Block & Report keeps no unblock latch; NOT_BLOCKER moves to blocked-by-peer, which hides Unblock. A stale GET /chats lookup is ignored once a block or unblock applied (stateRevision).
+- [Phase 07]: 07-06: Profile Block 404 maps to 'This user is unavailable.' only on the initiate step; other failures reuse ChatBlockState.actionErrorMessage
+- [Phase 07]: 07-06: ChatThreadItem.blockedByMe is non-optional and decodes false when missing or null (D-08); ChatThreadItemDecodingTests is @MainActor
 
 ### Pending Todos
 
@@ -489,6 +492,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-18T06:20:11.336Z
-Stopped at: Completed 07-05-PLAN.md
+Last session: 2026-11-18T06:35:10.078Z
+Stopped at: Completed 07-06-PLAN.md
 Resume file: None

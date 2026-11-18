@@ -67,7 +67,7 @@ struct ChattingMessageBubble: View {
             }
             // A pending bubble reads as one element: "{text}. Sending." (UI-SPEC L1).
             .accessibilityElement(children: isPending ? .ignore : .contain)
-            .accessibilityLabel(isPending ? "\(message.body). Sending." : "")
+            .accessibilityLabel(Text(verbatim: "\(message.body). Sending."), isEnabled: isPending)
 
             if isMe {
                 ChattingAvatar(url: message.avatarURL, size: 34)

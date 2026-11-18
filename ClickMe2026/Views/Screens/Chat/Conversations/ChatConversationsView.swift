@@ -22,7 +22,7 @@ struct ChatPreview: Identifiable, Hashable {
     let timeLabel: String
     let imageURL: String
     let isOnline: Bool
-    let unreadCount: Int
+    var unreadCount: Int
 
     var id: UUID { threadId }
 }

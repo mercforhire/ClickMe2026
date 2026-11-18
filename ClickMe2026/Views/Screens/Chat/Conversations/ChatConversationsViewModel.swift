@@ -24,6 +24,14 @@ final class ChatConversationsViewModel: ObservableObject {
 
     private let api: ClickMeAPI
 
+    /// Test seam: the signed-in user's id, so a message the user sent
+    /// never counts as unread (CHAT-07, D-13).
+    private let currentUserId: () -> UUID?
+
+    /// Test seam: the thread on screen right now, so a message for the
+    /// open thread never counts as unread (CHAT-07, D-13).
+    private let visibleThreadId: () -> UUID?
+
     // MARK: Realtime
 
     /// Held for the VM's lifetime; auto-cancel on deallocation.
@@ -36,11 +44,15 @@ final class ChatConversationsViewModel: ObservableObject {
     init(
         searchText: String = "",
         chats: [ChatPreview] = [],
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        currentUserId: @escaping () -> UUID? = { UserManager.shared.me?.id ?? UserManager.shared.authUser?.id },
+        visibleThreadId: @escaping () -> UUID? = { ChatPresence.shared.visibleThreadId }
     ) {
         self.searchText = searchText
         self.chats = chats
         self.api = api
+        self.currentUserId = currentUserId
+        self.visibleThreadId = visibleThreadId
         // Subscribe eagerly so events landing before the first fetch
         // completes aren't dropped; the handlers tolerate an empty
         // `chats` array.
@@ -134,7 +146,7 @@ final class ChatConversationsViewModel: ObservableObject {
     /// today, so we don't try to increment locally — the ChatView
     /// itself emits `message.read` on message arrival, which will
     /// often zero the count before this list ever re-fetches.
-    private func handleMessageNew(_ event: RealtimeMessageNewEvent) {
+    func handleMessageNew(_ event: RealtimeMessageNewEvent) {
         guard let idx = chats.firstIndex(where: { $0.threadId == event.threadId }) else {
             // Unknown thread — probably a first-message-from-new-peer
             // scenario. Trigger a full silent refresh to pick up the

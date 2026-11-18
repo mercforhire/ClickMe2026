@@ -26,7 +26,7 @@ All fixes are committed directly on `main` in this checkout, one commit per find
 
 ## Fixed Issues
 
-### WR-05: A late `GET /chats` still replaces the live row's preview, time and order, and a `markOpened` on a row that is not listed yet is lost
+### WR-05: A late `GET /chats` still replaces the live row's preview, time and order, and a `markOpened` on a row that is not listed yet is lost (incomplete fix of WR-04, part 1)
 
 **Status:** fixed: requires human verification (race/state logic)
 **Files modified:** `ClickMe2026/Views/Screens/Chat/Conversations/ChatConversationsViewModel.swift`, `ClickMe2026Tests/Chat/ChatConversationsUnreadTests.swift`
@@ -34,7 +34,7 @@ All fixes are committed directly on `main` in this checkout, one commit per find
 **Applied fix:** `unreadSetDuringReload` became `changesDuringReload`, a per-thread record of unread count, last message and time label, plus `movedToTopDuringReload` (newest first). `fetchChats()` applies them over the server rows through `applyLocalChanges(to:)`, and moves the touched rows to the top. Only the three fields a live message changes are overlaid, so the server's name, avatar and online state still win. `markOpened` now records the open before its `guard`, so an open during the first load (row not listed yet) is kept. All of it is cleared when the last in-flight reload ends.
 **Tests added:** late reload keeps the live preview, time label and top position; two live messages keep the newest on top; `markOpened` during the first load keeps the row at 0. I ran these three against the old code and all three failed.
 
-### WR-06: A new conversation's first message is dropped if it arrives while a load is in flight
+### WR-06: A new conversation's first message is dropped if it arrives while a load is in flight (regression from the WR-04 part 2 fix)
 
 **Status:** fixed: requires human verification (race/state logic)
 **Files modified:** `ClickMe2026/Views/Screens/Chat/Conversations/ChatConversationsViewModel.swift`, `ClickMe2026Tests/Chat/ChatConversationsUnreadTests.swift`

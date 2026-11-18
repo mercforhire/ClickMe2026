@@ -2,54 +2,24 @@
 phase: 07-chat
 reviewed: 2026-11-18T00:00:00Z
 depth: standard
-files_reviewed: 42
+files_reviewed: 12
 files_reviewed_list:
-  - ClickMe2026/Managers/ChatPresence.swift
-  - ClickMe2026/Model/Responses/Children/ChatThreadItem.swift
-  - ClickMe2026/Model/UIModels/ChatDisplayModels.swift
   - ClickMe2026/Realtime/RealtimeService.swift
   - ClickMe2026/Utils/ChatBlockState.swift
-  - ClickMe2026/Utils/ChatBookingRowRoute.swift
-  - ClickMe2026/Utils/ChatComposerRules.swift
-  - ClickMe2026/Utils/ChatItemMapper.swift
-  - ClickMe2026/Utils/ChatThreadLookup.swift
-  - ClickMe2026/Utils/ChatThreadReducer.swift
-  - ClickMe2026/Utils/ChatUnreadRules.swift
-  - ClickMe2026/Views/Screens/Chat/Chatting/ChatSendCoordinator.swift
-  - ClickMe2026/Views/Screens/Chat/Chatting/ChattingView.swift
   - ClickMe2026/Views/Screens/Chat/Chatting/ChattingViewModel.swift
-  - ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingBlockedBanner.swift
-  - ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingEmptyState.swift
-  - ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingInputBar.swift
-  - ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingMessageBubble.swift
-  - ClickMe2026/Views/Screens/Chat/Conversations/ChatConversationsView.swift
   - ClickMe2026/Views/Screens/Chat/Conversations/ChatConversationsViewModel.swift
-  - ClickMe2026/Views/Screens/Chat/Conversations/Subviews/ChatConversationRow.swift
-  - ClickMe2026/Views/Screens/Chat/Report and Block/ReportChatView.swift
-  - ClickMe2026/Views/Screens/Chat/Report and Block/ReportChatViewModel.swift
-  - ClickMe2026/Views/Screens/Chat/Report and Block/Subviews/ReportChatBlockCard.swift
-  - ClickMe2026/Views/Screens/Chat/Report and Block/Subviews/ReportChatDescriptionField.swift
-  - ClickMe2026/Views/Screens/Chat/Report and Block/Subviews/ReportChatReasonField.swift
-  - ClickMe2026/Views/Screens/Chat/Report and Block/Subviews/ReportChatReportCard.swift
-  - ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileBlockViewModel.swift
-  - ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift
+  - ClickMe2026/Utils/ChatThreadReducer.swift
+  - ClickMe2026/Model/UIModels/ChatDisplayModels.swift
+  - ClickMe2026/Utils/ChatItemMapper.swift
+  - ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingMessageBubble.swift
   - ClickMe2026Tests/Chat/ChatBlockStateTests.swift
-  - ClickMe2026Tests/Chat/ChatBookingRowRouteTests.swift
-  - ClickMe2026Tests/Chat/ChatComposerRulesTests.swift
   - ClickMe2026Tests/Chat/ChatConversationsUnreadTests.swift
-  - ClickMe2026Tests/Chat/ChatThreadItemDecodingTests.swift
-  - ClickMe2026Tests/Chat/ChatThreadReducerTests.swift
   - ClickMe2026Tests/Chat/ChattingViewModelOpenTests.swift
-  - ClickMe2026Tests/Chat/ChattingViewModelReadEmitTests.swift
   - ClickMe2026Tests/Chat/ChattingViewModelSendTests.swift
-  - ClickMe2026Tests/Chat/ChatUnreadRulesTests.swift
-  - ClickMe2026Tests/Chat/ProfileBlockActionTests.swift
-  - ClickMe2026Tests/Chat/ReportChatViewModelTests.swift
-  - ClickMe2026Tests/Support/ChatFixtures.swift
 findings:
   critical: 0
-  warning: 4
-  info: 5
+  warning: 2
+  info: 7
   total: 9
 status: issues_found
 ---
@@ -58,73 +28,64 @@ status: issues_found
 
 **Reviewed:** 2026-11-18
 **Depth:** standard
-**Files Reviewed:** 42
+**Files Reviewed:** 12
 **Status:** issues_found
 
 ## Summary
 
-I read all 29 source files and skimmed the 13 test files for reliability problems. The send pipeline holds up: the reducer, coordinator, view model and views agree on the send flow.
+This is an incremental re-review after fix commits 82050a4, 505068c, d9dc9b6 and 9f5f35e (WR-01 to WR-04 of the first review). I read the four changed source files in full and the diff of the four changed test files. I also re-opened every location cited by IN-01 to IN-05.
 
-- The optimistic-bubble lifecycle is consistent. A bubble keeps its `id` across ack, fail and retry, and reload merges match by `client_msg_id`, so a reload can't duplicate or drop a bubble.
-- Retry reuses the `client_msg_id`. This is safe: the backend returns 201 with the existing row on a duplicate (`chatMessages.js`, D-12).
-- The composer cap counts UTF-16 units, which is the unit the backend's zod `max(10000)` uses.
-- The 4xx and 5xx split in `sendFailure` matches the backend's `THREAD_BLOCKED` and `RECIPIENT_UNAVAILABLE` 403s.
-- `ChatSendCoordinator` is safe under `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`. Its `inFlight` dictionary is only touched on the main actor, so there is no data race.
-- I found no security vulnerabilities and no crash or data-loss bugs.
+**Fix verification**
+- **WR-01 (stale scan undoes a block change): fixed.** `Session.revision` moves on `adopt`, `applyUnblockSucceeded`, a `NOT_BLOCKER` unblock failure and a handled send refusal. `refreshThreadInfo` captures it before the await and drops the flags if it moved. I traced the ordering: a refusal bumps the revision first and then starts its own rescan, so that rescan captures the new value and is not dropped. `applyScan(found:)` now also resets `sessionBlockedByMe`. Nothing regressed.
+- **WR-02 (`recipientUnavailable` never cleared): fixed.** `reload()` is only called from pull-to-refresh and the error retry in `ChattingView`. A block still wins over the cleared flag. The banner text still gives no hint that refreshing helps (see IN-06).
+- **WR-03 (Socket.IO logging in all builds): fixed.** `.log` is now `false` outside `#if DEBUG`. No other `print`, `NSLog` or logger call exists in the file.
+- **WR-04 (list reload races): partly fixed.** The unread count now survives a late reload, but two gaps remain, WR-05 and WR-06 below.
 
-The four warnings are stale-state races that leave the UI wrong until the next refresh, plus one pre-existing logging setting that the chat feature makes more sensitive. The info items are latent traps and test-quality notes.
+No security issues, crashes or data-loss bugs found. The new in-flight tests are sound. `MockURLProtocol` records a request before it calls the handler, so `waitUntil { chatsGets().count >= 2 }` returns only once the request is held at the gate.
 
 ## Warnings
 
-### WR-01: A stale `GET /chats` scan can undo a block or unblock that finished while it was running
+### WR-05: A late `GET /chats` still replaces the live row's preview, time and order, and a `markOpened` on a row that is not listed yet is lost (incomplete fix of WR-04, part 1)
 
-**File:** `ClickMe2026/Views/Screens/Chat/Chatting/ChattingViewModel.swift:313-322` (with `ClickMe2026/Utils/ChatBlockState.swift:172-174`)
-**Issue:** `refreshThreadInfo()` awaits up to three sequential `GET /chats` pages, then calls `blockSession.applyScan(found:)`. Nothing checks whether the block state changed during that time. Several things can start a scan: `forceLoad`, `viewDidAppear`, and the send-refusal path (`applySendOutcome`, line 408). The user can tap the banner's Unblock, or return from Report & Block with a new state adopted through `adoptBlockState`, while a scan is in flight. The server sees the unblock after the scan read the thread, so the scan response is stale. When it arrives it overwrites `block` with `isBlocked: true`, and the composer reverts to the banner although the server has unblocked. The same applies in the other direction after a block. `ReportChatViewModel` guards against exactly this with `stateRevision` (lines 65-67 and 113). The thread view model has the same exposure and no guard.
+**File:** `ClickMe2026/Views/Screens/Chat/Conversations/ChatConversationsViewModel.swift:149-163, 182-220`
+**Issue:** `fetchChats()` re-applies only `unreadCount` over the server snapshot. `handleMessageNew` changes four other things on the row: `lastMessage`, `timeLabel`, the row position (moved to index 0) and `unreadCount`.
 
-The scan can also leave `sessionBlockedByMe` stale. `applyScan` copies the found flags into `block`, but `sessionBlockedByMe` stays true after a scan reports that the peer blocked. A later scan that doesn't list the thread then reads as blocked by me.
+1. If a live message arrives while a reload is in flight, the response that predates it restores the old preview, the old time label and the old order. The unread pill then shows the new count (for example 3) beside the old message text. The review of WR-04 named "the same applies to `handleMessageNew` updates made while a reload is in flight", and the fix covers only the pill. The row stays wrong until the next reload.
+2. `markOpened` returns at `guard let idx` before it reaches `noteLocalUnread`. While the first load is running, `chats` is empty and the thread is not listed yet. If the user opens that thread then (for example from a push tap on cold start), nothing is recorded, and the first load puts the server's unread pill back on the thread that is on screen.
 
-**Fix:** Add a revision counter to `ChatBlockState.Session` and bump it in every mutator except `applyScan`. `refreshThreadInfo` captures it before the await and drops the result if it changed. Also make `applyScan(found:)` set `sessionBlockedByMe = found.isBlocked && found.blockedByMe` when `found` is non-nil.
+**Fix:** Record the local change for the whole row, and record `markOpened` even when the row is absent.
 ```swift
-// ChatBlockState.Session
-private(set) var revision = 0
-// bump `revision &+= 1` in adopt, applyUnblockSucceeded, applyUnblockFailure, applySendRefusal
+private var localRowsDuringReload: [UUID: ChatPreview] = [:]   // set by handleMessageNew
+private var openedDuringReload: Set<UUID> = []                  // set by markOpened, row listed or not
 
-// ChattingViewModel.refreshThreadInfo
-let revision = blockSession.revision
-let thread = try await ChatThreadLookup.find(threadId: threadId, api: api)
-guard revision == blockSession.revision else { return }
+// fetchChats: after mapping
+for index in rows.indices {
+    let id = rows[index].threadId
+    if let local = localRowsDuringReload[id] { rows[index] = local }
+    else if openedDuringReload.contains(id) { rows[index].unreadCount = 0 }
+}
+// order: put rows in localRowsDuringReload first, newest event first
 ```
+`markOpened` should call `openedDuringReload.insert(threadId)` before its `guard`, but only while `reloadsInFlight > 0`. Clear both collections together with the existing counter. Add a test for each of the two cases above.
 
-### WR-02: `recipientUnavailable` is never cleared, so the composer stays disabled until the screen is rebuilt
+### WR-06: A new conversation's first message is dropped if it arrives while a load is in flight (regression from the WR-04 part 2 fix)
 
-**File:** `ClickMe2026/Utils/ChatBlockState.swift:159, 186`
-**Issue:** `applySendRefusal(.recipientUnavailable)` sets `recipientUnavailable = true`. Nothing resets it: not `applyScan`, not `adopt`, not `applyUnblockSucceeded`. `GET /chats` does not expose the peer's account status, so a rescan can't clear it either. If the recipient is suspended and then reinstated, or the 403 came from a transient moderation state, the user can't send in this open chat. The "unavailable" banner stays, and its text says nothing about retrying. The flag only resets when `ChattingViewModel` is recreated, which happens when the user leaves and re-enters the thread. The doc comment says "for this session", but nothing tells the user the way out.
+**File:** `ClickMe2026/Views/Screens/Chat/Conversations/ChatConversationsViewModel.swift:189`
+**Issue:** The new `guard case .loaded = loadState else { return }` assumes that a pending load "already returns the message". That is true only if the server read its list after the message was stored. The socket event can arrive while the HTTP response is still travelling, and that response may carry a snapshot taken before the message. In that case the event is ignored and the response does not list the thread, so the new conversation does not appear until some later reload. The window is the request latency, which is longest on a cold start.
 
-**Fix:** Clear the flag in `viewDidAppear`/`reload()` (the pull-to-refresh path) so a fresh visit or refresh retries. The server's fail-open check means one extra refused send is cheap. For example, add `mutating func clearUnavailable()` to `Session` and call it from `ChattingViewModel.reload()`.
+The same guard also covers a pull-to-refresh. `reload()` sets `loadState = .loading` while `chats` is already filled, so every unknown-thread event during a refresh is dropped. Before the fix this case called `silentReload()` and then `forceLoad()`, which at least refetched.
 
-### WR-03: Socket.IO client logging is on in all builds and logs message traffic
-
-**File:** `ClickMe2026/Realtime/RealtimeService.swift:93` (`.log(true)`)
-**Issue:** This line is not in the phase diff, but the file is in scope. `SocketManager` is created with `.log(true)` unconditionally. socket.io-client-swift then writes engine and event traffic to the console in Release as well as Debug builds. That includes the decoded `message.new` and `message.read` payloads, so chat content and user ids reach the unified log. The project convention is "no logging of user content" and "wrap debug-only logging in `#if DEBUG`". This phase adds more traffic through the socket: read receipts, reconnect handling and the `onConnect` hook. It also adds more places where the log would leak. The same connect call sends the JWT as the handshake payload (line 113).
-
-**Fix:**
+**Fix:** Remember the event and refetch once the in-flight load ends, instead of dropping it.
 ```swift
-#if DEBUG
-let logging = true
-#else
-let logging = false
-#endif
-// config: [.log(logging), ...]
+private var needsReloadAfterLoad = false
+
+// handleMessageNew, unknown-thread branch
+guard case .loaded = loadState else { needsReloadAfterLoad = true; return }
+
+// end of forceLoad(), after loadState = .loaded
+if needsReloadAfterLoad { needsReloadAfterLoad = false; await silentReload() }
 ```
-
-### WR-04: Chats list reloads can overwrite local unread changes and double-fetch during the first load
-
-**File:** `ClickMe2026/Views/Screens/Chat/Conversations/ChatConversationsViewModel.swift:114-124, 148-173`
-**Issue:** Two related races in the list view model:
-1. `silentReload()` assigns `chats = response…map(mapThread)` when the response arrives. The view triggers it when a chat closes (`ChatConversationsView.swift:75`). If the user opens another thread during the request, `markOpened(threadId:)` zeroes that row. The late response then restores the server's count. The server may not have processed the `message.read` emits yet. The pill for the thread on screen reappears until the next reload. The same applies to `handleMessageNew` updates made while a reload is in flight.
-2. `handleMessageNew` subscribes at `init`, so it runs while `chats` is still empty. Every live message in that window takes the "unknown thread" branch and calls `silentReload()`. That falls through to `forceLoad()` because `loadState` is not `.loaded`. The result is duplicate `GET /chats` calls that each set `loadState = .loading`, so the spinner can flash again after the first load finishes. In the `.failed` state, any incoming message also silently re-triggers a full load.
-
-**Fix:** For (1), apply a reload result by merging: keep the local `unreadCount` for rows whose thread is currently visible (`visibleThreadId()`), or track a revision counter bumped by `markOpened` and `handleMessageNew` and drop or merge a result that predates it. For (2), only take the "unknown thread" reload path when `loadState == .loaded`, and otherwise ignore the event, because the pending load will include it.
+This keeps the fix's goal, which is no duplicate request during the load. It makes one follow-up request only when an unknown thread was seen in that window. Reset the flag when the load fails.
 
 ## Info
 
@@ -136,7 +97,7 @@ let logging = false
 
 ### IN-02: `.timestamp` rows would be moved to the end by `ChatThreadReducer.order`
 
-**File:** `ClickMe2026/Utils/ChatThreadReducer.swift:181-198`, `ClickMe2026/Model/UIModels/ChatDisplayModels.swift:35-40`
+**File:** `ClickMe2026/Utils/ChatThreadReducer.swift:181-197`, `ClickMe2026/Model/UIModels/ChatDisplayModels.swift:35-40`
 **Issue:** `order` sorts rows that have a server id, then appends everything without one in current order. `.timestamp` separators have no `serverId`, so any `.timestamp` row that enters `items` is put after the server rows. Today only the preview `sampleConversation` contains them, and `mergePage` isn't used for previews, so there is no live bug. It is a trap if day separators are ever added to `items`. The `.timestamp` id (`"ts_\(label)"`) also collides when two separators share a label.
 **Fix:** Add a note to the `order` doc comment, or compute separators at render time rather than storing them in `items`.
 
@@ -154,9 +115,21 @@ let logging = false
 
 ### IN-05: Test timing helpers hide failures and one negative check is a fixed sleep
 
-**File:** `ClickMe2026Tests/Chat/ChatConversationsUnreadTests.swift:88-92`, `ClickMe2026Tests/Chat/ChattingViewModelOpenTests.swift:146-150, 289-292`
-**Issue:** `waitUntil` loops without reporting a timeout. A timeout falls through to whatever the next `#expect` checks. That is fine for positive checks, but the failure message then points at the wrong assertion. `viewDidAppearScansOnlyOnceLoaded` asserts "no request was made" after a fixed 50 ms sleep, which would also pass if the scan were merely late. The suites rely on the test plan's `parallelizable: false` because `MockURLProtocol.handler` is global static state. `.serialized` alone does not prevent cross-suite interference if someone enables parallel execution.
-**Fix:** Have `waitUntil` record an `Issue` on timeout. For the negative check, drive the scan through the awaited `Task` or an injected seam. Add a comment on the suites noting the dependency on the non-parallel test plan.
+**File:** `ClickMe2026Tests/Chat/ChatConversationsUnreadTests.swift:120-124`, `ClickMe2026Tests/Chat/ChattingViewModelOpenTests.swift:146-150, 289-292`
+**Issue:** `waitUntil` loops without reporting a timeout. A timeout falls through to whatever the next `#expect` checks. That is fine for positive checks, but the failure message then points at the wrong assertion. `viewDidAppearScansOnlyOnceLoaded` asserts "no request was made" after a fixed 50 ms sleep, which would also pass if the scan were merely late. The suites rely on the test plan's `parallelizable: false` because `MockURLProtocol.handler` is global static state. `.serialized` alone does not prevent cross-suite interference if someone enables parallel execution. The new in-flight tests also use `waitUntil` to reach the gate, and a timeout there would release a request that was never held (the same silent fall-through).
+**Fix:** Have `waitUntil` record an `Issue` on timeout. For the negative check, drive the scan through the awaited `Task` or an injected seam. Add a comment on the suites noting the dependency on the non-parallel test plan. Note that `ChatConversationsUnreadTests.swift:313` (the new `unknownThreadBeforeFirstLoadIsIgnored` test) adds another fixed 50 ms negative check of the same kind.
+
+### IN-06: The "unavailable" banner does not tell the user that pull-to-refresh retries
+
+**File:** `ClickMe2026/Utils/ChatBlockState.swift:126`, `ClickMe2026/Views/Screens/Chat/Chatting/ChattingViewModel.swift:173-180`
+**Issue:** WR-02 made pull-to-refresh clear `recipientUnavailable`, but the banner copy is still "This user is unavailable." with no hint. The recovery path exists but a user cannot find it. The fix report deliberately left the copy as a UX decision. The same applies to Android, which ports `BlockState.kt`.
+**Fix:** Get a copy decision, for example "This user is unavailable. Pull down to try again." Alternatively, clear the flag in `viewDidAppear` after a delay or on socket reconnect.
+
+### IN-07: Two copies of the test `Gate` helper that behave differently
+
+**File:** `ClickMe2026Tests/Chat/ChatConversationsUnreadTests.swift:44-62`, `ClickMe2026Tests/Chat/ChattingViewModelOpenTests.swift:558-570`
+**Issue:** The two `Gate` classes are near duplicates. The one in `ChatConversationsUnreadTests` disarms itself in `open()`. The one in `ChattingViewModelOpenTests` never does, so every later request that goes through the same handler waits for the full 5-second timeout. The test passes now only because `ChatThreadLookup.find` finds the thread on page 1 and makes one request. A fixture with `pagination.totalPages > 1` would make that test slow or flaky without a clear cause.
+**Fix:** Move one `Gate` that disarms in `open()` into `ClickMe2026Tests/Support/` and use it in both suites.
 
 ---
 

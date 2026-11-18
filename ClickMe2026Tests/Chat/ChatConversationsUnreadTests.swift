@@ -41,26 +41,6 @@ struct ChatConversationsUnreadTests {
         }
     }
 
-    /// Holds a stubbed response until `open()` is called, so a test can change the
-    /// list while a request is in flight. Blocks only while armed, and for at most
-    /// five seconds so a broken test cannot hang.
-    private final class Gate: @unchecked Sendable {
-        private let semaphore = DispatchSemaphore(value: 0)
-        private let lock = NSLock()
-        private var armed = false
-        func arm() { lock.lock(); armed = true; lock.unlock() }
-        func waitIfArmed() {
-            lock.lock(); let isArmed = armed; lock.unlock()
-            guard isArmed else { return }
-            _ = semaphore.wait(timeout: .now() + 5)
-        }
-        /// Releases the waiting request and lets later ones through.
-        func open() {
-            lock.lock(); armed = false; lock.unlock()
-            semaphore.signal()
-        }
-    }
-
     /// A flag a test flips while a stubbed handler reads it on another thread.
     private final class FailureSwitch: @unchecked Sendable {
         private let lock = NSLock()
@@ -98,7 +78,7 @@ struct ChatConversationsUnreadTests {
         )
     }
 
-    private static func makeViewModel(server: ChatsServer, gate: Gate) -> ChatConversationsViewModel {
+    private static func makeViewModel(server: ChatsServer, gate: RequestGate) -> ChatConversationsViewModel {
         let api = APITestFactory.make { request in
             // The snapshot is taken before the wait, as a server would take it, so a
             // body swapped while the request is held does not reach this response.
@@ -267,7 +247,7 @@ struct ChatConversationsUnreadTests {
     @Test("a reload that finishes after markOpened keeps the row at 0 instead of the server's older count")
     func lateReloadKeepsOpenedRowAtZero() async {
         let server = ChatsServer(Self.page(aUnread: 0, bUnread: 3))
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
         await viewModel.load()
 
@@ -284,7 +264,7 @@ struct ChatConversationsUnreadTests {
     @Test("a reload that finishes after a live peer message keeps the local count")
     func lateReloadKeepsLiveIncrement() async {
         let server = ChatsServer(Self.page(aUnread: 0, bUnread: 2))
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
         await viewModel.load()
 
@@ -301,7 +281,7 @@ struct ChatConversationsUnreadTests {
     @Test("the next reload after the first one ended takes the server's count again")
     func overridesEndWithTheReload() async {
         let server = ChatsServer(Self.page(aUnread: 0, bUnread: 3))
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
         await viewModel.load()
         gate.arm()
@@ -320,7 +300,7 @@ struct ChatConversationsUnreadTests {
     @Test("a reload that finishes after a live message keeps the row's preview and its place at the top")
     func lateReloadKeepsLivePreviewAndOrder() async {
         let server = ChatsServer(Self.page(aUnread: 0, bUnread: 2))
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
         await viewModel.load()
         #expect(viewModel.chats.map(\.threadId) == [Self.threadA, Self.threadB])
@@ -341,7 +321,7 @@ struct ChatConversationsUnreadTests {
     @Test("two live messages during a reload keep the newest conversation on top")
     func lateReloadKeepsNewestFirst() async {
         let server = ChatsServer(Self.page(aUnread: 0, bUnread: 0))
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
         await viewModel.load()
 
@@ -360,7 +340,7 @@ struct ChatConversationsUnreadTests {
     @Test("markOpened while the first load runs keeps the row at 0 even though the row is not listed yet")
     func openedDuringFirstLoadStaysZero() async {
         let server = ChatsServer(Self.page(aUnread: 4, bUnread: 3))
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
 
         gate.arm()
@@ -380,7 +360,7 @@ struct ChatConversationsUnreadTests {
     @Test("an unknown thread's message during the first load triggers one follow-up fetch that lists it")
     func unknownThreadDuringFirstLoadRefetches() async {
         let server = ChatsServer(Self.page())
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
 
         gate.arm()
@@ -404,7 +384,7 @@ struct ChatConversationsUnreadTests {
     @Test("an unknown thread's message during a pull-to-refresh triggers one follow-up fetch")
     func unknownThreadDuringPullToRefreshRefetches() async {
         let server = ChatsServer(Self.page())
-        let gate = Gate()
+        let gate = RequestGate()
         let viewModel = Self.makeViewModel(server: server, gate: gate)
         await viewModel.load()
 
@@ -438,7 +418,7 @@ struct ChatConversationsUnreadTests {
     @Test("a load that fails drops the pending follow-up")
     func failedLoadDropsFollowUp() async {
         let server = ChatsServer(Self.page())
-        let gate = Gate()
+        let gate = RequestGate()
         let failing = FailureSwitch()
         let api = APITestFactory.make { request in
             gate.waitIfArmed()

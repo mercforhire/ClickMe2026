@@ -66,6 +66,42 @@ enum ChatFixtures {
         )
     }
 
+    /// One thread row as `GET /chats` returns it.
+    ///
+    /// - Parameters:
+    ///   - blockedByMe: Written only when non-nil, so a response from before the key existed can be tested.
+    static func thread(
+        id: UUID,
+        partnerId: UUID,
+        partnerName: String = "Peer",
+        unreadCount: Int = 0,
+        isBlocked: Bool = false,
+        blockedByMe: Bool? = false
+    ) -> String {
+        let blockedByMeJSON = blockedByMe.map { #","blocked_by_me":\#($0)"# } ?? ""
+        return #"""
+        {"thread_id":"\#(id.uuidString)","partner":{"id":"\#(partnerId.uuidString)","name":"\#(partnerName)","avatar_url":null,"roles":["expert"]},"last_message":null,"last_msg_at":null,"unread_count":\#(unreadCount),"is_online":false,"is_blocked":\#(isBlocked)\#(blockedByMeJSON)}
+        """#
+    }
+
+    /// `GET /chats` success envelope around `rows` (each from `thread`).
+    ///
+    /// - Parameters:
+    ///   - includePagination: False leaves the `pagination` key out, as an older response does.
+    static func threadsPage(
+        _ rows: [String],
+        page: Int = 1,
+        totalPages: Int = 1,
+        includePagination: Bool = true
+    ) -> Data {
+        let pagination = includePagination
+            ? #","pagination":{"current_page":\#(page),"total_pages":\#(totalPages)}"#
+            : ""
+        return Data(
+            #"{"status":"success","data":{"threads":[\#(rows.joined(separator: ","))]\#(pagination)}}"#.utf8
+        )
+    }
+
     /// `POST /chats/:id/send` 201 ack.
     static func ack(messageId: UUID, timestamp: Date) -> Data {
         Data(

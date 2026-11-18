@@ -256,6 +256,12 @@ final class ChattingViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Thread info (D-10)
+
+    func refreshThreadInfo() async {}
+
+    func viewDidAppear() {}
+
     // MARK: - Send (optimistic, D-01)
 
     /// Appends the current `messageText` as a pending bubble at once, clears the

@@ -390,7 +390,8 @@ struct ChattingViewModelSendTests {
         let newPosts = Array(Self.sendPosts().dropFirst(postsBefore))
         #expect(Self.clientMsgIds(of: newPosts) == [secondId])
         let rows = messages(viewModel)
-        #expect(rows.map(\.body) == ["a", "b"])
+        // The acked row moves ahead of the still-unsent one (server rows first, then local unsent).
+        #expect(rows.map(\.body) == ["b", "a"])
         #expect(rows.first { $0.id == first.id }?.sendState == .failed)
         #expect(rows.first { $0.id == second.id }?.sendState == .sent)
     }

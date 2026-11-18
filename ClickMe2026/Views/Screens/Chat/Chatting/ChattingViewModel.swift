@@ -298,8 +298,8 @@ final class ChattingViewModel: ObservableObject {
         startSend(threadId: threadId, clientMsgId: clientMsgId, text: trimmed)
     }
 
-    /// Hands one send to the coordinator. Plan 07-02's retry reuses it with the
-    /// bubble's existing `clientMsgId`.
+    /// Hands one send to the coordinator. `retrySend` reuses it with the bubble's
+    /// existing `clientMsgId`.
     private func startSend(threadId: UUID, clientMsgId: String, text: String) {
         sendCoordinator.send(threadId: threadId, clientMsgId: clientMsgId, text: text) { [weak self] outcome in
             await self?.applySendOutcome(outcome, clientMsgId: clientMsgId, text: text)
@@ -341,9 +341,33 @@ final class ChattingViewModel: ObservableObject {
 
     // MARK: - Retry and delete (D-01)
 
-    func retrySend(clientMsgId: String) {}
+    /// Resends a Failed bubble with the `client_msg_id` it was first sent with, so
+    /// the server's `UNIQUE(thread_id, sender_id, client_msg_id)` removes the
+    /// duplicate if the first attempt did reach it (D-01). The bubble keeps its id,
+    /// goes back to Sending and becomes Sent on the ack. Does nothing for a bubble
+    /// that is not Failed or whose send is still in flight, so a second tap never
+    /// starts a second request.
+    func retrySend(clientMsgId: String) {
+        guard let threadId,
+              let bubble = ChatThreadReducer.findMine(items, clientMsgId: clientMsgId),
+              bubble.sendState == .failed,
+              !sendCoordinator.isInFlight(clientMsgId)
+        else { return }
+        items = ChatThreadReducer.retry(items, clientMsgId: clientMsgId)
+        startSend(threadId: threadId, clientMsgId: clientMsgId, text: bubble.body)
+    }
 
-    func deleteFailedMessage(clientMsgId: String) {}
+    /// Throws a Failed bubble away (D-01). Local only: no request is made, and
+    /// nothing was ever stored (D-02). A bubble that is Sending or Sent stays.
+    func deleteFailedMessage(clientMsgId: String) {
+        guard let bubble = ChatThreadReducer.findMine(items, clientMsgId: clientMsgId),
+              bubble.sendState == .failed,
+              !sendCoordinator.isInFlight(clientMsgId)
+        else { return }
+        withAnimation(.easeInOut(duration: 0.2)) {
+            items = ChatThreadReducer.remove(items, clientMsgId: clientMsgId)
+        }
+    }
 
     /// Awaits every send in flight. Used by tests.
     func awaitInFlightSends() async {

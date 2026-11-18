@@ -287,7 +287,16 @@ struct ChatView: View {
     private func chatItemView(_ item: ChatItem) -> some View {
         switch item {
         case let .message(msg):
-            ChattingMessageBubble(message: msg, myName: viewModel.myName)
+            ChattingMessageBubble(
+                message: msg,
+                myName: viewModel.myName,
+                onRetry: {
+                    if let clientMsgId = msg.clientMsgId { viewModel.retrySend(clientMsgId: clientMsgId) }
+                },
+                onDelete: {
+                    if let clientMsgId = msg.clientMsgId { viewModel.deleteFailedMessage(clientMsgId: clientMsgId) }
+                }
+            )
                 .padding(.vertical, 8)
                 .padding(.horizontal, 14)
         case let .timestamp(label):

@@ -87,10 +87,18 @@ final class RealtimeService {
             return
         }
 
+        // The library's log prints decoded event payloads (chat text, user ids), so
+        // it is on for debug builds only.
+        #if DEBUG
+        let socketLogging = true
+        #else
+        let socketLogging = false
+        #endif
+
         let manager = SocketManager(
             socketURL: baseURL,
             config: [
-                .log(true),
+                .log(socketLogging),
                 .compress,
                 .forceWebsockets(true),
                 .reconnects(true),

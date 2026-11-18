@@ -339,6 +339,12 @@ final class ChattingViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Retry and delete (D-01)
+
+    func retrySend(clientMsgId: String) {}
+
+    func deleteFailedMessage(clientMsgId: String) {}
+
     /// Awaits every send in flight. Used by tests.
     func awaitInFlightSends() async {
         await sendCoordinator.awaitAll()

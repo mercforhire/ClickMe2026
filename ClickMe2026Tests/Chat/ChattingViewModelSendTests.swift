@@ -245,6 +245,156 @@ struct ChattingViewModelSendTests {
         #expect(MockURLProtocol.recordedRequests.isEmpty)
     }
 
+    // MARK: Retry and delete (D-01, D-02)
+
+    /// A switch a `@Sendable` stub closure can read while the test flips it.
+    private final class Switch: @unchecked Sendable {
+        private let lock = NSLock()
+        private var stored: Bool
+        init(_ initial: Bool) { stored = initial }
+        var isOn: Bool {
+            get { lock.withLock { stored } }
+            set { lock.withLock { stored = newValue } }
+        }
+    }
+
+    /// Answers 500 while `failing` is on, otherwise acks like `ackResponder`.
+    nonisolated private static func flakyResponder(failing: Switch) -> Responder {
+        { request in
+            if failing.isOn {
+                return Fixtures.response(
+                    for: request,
+                    status: 500,
+                    body: Fixtures.errorBody(code: "INTERNAL_ERROR", message: "Boom")
+                )
+            }
+            return try ackResponder(request)
+        }
+    }
+
+    nonisolated private static func clientMsgIds(of requests: [URLRequest]) -> [String] {
+        requests.compactMap { $0.jsonBodyForTest()?["client_msg_id"] as? String }
+    }
+
+    /// Sends `text`, waits for the 500, and returns the Failed bubble.
+    private func sendAndFail(_ viewModel: ChattingViewModel, text: String) async throws -> ChatMessage {
+        viewModel.messageText = text
+        await viewModel.sendMessage()
+        await viewModel.awaitInFlightSends()
+        let failed = try #require(messages(viewModel).last { $0.body == text })
+        #expect(failed.sendState == .failed)
+        return failed
+    }
+
+    @Test("retrying a failed bubble resends it with the same client_msg_id and the bubble ends up sent")
+    func retryResendsWithTheSameClientMsgId() async throws {
+        let failing = Switch(true)
+        let viewModel = makeViewModel(onSend: Self.flakyResponder(failing: failing))
+        let failed = try await sendAndFail(viewModel, text: "hello")
+        let clientMsgId = try #require(failed.clientMsgId)
+
+        failing.isOn = false
+        viewModel.retrySend(clientMsgId: clientMsgId)
+        #expect(messages(viewModel).last?.sendState == .sending)
+        await viewModel.awaitInFlightSends()
+
+        let posts = Self.sendPosts()
+        #expect(posts.count == 2)
+        #expect(Self.clientMsgIds(of: posts) == [clientMsgId, clientMsgId])
+        #expect(posts.compactMap { $0.jsonBodyForTest()?["content"] as? String } == ["hello", "hello"])
+        let rows = messages(viewModel)
+        #expect(rows.count == 1)
+        #expect(rows.first?.id == failed.id)
+        #expect(rows.first?.sendState == .sent)
+        #expect(rows.first?.serverId != nil)
+    }
+
+    @Test("two retries in a row before the first answers send one extra request")
+    func secondRetryWhileSendingSendsNothing() async throws {
+        let failing = Switch(true)
+        let viewModel = makeViewModel(onSend: Self.flakyResponder(failing: failing))
+        let failed = try await sendAndFail(viewModel, text: "hello")
+        let clientMsgId = try #require(failed.clientMsgId)
+
+        failing.isOn = false
+        viewModel.retrySend(clientMsgId: clientMsgId)
+        viewModel.retrySend(clientMsgId: clientMsgId)
+        await viewModel.awaitInFlightSends()
+
+        #expect(Self.sendPosts().count == 2)
+        #expect(messages(viewModel).first?.sendState == .sent)
+    }
+
+    @Test("retrying a sent bubble or an unknown client_msg_id sends nothing")
+    func retryIgnoresSentAndUnknownBubbles() async throws {
+        let viewModel = makeViewModel(onSend: Self.ackResponder)
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+        await viewModel.awaitInFlightSends()
+        let sent = try #require(messages(viewModel).last)
+        #expect(sent.sendState == .sent)
+
+        viewModel.retrySend(clientMsgId: try #require(sent.clientMsgId))
+        viewModel.retrySend(clientMsgId: UUID().uuidString)
+        await viewModel.awaitInFlightSends()
+
+        #expect(Self.sendPosts().count == 1)
+        #expect(messages(viewModel).count == 1)
+        #expect(messages(viewModel).first?.sendState == .sent)
+    }
+
+    @Test("deleting a failed bubble removes the row and makes no request")
+    func deleteRemovesAFailedBubble() async throws {
+        let viewModel = makeViewModel(
+            onSend: Self.errorResponder(status: 500, code: "INTERNAL_ERROR", message: "Boom")
+        )
+        let failed = try await sendAndFail(viewModel, text: "hello")
+        let postsBefore = Self.sendPosts().count
+
+        viewModel.deleteFailedMessage(clientMsgId: try #require(failed.clientMsgId))
+
+        #expect(messages(viewModel).isEmpty)
+        #expect(Self.sendPosts().count == postsBefore)
+        #expect(MockURLProtocol.recordedRequests.count == postsBefore)
+    }
+
+    @Test("deleting a bubble that is still sending changes nothing")
+    func deleteIgnoresASendingBubble() async throws {
+        let viewModel = makeViewModel(onSend: Self.ackResponder)
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+        let pending = try #require(messages(viewModel).last)
+        #expect(pending.sendState == .sending)
+
+        viewModel.deleteFailedMessage(clientMsgId: try #require(pending.clientMsgId))
+
+        #expect(messages(viewModel).count == 1)
+        #expect(messages(viewModel).first?.sendState == .sending)
+        await viewModel.awaitInFlightSends()
+        #expect(messages(viewModel).first?.sendState == .sent)
+    }
+
+    @Test("with two failed bubbles, retrying the second sends only the second's client_msg_id")
+    func retryTargetsOnlyTheTappedBubble() async throws {
+        let failing = Switch(true)
+        let viewModel = makeViewModel(onSend: Self.flakyResponder(failing: failing))
+        let first = try await sendAndFail(viewModel, text: "a")
+        let second = try await sendAndFail(viewModel, text: "b")
+        let secondId = try #require(second.clientMsgId)
+        let postsBefore = Self.sendPosts().count
+
+        failing.isOn = false
+        viewModel.retrySend(clientMsgId: secondId)
+        await viewModel.awaitInFlightSends()
+
+        let newPosts = Array(Self.sendPosts().dropFirst(postsBefore))
+        #expect(Self.clientMsgIds(of: newPosts) == [secondId])
+        let rows = messages(viewModel)
+        #expect(rows.map(\.body) == ["a", "b"])
+        #expect(rows.first { $0.id == first.id }?.sendState == .failed)
+        #expect(rows.first { $0.id == second.id }?.sendState == .sent)
+    }
+
     // MARK: Coordinator
 
     @Test("a second send for a client_msg_id already in flight makes no request")

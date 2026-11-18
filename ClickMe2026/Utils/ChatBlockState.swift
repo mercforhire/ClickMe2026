@@ -160,6 +160,10 @@ struct ChatBlockState: Equatable {
         /// True once this screen session blocked the thread, so a scan that does not
         /// list the thread (an empty one) still reads as blocked by me.
         private(set) var sessionBlockedByMe = false
+        /// True while an Unblock request runs, so one tap sequence sends one request.
+        private(set) var isUnblocking = false
+        /// Counts sends refused as blocked or unavailable; the view announces each one.
+        private(set) var refusalCount = 0
 
         var composerMode: ComposerMode {
             ChatBlockState.composerMode(block: block, recipientUnavailable: recipientUnavailable)
@@ -178,13 +182,13 @@ struct ChatBlockState: Equatable {
             switch code {
             case .threadBlocked:
                 block = block.onThreadBlocked()
-                return true
             case .recipientUnavailable:
                 recipientUnavailable = true
-                return true
             default:
                 return false
             }
+            refusalCount &+= 1
+            return true
         }
 
         /// Takes the outcome of the Block & Report screen without a reload.
@@ -193,14 +197,23 @@ struct ChatBlockState: Equatable {
             sessionBlockedByMe = state.isBlocked && state.blockedByMe
         }
 
+        /// Starts an Unblock request. False while one is already running (repeat taps).
+        mutating func beginUnblock() -> Bool {
+            guard !isUnblocking else { return false }
+            isUnblocking = true
+            return true
+        }
+
         mutating func applyUnblockSucceeded() {
             block = block.onUnblockSucceeded()
             sessionBlockedByMe = false
+            isUnblocking = false
         }
 
         /// Records a failed unblock and returns the text to show. `NOT_BLOCKER`
         /// moves the state to blocked by the peer; any other failure keeps it.
         mutating func applyUnblockFailure(_ error: Error) -> String {
+            isUnblocking = false
             if BookingErrorMapper.code(for: error) == .notBlocker {
                 block = block.onNotBlocker()
                 sessionBlockedByMe = false

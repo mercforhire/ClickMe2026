@@ -11,7 +11,9 @@ import SwiftUI
 // MARK: - Empty conversation state
 
 struct ChattingEmptyState: View {
-    let onSendMessage: () -> Void
+    /// Nil hides the Send a message button, for a thread whose composer is replaced
+    /// by a banner (Pitfall 8, UI EM2).
+    let onSendMessage: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 32) {
@@ -30,18 +32,20 @@ struct ChattingEmptyState: View {
                     .foregroundColor(ChattingBrand.onSurfaceVar)
             }
 
-            Button(action: onSendMessage) {
-                Text("Send a message")
-                    .font(.brand(.callout, weight: .bold))
-                    .foregroundColor(ChattingBrand.myText)
-                    .frame(width: 220, height: 52)
-                    .background(
-                        Capsule()
-                            .fill(ChattingBrand.brandGreen)
-                            .shadow(color: ChattingBrand.brandGreen.opacity(0.50), radius: 16, x: 0, y: 5)
-                    )
+            if let onSendMessage {
+                Button(action: onSendMessage) {
+                    Text("Send a message")
+                        .font(.brand(.callout, weight: .bold))
+                        .foregroundColor(ChattingBrand.myText)
+                        .frame(width: 220, height: 52)
+                        .background(
+                            Capsule()
+                                .fill(ChattingBrand.brandGreen)
+                                .shadow(color: ChattingBrand.brandGreen.opacity(0.50), radius: 16, x: 0, y: 5)
+                        )
+                }
+                .buttonStyle(PressScaleButtonStyle())
             }
-            .buttonStyle(PressScaleButtonStyle())
 
             Spacer()
         }

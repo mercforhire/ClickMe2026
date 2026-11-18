@@ -12,7 +12,6 @@ import SwiftUI
 @MainActor
 final class ChattingViewModel: ObservableObject {
 
-
     // MARK: Identity
     let threadId: UUID?
     let peerName: String
@@ -283,12 +282,25 @@ final class ChattingViewModel: ObservableObject {
     var blockState: ChatBlockState { blockSession.block }
     var composerMode: ChatBlockState.ComposerMode { blockSession.composerMode }
     /// Bumped when a send is refused as blocked or unavailable; the view announces the banner.
-    @Published private(set) var refusedBannerToken = 0
-    @Published private(set) var isUnblocking = false
+    var refusedBannerToken: Int { blockSession.refusalCount }
+    var isUnblocking: Bool { blockSession.isUnblocking }
     @Published var unblockError: String?
-    var isSelfThread: Bool { false }
-    func adoptBlockState(_ state: ChatBlockState) {}
-    func unblockFromBanner() async {}
+    /// A legacy thread with myself, which offers no block or report entry (CANNOT_REPORT_SELF).
+    var isSelfThread: Bool { peerUserId != nil && peerUserId == myUserId }
+
+    /// Takes the Block & Report screen's outcome with no reload (wired in plan 07-05).
+    func adoptBlockState(_ state: ChatBlockState) { blockSession.adopt(state) }
+
+    /// Posts `unblock` once per tap sequence (D-07, CHAT-UNBLOCK §6); the banner shows it to the blocker only.
+    func unblockFromBanner() async {
+        guard let threadId, blockSession.beginUnblock() else { return }
+        do {
+            _ = try await api.chatAction(id: threadId, action: "unblock")
+            blockSession.applyUnblockSucceeded()
+        } catch {
+            unblockError = blockSession.applyUnblockFailure(error)
+        }
+    }
 
     // MARK: - Thread info (D-10)
 
@@ -393,7 +405,6 @@ final class ChattingViewModel: ObservableObject {
             items = ChatThreadReducer.remove(items, clientMsgId: clientMsgId)
             updateMessageText(ChatSendCoordinator.restoredText(refused: text, draft: messageText))
             guard blockSession.applySendRefusal(code) else { sendError = message; return }
-            refusedBannerToken &+= 1
             await refreshThreadInfo()
         }
     }
@@ -610,7 +621,4 @@ final class ChattingViewModel: ObservableObject {
             )
         )
     }
-
-    // MARK: - Error mapping
-
 }

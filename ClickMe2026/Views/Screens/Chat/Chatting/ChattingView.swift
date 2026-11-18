@@ -90,8 +90,15 @@ struct ChatView: View {
         .confirmationDialog("Options", isPresented: $viewModel.showMenu, titleVisibility: .hidden) {
             Button("View Profile") { openPeerProfile() }
                 .disabled(viewModel.peerUserId == nil)
-            Button("Block or Report", role: .destructive) {
-                showingBlockReport = true
+            if !viewModel.isSelfThread {
+                switch viewModel.blockState.menuEntry {
+                case .blockOrReport:
+                    Button("Block or Report", role: .destructive) { showingBlockReport = true }
+                case .unblockOrReport:
+                    Button("Unblock or Report") { showingBlockReport = true }
+                case .reportOnly:
+                    Button("Report") { showingBlockReport = true }
+                }
             }
         }
         .navigationDestination(isPresented: $showingBlockReport) {
@@ -105,6 +112,18 @@ struct ChatView: View {
                     onDismiss: { showingBlockReport = false }
                 )
             }
+        }
+        .alert(
+            "Couldn't unblock user",
+            isPresented: Binding(
+                get: { viewModel.unblockError != nil },
+                set: { if !$0 { viewModel.unblockError = nil } }
+            ),
+            presenting: viewModel.unblockError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
         }
         .alert(
             "Couldn't send message",
@@ -138,7 +157,7 @@ struct ChatView: View {
         case .loaded:
             VStack(spacing: 0) {
                 if viewModel.items.isEmpty {
-                    ChattingEmptyState(onSendMessage: { inputFocused = true })
+                    ChattingEmptyState(onSendMessage: viewModel.composerMode == .normal ? { inputFocused = true } : nil)
                 } else {
                     messageList
                 }
@@ -156,7 +175,13 @@ struct ChatView: View {
             if viewModel.composerMode == .normal {
                 inputBar.transition(.opacity)
             } else {
-                ChattingBlockedBanner(mode: viewModel.composerMode).transition(.opacity)
+                ChattingBlockedBanner(
+                    mode: viewModel.composerMode,
+                    peerName: viewModel.peerName,
+                    isUnblocking: viewModel.isUnblocking,
+                    onUnblock: { Task { await viewModel.unblockFromBanner() } }
+                )
+                .transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.composerMode)

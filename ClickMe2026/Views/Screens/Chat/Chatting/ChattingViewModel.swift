@@ -309,12 +309,17 @@ final class ChattingViewModel: ObservableObject {
     /// peer message arrives (D-10), and its block flags (D-07, D-08). An unlisted
     /// thread keeps its block state (an empty thread is not listed); a failed scan
     /// changes nothing and shows no error (UI-SPEC L2). The first-sender rule in
-    /// `hydratePeerUserIdIfNeeded` stands in for the id.
+    /// `hydratePeerUserIdIfNeeded` stands in for the id. A scan that finishes after
+    /// the block state changed (an unblock, a block adopted from Report & Block, a
+    /// refused send) is stale for the block flags and is dropped, so it can never
+    /// undo that change.
     func refreshThreadInfo() async {
         guard let threadId else { return }
+        let revision = blockSession.revision
         do {
             let thread = try await ChatThreadLookup.find(threadId: threadId, api: api)
             if let thread { peerUserId = thread.partner.id }
+            guard revision == blockSession.revision else { return }
             blockSession.applyScan(found: thread.map(ChatBlockState.ScannedBlock.init(thread:)))
         } catch {
             // Lookup failure keeps the composer; the server still enforces the block.

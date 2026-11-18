@@ -248,4 +248,56 @@ struct ChatBlockStateTests {
 
         #expect(session.composerMode == .normal)
     }
+
+    // MARK: Session revision and scan bookkeeping (WR-01)
+
+    @Test("every change except a scan moves the revision, so an in-flight scan can tell it is stale")
+    func sessionRevisionMovesOnEveryNonScanChange() {
+        var session = State.Session()
+        var seen = session.revision
+
+        session.adopt(blocked(byMe: true))
+        #expect(session.revision != seen)
+        seen = session.revision
+
+        session.applyUnblockSucceeded()
+        #expect(session.revision != seen)
+        seen = session.revision
+
+        session.adopt(blocked(byMe: true))
+        seen = session.revision
+        _ = session.applyUnblockFailure(httpError(code: "NOT_BLOCKER"))
+        #expect(session.revision != seen)
+        seen = session.revision
+
+        _ = session.applySendRefusal(.threadBlocked)
+        #expect(session.revision != seen)
+        seen = session.revision
+
+        _ = session.applySendRefusal(.recipientUnavailable)
+        #expect(session.revision != seen)
+    }
+
+    @Test("a scan and an unhandled refusal leave the revision alone")
+    func sessionRevisionIgnoresScansAndUnhandledRefusals() {
+        var session = State.Session()
+        let seen = session.revision
+
+        session.applyScan(found: State.ScannedBlock(isBlocked: true, blockedByMe: false))
+        session.applyScan(found: nil)
+        _ = session.applySendRefusal(.validationError)
+
+        #expect(session.revision == seen)
+    }
+
+    @Test("a scan that finds the peer's block stops a later miss from reading as blocked by me")
+    func sessionScanResetsBlockedByMeBookkeeping() {
+        var session = State.Session()
+        session.adopt(blocked(byMe: true))
+
+        session.applyScan(found: State.ScannedBlock(isBlocked: true, blockedByMe: false))
+        session.applyScan(found: nil)
+
+        #expect(session.composerMode == .blockedByPeer)
+    }
 }

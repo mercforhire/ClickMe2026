@@ -164,13 +164,22 @@ struct ChatBlockState: Equatable {
         private(set) var isUnblocking = false
         /// Counts sends refused as blocked or unavailable; the view announces each one.
         private(set) var refusalCount = 0
+        /// Bumped by every change other than a scan. A scan captures it before its
+        /// request and drops its result when it moved, because the server answered
+        /// that request before the change (a stale scan must not undo it).
+        private(set) var revision = 0
 
         var composerMode: ComposerMode {
             ChatBlockState.composerMode(block: block, recipientUnavailable: recipientUnavailable)
         }
 
+        /// A listed thread also resets `sessionBlockedByMe` to what the server says,
+        /// so a block the peer placed later is not read as mine on the next miss.
         mutating func applyScan(found: ScannedBlock?) {
             block = block.applyScan(found: found, sessionBlockedByMe: sessionBlockedByMe)
+            if let found {
+                sessionBlockedByMe = found.isBlocked && found.blockedByMe
+            }
         }
 
         /// A send was refused with `code` (D-03). `THREAD_BLOCKED` marks the thread
@@ -188,6 +197,7 @@ struct ChatBlockState: Equatable {
                 return false
             }
             refusalCount &+= 1
+            revision &+= 1
             return true
         }
 
@@ -195,6 +205,7 @@ struct ChatBlockState: Equatable {
         mutating func adopt(_ state: ChatBlockState) {
             block = state
             sessionBlockedByMe = state.isBlocked && state.blockedByMe
+            revision &+= 1
         }
 
         /// Starts an Unblock request. False while one is already running (repeat taps).
@@ -208,6 +219,7 @@ struct ChatBlockState: Equatable {
             block = block.onUnblockSucceeded()
             sessionBlockedByMe = false
             isUnblocking = false
+            revision &+= 1
         }
 
         /// Records a failed unblock and returns the text to show. `NOT_BLOCKER`
@@ -217,6 +229,7 @@ struct ChatBlockState: Equatable {
             if BookingErrorMapper.code(for: error) == .notBlocker {
                 block = block.onNotBlocker()
                 sessionBlockedByMe = false
+                revision &+= 1
             }
             return ChatBlockState.actionErrorMessage(for: error)
         }

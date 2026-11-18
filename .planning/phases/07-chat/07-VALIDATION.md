@@ -3,7 +3,7 @@ phase: "07"
 slug: "chat"
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+status: validated
 nyquist_compliant: true
 wave_0_complete: true
 created: "2026-11-17"
@@ -61,7 +61,7 @@ Rules:
 | CHAT-06 | `loadEarlier` overlapping page 1 adds only new rows | unit | `ChatThreadReducerTests`, `ChattingViewModelOpenTests` | ✅ exists | ✅ green |
 | CHAT-07 | Badge `99+`, VoiceOver label, hidden at 0; open → 0; peer message → +1 and moves to top; open thread or own message → no +1 | unit | `ChatUnreadRulesTests`, `ChatConversationsUnreadTests` | ✅ exists | ✅ green |
 | D-16 | Read ids emitted once per page, held until the socket connects | unit | `ChattingViewModelReadEmitTests` | ✅ exists | ✅ green |
-| D-18 | Booking-row route: expert shell → `.expertBookingSummary`; client shell keeps its routes | unit (pure) | `ChatBookingRowRouteTests` (plan 07-09, runs after the 07-08 gate) | ❌ W0 | ⬜ pending |
+| D-18 | Booking-row route: expert shell → `.expertBookingSummary`; client shell keeps its routes | unit (pure) | `ChatBookingRowRouteTests` (plan 07-09, runs after the 07-08 gate) | ✅ exists | ✅ green |
 | CHAT-01 | Retry reuses the same `client_msg_id` once per bubble; delete a failed bubble locally; counter and cap rules | unit (stubbed, serialized) | `ChattingViewModelSendTests`, `ChatComposerRulesTests` | ✅ exists | ✅ green |
 | CHAT-03 | Thread open scan, unblock outcomes (success, NOT_BLOCKER, server and transport error, repeat tap), self-thread | unit (stubbed, serialized) | `ChattingViewModelOpenTests` | ✅ exists | ✅ green |
 | CHAT-03 / CHAT-04 | Report & Block screen: block, unblock, NOT_BLOCKER and stale-lookup outcomes handed back to the thread | unit (stubbed, serialized) | `ReportChatViewModelTests` | ✅ exists | ✅ green |
@@ -103,3 +103,11 @@ Rules:
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** approved 2026-11-18 by plan 07-08 on the green phase gate: full suite 1168 tests in 107 suites passed at HEAD `003aff8` (last Phase 7 app commit `7452bc0`), evidence committed in `8fdc9fd`. `status` stays `draft` and the Manual-Only rows stay pending for `/gsd-verify-work 07`; the D-18 row is closed by plan 07-09.
+
+## Validation Audit 2026-11-18
+
+| Metric | Count |
+|---|---|
+| Gaps found | 1 |
+| Resolved | 1 |
+| Escalated | 0 |

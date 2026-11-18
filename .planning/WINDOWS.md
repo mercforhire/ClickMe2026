@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 29
+open_count: 31
 waived_count: 0
 fixed_count: 7
-total_count: 36
-last_updated: 2026-11-16T18:36:00.126Z
+total_count: 38
+last_updated: 2026-11-18T05:27:16.103Z
 ---
 
 # Broken Windows Ledger
@@ -51,6 +51,8 @@ last_updated: 2026-11-16T18:36:00.126Z
 | 34 | 04 | unrun-verify | .planning/phases/04-booking-payment-and-discovery/04-13-PLAN.md |  | 04-13 PAY-02 D-04/D-15 device check (UAT E5, 04-14 D-11 session): after the confirm-unknown alert tap Not now then Book Now on the same slot and land on Request Sent for the existing booking; a slot someone else holds still shows the plain slot-taken alert; SwiftUI alert layout (Check My Bookings, Close Alert) unseen on device | open |  | 2026-11-12T06:01:27.372Z |  |
 | 35 | 04 | unrun-verify | .planning/phases/04-booking-payment-and-discovery/04-12-PLAN.md |  | 04-12 EXPL-02 and EXPL-05 device check not run (user chose fix-now 2026-11-12, device check deferred to the 04-14 UAT list): chat View Profile for an expert with no reviews shows no Expertise header, no empty Recent Reviews card, no blank gap and 'No reviews yet' in the hero (compare before on the App Store build); one review shows '(1 review)'; a profile opened from Favorites shows a filled heart from the first frame while one opened from Search starts empty | open |  | 2026-11-12T15:02:14.464Z |  |
 | 36 | 06 | unrun-verify | ClickMe2026/Views/Screens/Expert Mode/Booking Note/ExpertBookingNoteView.swift |  | 06-07 device checks D4, OV2, LT1, EM2 (swipe never pops, Back prompts when dirty, counter above keyboard, 5,000 cap on paste, TextEditor shows the cut text) not run; belongs in 06-DEVICE-UAT-CHECKLIST.md | open |  | 2026-11-16T18:36:00.126Z |  |
+| 37 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingMessageBubble.swift |  | 07-02 Task 1 human-check deferred to end-of-phase UAT: C1 second half and C8 on two iPhones (tap-to-retry delivers once, long-press Delete, VoiceOver actions) | open |  | 2026-11-18T05:27:16.006Z |  |
+| 38 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingInputBar.swift |  | 07-02 Task 2 human-check deferred to end-of-phase UAT: C2 and counter part of C8 (paste over 10,000, counter, VoiceOver announcement once) | open |  | 2026-11-18T05:27:16.103Z |  |
 
 ````json
 [
@@ -519,6 +521,32 @@ last_updated: 2026-11-16T18:36:00.126Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-16T18:36:00.126Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 37,
+    "kind": "unrun-verify",
+    "phase": "07",
+    "file": "ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingMessageBubble.swift",
+    "line": null,
+    "description": "07-02 Task 1 human-check deferred to end-of-phase UAT: C1 second half and C8 on two iPhones (tap-to-retry delivers once, long-press Delete, VoiceOver actions)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-18T05:27:16.006Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 38,
+    "kind": "unrun-verify",
+    "phase": "07",
+    "file": "ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingInputBar.swift",
+    "line": null,
+    "description": "07-02 Task 2 human-check deferred to end-of-phase UAT: C2 and counter part of C8 (paste over 10,000, counter, VoiceOver announcement once)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-18T05:27:16.103Z",
     "resolved_at": null,
     "milestone": null
   }

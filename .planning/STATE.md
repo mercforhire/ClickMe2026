@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 07
 current_phase_name: Chat
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 07-01-PLAN.md
-last_updated: "2026-11-18T05:08:15.366Z"
+stopped_at: Completed 07-02-PLAN.md
+last_updated: "2026-11-18T05:28:08.585Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 07 execution started
-state_head: bde01177c67b4a54ea3e6150b649e36c1ecc3040
+state_head: 9bf42384a3f6acc9ec1d8dff8c9b4bd1d653c4bd
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 124
-  completed_plans: 116
+  completed_plans: 117
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 07 (Chat) — EXECUTING
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 9
 Status: Ready to execute
 Last activity: 2026-11-17 — Phase 07 execution started
@@ -176,6 +176,7 @@ Progress: [█████░░░░░] 50%
 | Phase 06 P16 | 15min | 2 tasks | 2 files |
 | Phase 06 P17 | 3 min | 3 tasks | 1 files |
 | Phase 07 P01 | 18 min | 3 tasks | 9 files |
+| Phase 07 P02 | 20 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -378,6 +379,8 @@ Recent decisions affecting current work:
 - [Phase 06]: 06-17: user chose skip (2026-11-17) for the optional backend null topic currency; backend untouched, no worktree or branch; the iOS fix in 06-11 closes G-06-1-currency either way, todo 2026-11-16-backend-null-topic-currency.md records the value change and the client tolerance gate to rerun first
 - [Phase 07]: 07-01: HTTP 4xx send failures are refusals (bubble removed, text restored); 5xx, transport, decode and invalid-response failures keep the bubble as Failed with no alert
 - [Phase 07]: 07-01: failed-bubble glyph is an overlay offset 28 pt left of the bubble, not an HStack sibling, so the 260 pt frame does not re-wrap text between Sending and Failed
+- [Phase 07]: 07-02: retry never starts while a bubble's send is in flight and always reuses its stored client_msg_id; refused-send restored text goes through the 10,000-unit composer cap
+- [Phase 07]: 07-02: Failed bubble is one Button group (tap retry, long-press Delete, VoiceOver actions); device checks H1 and H2 plus two observations deferred to end-of-phase UAT
 
 ### Pending Todos
 
@@ -479,6 +482,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-18T05:08:14.600Z
-Stopped at: Completed 07-01-PLAN.md
+Last session: 2026-11-18T05:28:07.806Z
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None

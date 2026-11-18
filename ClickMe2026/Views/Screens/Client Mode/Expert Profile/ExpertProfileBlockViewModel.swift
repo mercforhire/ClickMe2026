@@ -49,6 +49,17 @@ final class ExpertProfileBlockViewModel: ObservableObject {
         return trimmed.isEmpty ? "this user" : trimmed
     }
 
+    /// The alert text for a failed `initiateChat`. The backend answers 404 for a new thread with a
+    /// suspended or removed peer, so that status (or the `NOT_FOUND` code) reads as unavailable.
+    /// Branches on status and `ErrorCode`, never on message text.
+    private static func initiateErrorMessage(for error: Error) -> String {
+        if case NetworkError.httpError(let statusCode, _) = error, statusCode == 404 {
+            return unavailableMessage
+        }
+        if BookingErrorMapper.code(for: error) == .notFound { return unavailableMessage }
+        return ChatBlockState.actionErrorMessage(for: error)
+    }
+
     /// Test seam: waits for the running block, if any.
     func awaitBlock() async {
         await blockTask?.value
@@ -64,12 +75,19 @@ final class ExpertProfileBlockViewModel: ObservableObject {
         apiError = nil
         blockTask = Task { [weak self] in
             guard let self else { return }
+            let threadId: UUID
             do {
-                let response = try await api.initiateChat(peerId: peerId)
-                _ = try await api.chatAction(id: response.data.threadId, action: "block")
+                threadId = try await api.initiateChat(peerId: peerId).data.threadId
+            } catch {
+                apiError = Self.initiateErrorMessage(for: error)
+                isBlocking = false
+                return
+            }
+            do {
+                _ = try await api.chatAction(id: threadId, action: "block")
                 toasts.show("You blocked \(Self.displayName(peerName))", systemImage: "checkmark.circle.fill")
             } catch {
-                apiError = error.userMessage
+                apiError = ChatBlockState.actionErrorMessage(for: error)
             }
             isBlocking = false
         }

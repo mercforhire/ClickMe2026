@@ -247,6 +247,7 @@ struct ExpertProfileView: View {
                                 .font(.title3.weight(.regular))
                                 .foregroundColor(ExpertProfileBrand.onSurface)
                         }
+                        .disabled(blockAction.isBlocking)
                         .accessibilityLabel("More options")
                     }
                 }
@@ -289,6 +290,24 @@ struct ExpertProfileView: View {
             Button("OK", role: .cancel) {}
         } message: { message in
             Text(message)
+        }
+        // In-flight scrim while Block runs: absorbs taps, one VoiceOver element
+        // labelled "Blocking" with the modal trait (UI-SPEC section 6, Accessibility).
+        .overlay {
+            if blockAction.isBlocking {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+                        .contentShape(Rectangle())
+                        .onTapGesture {}
+                    ProgressView()
+                        .controlSize(.large)
+                        .tint(Brand.primary)
+                }
+                .accessibilityElement()
+                .accessibilityLabel("Blocking")
+                .accessibilityAddTraits(.isModal)
+            }
         }
         .onAppear { viewModel.glowPulse = true }
         .task { await viewModel.loadProfileDetails() }

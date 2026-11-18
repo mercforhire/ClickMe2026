@@ -191,6 +191,11 @@ enum ChatThreadReducer {
     ///
     /// Swift's `sorted` is not documented as stable, so the sort key is the
     /// time and then the original index: equal times keep their order.
+    ///
+    /// `.timestamp` separators have no server id, so they land after every server
+    /// row. Do not store separators in `items` for a live thread: compute them at
+    /// render time. (Their id, `"ts_\(label)"`, is also the same for two
+    /// separators with one label.)
     static func order(_ items: [ChatItem]) -> [ChatItem] {
         var server: [(index: Int, item: ChatItem)] = []
         var local: [ChatItem] = []

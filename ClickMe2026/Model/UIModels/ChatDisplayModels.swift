@@ -29,6 +29,9 @@ enum ChatSendState {
 /// separators, and system-injected booking lifecycle events.
 enum ChatItem: Identifiable {
     case message(ChatMessage)
+    /// Preview-only today. `ChatThreadReducer.order(_:)` puts rows without a server
+    /// id after the server rows, so live separators belong at render time, not in
+    /// the stored items.
     case timestamp(String)
     case systemEvent(BookingEvent)
 

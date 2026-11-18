@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 07
 current_phase_name: Chat
-current_plan: 3
+current_plan: 4
 status: executing
-stopped_at: Completed 07-02-PLAN.md
-last_updated: "2026-11-18T05:28:08.585Z"
+stopped_at: Completed 07-03-PLAN.md
+last_updated: "2026-11-18T05:43:09.608Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 07 execution started
-state_head: 9bf42384a3f6acc9ec1d8dff8c9b4bd1d653c4bd
+state_head: 85302ae8f3e319f155f82f943f4d3089252a399c
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 124
-  completed_plans: 117
+  completed_plans: 118
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 07 (Chat) — EXECUTING
-Current Plan: 3
+Current Plan: 4
 Total Plans in Phase: 9
 Status: Ready to execute
 Last activity: 2026-11-17 — Phase 07 execution started
@@ -177,6 +177,7 @@ Progress: [█████░░░░░] 50%
 | Phase 06 P17 | 3 min | 3 tasks | 1 files |
 | Phase 07 P01 | 18 min | 3 tasks | 9 files |
 | Phase 07 P02 | 20 min | 2 tasks | 7 files |
+| Phase 07 P03 | 13 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -381,6 +382,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-01: failed-bubble glyph is an overlay offset 28 pt left of the bubble, not an HStack sibling, so the 260 pt frame does not re-wrap text between Sending and Failed
 - [Phase 07]: 07-02: retry never starts while a bubble's send is in flight and always reuses its stored client_msg_id; refused-send restored text goes through the 10,000-unit composer cap
 - [Phase 07]: 07-02: Failed bubble is one Button group (tap retry, long-press Delete, VoiceOver actions); device checks H1 and H2 plus two observations deferred to end-of-phase UAT
+- [Phase 07]: 07-03: the GET /chats scan's partner.id replaces a message-derived peer id; a failed or empty scan leaves the first-sender rule in place
+- [Phase 07]: 07-03: message.read ids are recorded as sent only while the socket is connected and replayed from an onConnect subscription (socket.io drops emits made while disconnected)
 
 ### Pending Todos
 
@@ -482,6 +485,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-18T05:28:07.806Z
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-11-18T05:43:08.818Z
+Stopped at: Completed 07-03-PLAN.md
 Resume file: None

@@ -427,7 +427,7 @@ Plans:
   4. Reports from chat reach the backend as report-reason enum values, the same as profile reports.
   5. The "Read" label updates live while a chat is open, or CHAT-08 is closed as not reproducible after the device re-test.
 
-**Plans**: 2/9 plans executed in 9 waves (iOS only, no backend or Android change; plans run one at a time because they share one tree and simulator; the only user stop is the D-18 decision in the last plan)
+**Plans**: 3/9 plans executed in 9 waves (iOS only, no backend or Android change; plans run one at a time because they share one tree and simulator; the only user stop is the D-18 decision in the last plan)
 
 Plans:
 **Wave 1**
@@ -437,7 +437,7 @@ Plans:
 - [x] 07-02-PLAN.md — CHAT-01: tap to retry with the same client_msg_id, long-press Delete; composer capped at 10,000 with a counter from 9,000 (D-01, D-02, D-04)
 
 **Wave 3** *(after 07-02)*
-- [ ] 07-03-PLAN.md — CHAT-05/06/07: thread-open GET /chats scan seeds the peer id; loadEarlier de-duplicated; read receipts per page, held until the socket connects (D-10, D-11, D-16)
+- [x] 07-03-PLAN.md — CHAT-05/06/07: thread-open GET /chats scan seeds the peer id; loadEarlier de-duplicated; read receipts per page, held until the socket connects (D-10, D-11, D-16)
 
 **Wave 4** *(after 07-03)*
 - [ ] 07-04-PLAN.md — CHAT-03: ChatBlockState; banner replaces the composer; blocked/unavailable sends switch to it; banner Unblock for the blocker only; state-aware menu (D-03, D-07, D-08)
@@ -493,7 +493,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
-| 7. Chat | 2/9 | In Progress | - |
+| 7. Chat | 3/9 | In Progress | - |
 | 8. Release | 0/TBD | Not started | - |
 
 ---

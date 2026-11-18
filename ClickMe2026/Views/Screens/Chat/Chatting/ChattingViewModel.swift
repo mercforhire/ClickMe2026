@@ -36,8 +36,8 @@ final class ChattingViewModel: ObservableObject {
     @Published var showMenu: Bool
 
     @Published var loadState: LoadState = .idle
-    /// True while a POST to `/chats/:id/send` is in flight. Disables the
-    /// input and swaps the send button for a spinner.
+    /// No longer set: sends are optimistic (D-01) and the composer stays
+    /// usable. Plan 07-02 deletes this flag with the input bar's spinner.
     @Published var isSending: Bool = false
     /// Non-fatal error surfaced from the send-message call.
     @Published var sendError: String?
@@ -257,13 +257,16 @@ final class ChattingViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Send (wait-for-ack)
+    // MARK: - Send (optimistic, D-01)
 
-    /// POSTs the current `messageText` and, on success, appends the
-    /// server's returned message to `items` and clears the input.
+    /// Appends the current `messageText` as a pending bubble at once, clears the
+    /// composer and starts the POST. The bubble is added before the first
+    /// suspension point, so it is on screen before the request goes out. The
+    /// ack, a failure or a refusal later updates that same bubble through
+    /// `applySendOutcome`.
     func sendMessage() async {
         let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !isSending else { return }
+        guard !trimmed.isEmpty else { return }
 
         // Preview / design path — no threadId; just append locally.
         guard let threadId else {
@@ -279,53 +282,58 @@ final class ChattingViewModel: ObservableObject {
         }
 
         sendError = nil
-        isSending = true
-        defer { isSending = false }
-
         let clientMsgId = UUID().uuidString
-        do {
-            let ack = try await api.sendChatMessage(
-                id: threadId,
-                type: .text,
-                content: trimmed,
-                clientMsgId: clientMsgId
-            )
-            // Server acks with just id/status/timestamp — reconstruct the
-            // full ChatMessageItem locally from the ack + what we already
-            // know about the sender (ourselves).
-            let localItem = ChatMessageItem(
-                id: ack.data.messageId,
-                threadId: threadId,
-                senderId: myUserId,
-                sender: myUserId.map {
-                    ChatMessageItem.Sender(
-                        id: $0,
-                        name: myName,
-                        avatarUrl: myAvatarURL.isEmpty ? nil : myAvatarURL
-                    )
-                },
-                type: .text,
-                content: trimmed,
-                status: ack.data.status,
+        let bubble = ChatMessage(
+            serverId: nil, sender: .me, senderName: myName, body: trimmed,
+            avatarURL: myAvatarURL, timestamp: Date(), status: .sent,
+            clientMsgId: clientMsgId, sendState: .sending
+        )
+        withAnimation(.easeInOut(duration: 0.2)) {
+            items = ChatThreadReducer.appendLocal(items, bubble)
+        }
+        messageText = ""
+        scrollToBottomToken &+= 1
+        startSend(threadId: threadId, clientMsgId: clientMsgId, text: trimmed)
+    }
+
+    /// Hands one send to the coordinator. Plan 07-02's retry reuses it with the
+    /// bubble's existing `clientMsgId`.
+    private func startSend(threadId: UUID, clientMsgId: String, text: String) {
+        sendCoordinator.send(threadId: threadId, clientMsgId: clientMsgId, text: text) { [weak self] outcome in
+            await self?.applySendOutcome(outcome, clientMsgId: clientMsgId, text: text)
+        }
+    }
+
+    /// Applies how a POST ended to the bubble that sent it.
+    private func applySendOutcome(
+        _ outcome: ChatSendCoordinator.Outcome,
+        clientMsgId: String,
+        text: String
+    ) async {
+        switch outcome {
+        case let .acked(messageId, timestamp, status):
+            items = ChatThreadReducer.ack(
+                items,
                 clientMsgId: clientMsgId,
-                eventType: nil,
-                eventData: nil,
-                createdAt: ack.data.timestamp
+                serverId: messageId,
+                timestamp: timestamp,
+                status: status
             )
-            let item = mapToChatItem(localItem)
-            withAnimation(.easeInOut(duration: 0.2)) {
-                items.append(item)
-            }
-            messageText = ""
-            scrollToBottomToken &+= 1
             // Whatever debounced `typing.stop` we had queued becomes
             // redundant once the message lands — fire immediately so
-            // the peer's indicator drops the moment the bubble appears.
-            if let peerId = peerUserId {
+            // the peer's indicator drops the moment the bubble settles.
+            if let threadId, let peerId = peerUserId {
                 emitTypingStopIfNeeded(threadId: threadId, peerId: peerId)
             }
-        } catch {
-            sendError = error.userMessage
+        case .keptAsFailed:
+            items = ChatThreadReducer.fail(items, clientMsgId: clientMsgId)
+        case let .refused(_, message):
+            // D-03: the server will never accept this text. Take the bubble
+            // away and put the text back, ahead of anything typed since.
+            // Plan 07-04 splits this branch by error code.
+            items = ChatThreadReducer.remove(items, clientMsgId: clientMsgId)
+            messageText = ChatSendCoordinator.restoredText(refused: text, draft: messageText)
+            sendError = message
         }
     }
 

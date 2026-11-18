@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 07
 current_phase_name: Chat
-current_plan: 7
+current_plan: 8
 status: executing
-stopped_at: Completed 07-06-PLAN.md
-last_updated: "2026-11-18T06:35:10.878Z"
+stopped_at: Completed 07-07-PLAN.md
+last_updated: "2026-11-18T06:46:54.179Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 07 execution started
-state_head: 67fd0bad944db53497ec46ce3a5cff6bb102fdbc
+state_head: 7452bc078d214e1d10735984a7f5e329a679e4c3
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 124
-  completed_plans: 121
+  completed_plans: 122
   percent: 50
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 ## Current Position
 
 Phase: 07 (Chat) — EXECUTING
-Current Plan: 7
+Current Plan: 8
 Total Plans in Phase: 9
 Status: Ready to execute
 Last activity: 2026-11-17 — Phase 07 execution started
@@ -181,6 +181,7 @@ Progress: [█████░░░░░] 50%
 | Phase 07 P04 | 22 min | 3 tasks | 8 files |
 | Phase 07 P05 | 14 min | 2 tasks | 8 files |
 | Phase 07 P06 | 13 min | 3 tasks | 6 files |
+| Phase 07 P07 | 17 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -391,6 +392,7 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-05: Block & Report keeps no unblock latch; NOT_BLOCKER moves to blocked-by-peer, which hides Unblock. A stale GET /chats lookup is ignored once a block or unblock applied (stateRevision).
 - [Phase 07]: 07-06: Profile Block 404 maps to 'This user is unavailable.' only on the initiate step; other failures reuse ChatBlockState.actionErrorMessage
 - [Phase 07]: 07-06: ChatThreadItem.blockedByMe is non-optional and decodes false when missing or null (D-08); ChatThreadItemDecodingTests is @MainActor
+- [Phase 07]: 07-07: local +1 on unread only for peer messages on a thread that is not on screen; GET /chats stays authoritative; ChatPresence is @Observable and drives markOpened and quiet reload for every route (CHAT-07, D-12, D-13)
 
 ### Pending Todos
 
@@ -492,6 +494,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-18T06:35:10.078Z
-Stopped at: Completed 07-06-PLAN.md
+Last session: 2026-11-18T06:46:53.374Z
+Stopped at: Completed 07-07-PLAN.md
 Resume file: None

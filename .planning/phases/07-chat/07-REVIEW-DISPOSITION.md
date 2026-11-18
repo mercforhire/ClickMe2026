@@ -5,11 +5,11 @@ titles: json
 findings:
   - id: WR-05
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "A late `GET /chats` still replaces the live row's preview, time and order, and a `markOpened` on a row that is not listed yet is lost (incomplete fix of WR-04, part 1)"
   - id: WR-06
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "A new conversation's first message is dropped if it arrives while a load is in flight (regression from the WR-04 part 2 fix)"
   - id: IN-01
     severity: info
@@ -55,17 +55,17 @@ findings:
     severity: warning
     disposition: fixed
     title: "Chats list reloads can overwrite local unread changes and double-fetch during the first load"
-open: 2
+open: 0
 total: 13
-recorded: 2026-11-18T16:36:06.501Z
+recorded: 2026-11-18T16:36:20.062Z
 ---
 
 # Phase 07: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-05 | warning | open | - |
-| WR-06 | warning | open | - |
+| WR-05 | warning | fixed | 07-REVIEW-FIX.md |
+| WR-06 | warning | fixed | 07-REVIEW-FIX.md |
 | IN-01 | info | fixed | 07-REVIEW-FIX.md |
 | IN-02 | info | fixed | 07-REVIEW-FIX.md |
 | IN-03 | info | fixed | 07-REVIEW-FIX.md |

@@ -170,7 +170,10 @@ final class ChattingViewModel: ObservableObject {
         await forceLoad()
     }
 
+    /// Pull to refresh. Also lifts the "unavailable" banner, so a person who was
+    /// reinstated can be messaged again without leaving the chat.
     func reload() async {
+        blockSession.clearRecipientUnavailable()
         oldestLoadedPage = 0
         hasMoreEarlier = true
         await forceLoad()

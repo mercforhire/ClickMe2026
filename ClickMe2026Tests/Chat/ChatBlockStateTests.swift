@@ -190,6 +190,21 @@ struct ChatBlockStateTests {
         #expect(session.composerMode == .unavailable)
     }
 
+    @Test("clearing the unavailable flag brings the composer back, and a block still wins")
+    func sessionClearRecipientUnavailable() {
+        var session = State.Session()
+        _ = session.applySendRefusal(.recipientUnavailable)
+        #expect(session.composerMode == .unavailable)
+
+        session.clearRecipientUnavailable()
+
+        #expect(session.composerMode == .normal)
+
+        _ = session.applySendRefusal(.threadBlocked)
+        session.clearRecipientUnavailable()
+        #expect(session.composerMode == .blockedByPeer)
+    }
+
     @Test("another code or none changes nothing and is not handled")
     func sessionOtherRefusal() {
         var session = State.Session()

@@ -201,6 +201,14 @@ struct ChatBlockState: Equatable {
             return true
         }
 
+        /// Forgets a `RECIPIENT_UNAVAILABLE` refusal so the composer is offered again.
+        /// `GET /chats` does not say whether the person is available, so the only way
+        /// to learn is to let the user try again; a still-unavailable person is simply
+        /// refused once more (the server checks on every send).
+        mutating func clearRecipientUnavailable() {
+            recipientUnavailable = false
+        }
+
         /// Takes the outcome of the Block & Report screen without a reload.
         mutating func adopt(_ state: ChatBlockState) {
             block = state

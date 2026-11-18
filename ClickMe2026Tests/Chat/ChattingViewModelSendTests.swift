@@ -282,6 +282,25 @@ struct ChattingViewModelSendTests {
         #expect(viewModel.composerMode == .unavailable)
     }
 
+    @Test("pull to refresh lifts the unavailable banner so the composer is offered again")
+    func reloadClearsTheUnavailableBanner() async throws {
+        let viewModel = makeViewModel(
+            onSend: Self.errorResponder(status: 403, code: "RECIPIENT_UNAVAILABLE", message: "Gone"),
+            onMessages: { request in
+                Fixtures.response(for: request, body: ChatFixtures.messagesPage([]))
+            },
+            onChats: Self.threadScan(isBlocked: false, blockedByMe: false)
+        )
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+        await viewModel.awaitInFlightSends()
+        #expect(viewModel.composerMode == .unavailable)
+
+        await viewModel.reload()
+
+        #expect(viewModel.composerMode == .normal)
+    }
+
     @Test("a blocked state wins over unavailable when the rescan says the thread is blocked by me")
     func blockedWinsOverUnavailable() async throws {
         let viewModel = makeViewModel(

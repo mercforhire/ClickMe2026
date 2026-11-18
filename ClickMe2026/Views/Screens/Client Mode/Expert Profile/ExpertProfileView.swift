@@ -69,18 +69,13 @@ struct ExpertProfileView: View {
     /// `docs/ios/USER-REPORTING.md` §1 and `ReportUserSheet`.
     @State private var showReportSheet: Bool = false
 
-    /// Thread id for the Block flow. Populated after `/chats/initiate`
-    /// returns, which gives us the thread-scoped id required by the
-    /// existing `chat_action = "block"` endpoint. Block has to stay
-    /// thread-based because that's what the current block API wants —
-    /// only Report has a dedicated user-scoped endpoint today.
-    @State private var blockThreadId: ReportThreadIdentifier?
+    /// Runs Block {name}: thread bootstrap, block action, toast and error text
+    /// (CHAT-04, D-06). Report errors stay inside `ReportUserSheet`.
+    @StateObject private var blockAction = ExpertProfileBlockViewModel()
 
-    /// Non-nil when a transient error from the block flow (initiate-chat
-    /// failure, suspended target, etc.) needs surfacing. Report errors
-    /// stay inside `ReportUserSheet` so they're seen next to the submit
-    /// button.
-    @State private var blockErrorMessage: String?
+    /// True while the `Block {name}?` confirmation alert is up. Nothing is sent
+    /// until the alert's Block button is tapped.
+    @State private var showBlockConfirm: Bool = false
 
     /// Shared nav path from the home shell (Explore / Search / Favorites
     /// all push this screen onto it). Used to push the booking flow on
@@ -224,9 +219,9 @@ struct ExpertProfileView: View {
                 // Overflow menu — App Review 1.2 requires an in-surface
                 // path to report / block UGC. Report hits the dedicated
                 // `/users/:id/report` endpoint (no chat required); Block
-                // still goes through the existing thread-scoped
-                // `chat_action` endpoint, so we bootstrap a thread
-                // via `/chats/initiate` on demand.
+                // asks first, then goes through the thread-scoped
+                // `chat_action` endpoint, bootstrapping a thread via
+                // `/chats/initiate` on demand (`ExpertProfileBlockViewModel`).
                 //
                 // Also gate on `!isSameAsCurrentUser` so the signed-in
                 // user never sees Report / Block pointed at themselves,
@@ -243,7 +238,7 @@ struct ExpertProfileView: View {
                                 Label("Report This Profile", systemImage: "exclamationmark.bubble")
                             }
                             Button(role: .destructive) {
-                                handleOpenBlockFlow()
+                                showBlockConfirm = true
                             } label: {
                                 Label("Block \(expert.name)", systemImage: "hand.raised")
                             }
@@ -267,31 +262,29 @@ struct ExpertProfileView: View {
                 )
             }
         }
-        .sheet(item: $blockThreadId) { identifier in
-            NavigationStack {
-                ReportChatView(
-                    threadId: identifier.id,
-                    userName: expert.name,
-                    onBlock: { _ in blockThreadId = nil },
-                    onReport: { _, _ in blockThreadId = nil },
-                    onUnblock: { _ in blockThreadId = nil },
-                    onDismiss: { blockThreadId = nil }
-                )
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Close") { blockThreadId = nil }
-                    }
-                }
+        // A centred alert, not a confirmation dialog: a Menu source would anchor a
+        // dialog as an iPad popover (UI-SPEC section 6).
+        .alert(
+            "Block \(ExpertProfileBlockViewModel.displayName(expert.name))?",
+            isPresented: $showBlockConfirm
+        ) {
+            Button("Block", role: .destructive) {
+                guard let expertId = expert.expertId,
+                      !isSameAsCurrentUser  // belt-and-suspenders: menu is already gated
+                else { return }
+                blockAction.block(peerId: expertId, peerName: expert.name)
             }
-            .presentationDetents([.large])
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("They won't be able to message you.")
         }
         .alert(
-            "Couldn't open block flow",
+            "Couldn't block user",
             isPresented: Binding(
-                get: { blockErrorMessage != nil },
-                set: { if !$0 { blockErrorMessage = nil } }
+                get: { blockAction.apiError != nil },
+                set: { if !$0 { blockAction.apiError = nil } }
             ),
-            presenting: blockErrorMessage
+            presenting: blockAction.apiError
         ) { _ in
             Button("OK", role: .cancel) {}
         } message: { message in
@@ -417,29 +410,6 @@ struct ExpertProfileView: View {
         }
     }
 
-    /// Opens the Block flow by bootstrapping a chat thread first
-    /// (`/chats/initiate` is idempotent — returns existing or creates
-    /// new). The existing `ReportChatView` is thread-scoped and handles
-    /// the block action; we only need the threadId. Report has its own
-    /// endpoint and does NOT go through this path.
-    private func handleOpenBlockFlow() {
-        guard let expertId = expert.expertId,
-              !isSameAsCurrentUser  // belt-and-suspenders: menu is already gated
-        else { return }
-        Task {
-            do {
-                let response = try await ClickMeAPI.shared.initiateChat(peerId: expertId)
-                await MainActor.run {
-                    blockThreadId = ReportThreadIdentifier(id: response.data.threadId)
-                }
-            } catch {
-                await MainActor.run {
-                    blockErrorMessage = error.userMessage
-                }
-            }
-        }
-    }
-
     /// Message tap handler. Fires `onMessage` (caller escape hatch),
     /// then calls `POST /chats/initiate` to get or create a thread with
     /// this expert and asks the shell to open the Chats tab + push the
@@ -468,15 +438,6 @@ struct ExpertProfileView: View {
             }
         }
     }
-}
-
-// MARK: - Block-sheet identifier
-
-/// Wraps the chat thread id so SwiftUI's `.sheet(item:)` can key on it
-/// for the Block flow. Report has its own `isPresented` binding and
-/// doesn't need this type.
-private struct ReportThreadIdentifier: Identifiable {
-    let id: UUID
 }
 
 // MARK: - Placeholder

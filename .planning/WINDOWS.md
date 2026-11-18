@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 32
+open_count: 33
 waived_count: 0
 fixed_count: 7
-total_count: 39
-last_updated: 2026-11-18T05:42:11.755Z
+total_count: 40
+last_updated: 2026-11-18T06:03:49.550Z
 ---
 
 # Broken Windows Ledger
@@ -54,6 +54,7 @@ last_updated: 2026-11-18T05:42:11.755Z
 | 37 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingMessageBubble.swift |  | 07-02 Task 1 human-check deferred to end-of-phase UAT: C1 second half and C8 on two iPhones (tap-to-retry delivers once, long-press Delete, VoiceOver actions) | open |  | 2026-11-18T05:27:16.006Z |  |
 | 38 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingInputBar.swift |  | 07-02 Task 2 human-check deferred to end-of-phase UAT: C2 and counter part of C8 (paste over 10,000, counter, VoiceOver announcement once) | open |  | 2026-11-18T05:27:16.103Z |  |
 | 39 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/ChattingViewModel.swift |  | 07-03 Task 2 device check C6 (open-clears, two accounts, cold-launch push open, Load earlier twice) deferred to end-of-phase UAT | open |  | 2026-11-18T05:42:11.755Z |  |
+| 40 | 07 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingBlockedBanner.swift |  | 07-04 Task 3 device checks C4, C5, C9 (banner) and C8 (banner): two accounts, block/unblock, B sends while blocked, largest text size and VoiceOver; deferred to end-of-phase UAT | open |  | 2026-11-18T06:03:49.550Z |  |
 
 ````json
 [
@@ -561,6 +562,19 @@ last_updated: 2026-11-18T05:42:11.755Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-18T05:42:11.755Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 40,
+    "kind": "unrun-verify",
+    "phase": "07",
+    "file": "ClickMe2026/Views/Screens/Chat/Chatting/Subviews/ChattingBlockedBanner.swift",
+    "line": null,
+    "description": "07-04 Task 3 device checks C4, C5, C9 (banner) and C8 (banner): two accounts, block/unblock, B sends while blocked, largest text size and VoiceOver; deferred to end-of-phase UAT",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-18T06:03:49.550Z",
     "resolved_at": null,
     "milestone": null
   }

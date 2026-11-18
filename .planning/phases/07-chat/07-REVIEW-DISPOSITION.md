@@ -3,6 +3,42 @@ phase: 07
 review: 07-REVIEW.md
 titles: json
 findings:
+  - id: WR-05
+    severity: warning
+    disposition: open
+    title: "A late `GET /chats` still replaces the live row's preview, time and order, and a `markOpened` on a row that is not listed yet is lost (incomplete fix of WR-04, part 1)"
+  - id: WR-06
+    severity: warning
+    disposition: open
+    title: "A new conversation's first message is dropped if it arrives while a load is in flight (regression from the WR-04 part 2 fix)"
+  - id: IN-01
+    severity: info
+    disposition: fixed
+    title: "`sendFailure` treats every 4xx as a permanent refusal, including 401, 408 and 429"
+  - id: IN-02
+    severity: info
+    disposition: fixed
+    title: "`.timestamp` rows would be moved to the end by `ChatThreadReducer.order`"
+  - id: IN-03
+    severity: info
+    disposition: fixed
+    title: "`Int(d)` in `extractInt` can trap on an out-of-range double"
+  - id: IN-04
+    severity: info
+    disposition: fixed
+    title: "Empty accessibility label on non-pending bubble containers"
+  - id: IN-05
+    severity: info
+    disposition: fixed
+    title: "Test timing helpers hide failures and one negative check is a fixed sleep"
+  - id: IN-06
+    severity: info
+    disposition: skipped
+    title: "The \"unavailable\" banner does not tell the user that pull-to-refresh retries"
+  - id: IN-07
+    severity: info
+    disposition: fixed
+    title: "Two copies of the test `Gate` helper that behave differently"
   - id: WR-01
     severity: warning
     disposition: fixed
@@ -19,44 +55,28 @@ findings:
     severity: warning
     disposition: fixed
     title: "Chats list reloads can overwrite local unread changes and double-fetch during the first load"
-  - id: IN-01
-    severity: info
-    disposition: open
-    title: "`sendFailure` treats every 4xx as a permanent refusal, including 401, 408 and 429"
-  - id: IN-02
-    severity: info
-    disposition: open
-    title: "`.timestamp` rows would be moved to the end by `ChatThreadReducer.order`"
-  - id: IN-03
-    severity: info
-    disposition: open
-    title: "`Int(d)` in `extractInt` can trap on an out-of-range double"
-  - id: IN-04
-    severity: info
-    disposition: open
-    title: "Empty accessibility label on non-pending bubble containers"
-  - id: IN-05
-    severity: info
-    disposition: open
-    title: "Test timing helpers hide failures and one negative check is a fixed sleep"
-open: 5
-total: 9
-recorded: 2026-11-18T16:03:41.148Z
+open: 2
+total: 13
+recorded: 2026-11-18T16:36:06.501Z
 ---
 
 # Phase 07: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | fixed | 07-REVIEW-FIX.md |
-| WR-02 | warning | fixed | 07-REVIEW-FIX.md |
-| WR-03 | warning | fixed | 07-REVIEW-FIX.md |
-| WR-04 | warning | fixed | 07-REVIEW-FIX.md |
-| IN-01 | info | open | - |
-| IN-02 | info | open | - |
-| IN-03 | info | open | - |
-| IN-04 | info | open | - |
-| IN-05 | info | open | - |
+| WR-05 | warning | open | - |
+| WR-06 | warning | open | - |
+| IN-01 | info | fixed | 07-REVIEW-FIX.md |
+| IN-02 | info | fixed | 07-REVIEW-FIX.md |
+| IN-03 | info | fixed | 07-REVIEW-FIX.md |
+| IN-04 | info | fixed | 07-REVIEW-FIX.md |
+| IN-05 | info | fixed | 07-REVIEW-FIX.md |
+| IN-06 | info | skipped | 07-REVIEW-FIX.md |
+| IN-07 | info | fixed | 07-REVIEW-FIX.md |
+| WR-01 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
+| WR-02 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
+| WR-03 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
+| WR-04 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.

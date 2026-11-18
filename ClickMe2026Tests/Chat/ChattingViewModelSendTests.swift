@@ -7,6 +7,8 @@
 //  leaves a Failed bubble, and a refused send returns its text to the composer.
 //  Reloads and live events merge through ChatThreadReducer, so they never drop
 //  a pending or failed bubble and never add a message twice.
+//  CHAT-03 (D-03): a send refused as blocked or unavailable switches the thread to
+//  the banner, returns the text and shows no alert.
 //
 
 import Foundation
@@ -62,13 +64,19 @@ struct ChattingViewModelSendTests {
         request.httpMethod == "GET" && request.url?.path.hasSuffix("/messages") == true
     }
 
+    nonisolated private static func isChatsList(_ request: URLRequest) -> Bool {
+        request.httpMethod == "GET" && request.url?.path.hasSuffix("/chats") == true
+    }
+
     private static func makeAPI(
         onSend: @escaping Responder,
-        onMessages: Responder? = nil
+        onMessages: Responder? = nil,
+        onChats: Responder? = nil
     ) -> ClickMeAPI {
         APITestFactory.make { request in
             if isSend(request) { return try onSend(request) }
             if isMessagesGet(request), let onMessages { return try onMessages(request) }
+            if isChatsList(request), let onChats { return try onChats(request) }
             return Fixtures.response(
                 for: request,
                 status: 404,
@@ -78,12 +86,16 @@ struct ChattingViewModelSendTests {
     }
 
     /// A view model with a non-empty identity, so no `/me` or `/user/profile` request is made.
-    private func makeViewModel(onSend: @escaping Responder, onMessages: Responder? = nil) -> ChattingViewModel {
+    private func makeViewModel(
+        onSend: @escaping Responder,
+        onMessages: Responder? = nil,
+        onChats: Responder? = nil
+    ) -> ChattingViewModel {
         ChattingViewModel(
             threadId: Self.threadId,
             peerName: "Peer",
             peerAvatarURL: "",
-            api: Self.makeAPI(onSend: onSend, onMessages: onMessages),
+            api: Self.makeAPI(onSend: onSend, onMessages: onMessages, onChats: onChats),
             myUserId: Self.myId,
             myName: "Me",
             myAvatarURL: "https://example.invalid/me.png"
@@ -216,10 +228,28 @@ struct ChattingViewModelSendTests {
         #expect(viewModel.messageText == "first\ndraft")
     }
 
-    @Test("a 403 THREAD_BLOCKED takes the refused path until plan 07-04")
-    func blockedThreadIsRefusedForNow() async throws {
+    // MARK: Blocked and unavailable refusals (CHAT-03, D-03)
+
+    /// Answers `GET /chats` with the test thread, as the rescan after a refusal reads it.
+    nonisolated private static func threadScan(isBlocked: Bool, blockedByMe: Bool) -> Responder {
+        { request in
+            let row = ChatFixtures.thread(
+                id: threadId, partnerId: peerId, isBlocked: isBlocked, blockedByMe: blockedByMe
+            )
+            return Fixtures.response(for: request, body: ChatFixtures.threadsPage([row]))
+        }
+    }
+
+    nonisolated private static func recordedIndex(where match: (URLRequest) -> Bool, last: Bool = false) -> Int? {
+        let all = MockURLProtocol.recordedRequests
+        return last ? all.lastIndex(where: match) : all.firstIndex(where: match)
+    }
+
+    @Test("a 403 THREAD_BLOCKED removes the bubble, returns the text, shows the banner and rescans, with no alert")
+    func threadBlockedSwitchesToTheBanner() async throws {
         let viewModel = makeViewModel(
-            onSend: Self.errorResponder(status: 403, code: "THREAD_BLOCKED", message: "You can't message this person")
+            onSend: Self.errorResponder(status: 403, code: "THREAD_BLOCKED", message: "You can't message this person"),
+            onChats: Self.threadScan(isBlocked: true, blockedByMe: false)
         )
         viewModel.messageText = "hello"
         await viewModel.sendMessage()
@@ -228,7 +258,88 @@ struct ChattingViewModelSendTests {
 
         #expect(messages(viewModel).isEmpty)
         #expect(viewModel.messageText == "hello")
-        #expect(viewModel.sendError != nil)
+        #expect(viewModel.sendError == nil)
+        #expect(viewModel.composerMode == .blockedByPeer)
+        let post = try #require(Self.recordedIndex(where: Self.isSend))
+        let scan = try #require(Self.recordedIndex(where: Self.isChatsList, last: true))
+        #expect(scan > post)
+    }
+
+    @Test("a 403 RECIPIENT_UNAVAILABLE shows the unavailable banner, returns the text and shows no alert")
+    func recipientUnavailableSwitchesToTheBanner() async throws {
+        let viewModel = makeViewModel(
+            onSend: Self.errorResponder(status: 403, code: "RECIPIENT_UNAVAILABLE", message: "Gone"),
+            onChats: Self.threadScan(isBlocked: false, blockedByMe: false)
+        )
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+
+        await viewModel.awaitInFlightSends()
+
+        #expect(messages(viewModel).isEmpty)
+        #expect(viewModel.messageText == "hello")
+        #expect(viewModel.sendError == nil)
+        #expect(viewModel.composerMode == .unavailable)
+    }
+
+    @Test("a blocked state wins over unavailable when the rescan says the thread is blocked by me")
+    func blockedWinsOverUnavailable() async throws {
+        let viewModel = makeViewModel(
+            onSend: Self.errorResponder(status: 403, code: "RECIPIENT_UNAVAILABLE", message: "Gone"),
+            onChats: Self.threadScan(isBlocked: true, blockedByMe: true)
+        )
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+
+        await viewModel.awaitInFlightSends()
+
+        #expect(viewModel.composerMode == .blockedByMe)
+    }
+
+    @Test("retrying a Failed bubble does nothing once the composer is replaced by a banner")
+    func retryIsIgnoredBehindTheBanner() async throws {
+        let mode = Box()
+        mode.value = "fail"
+        let viewModel = makeViewModel(
+            onSend: { request in
+                if mode.value == "blocked" {
+                    return try Self.errorResponder(
+                        status: 403, code: "THREAD_BLOCKED", message: "Blocked"
+                    )(request)
+                }
+                return try Self.errorResponder(status: 500, code: "INTERNAL_ERROR", message: "Boom")(request)
+            },
+            onChats: Self.threadScan(isBlocked: true, blockedByMe: false)
+        )
+        let failed = try await sendAndFail(viewModel, text: "a")
+        mode.value = "blocked"
+        viewModel.messageText = "b"
+        await viewModel.sendMessage()
+        await viewModel.awaitInFlightSends()
+        #expect(viewModel.composerMode == .blockedByPeer)
+        let postsBefore = Self.sendPosts().count
+
+        viewModel.retrySend(clientMsgId: try #require(failed.clientMsgId))
+        await viewModel.awaitInFlightSends()
+
+        #expect(Self.sendPosts().count == postsBefore)
+        #expect(messages(viewModel).first { $0.id == failed.id }?.sendState == .failed)
+    }
+
+    @Test("a 422 keeps the alert and leaves the composer mode alone")
+    func validationRefusalKeepsTheNormalComposer() async throws {
+        let viewModel = makeViewModel(
+            onSend: Self.errorResponder(status: 422, code: "VALIDATION_ERROR", message: "Bad text"),
+            onChats: Self.threadScan(isBlocked: true, blockedByMe: true)
+        )
+        viewModel.messageText = "hello"
+        await viewModel.sendMessage()
+
+        await viewModel.awaitInFlightSends()
+
+        #expect(viewModel.sendError == "Bad text")
+        #expect(viewModel.composerMode == .normal)
+        #expect(Self.recordedIndex(where: Self.isChatsList) == nil)
     }
 
     // MARK: Empty input

@@ -40,8 +40,31 @@ struct ChatThreadItem: Decodable {
     /// Caller-relative blocker flag. Only `true` when `isBlocked` is also
     /// `true` AND the caller is the recorded blocker. Legacy blocks pre
     /// 2026-10-17 don't have a recorded blocker, so both sides see
-    /// `false` (handled per `docs/ios/CHAT-UNBLOCK.md` §7). Optional so
-    /// pre-rollout cached responses still decode; coalesce to `false`
-    /// at the call site.
-    let blockedByMe: Bool?
+    /// `false` (`docs/ios/CHAT-UNBLOCK.md` §7). A payload from before the
+    /// key existed, or a `null`, decodes as `false` too (§9, D-08), so a
+    /// legacy block reads as blocked by the peer with no Unblock for either side.
+    let blockedByMe: Bool
+}
+
+extension ChatThreadItem {
+
+    /// The eight camelCase keys of a `GET /chats` thread; the network decoder's
+    /// `convertFromSnakeCase` maps them from the snake_case wire names.
+    private enum CodingKeys: String, CodingKey {
+        case threadId, partner, lastMessage, lastMsgAt, unreadCount, isOnline, isBlocked, blockedByMe
+    }
+
+    /// Declared in an extension so the memberwise initializer stays available.
+    /// `blocked_by_me` defaults to `false` when missing or null (D-08).
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        threadId = try container.decode(UUID.self, forKey: .threadId)
+        partner = try container.decode(Partner.self, forKey: .partner)
+        lastMessage = try container.decodeIfPresent(String.self, forKey: .lastMessage)
+        lastMsgAt = try container.decodeIfPresent(Date.self, forKey: .lastMsgAt)
+        unreadCount = try container.decode(Int.self, forKey: .unreadCount)
+        isOnline = try container.decode(Bool.self, forKey: .isOnline)
+        isBlocked = try container.decode(Bool.self, forKey: .isBlocked)
+        blockedByMe = try container.decodeIfPresent(Bool.self, forKey: .blockedByMe) ?? false
+    }
 }

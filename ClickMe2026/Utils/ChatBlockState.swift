@@ -37,9 +37,9 @@ struct ChatBlockState: Equatable {
             self.blockedByMe = blockedByMe
         }
 
-        /// A missing `blocked_by_me` key reads as false (CHAT-UNBLOCK §7).
+        /// `ChatThreadItem` already decodes a missing `blocked_by_me` as false (D-08).
         init(thread: ChatThreadItem) {
-            self.init(isBlocked: thread.isBlocked, blockedByMe: thread.blockedByMe ?? false)
+            self.init(isBlocked: thread.isBlocked, blockedByMe: thread.blockedByMe)
         }
     }
 

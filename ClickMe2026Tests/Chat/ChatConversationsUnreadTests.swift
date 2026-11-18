@@ -61,6 +61,16 @@ struct ChatConversationsUnreadTests {
         }
     }
 
+    /// A flag a test flips while a stubbed handler reads it on another thread.
+    private final class FailureSwitch: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = false
+        var isOn: Bool {
+            get { lock.withLock { value } }
+            set { lock.withLock { value = newValue } }
+        }
+    }
+
     nonisolated private static func page(aUnread: Int = 0, bUnread: Int = 2) -> Data {
         ChatFixtures.threadsPage([
             ChatFixtures.thread(id: threadA, partnerId: peerA, partnerName: "Alice", unreadCount: aUnread),
@@ -365,7 +375,100 @@ struct ChatConversationsUnreadTests {
         #expect(count(viewModel, Self.threadA) == 4)
     }
 
-    @Test("a live message for an unknown thread before the first load finished starts no request")
+    // MARK: Unknown thread while a load is in flight (WR-06)
+
+    @Test("an unknown thread's message during the first load triggers one follow-up fetch that lists it")
+    func unknownThreadDuringFirstLoadRefetches() async {
+        let server = ChatsServer(Self.page())
+        let gate = Gate()
+        let viewModel = Self.makeViewModel(server: server, gate: gate)
+
+        gate.arm()
+        let load = Task { await viewModel.load() }
+        await waitUntil { Self.chatsGets().count >= 1 }
+        // The held response was taken before the message; the next one lists the thread.
+        server.body = ChatFixtures.threadsPage([
+            ChatFixtures.thread(id: Self.threadC, partnerId: UUID(), partnerName: "Cara", unreadCount: 1),
+            ChatFixtures.thread(id: Self.threadA, partnerId: Self.peerA, partnerName: "Alice", unreadCount: 0)
+        ])
+        viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
+        gate.open()
+        await load.value
+        await waitUntil { viewModel.chats.first?.threadId == Self.threadC }
+
+        #expect(Self.chatsGets().count == 2)
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
+        #expect(viewModel.loadState == .loaded)
+    }
+
+    @Test("an unknown thread's message during a pull-to-refresh triggers one follow-up fetch")
+    func unknownThreadDuringPullToRefreshRefetches() async {
+        let server = ChatsServer(Self.page())
+        let gate = Gate()
+        let viewModel = Self.makeViewModel(server: server, gate: gate)
+        await viewModel.load()
+
+        gate.arm()
+        let refresh = Task { await viewModel.reload() }
+        await waitUntil { Self.chatsGets().count >= 2 }
+        server.body = ChatFixtures.threadsPage([
+            ChatFixtures.thread(id: Self.threadC, partnerId: UUID(), partnerName: "Cara", unreadCount: 1),
+            ChatFixtures.thread(id: Self.threadA, partnerId: Self.peerA, partnerName: "Alice", unreadCount: 0)
+        ])
+        viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
+        gate.open()
+        await refresh.value
+        await waitUntil { viewModel.chats.first?.threadId == Self.threadC }
+
+        #expect(Self.chatsGets().count == 3)
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
+    }
+
+    @Test("a load with no unknown-thread message makes no follow-up fetch")
+    func plainLoadMakesNoFollowUp() async {
+        let server = ChatsServer(Self.page())
+        let viewModel = Self.makeViewModel(server: server)
+
+        await viewModel.load()
+        await viewModel.reload()
+
+        #expect(Self.chatsGets().count == 2)
+    }
+
+    @Test("a load that fails drops the pending follow-up")
+    func failedLoadDropsFollowUp() async {
+        let server = ChatsServer(Self.page())
+        let gate = Gate()
+        let failing = FailureSwitch()
+        let api = APITestFactory.make { request in
+            gate.waitIfArmed()
+            if failing.isOn {
+                return ClientBookingFixtures.response(
+                    for: request,
+                    status: 500,
+                    body: ClientBookingFixtures.errorBody(code: "INTERNAL_ERROR", message: "Boom")
+                )
+            }
+            return ClientBookingFixtures.response(for: request, body: server.body)
+        }
+        let viewModel = ChatConversationsViewModel(api: api, currentUserId: { Self.myId }, visibleThreadId: { nil })
+
+        failing.isOn = true
+        gate.arm()
+        let load = Task { await viewModel.load() }
+        await waitUntil { Self.chatsGets().count >= 1 }
+        viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
+        gate.open()
+        await load.value
+
+        failing.isOn = false
+        await viewModel.load()
+
+        #expect(Self.chatsGets().count == 2)
+        #expect(viewModel.loadState == .loaded)
+    }
+
+    @Test("a live message for an unknown thread before the first load started starts no request")
     func unknownThreadBeforeFirstLoadIsIgnored() async {
         let server = ChatsServer(Self.page())
         let viewModel = Self.makeViewModel(server: server)

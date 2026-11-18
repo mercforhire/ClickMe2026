@@ -55,6 +55,10 @@ final class ChatConversationsViewModel: ObservableObject {
     /// first. A response puts them back at the top in this order.
     private var movedToTopDuringReload: [UUID] = []
 
+    /// An unknown thread's message arrived while a load was running. That load's
+    /// response may predate the message, so one more fetch runs when it ends.
+    private var needsReloadAfterLoad = false
+
     // MARK: Realtime
 
     /// Held for the VM's lifetime; auto-cancel on deallocation.
@@ -152,7 +156,13 @@ final class ChatConversationsViewModel: ObservableObject {
             chats = try await fetchChats()
             loadState = .loaded
         } catch {
+            needsReloadAfterLoad = false
             loadState = .failed(error.userMessage)
+            return
+        }
+        if needsReloadAfterLoad {
+            needsReloadAfterLoad = false
+            await silentReload()
         }
     }
 
@@ -226,10 +236,15 @@ final class ChatConversationsViewModel: ObservableObject {
         guard let idx = chats.firstIndex(where: { $0.threadId == event.threadId }) else {
             // Unknown thread — probably a first-message-from-new-peer
             // scenario. Trigger a full silent refresh to pick up the
-            // brand-new row without flashing a spinner. Before the first load
-            // has finished there is nothing to patch, and that load already
-            // returns the message, so a second request would only repeat it.
-            guard case .loaded = loadState else { return }
+            // brand-new row without flashing a spinner. While a load is
+            // running (first load or pull-to-refresh) its response may predate
+            // the message, so remember it and fetch once more when the load
+            // ends. With no load running (idle, failed) the next load fetches
+            // the message anyway.
+            guard case .loaded = loadState else {
+                if case .loading = loadState { needsReloadAfterLoad = true }
+                return
+            }
             Task { await silentReload() }
             return
         }

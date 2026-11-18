@@ -27,6 +27,10 @@ struct ChatView: View {
     /// remain non-tappable rather than doing nothing.
     @Environment(\.homeNavigationPath) private var homeNavigationPath
 
+    /// False in the expert shell, whose booking rows open the expert Booking
+    /// Summary instead of the client screens (D-18, `ChatBookingRowRoute`).
+    @Environment(\.hostsClientBookingFlows) private var hostsClientBookingFlows
+
     // MARK: Init
 
     /// Runtime init — pushed from `ChatConversationsView` with the tapped
@@ -378,13 +382,6 @@ struct ChatView: View {
         }
     }
 
-    /// Routes a tap on a system-event row to the appropriate detail
-    /// screen. Terminal states (declined / cancelled / completed /
-    /// expired) go to the read-only `BookingSummaryView`; active states
-    /// (request / confirmed / rescheduled) go to `UpcomingBookingView`
-    /// where the user can still manage the booking. No-op when the
-    /// event carries no booking id (legacy rows) or when there's no
-    /// shell nav path to push onto (previews).
     /// Push the peer's profile onto the ambient shell nav path. Silently
     /// no-ops when we don't yet know the peer id (empty thread, no
     /// messages loaded) or when we're rendered outside a shell (previews).
@@ -398,14 +395,21 @@ struct ChatView: View {
         ))
     }
 
+    /// Routes a tap on a system-event row to its booking detail screen. The
+    /// expert shell opens the expert Booking Summary; the client shell opens the
+    /// read-only `BookingSummaryView` for finished bookings (declined /
+    /// cancelled / completed / expired) and `UpcomingBookingView` for active
+    /// ones (request / confirmed / rescheduled). See `ChatBookingRowRoute`.
+    /// No-op when the event carries no booking id (legacy rows) or when
+    /// there's no shell nav path to push onto (previews).
     private func openBookingDetail(for event: BookingEvent) {
         guard let bookingId = event.bookingId,
               let navPath = homeNavigationPath else { return }
-        if event.isTerminal {
-            navPath.push(HomeRoute.bookingSummary(bookingId: bookingId))
-        } else {
-            navPath.push(HomeRoute.upcomingBooking(bookingId: bookingId))
-        }
+        navPath.push(ChatBookingRowRoute.route(
+            isTerminal: event.isTerminal,
+            bookingId: bookingId,
+            hostsClientBookingFlows: hostsClientBookingFlows
+        ))
     }
 }
 

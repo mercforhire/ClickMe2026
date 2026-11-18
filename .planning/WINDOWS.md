@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 36
+open_count: 37
 waived_count: 0
 fixed_count: 7
-total_count: 43
-last_updated: 2026-11-18T06:46:05.128Z
+total_count: 44
+last_updated: 2026-11-18T15:34:23.215Z
 ---
 
 # Broken Windows Ledger
@@ -58,6 +58,7 @@ last_updated: 2026-11-18T06:46:05.128Z
 | 41 | 7 | unrun-verify | ClickMe2026/Views/Screens/Chat/Report and Block/ReportChatView.swift |  | 07-05 Task 2 human-check deferred to end-of-phase UAT: Block & Report card rows, reason picker order, 1000/1000 counter and a live report on two accounts (device checks C3, C4 card part, report part) | open |  | 2026-11-18T06:19:17.017Z |  |
 | 42 | 7 | unrun-verify | ClickMe2026/Views/Screens/Client Mode/Expert Profile/ExpertProfileView.swift |  | 07-06 Task 2 human-check deferred to end-of-phase UAT: profile Block alert, Blocking scrim with VoiceOver, You blocked {name} toast placement and a live block on two accounts (device checks C3 profile part, C7) | open |  | 2026-11-18T06:34:16.857Z |  |
 | 43 | 7 | unrun-verify | ClickMe2026/Views/Screens/Chat/Conversations/Subviews/ChatConversationRow.swift |  | 07-07 Task 2 human-check deferred to end-of-phase UAT: unread pill 1, 4, 99+, bold brighter preview, name bold in both states (A9), clears on open by row, push and profile, no Chats tab badge, VoiceOver one element with unread clause (device checks C6 badge part, C8 row) | open |  | 2026-11-18T06:46:05.128Z |  |
+| 44 | 7 | unrun-verify | ClickMe2026/Views/Screens/Chat/Chatting/ChattingView.swift |  | 07-09 Task 2 device check deferred to end-of-phase UAT: as the test expert on a real iPhone (build at or after 491b600), tapping a chat booking row opens the expert Booking Summary with no load error, for active and finished bookings; as the test client the same row still opens the client's booking screens (device check C10 after-step, item 14) | open |  | 2026-11-18T15:34:23.215Z |  |
 
 ````json
 [
@@ -617,6 +618,19 @@ last_updated: 2026-11-18T06:46:05.128Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-11-18T06:46:05.128Z",
+    "resolved_at": null,
+    "milestone": null
+  },
+  {
+    "id": 44,
+    "kind": "unrun-verify",
+    "phase": "7",
+    "file": "ClickMe2026/Views/Screens/Chat/Chatting/ChattingView.swift",
+    "line": null,
+    "description": "07-09 Task 2 device check deferred to end-of-phase UAT: as the test expert on a real iPhone (build at or after 491b600), tapping a chat booking row opens the expert Booking Summary with no load error, for active and finished bookings; as the test client the same row still opens the client's booking screens (device check C10 after-step, item 14)",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-11-18T15:34:23.215Z",
     "resolved_at": null,
     "milestone": null
   }

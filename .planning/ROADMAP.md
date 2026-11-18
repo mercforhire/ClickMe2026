@@ -427,7 +427,7 @@ Plans:
   4. Reports from chat reach the backend as report-reason enum values, the same as profile reports.
   5. The "Read" label updates live while a chat is open, or CHAT-08 is closed as not reproducible after the device re-test.
 
-**Plans**: 8/9 plans executed in 9 waves (iOS only, no backend or Android change; plans run one at a time because they share one tree and simulator; the only user stop is the D-18 decision in the last plan)
+**Plans**: 9/9 plans executed in 9 waves (iOS only, no backend or Android change; plans run one at a time because they share one tree and simulator; the only user stop is the D-18 decision in the last plan)
 
 Plans:
 **Wave 1**
@@ -455,7 +455,7 @@ Plans:
 - [x] 07-08-PLAN.md — Phase gate: full suite, grep gates, device UAT checklist (C1 to C10), CHAT-08 closed as not reproducible (D-17), validation sign-off
 
 **Wave 9** *(after 07-08)*
-- [ ] 07-09-PLAN.md — D-18 folded todo: decision checkpoint, then expert chat booking rows open the expert Booking Summary; todo closed; dual-role follow-up logged
+- [x] 07-09-PLAN.md — D-18 folded todo: decision checkpoint, then expert chat booking rows open the expert Booking Summary; todo closed; dual-role follow-up logged
 
 **UI hint**: yes
 **Notes**:
@@ -493,7 +493,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
-| 7. Chat | 8/9 | In Progress | - |
+| 7. Chat | 9/9 | In Progress | - |
 | 8. Release | 0/TBD | Not started | - |
 
 ---

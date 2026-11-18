@@ -3,17 +3,17 @@ gsd_state_version: "1.0"
 current_phase: 07
 current_phase_name: Chat
 current_plan: 9
-status: executing
-stopped_at: Completed 07-08-PLAN.md
-last_updated: "2026-11-18T06:54:12.677Z"
+status: verifying
+stopped_at: Completed 07-09-PLAN.md
+last_updated: "2026-11-18T15:35:21.875Z"
 last_activity: 2026-11-17
 last_activity_desc: Phase 07 execution started
-state_head: 6774e7f8e2f67d855a1d2628adb883b094a70a6b
+state_head: 472cb2a95b966419cbf43d835a141ecba240e8e8
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 124
-  completed_plans: 123
+  completed_plans: 124
   percent: 50
 ---
 
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-11-15)
 Phase: 07 (Chat) — EXECUTING
 Current Plan: 9
 Total Plans in Phase: 9
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-11-17 — Phase 07 execution started
 
 Progress: [█████░░░░░] 50%
@@ -183,6 +183,7 @@ Progress: [█████░░░░░] 50%
 | Phase 07 P06 | 13 min | 3 tasks | 6 files |
 | Phase 07 P07 | 17 min | 2 tasks | 7 files |
 | Phase 07 P08 | 10 min | 2 tasks | 4 files |
+| Phase 07 P09 | 15 min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -396,6 +397,7 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-07: local +1 on unread only for peer messages on a thread that is not on screen; GET /chats stays authoritative; ChatPresence is @Observable and drives markOpened and quiet reload for every route (CHAT-07, D-12, D-13)
 - [Phase 07]: 07-08: CHAT-08 recorded as closed as not reproducible in REQUIREMENTS.md only after the D-17 guard passed (handleMessageRead byte-identical to 16fe88e); box left unticked for verify-work
 - [Phase 07]: 07-08: 07-VALIDATION signed off (nyquist_compliant, wave_0_complete true, status draft); D-18 row stays pending for plan 07-09
+- [Phase 07]: 07-09 D-18: user reported the expert chat booking row failure reproduced on a device; expert shell chat booking rows now open ExpertBookingSummaryView via ChatBookingRowRoute. Shell decides the route; dual-role users logged as a pending todo, not built.
 
 ### Pending Todos
 
@@ -497,6 +499,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-18T06:54:11.870Z
-Stopped at: Completed 07-08-PLAN.md
+Last session: 2026-11-18T15:35:21.061Z
+Stopped at: Completed 07-09-PLAN.md
 Resume file: None

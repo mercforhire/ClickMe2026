@@ -47,6 +47,7 @@ Android: Android Phase 12 already implements most of this behaviour, and iOS is 
 - **D-12:** **Set the row's count to 0 locally when its thread opens.** The next quiet reload of `GET /chats` re-syncs.
 - **D-13:** **Add 1 locally** to a row's count on a `message.new` for a thread that isn't open, for peer messages only, never own echoes, along with the existing move-to-top. `GET /chats` corrects any drift.
 - **D-14:** **Badge style:** a brand-coloured count pill on the right of the row, "99+" above 99, hidden at 0. The row's name and preview are bold while unread.
+  - **Note 2026-11-17 (confirmed):** A9 confirmed by user — name stays bold in both states. The user confirmed UI-SPEC assumption A9 at plan-check on 2026-11-17: the conversation name stays `.callout` Bold whether the row is read or unread, and unread is signalled by the count pill plus the Bold, brighter preview. This is no longer an open assumption.
 - **D-15:** **No Chats tab icon badge** (Android 12 D-16 parity).
 - **D-16:** **Send `message.read` for unread peer messages on every page loaded**, including `loadEarlier`, not only page 1. No backend change. Accepted gap: in a thread with more than 30 unread messages where the user never scrolls up, the server count stays above 0 and the badge comes back after a reload (backend 01-14 marks nothing read on open).
 

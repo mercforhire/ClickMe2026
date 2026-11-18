@@ -1,8 +1,9 @@
 # Phase 7: Chat - Pattern Map
 
 **Mapped:** 2026-11-17
-**Files analyzed:** 21 (9 new, 12 modified)
-**Analogs found:** 21 / 21 (4 are cross-repo Android ports)
+**Files analyzed:** 25 (13 new, 12 modified)
+**Analogs found:** 25 / 25 (4 are cross-repo Android ports)
+**Revised:** 2026-11-17 at plan-check iteration 2: rows added for `ChatSendCoordinator`, `ChatItemMapper`, `ChatThreadLookup` and `ExpertProfileBlockViewModel`; the `handleMessageRead` mapping removed (D-17); the view-model size rule given a ceiling.
 
 All iOS analog paths are under `/Users/LeonChen/Documents/ClickMe2026/` and git-tracked. Android analogs are under `/Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/chat/` (abbreviated `$A`) and are tracked source in that repo.
 
@@ -15,6 +16,10 @@ All iOS analog paths are under `/Users/LeonChen/Documents/ClickMe2026/` and git-
 | `ClickMe2026/Utils/ChatComposerRules.swift` (new) | utility (pure) | transform | `ExpertBookingNoteViewModel.swift:85-105` | exact |
 | `ClickMe2026/Utils/ChatUnreadRules.swift` (new) | utility (pure) | transform | `Utils/BookingErrorMapper.swift` (caseless enum of static funcs) | role-match |
 | `ClickMe2026/Utils/ChatBookingRowRoute.swift` (new) | utility (pure) | request-response | `Utils/BookingErrorMapper.swift` + `HomeNavigationPath.swift:85,117` | role-match |
+| `Views/Screens/Chat/Chatting/ChatSendCoordinator.swift` (new) | sibling type of the view model | request-response | `Client Mode/Booking Summary/RescheduleResponder.swift` (logic lifted out of a VM) + `$A/chatting/ChatThreadViewModel.kt` `deliver` (L226-299) | role-match |
+| `ClickMe2026/Utils/ChatItemMapper.swift` (new) | utility (pure) | transform | `ChattingViewModel.swift` L475-620 (moved, not rewritten) | self (moved) |
+| `ClickMe2026/Utils/ChatThreadLookup.swift` (new) | utility (read helper) | request-response | `Report and Block/ReportChatViewModel.swift` `loadBlockState()` L94-105 (the one-page `GET /chats` scan) + `$A/ChatsRepository.kt` `SCAN_LIMIT = 100` | role-match |
+| `Client Mode/Expert Profile/ExpertProfileBlockViewModel.swift` (new) | view model | request-response | `Expert Mode/Booking Note/ExpertBookingNoteViewModel.swift` (injected `api`, `apiError`) + `RescheduleResponder.swift` L76-85 (`toasts: ToastCenter = .shared`) | role-match |
 | `Model/UIModels/ChatDisplayModels.swift` (mod) | model | transform | itself (lines 35-57) | self |
 | `Model/Responses/Children/ChatThreadItem.swift` (mod) | model | request-response | same file, CHAT-UNBLOCK §9 decode default | self |
 | `Managers/ChatPresence.swift` (mod) | manager | event-driven | `Managers/ToastCenter.swift` (`@Observable`) | role-match |
@@ -45,12 +50,12 @@ Rules to copy, by function:
 - `fail`/`retry` = `updateLocal(from:to:)` restricted to own, `serverId == nil`, state == `from`.
 - `remove` never deletes a row with a `serverId`.
 - `onIncoming`: ignore if `senderId == myId` or the server id already exists.
-- `markRead(ids)`: own messages with `serverId` in ids become `.read`.
+- `markRead(ids)`: not ported. D-17 closed CHAT-08 as not reproducible with no code change, so the shipped `ChattingViewModel.handleMessageRead(_:)` keeps that job and is left byte-for-byte as it is (it already updates own bubbles in place, which keeps their `id` under the new model).
 - `unreadPeerIds(alreadyEmitted)`: peer, has `serverId`, not `.read`, not already emitted.
 - `order`: server-backed rows stable-sorted by `createdAt`, then local unsent rows in current order.
 - Compare ids case-insensitively. In Swift `UUID` equality already is, but `clientMsgId` is a `String`, so use `caseInsensitiveCompare`.
 
-Android's `ThreadItem` has `Message` only for these paths. iOS `ChatItem` also has `.timestamp` and `.systemEvent`. Only `.message` cases are matched/replaced. Day separators and system events must pass through `order` unchanged. The planner must decide how `.timestamp` rows are produced; check how `ChattingViewModel` inserts them before wiring (see the mapping code from `ChattingViewModel.swift:475`).
+Android's `ThreadItem` has `Message` only for these paths. iOS `ChatItem` also has `.timestamp` and `.systemEvent`. Only `.message` cases are matched/replaced. Day separators and system events must pass through `order` unchanged. The planner must decide how `.timestamp` rows are produced; check how `ChattingViewModel` inserts them before wiring (see the mapping code from `ChattingViewModel.swift:475`, which plan 07-01 moves to `ChatItemMapper`).
 
 **Model dependency (RESEARCH Pattern 1).** `ChatDisplayModels.swift:35-57` has `let id = UUID()` (not in memberwise init) and `let timestamp: Date`. Required change:
 
@@ -89,6 +94,8 @@ block.isBlocked -> block.ownComposerMode ; recipientUnavailable -> Unavailable ;
 ```
 
 **Deliberate divergence:** drop Android's `unblockDenied` latch (RESEARCH Pattern 2). After `NOT_BLOCKER` the state is `blockedByMe = false`, so `showsUnblock = isBlocked && blockedByMe` already hides Unblock. Delete `unblockDenied` from `ReportChatViewModel` and `ReportChatBlockCard` too.
+
+**iOS addition (size rule):** a nested `ChatBlockState.Session` value holds what the thread view model would otherwise track by hand: the current `block`, `recipientUnavailable`, `sessionBlockedByMe`, `composerMode`, and the mutating `applyScan(found:)`, `applySendRefusal(_:) -> Bool`, `adopt(_:)`, `applyUnblockSucceeded()`, `applyUnblockFailure(_:) -> String`. The VM stores one `Session` and calls it.
 
 ---
 
@@ -159,7 +166,7 @@ No test constructs this type through its memberwise init, so the change is local
 
 **Analog:** itself. Current spots to change:
 
-- `sendMessage()` lines 254-320. Wait-for-ack with `isSending` gate and `sendError`. `clientMsgId = UUID().uuidString` at line 275 is the seed. Replace with: append pending (`appendLocal`), clear composer, `scrollToBottomToken &+= 1`, then `Task` POST using the same `api.sendChatMessage(id:type:content:clientMsgId:)` (`Network/ClickMeAPI+Chats.swift:46`). Outcome switch (RESEARCH "Code Examples"):
+- `sendMessage()` lines 254-320. Wait-for-ack with `isSending` gate and `sendError`. `clientMsgId = UUID().uuidString` at line 275 is the seed. Replace with: append pending (`appendLocal`), clear composer, `scrollToBottomToken &+= 1`, then hand the POST to `ChatSendCoordinator` (see its section below), which calls the same `api.sendChatMessage(id:type:content:clientMsgId:)` (`Network/ClickMeAPI+Chats.swift:46`) and reports an `Outcome` back to the view model. The outcome switch the coordinator's classification encodes (RESEARCH "Code Examples"):
 
 ```swift
 switch BookingErrorMapper.code(for: error) {
@@ -173,9 +180,10 @@ default:
 - `forceLoad()` line 179 `items = response.data.messages.map(mapToChatItem(_:))` becomes `ChatThreadReducer.mergePage`. Also add the `GET /chats` scan (`api.getChats(page:limit: 100)`, bounded to 3 pages) for peer id and block state.
 - `hydratePeerUserIdIfNeeded` (216-226): keep as fallback; seed first from scan `partner.id` (D-10).
 - `loadEarlier` 242-243 `items.insert(contentsOf: older, at: 0)` becomes `mergePage`; then emit reads (D-16).
-- `handleMessageNew` 350-381 and `handleMessageRead` 386-398 become `onIncoming` and `markRead`. Keep the `event.threadId == threadId` and `senderId == myUserId` guards and the `peerUserId == nil` latch (line 373).
+- `handleMessageNew` 350-381 becomes `onIncoming`. Keep the `event.threadId == threadId` and `senderId == myUserId` guards and the `peerUserId == nil` latch (line 373).
+- `handleMessageRead` 386-398 is unchanged (D-17: CHAT-08 closed as not reproducible, no code change). Do not route it through the reducer, rename it or change its access level; plans 07-01 and 07-08 guard that it stays byte-identical to the phase base 16fe88e.
 - `emitReadForVisiblePeerMessages` 462-473 becomes `unreadPeerIds(alreadyEmitted:)` plus an `emittedReadIds` set; also call after each page and after `message.new`. Optional connected-flag replay (RESEARCH Open Q1; planner decision).
-- `mapToChatItem` (line 477+): map `item.clientMsgId` through (already decoded on `ChatMessageItem.clientMsgId`).
+- `mapToChatItem` (line 477+) and the whole `// MARK: - Mapping` section move to `ChatItemMapper` (see its section); the mapper maps `item.clientMsgId` through (already decoded on `ChatMessageItem.clientMsgId`) and gives event rows their server id and created time. The view model keeps a one-line `mapToChatItem` forwarder.
 
 **Error branching** (copy, `Utils/BookingErrorMapper.swift:30-35`):
 
@@ -189,7 +197,23 @@ static func code(for error: Error) -> ErrorCode? {
 ```
 `ErrorCode` already has `.threadBlocked`, `.notBlocker`, `.recipientUnavailable`, `.tooManyRequests` (`Model/Enums/ErrorCode.swift:83,87,179,185`).
 
-Size rule: the VM is 624 lines. Put all list logic in the reducer and rules types; the VM only wires.
+Size rule (07-CONTEXT code_context; CLAUDE.md Function Design): the VM is 624 lines at the phase base and must not grow past that; plans 07-01 to 07-04 and the 07-08 gate check `wc -l` at or under 624. List logic goes in `ChatThreadReducer`, sends in flight in `ChatSendCoordinator`, row mapping in `ChatItemMapper`, the thread scan in `ChatThreadLookup`, block bookkeeping in `ChatBlockState.Session`; the VM only wires.
+
+---
+
+### `Chatting/ChatSendCoordinator.swift` (sibling type, request-response)
+
+**Analog:** `Client Mode/Booking Summary/RescheduleResponder.swift` (a `@MainActor final class` lifted out of a view model so the money path lives once; header docs explain why it is separate). Android: `$A/chatting/ChatThreadViewModel.kt` `deliver` / `handleSendFailure` (L226-299).
+
+Plain `final class` at the module default isolation (no view state, so not observable). Owns `inFlight: [String: Task<Void, Never>]` keyed by `client_msg_id`, the POST, and the classification through `ChatThreadReducer.sendFailure(for:)` into `Outcome { acked, keptAsFailed, refused(code:message:) }`. `send(...)` ignores an id already in flight. The VM passes an `onOutcome` closure that holds it weakly and applies the reducer. `nonisolated static func restoredText(refused:draft:)` is the Android `restoreToComposer` join; plan 07-02 passes it through `ChatComposerRules.cap`. No logging, no persistence, no `try?`.
+
+### `Utils/ChatItemMapper.swift` (utility, transform)
+
+**Analog:** itself: `ChattingViewModel.swift` L475-620 moved as is (event builder, `isTerminal`, `extract*` helpers, the two existing ISO 8601 formatters; no new formatter). The VM's identity fields arrive as an `Identity` value. New in the move: `clientMsgId` on messages, `serverId` / `createdAt` on booking events (so `mergePage` can dedupe them).
+
+### `Utils/ChatThreadLookup.swift` (read helper, request-response)
+
+**Analog:** `Report and Block/ReportChatViewModel.swift` `loadBlockState()` L94-105 (one page of `getChats(page: 1, limit: 50)`, coalesced flag). Generalise to `find(threadId:api:maxPages:)` over `limit: 100` (backend `Math.min(100, …)`; Android `$A/ChatsRepository.kt` `SCAN_LIMIT = 100`), stopping on an empty page, missing pagination, the last page or 3 pages; errors propagate so callers can tell "not listed" from "failed" (CHAT-UNBLOCK §6).
 
 ---
 
@@ -281,14 +305,18 @@ if case let NetworkError.httpError(status, data) = error, status == 403,
 
 ### `ExpertProfileView.swift` (view, request-response)
 
-**Analog:** itself, `handleOpenBlockFlow` lines ~420-441 (shown above). Replace the `blockThreadId` sheet route with a centred `.alert` and in-flight scrim; sequence `initiateChat(peerId:)` then `chatAction(id:action:"block")` in a testable helper (`@MainActor`, e.g. `ProfileBlockViewModel`, injectable `ClickMeAPI` as in `ExpertBookingNoteViewModel(bookingId:api:)`). Map `initiateChat` 404 to "This user is unavailable.". Success: `ToastCenter.shared.show("You blocked \(name)", systemImage: "checkmark.circle.fill")` (`ToastCenter.swift:63`; both shells host `ToastHost`). Remove `ReportThreadIdentifier` sheet and the `Couldn't open block flow` title. Keep `isSameAsCurrentUser` guard (lines ~115-125).
+**Analog:** itself, `handleOpenBlockFlow` lines ~420-441 (shown above). Replace the `blockThreadId` sheet route with a centred `.alert` and in-flight scrim; sequence `initiateChat(peerId:)` then `chatAction(id:action:"block")` in a testable helper (`ExpertProfileBlockViewModel`, see below).
+
+### `Client Mode/Expert Profile/ExpertProfileBlockViewModel.swift` (view model, request-response, new)
+
+**Analog:** `Expert Mode/Booking Note/ExpertBookingNoteViewModel.swift` (`@MainActor` view model, `init(bookingId:api:)` with `api: ClickMeAPI = .shared`, published `apiError`, `do`/`catch` writes) and `Client Mode/Booking Summary/RescheduleResponder.swift` L76-85 (`toasts: ToastCenter = .shared` injected so tests read `current`). One in-flight guard as the first statement, a stored `Task` with an `awaitBlock()` test seam, error copy by step (`initiateChat` 404 gives "This user is unavailable."). Map `initiateChat` 404 to "This user is unavailable.". Success: `ToastCenter.shared.show("You blocked \(name)", systemImage: "checkmark.circle.fill")` (`ToastCenter.swift:63`; both shells host `ToastHost`). Remove `ReportThreadIdentifier` sheet and the `Couldn't open block flow` title. Keep `isSameAsCurrentUser` guard (lines ~115-125).
 
 ---
 
 ### Tests: `ClickMe2026Tests/Chat/` (new)
 
 **Analogs:**
-- Pure-type tests: `ClickMe2026Tests/Utils/BookingErrorMapperTests.swift` (header, `@testable import ClickMe2026`, `@Suite`, `@Test("...")`, `#expect`, `httpError(status:code:message:)` helper lines 18-22). Port Android `ThreadReducerTest.kt` and `BlockStateTest.kt` (both exist under `app/src/test/.../screens/chat/`) case-for-case into `ChatThreadReducerTests` and `ChatBlockStateTests`; add "id unchanged across append, ack, markRead".
+- Pure-type tests: `ClickMe2026Tests/Utils/BookingErrorMapperTests.swift` (header, `@testable import ClickMe2026`, `@Suite`, `@Test("...")`, `#expect`, `httpError(status:code:message:)` helper lines 18-22). Port Android `ThreadReducerTest.kt` and `BlockStateTest.kt` (both exist under `app/src/test/.../screens/chat/`) case-for-case into `ChatThreadReducerTests` and `ChatBlockStateTests` (skip the `markRead` cases: D-17 keeps the shipped Read handler); add "id unchanged across append, ack, fail, retry and mergePage".
 - Stubbed VM tests: `ClickMe2026Tests/ExpertMode/ExpertBookingNoteViewModelTests.swift:14-70`:
 ```swift
 @Suite("...", .serialized) @MainActor struct ...Tests {

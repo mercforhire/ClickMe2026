@@ -204,7 +204,7 @@ final class ChattingViewModel: ObservableObject {
             loadState = .loaded
             scrollToBottomToken &+= 1
             attachRealtime()
-            emitReadForVisiblePeerMessages()
+            emitPendingReads()
         } catch {
             loadState = .failed(error.userMessage)
             return
@@ -265,9 +265,12 @@ final class ChattingViewModel: ObservableObject {
             let totalPages = response.data.pagination?.totalPages ?? nextPage
             hasMoreEarlier = nextPage < totalPages
 
+            // Merge, don't prepend: a row already shown is never added twice and
+            // older rows land above newer ones in server-time order (D-11).
             let older = response.data.messages.map(mapToChatItem(_:))
-            items.insert(contentsOf: older, at: 0)
+            items = ChatThreadReducer.mergePage(items, page: older)
             hydratePeerUserIdIfNeeded(from: response.data.messages)
+            emitPendingReads()
         } catch {
             // Silent — leave hasMoreEarlier alone so user can retry.
         }
@@ -294,9 +297,6 @@ final class ChattingViewModel: ObservableObject {
         guard case .loaded = loadState else { return }
         Task { await refreshThreadInfo() }
     }
-
-    /// The socket connected or reconnected. Compile stub until the receipts are held.
-    func realtimeDidConnect() {}
 
     // MARK: - Send (optimistic, D-01)
 
@@ -439,6 +439,9 @@ final class ChattingViewModel: ObservableObject {
             },
             RealtimeService.shared.onTypingStop { [weak self] event in
                 Task { @MainActor in self?.handleTypingStop(event) }
+            },
+            RealtimeService.shared.onConnect { [weak self] in
+                Task { @MainActor in self?.realtimeDidConnect() }
             }
         ]
     }
@@ -472,10 +475,7 @@ final class ChattingViewModel: ObservableObject {
         scrollToBottomToken &+= 1
 
         // The user is looking at this bubble right now — mark it read.
-        RealtimeService.shared.emitMessageRead(
-            threadId: event.threadId,
-            messageIds: [event.messageId]
-        )
+        emitPendingReads()
     }
 
     /// Receipt: the peer just read some of my sent messages. Flip
@@ -554,20 +554,24 @@ final class ChattingViewModel: ObservableObject {
         mySelfStopTask = nil
     }
 
-    /// Emits `message.read` for every peer bubble currently in `items`
-    /// that hasn't already been marked `.read`. Called on initial load
-    /// so opening a thread with a badge zeroes it out on the server.
-    private func emitReadForVisiblePeerMessages() {
-        guard let threadId else { return }
-        let unread: [UUID] = items.compactMap {
-            guard case let .message(m) = $0,
-                  m.sender == .them,
-                  m.status != .read,
-                  let sid = m.serverId else { return nil }
-            return sid
-        }
-        guard !unread.isEmpty else { return }
-        RealtimeService.shared.emitMessageRead(threadId: threadId, messageIds: unread)
+    /// Emits `message.read` for the loaded peer messages that are unread and not
+    /// sent yet (D-16): every page loaded and every live peer message. Only loaded
+    /// rows are ever listed, never a whole-thread mark (CHAT-07). An id is
+    /// recorded as sent only when the socket is connected, because the socket
+    /// library drops an emit made while it is not; the rest go out from
+    /// `realtimeDidConnect()`.
+    private func emitPendingReads() {
+        guard let threadId, isRealtimeConnected() else { return }
+        let ids = ChatThreadReducer.unreadPeerIds(items, alreadyEmitted: emittedReadIds)
+        guard !ids.isEmpty else { return }
+        emitMessageRead(threadId, ids)
+        emittedReadIds.formUnion(ids)
+    }
+
+    /// The socket connected or reconnected: send the receipts held back while it
+    /// was not (Pitfall 4). Internal so tests can drive it.
+    func realtimeDidConnect() {
+        emitPendingReads()
     }
 
     // MARK: - Mapping

@@ -52,6 +52,7 @@ final class RealtimeService {
     private var typingStopHandlers: [UUID: @Sendable (RealtimeTypingEvent) -> Void] = [:]
     private var bookingUpdateHandlers: [UUID: @Sendable (RealtimeBookingUpdateEvent) -> Void] = [:]
     private var callEndedHandlers: [UUID: @Sendable (RealtimeCallEndedEvent) -> Void] = [:]
+    private var connectHandlers: [UUID: @Sendable () -> Void] = [:]
 
     // MARK: Decoder
 
@@ -185,6 +186,16 @@ final class RealtimeService {
         }
     }
 
+    /// Fires on the first connect and on every reconnect. A caller that holds an
+    /// emit until the socket is up (see `isConnected`) sends it from here.
+    func onConnect(_ handler: @escaping @Sendable () -> Void) -> RealtimeSubscription {
+        let id = UUID()
+        connectHandlers[id] = handler
+        return RealtimeSubscription {
+            Task { @MainActor in RealtimeService.shared.connectHandlers.removeValue(forKey: id) }
+        }
+    }
+
     // MARK: - Emit
 
     /// Emit `message.read` — the caller has seen the listed peer
@@ -223,8 +234,11 @@ final class RealtimeService {
     /// event and fans out to registered subscribers.
     private func bind(socket: SocketIOClient) {
         socket.on(clientEvent: .connect) { _, _ in
-            // Nothing to do — the server auto-joins the user room on
-            // handshake. Kept for future observability hooks.
+            // The server auto-joins the user room on handshake. Subscribers
+            // use this to send what the library dropped while disconnected.
+            Task { @MainActor in
+                for handler in RealtimeService.shared.connectHandlers.values { handler() }
+            }
         }
 
         socket.on("message.new") { data, _ in

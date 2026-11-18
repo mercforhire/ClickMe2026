@@ -32,6 +32,17 @@ final class ChatConversationsViewModel: ObservableObject {
     /// open thread never counts as unread (CHAT-07, D-13).
     private let visibleThreadId: () -> UUID?
 
+    // MARK: Reload bookkeeping
+
+    /// `GET /chats` requests in flight. A response can predate local changes made
+    /// while it travelled, so those changes are remembered until the last one ends.
+    private var reloadsInFlight = 0
+
+    /// Unread counts set locally (`markOpened`, a live peer message) while a reload
+    /// was in flight. A response applies them over the server's count for those
+    /// rows, so a late page never brings back a pill the user just cleared.
+    private var unreadSetDuringReload: [UUID: Int] = [:]
+
     // MARK: Realtime
 
     /// Held for the VM's lifetime; auto-cancel on deallocation.
@@ -118,20 +129,43 @@ final class ChatConversationsViewModel: ObservableObject {
             await forceLoad()
             return
         }
-        if let response = try? await api.getChats(page: 1, limit: 50) {
-            chats = response.data.threads.map(Self.mapThread(from:))
+        if let rows = try? await fetchChats() {
+            chats = rows
         }
     }
 
     private func forceLoad() async {
         loadState = .loading
         do {
-            let response = try await api.getChats(page: 1, limit: 50)
-            chats = response.data.threads.map(Self.mapThread(from:))
+            chats = try await fetchChats()
             loadState = .loaded
         } catch {
             loadState = .failed(error.userMessage)
         }
+    }
+
+    /// One `GET /chats` page mapped to rows. Rows whose unread count changed
+    /// locally while the request ran keep that local count (see `unreadSetDuringReload`).
+    private func fetchChats() async throws -> [ChatPreview] {
+        reloadsInFlight += 1
+        defer {
+            reloadsInFlight -= 1
+            if reloadsInFlight == 0 { unreadSetDuringReload.removeAll() }
+        }
+        let response = try await api.getChats(page: 1, limit: 50)
+        var rows = response.data.threads.map(Self.mapThread(from:))
+        for index in rows.indices {
+            if let local = unreadSetDuringReload[rows[index].threadId] {
+                rows[index].unreadCount = local
+            }
+        }
+        return rows
+    }
+
+    /// Remembers a local unread count when a reload is in flight.
+    private func noteLocalUnread(_ count: Int, threadId: UUID) {
+        guard reloadsInFlight > 0 else { return }
+        unreadSetDuringReload[threadId] = count
     }
 
     // MARK: - Realtime
@@ -149,7 +183,10 @@ final class ChatConversationsViewModel: ObservableObject {
         guard let idx = chats.firstIndex(where: { $0.threadId == event.threadId }) else {
             // Unknown thread — probably a first-message-from-new-peer
             // scenario. Trigger a full silent refresh to pick up the
-            // brand-new row without flashing a spinner.
+            // brand-new row without flashing a spinner. Before the first load
+            // has finished there is nothing to patch, and that load already
+            // returns the message, so a second request would only repeat it.
+            guard case .loaded = loadState else { return }
             Task { await silentReload() }
             return
         }
@@ -170,6 +207,7 @@ final class ChatConversationsViewModel: ObservableObject {
         )
         chats.remove(at: idx)
         chats.insert(updated, at: 0)
+        noteLocalUnread(updated.unreadCount, threadId: updated.threadId)
     }
 
     /// The thread for `threadId` just became the visible thread, from any
@@ -178,6 +216,7 @@ final class ChatConversationsViewModel: ObservableObject {
     func markOpened(threadId: UUID) {
         guard let idx = chats.firstIndex(where: { $0.threadId == threadId }) else { return }
         chats[idx].unreadCount = ChatUnreadRules.afterOpen
+        noteLocalUnread(ChatUnreadRules.afterOpen, threadId: threadId)
     }
 
     /// A conversation partner's presence changed. Flip the matching row's

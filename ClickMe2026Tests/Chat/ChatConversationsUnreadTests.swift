@@ -41,6 +41,26 @@ struct ChatConversationsUnreadTests {
         }
     }
 
+    /// Holds a stubbed response until `open()` is called, so a test can change the
+    /// list while a request is in flight. Blocks only while armed, and for at most
+    /// five seconds so a broken test cannot hang.
+    private final class Gate: @unchecked Sendable {
+        private let semaphore = DispatchSemaphore(value: 0)
+        private let lock = NSLock()
+        private var armed = false
+        func arm() { lock.lock(); armed = true; lock.unlock() }
+        func waitIfArmed() {
+            lock.lock(); let isArmed = armed; lock.unlock()
+            guard isArmed else { return }
+            _ = semaphore.wait(timeout: .now() + 5)
+        }
+        /// Releases the waiting request and lets later ones through.
+        func open() {
+            lock.lock(); armed = false; lock.unlock()
+            semaphore.signal()
+        }
+    }
+
     nonisolated private static func page(aUnread: Int = 0, bUnread: Int = 2) -> Data {
         ChatFixtures.threadsPage([
             ChatFixtures.thread(id: threadA, partnerId: peerA, partnerName: "Alice", unreadCount: aUnread),
@@ -65,6 +85,18 @@ struct ChatConversationsUnreadTests {
             api: api,
             currentUserId: { myId },
             visibleThreadId: { visible.id }
+        )
+    }
+
+    private static func makeViewModel(server: ChatsServer, gate: Gate) -> ChatConversationsViewModel {
+        let api = APITestFactory.make { request in
+            gate.waitIfArmed()
+            return ClientBookingFixtures.response(for: request, body: server.body)
+        }
+        return ChatConversationsViewModel(
+            api: api,
+            currentUserId: { myId },
+            visibleThreadId: { nil }
         )
     }
 
@@ -215,5 +247,72 @@ struct ChatConversationsUnreadTests {
         await viewModel.silentReload()
 
         #expect(count(viewModel, Self.threadB) == 1)
+    }
+
+    // MARK: Reloads that overlap local changes (WR-04)
+
+    @Test("a reload that finishes after markOpened keeps the row at 0 instead of the server's older count")
+    func lateReloadKeepsOpenedRowAtZero() async {
+        let server = ChatsServer(Self.page(aUnread: 0, bUnread: 3))
+        let gate = Gate()
+        let viewModel = Self.makeViewModel(server: server, gate: gate)
+        await viewModel.load()
+
+        gate.arm()
+        let reload = Task { await viewModel.silentReload() }
+        await waitUntil { Self.chatsGets().count >= 2 }
+        viewModel.markOpened(threadId: Self.threadB)
+        gate.open()
+        await reload.value
+
+        #expect(count(viewModel, Self.threadB) == 0)
+    }
+
+    @Test("a reload that finishes after a live peer message keeps the local count")
+    func lateReloadKeepsLiveIncrement() async {
+        let server = ChatsServer(Self.page(aUnread: 0, bUnread: 2))
+        let gate = Gate()
+        let viewModel = Self.makeViewModel(server: server, gate: gate)
+        await viewModel.load()
+
+        gate.arm()
+        let reload = Task { await viewModel.silentReload() }
+        await waitUntil { Self.chatsGets().count >= 2 }
+        viewModel.handleMessageNew(Self.event(thread: Self.threadB, sender: Self.peerB))
+        gate.open()
+        await reload.value
+
+        #expect(count(viewModel, Self.threadB) == 3)
+    }
+
+    @Test("the next reload after the first one ended takes the server's count again")
+    func overridesEndWithTheReload() async {
+        let server = ChatsServer(Self.page(aUnread: 0, bUnread: 3))
+        let gate = Gate()
+        let viewModel = Self.makeViewModel(server: server, gate: gate)
+        await viewModel.load()
+        gate.arm()
+        let reload = Task { await viewModel.silentReload() }
+        await waitUntil { Self.chatsGets().count >= 2 }
+        viewModel.markOpened(threadId: Self.threadB)
+        gate.open()
+        await reload.value
+
+        server.body = Self.page(aUnread: 0, bUnread: 1)
+        await viewModel.silentReload()
+
+        #expect(count(viewModel, Self.threadB) == 1)
+    }
+
+    @Test("a live message for an unknown thread before the first load finished starts no request")
+    func unknownThreadBeforeFirstLoadIsIgnored() async {
+        let server = ChatsServer(Self.page())
+        let viewModel = Self.makeViewModel(server: server)
+
+        viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
+        try? await Task.sleep(for: .milliseconds(50))
+
+        #expect(viewModel.loadState == .idle)
+        #expect(Self.chatsGets().isEmpty)
     }
 }

@@ -497,149 +497,19 @@ final class ChattingViewModel: ObservableObject {
 
     // MARK: - Mapping
 
+    /// Thin forwarder so `forceLoad()` and `loadEarlier()` keep their call
+    /// sites; the mapping itself lives in `ChatItemMapper`.
     private func mapToChatItem(_ item: ChatMessageItem) -> ChatItem {
-        if item.type == .event, let eventType = item.eventType {
-            return .systemEvent(bookingEvent(
-                from: eventType,
-                content: item.content,
-                eventData: item.eventData
-            ))
-        }
-        let mine = (item.senderId != nil && item.senderId == myUserId)
-        // Prefer server-provided sender info for the peer; fall back to
-        // the caller-supplied peer identity for older payloads.
-        let displayName = mine
-            ? myName
-            : (item.sender?.name ?? peerName)
-        let displayAvatar = mine
-            ? myAvatarURL
-            : (item.sender?.avatarUrl ?? peerAvatarURL)
-        return .message(ChatMessage(
-            serverId: item.id,
-            sender: mine ? .me : .them,
-            senderName: displayName,
-            body: item.content ?? "",
-            avatarURL: displayAvatar,
-            timestamp: item.createdAt,
-            status: item.status
-        ))
-    }
-
-    /// Maps a booking-lifecycle event to the visual style used by the
-    /// sample conversation. Subtitle is the server's `content` if
-    /// present (e.g. `"Tomorrow, 2:00 PM"`). `eventData` carries the
-    /// server's `{ booking_id, client_id, expert_id, start_time,
-    /// end_time, duration_mins, topic_title }` payload — the display
-    /// metadata is pulled out so the row can render the booking's topic
-    /// name and time inline without a per-row fetch.
-    private func bookingEvent(
-        from event: MessageEventType,
-        content: String?,
-        eventData: JSONValue?
-    ) -> BookingEvent {
-        let bookingId = Self.extractBookingId(from: eventData)
-        let topicTitle = Self.extractString(from: eventData, key: "topic_title")
-        let startTime = Self.extractDate(from: eventData, key: "start_time")
-        let durationMins = Self.extractInt(from: eventData, key: "duration_mins")
-        let terminal = Self.isTerminal(event)
-
-        switch event {
-        case .bookingRequest:
-            return BookingEvent(icon: "envelope", title: "Booking Request",
-                                subtitle: content, isAccepted: true, avatarURL: nil,
-                                bookingId: bookingId, isTerminal: terminal,
-                                topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
-        case .bookingConfirmed:
-            return BookingEvent(icon: "checkmark.square", title: "Booking Confirmed",
-                                subtitle: content, isAccepted: true, avatarURL: nil,
-                                bookingId: bookingId, isTerminal: terminal,
-                                topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
-        case .bookingDeclined:
-            return BookingEvent(icon: "xmark.square", title: "Booking Declined",
-                                subtitle: content, isAccepted: false, avatarURL: nil,
-                                bookingId: bookingId, isTerminal: terminal,
-                                topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
-        case .bookingCancelled:
-            return BookingEvent(icon: "xmark.circle", title: "Booking Cancelled",
-                                subtitle: content, isAccepted: false, avatarURL: nil,
-                                bookingId: bookingId, isTerminal: terminal,
-                                topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
-        case .bookingRescheduled:
-            return BookingEvent(icon: "clock.arrow.circlepath", title: "Booking Rescheduled",
-                                subtitle: content, isAccepted: true, avatarURL: nil,
-                                bookingId: bookingId, isTerminal: terminal,
-                                topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
-        case .bookingCompleted:
-            return BookingEvent(icon: "checkmark.seal", title: "Session Completed",
-                                subtitle: content, isAccepted: true, avatarURL: nil,
-                                bookingId: bookingId, isTerminal: terminal,
-                                topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
-        case .bookingExpired:
-            return BookingEvent(icon: "hourglass", title: "Request Expired",
-                                subtitle: content, isAccepted: false, avatarURL: nil,
-                                bookingId: bookingId, isTerminal: terminal,
-                                topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
-        }
-    }
-
-    /// Whether a booking event represents a finished lifecycle state
-    /// (nothing more will happen). Decides whether tapping the row
-    /// routes to the read-only summary or the still-actionable
-    /// upcoming-booking screen.
-    private static func isTerminal(_ event: MessageEventType) -> Bool {
-        switch event {
-        case .bookingDeclined, .bookingCancelled, .bookingCompleted, .bookingExpired:
-            return true
-        case .bookingRequest, .bookingConfirmed, .bookingRescheduled:
-            return false
-        }
-    }
-
-    /// Pulls `booking_id` out of the server's `event_data` payload.
-    /// Returns nil for legacy events that predate this field or if the
-    /// value isn't a valid UUID string.
-    private static func extractBookingId(from data: JSONValue?) -> UUID? {
-        guard case let .object(dict) = data,
-              case let .string(str) = dict["booking_id"] else { return nil }
-        return UUID(uuidString: str)
-    }
-
-    /// Reads a string field from the server's `event_data` object.
-    /// Nil when the payload isn't an object or the field is missing.
-    private static func extractString(from data: JSONValue?, key: String) -> String? {
-        guard case let .object(dict) = data,
-              case let .string(str) = dict[key] else { return nil }
-        return str
-    }
-
-    /// Reads an integer field from `event_data`. Accepts both raw ints
-    /// and stringly-typed numbers (some backends stringify small ints).
-    private static func extractInt(from data: JSONValue?, key: String) -> Int? {
-        guard case let .object(dict) = data else { return nil }
-        switch dict[key] {
-        case .int(let v): return v
-        case .string(let s): return Int(s)
-        case .double(let d): return Int(d)
-        default: return nil
-        }
-    }
-
-    /// Parses an ISO 8601 timestamp field from `event_data`. Fractional
-    /// seconds are optional; the server currently emits them
-    /// (`.424+00:00`) but we accept both for safety.
-    private static let isoWithFraction: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return f
-    }()
-    private static let isoNoFraction: ISO8601DateFormatter = {
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime]
-        return f
-    }()
-    private static func extractDate(from data: JSONValue?, key: String) -> Date? {
-        guard let str = extractString(from: data, key: key) else { return nil }
-        return isoWithFraction.date(from: str) ?? isoNoFraction.date(from: str)
+        ChatItemMapper.chatItem(
+            from: item,
+            identity: ChatItemMapper.Identity(
+                myUserId: myUserId,
+                myName: myName,
+                myAvatarURL: myAvatarURL,
+                peerName: peerName,
+                peerAvatarURL: peerAvatarURL
+            )
+        )
     }
 
     // MARK: - Error mapping

@@ -38,6 +38,14 @@ final class ReportChatViewModel: ObservableObject {
     /// for the remainder of this screen session.
     @Published var unblockDenied: Bool = false
 
+    /// Compile seam for the tests; wired in the next commit.
+    @Published private(set) var blockState: ChatBlockState
+    @Published private(set) var apiErrorTitle = "Couldn't block user"
+    private let onBlockStateChange: (ChatBlockState) -> Void
+    private(set) var actionTask: Task<Void, Never>?
+
+    func awaitPendingAction() async { await actionTask?.value }
+
     /// Alert copy shown on either block or report failure.
     @Published var apiError: String?
 
@@ -67,8 +75,11 @@ final class ReportChatViewModel: ObservableObject {
         isBlocked: Bool = false,
         blockedByMe: Bool = false,
         reasons: [String] = ReportChatViewModel.defaultReasons,
-        api: ClickMeAPI = .shared
+        api: ClickMeAPI = .shared,
+        onBlockStateChange: @escaping (ChatBlockState) -> Void = { _ in }
     ) {
+        self.blockState = ChatBlockState(isBlocked: isBlocked, blockedByMe: blockedByMe)
+        self.onBlockStateChange = onBlockStateChange
         self.threadId = threadId
         self.userName = userName
         self.selectedReason = selectedReason
@@ -143,7 +154,7 @@ final class ReportChatViewModel: ObservableObject {
         apiError = nil
         withAnimation { isSubmitting = true }
 
-        Task { [weak self] in
+        actionTask = Task { [weak self] in
             guard let self else { return }
             let reason = self.selectedReason
             let details = self.description.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -186,7 +197,7 @@ final class ReportChatViewModel: ObservableObject {
         apiError = nil
         isBlocking = true
 
-        Task { [weak self] in
+        actionTask = Task { [weak self] in
             guard let self else { return }
             defer { self.isBlocking = false }
             do {
@@ -221,7 +232,7 @@ final class ReportChatViewModel: ObservableObject {
         apiError = nil
         isBlocking = true
 
-        Task { [weak self] in
+        actionTask = Task { [weak self] in
             guard let self else { return }
             defer { self.isBlocking = false }
             do {

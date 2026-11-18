@@ -116,6 +116,10 @@ final class ReportChatViewModel: ObservableObject {
 
     // MARK: - Reason selection
 
+    /// Compile seam for the tests; wired in the next commit.
+    static let maxDetailsLength = 1000
+    func selectReason(_ reason: UserReportReason) {}
+
     func selectReason(_ reason: String) {
         withAnimation(.easeInOut(duration: 0.2)) {
             selectedReason = reason

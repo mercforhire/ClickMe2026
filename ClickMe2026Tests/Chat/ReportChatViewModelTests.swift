@@ -265,4 +265,121 @@ struct ReportChatViewModelTests {
         #expect(log.states.isEmpty)
         #expect(viewModel.apiError == nil)
     }
+
+    // MARK: Report
+
+    private func makeReportViewModel(api: ClickMeAPI, log: Log = Log()) -> ReportChatViewModel {
+        makeViewModel(api: api, log: log)
+    }
+
+    @Test("each of the six reasons posts its raw value as reason with action report")
+    func reportSendsRawValue() async {
+        for reason in UserReportReason.allCases {
+            let log = Log()
+            let viewModel = makeReportViewModel(api: Self.makeAPI(onActions: Self.actionsOK), log: log)
+
+            viewModel.selectReason(reason)
+            viewModel.submitReport { log.recordReport($0, $1) }
+            await viewModel.awaitPendingAction()
+
+            let posts = Self.actionsPosts()
+            #expect(posts.count == 1, "\(reason)")
+            let body = posts.first?.jsonBodyForTest()
+            #expect(body?["action"] as? String == "report", "\(reason)")
+            #expect(body?["reason"] as? String == reason.rawValue, "\(reason)")
+            #expect(log.reports.map(\.reason) == [reason.rawValue], "\(reason)")
+            #expect(viewModel.didSubmit == true, "\(reason)")
+        }
+    }
+
+    @Test("submitting with no reason shows the reason error and sends nothing")
+    func reportWithoutReason() async {
+        let viewModel = makeReportViewModel(api: Self.makeAPI(onActions: Self.actionsOK))
+
+        viewModel.submitReport { _, _ in }
+        await viewModel.awaitPendingAction()
+
+        #expect(viewModel.showReasonError == true)
+        #expect(Self.actionsPosts().isEmpty)
+        #expect(viewModel.didSubmit == false)
+    }
+
+    @Test("details of 1,200 characters stop at 1,000 UTF-16 units")
+    func detailsAreCapped() {
+        let viewModel = makeReportViewModel(api: Self.makeAPI())
+
+        viewModel.description = String(repeating: "a", count: 1_200)
+
+        #expect(viewModel.description.utf16.count == 1_000)
+        #expect(ReportChatViewModel.maxDetailsLength == 1_000)
+    }
+
+    @Test("a cap never splits an emoji: 999 letters plus an emoji keep 999 units")
+    func capKeepsEmojiWhole() {
+        let viewModel = makeReportViewModel(api: Self.makeAPI())
+
+        viewModel.description = String(repeating: "a", count: 999) + "\u{1F600}"
+
+        #expect(viewModel.description.utf16.count == 999)
+        #expect(viewModel.description == String(repeating: "a", count: 999))
+    }
+
+    @Test("whitespace-only details send no details key")
+    func blankDetailsAreOmitted() async {
+        let viewModel = makeReportViewModel(api: Self.makeAPI(onActions: Self.actionsOK))
+
+        viewModel.selectReason(.spam)
+        viewModel.description = "   \n"
+        viewModel.submitReport { _, _ in }
+        await viewModel.awaitPendingAction()
+
+        let body = Self.actionsPosts().first?.jsonBodyForTest()
+        #expect(body != nil)
+        #expect(body?.keys.contains("details") == false)
+    }
+
+    @Test("details are trimmed on submit and passed to onReport trimmed")
+    func detailsAreTrimmed() async {
+        let log = Log()
+        let viewModel = makeReportViewModel(api: Self.makeAPI(onActions: Self.actionsOK), log: log)
+
+        viewModel.selectReason(.scamOrFraud)
+        viewModel.description = " text "
+        viewModel.submitReport { log.recordReport($0, $1) }
+        await viewModel.awaitPendingAction()
+
+        #expect(Self.actionsPosts().first?.jsonBodyForTest()?["details"] as? String == "text")
+        #expect(log.reports.count == 1)
+        #expect(log.reports.first?.reason == "scam_or_fraud")
+        #expect(log.reports.first?.details == "text")
+    }
+
+    @Test("a 429 shows its title and the server message and is not retried")
+    func reportRateLimited() async {
+        let api = Self.makeAPI(onActions: Self.actionsFail(429, code: "TOO_MANY_REQUESTS", message: "Too many reports"))
+        let viewModel = makeReportViewModel(api: api)
+
+        viewModel.selectReason(.harassment)
+        viewModel.submitReport { _, _ in }
+        await viewModel.awaitPendingAction()
+
+        #expect(viewModel.apiErrorTitle == "Couldn't send report")
+        #expect(viewModel.apiError == "Too many reports")
+        #expect(Self.actionsPosts().count == 1)
+        #expect(viewModel.didSubmit == false)
+        #expect(viewModel.isSubmitting == false)
+    }
+
+    @Test("a transport error on report reads as not sent")
+    func reportTransportFailure() async {
+        let api = Self.makeAPI(onActions: { _ in throw URLError(.notConnectedToInternet) })
+        let viewModel = makeReportViewModel(api: api)
+
+        viewModel.selectReason(.other)
+        viewModel.submitReport { _, _ in }
+        await viewModel.awaitPendingAction()
+
+        #expect(viewModel.apiError == "Your report wasn't sent. Check your connection and try again.")
+        #expect(viewModel.apiErrorTitle == "Couldn't send report")
+    }
 }

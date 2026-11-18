@@ -14,6 +14,9 @@ import Foundation
 import Testing
 @testable import ClickMe2026
 
+/// `MockURLProtocol.handler` is global state, so these suites depend on the test
+/// plan's `parallelizable: false` (`ClickMe2026/AllTests.xctestplan`). `.serialized`
+/// only orders tests inside one suite.
 @Suite("Chat list unread", .serialized)
 @MainActor
 struct ChatConversationsUnreadTests {
@@ -109,13 +112,6 @@ struct ChatConversationsUnreadTests {
         viewModel.chats.first { $0.threadId == thread }?.unreadCount
     }
 
-    /// Waits up to two seconds for `condition`, yielding between checks.
-    private func waitUntil(_ condition: () -> Bool) async {
-        for _ in 0..<200 where !condition() {
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-    }
-
     // MARK: D-13 +1 for a peer message on a closed thread
 
     @Test("peer message for a closed thread adds 1 and moves the row to the top")
@@ -180,7 +176,7 @@ struct ChatConversationsUnreadTests {
             ChatFixtures.thread(id: Self.threadA, partnerId: Self.peerA, partnerName: "Alice", unreadCount: 0)
         ])
         viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
-        await waitUntil { viewModel.chats.first?.threadId == Self.threadC }
+        await waitUntil("the new thread at the top") { viewModel.chats.first?.threadId == Self.threadC }
 
         #expect(Self.chatsGets().count == 2)
         #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
@@ -253,7 +249,7 @@ struct ChatConversationsUnreadTests {
 
         gate.arm()
         let reload = Task { await viewModel.silentReload() }
-        await waitUntil { Self.chatsGets().count >= 2 }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
         viewModel.markOpened(threadId: Self.threadB)
         gate.open()
         await reload.value
@@ -270,7 +266,7 @@ struct ChatConversationsUnreadTests {
 
         gate.arm()
         let reload = Task { await viewModel.silentReload() }
-        await waitUntil { Self.chatsGets().count >= 2 }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
         viewModel.handleMessageNew(Self.event(thread: Self.threadB, sender: Self.peerB))
         gate.open()
         await reload.value
@@ -286,7 +282,7 @@ struct ChatConversationsUnreadTests {
         await viewModel.load()
         gate.arm()
         let reload = Task { await viewModel.silentReload() }
-        await waitUntil { Self.chatsGets().count >= 2 }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
         viewModel.markOpened(threadId: Self.threadB)
         gate.open()
         await reload.value
@@ -307,7 +303,7 @@ struct ChatConversationsUnreadTests {
 
         gate.arm()
         let reload = Task { await viewModel.silentReload() }
-        await waitUntil { Self.chatsGets().count >= 2 }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
         viewModel.handleMessageNew(Self.event(thread: Self.threadB, sender: Self.peerB, content: "fresh"))
         gate.open()
         await reload.value
@@ -327,7 +323,7 @@ struct ChatConversationsUnreadTests {
 
         gate.arm()
         let reload = Task { await viewModel.silentReload() }
-        await waitUntil { Self.chatsGets().count >= 2 }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
         viewModel.handleMessageNew(Self.event(thread: Self.threadB, sender: Self.peerB, content: "first"))
         viewModel.handleMessageNew(Self.event(thread: Self.threadA, sender: Self.peerA, content: "second"))
         gate.open()
@@ -345,7 +341,7 @@ struct ChatConversationsUnreadTests {
 
         gate.arm()
         let load = Task { await viewModel.load() }
-        await waitUntil { Self.chatsGets().count >= 1 }
+        await waitUntil("the first GET /chats") { Self.chatsGets().count >= 1 }
         #expect(viewModel.chats.isEmpty)
         viewModel.markOpened(threadId: Self.threadB)
         gate.open()
@@ -365,7 +361,7 @@ struct ChatConversationsUnreadTests {
 
         gate.arm()
         let load = Task { await viewModel.load() }
-        await waitUntil { Self.chatsGets().count >= 1 }
+        await waitUntil("the first GET /chats") { Self.chatsGets().count >= 1 }
         // The held response was taken before the message; the next one lists the thread.
         server.body = ChatFixtures.threadsPage([
             ChatFixtures.thread(id: Self.threadC, partnerId: UUID(), partnerName: "Cara", unreadCount: 1),
@@ -374,7 +370,7 @@ struct ChatConversationsUnreadTests {
         viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
         gate.open()
         await load.value
-        await waitUntil { viewModel.chats.first?.threadId == Self.threadC }
+        await waitUntil("the new thread at the top") { viewModel.chats.first?.threadId == Self.threadC }
 
         #expect(Self.chatsGets().count == 2)
         #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
@@ -390,7 +386,7 @@ struct ChatConversationsUnreadTests {
 
         gate.arm()
         let refresh = Task { await viewModel.reload() }
-        await waitUntil { Self.chatsGets().count >= 2 }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
         server.body = ChatFixtures.threadsPage([
             ChatFixtures.thread(id: Self.threadC, partnerId: UUID(), partnerName: "Cara", unreadCount: 1),
             ChatFixtures.thread(id: Self.threadA, partnerId: Self.peerA, partnerName: "Alice", unreadCount: 0)
@@ -398,7 +394,7 @@ struct ChatConversationsUnreadTests {
         viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
         gate.open()
         await refresh.value
-        await waitUntil { viewModel.chats.first?.threadId == Self.threadC }
+        await waitUntil("the new thread at the top") { viewModel.chats.first?.threadId == Self.threadC }
 
         #expect(Self.chatsGets().count == 3)
         #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
@@ -436,7 +432,7 @@ struct ChatConversationsUnreadTests {
         failing.isOn = true
         gate.arm()
         let load = Task { await viewModel.load() }
-        await waitUntil { Self.chatsGets().count >= 1 }
+        await waitUntil("the first GET /chats") { Self.chatsGets().count >= 1 }
         viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
         gate.open()
         await load.value
@@ -448,15 +444,17 @@ struct ChatConversationsUnreadTests {
         #expect(viewModel.loadState == .loaded)
     }
 
-    @Test("a live message for an unknown thread before the first load started starts no request")
+    @Test("a live message for an unknown thread before the first load started adds no request")
     func unknownThreadBeforeFirstLoadIsIgnored() async {
         let server = ChatsServer(Self.page())
         let viewModel = Self.makeViewModel(server: server)
 
         viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
-        try? await Task.sleep(for: .milliseconds(50))
+        // A reload started by the message would run while `load()` awaits its request,
+        // so it would add a second GET /chats before the check below.
+        await viewModel.load()
 
-        #expect(viewModel.loadState == .idle)
-        #expect(Self.chatsGets().isEmpty)
+        #expect(viewModel.loadState == .loaded)
+        #expect(Self.chatsGets().count == 1)
     }
 }

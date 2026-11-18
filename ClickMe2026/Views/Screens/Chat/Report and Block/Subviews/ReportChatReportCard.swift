@@ -11,14 +11,14 @@ import SwiftUI
 // MARK: - Report User card: reason picker + description + submit button
 
 struct ReportChatReportCard: View {
-    let reasons: [String]
-    let selectedReason: String
+    let reasons: [UserReportReason]
+    let selectedReason: UserReportReason?
     let showReasonError: Bool
     @Binding var description: String
     @FocusState.Binding var descFocused: Bool
     let isSubmitting: Bool
     let didSubmit: Bool
-    let onSelectReason: (String) -> Void
+    let onSelectReason: (UserReportReason) -> Void
     let onSubmit: () -> Void
 
     var body: some View {

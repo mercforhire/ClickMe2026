@@ -11,10 +11,10 @@ import SwiftUI
 // MARK: - Reason picker Menu + inline validation error
 
 struct ReportChatReasonField: View {
-    let reasons: [String]
-    let selectedReason: String
+    let reasons: [UserReportReason]
+    let selectedReason: UserReportReason?
     let showError: Bool
-    let onSelect: (String) -> Void
+    let onSelect: (UserReportReason) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -23,14 +23,14 @@ struct ReportChatReasonField: View {
                 .foregroundColor(ReportChatBrand.onSurface)
 
             Menu {
-                ForEach(reasons, id: \.self) { reason in
-                    Button(reason) { onSelect(reason) }
+                ForEach(reasons) { reason in
+                    Button(reason.displayLabel) { onSelect(reason) }
                 }
             } label: {
                 HStack {
-                    Text(selectedReason.isEmpty ? "Select a reason" : selectedReason)
+                    Text(selectedReason?.displayLabel ?? "Select a reason")
                         .font(.brand(.subheadline))
-                        .foregroundColor(selectedReason.isEmpty
+                        .foregroundColor(selectedReason == nil
                                          ? ReportChatBrand.onSurfaceVar
                                          : ReportChatBrand.onSurface)
                     Spacer()

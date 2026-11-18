@@ -292,6 +292,17 @@ struct ReportChatViewModelTests {
         }
     }
 
+    @Test("the picker lists the six moderation labels in enum order with nothing preselected")
+    func pickerListsTheEnum() {
+        let viewModel = makeReportViewModel(api: Self.makeAPI())
+
+        #expect(viewModel.selectedReason == nil)
+        #expect(viewModel.reasons.map(\.displayLabel) == [
+            "Harassment or abuse", "Spam", "Inappropriate content",
+            "Scam or fraud", "Impersonation", "Something else",
+        ])
+    }
+
     @Test("submitting with no reason shows the reason error and sends nothing")
     func reportWithoutReason() async {
         let viewModel = makeReportViewModel(api: Self.makeAPI(onActions: Self.actionsOK))

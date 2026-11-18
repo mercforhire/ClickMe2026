@@ -48,6 +48,12 @@ struct ReportChatDescriptionField: View {
                     .padding(.vertical, 10)
                     .focused($isFocused)
             }
+
+            // UTF-16 units, the server's unit; the view model stops the text at the cap.
+            Text("\(text.utf16.count)/\(ReportChatViewModel.maxDetailsLength)")
+                .font(.brand(.caption))
+                .foregroundColor(ReportChatBrand.onSurfaceVar)
+                .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 }

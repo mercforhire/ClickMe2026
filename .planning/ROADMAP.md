@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 4: Booking, Payment and Discovery** - Clients can find an expert, book and pay without resubmits, unintended holds or misleading errors
 - [x] **Phase 5: Signup, Mode Switch and Account** - Signup, becoming an expert and account settings save correctly and tell the truth (completed 2026-11-15)
 - [x] **Phase 6: Expert Mode** - Experts can price, schedule and run their bookings without wrong amounts or dead ends (completed 2026-11-17)
-- [ ] **Phase 7: Chat** - Messages, block state, unread and read state behave reliably and clearly
+- [x] **Phase 7: Chat** - Messages, block state, unread and read state behave reliably and clearly (completed 2026-11-18)
 - [ ] **Phase 8: Release** - One verified iOS build ships to TestFlight and the App Store after the backend is live
 
 ## Phase Details
@@ -427,7 +427,7 @@ Plans:
   4. Reports from chat reach the backend as report-reason enum values, the same as profile reports.
   5. The "Read" label updates live while a chat is open, or CHAT-08 is closed as not reproducible after the device re-test.
 
-**Plans**: 9/9 plans executed in 9 waves (iOS only, no backend or Android change; plans run one at a time because they share one tree and simulator; the only user stop is the D-18 decision in the last plan)
+**Plans**: 9/9 plans complete in 9 waves (iOS only, no backend or Android change; plans run one at a time because they share one tree and simulator; the only user stop is the D-18 decision in the last plan)
 
 Plans:
 **Wave 1**
@@ -493,7 +493,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Booking, Payment and Discovery | 17/17 | In Progress | - |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
-| 7. Chat | 9/9 | In Progress | - |
+| 7. Chat | 9/9 | Complete    | 2026-11-18 |
 | 8. Release | 0/TBD | Not started | - |
 
 ---

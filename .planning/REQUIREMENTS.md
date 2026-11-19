@@ -97,14 +97,14 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Chat
 
-- [ ] **CHAT-01** [H1]: A sent message appears immediately as pending, shows a failed state on error, and can be retried
-- [ ] **CHAT-02** [H2]: Chat reports send the report-reason enum values, not display labels
-- [ ] **CHAT-03** [H3] **[major]**: A blocked thread hides the composer and shows who blocked it; Unblock appears only to the blocker
-- [ ] **CHAT-04** [H4] **[major]**: Blocking from a profile uses a confirm dialog, and the block copy describes what blocking actually does
-- [ ] **CHAT-05** [H5]: Typing indicators and View Profile work as soon as a chat opens
-- [ ] **CHAT-06** [H6]: Loading earlier messages never duplicates messages
-- [ ] **CHAT-07** [H7] **[major]**: Conversation rows show an unread badge (backend increments on send and resets on read; iOS shows the badge)
-- [ ] **CHAT-08** [H8] (likely, re-test first per Q8): The "Read" label updates live while the chat is open *(Closed as not reproducible 2026-11-17: the user's device re-test after Phase 1 shipped showed the live Read label working (Q8, 07-CONTEXT D-17). No CHAT-08 fix was made: the sender-side Read handler (ChattingViewModel.handleMessageRead) is byte-identical to the phase base. Two Phase 7 changes sit next to that path: plan 07-01 keeps an own Read bubble from reverting on reload, and plan 07-03 changes when the receiving side emits message.read (D-16, for CHAT-07). Regression row in item C6 of 07-DEVICE-UAT-CHECKLIST.md. The box is left for /gsd-verify-work 07.)*
+- [x] **CHAT-01** [H1]: A sent message appears immediately as pending, shows a failed state on error, and can be retried
+- [x] **CHAT-02** [H2]: Chat reports send the report-reason enum values, not display labels
+- [x] **CHAT-03** [H3] **[major]**: A blocked thread hides the composer and shows who blocked it; Unblock appears only to the blocker
+- [x] **CHAT-04** [H4] **[major]**: Blocking from a profile uses a confirm dialog, and the block copy describes what blocking actually does
+- [x] **CHAT-05** [H5]: Typing indicators and View Profile work as soon as a chat opens
+- [x] **CHAT-06** [H6]: Loading earlier messages never duplicates messages
+- [x] **CHAT-07** [H7] **[major]**: Conversation rows show an unread badge (backend increments on send and resets on read; iOS shows the badge)
+- [x] **CHAT-08** [H8] (likely, re-test first per Q8): The "Read" label updates live while the chat is open *(Closed as not reproducible 2026-11-17: the user's device re-test after Phase 1 shipped showed the live Read label working (Q8, 07-CONTEXT D-17). No CHAT-08 fix was made: the sender-side Read handler (ChattingViewModel.handleMessageRead) is byte-identical to the phase base. Two Phase 7 changes sit next to that path: plan 07-01 keeps an own Read bubble from reverting on reload, and plan 07-03 changes when the receiving side emits message.read (D-16, for CHAT-07). Regression row in item C6 of 07-DEVICE-UAT-CHECKLIST.md. The box is left for /gsd-verify-work 07.)*
 - [x] **CHAT-09** [H9]: No foreground push banner appears for the chat currently on screen
 
 ### Push
@@ -245,14 +245,14 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | EXP-16 | Phase 6 | Complete |
 | EXP-17 | Phase 6 | Complete |
 | EXP-18 | Phase 6 | Complete |
-| CHAT-01 | Phase 7 | Pending |
-| CHAT-02 | Phase 7 | Pending |
-| CHAT-03 | Phase 7 | Pending |
-| CHAT-04 | Phase 7 | Pending |
-| CHAT-05 | Phase 7 | Pending |
-| CHAT-06 | Phase 7 | Pending |
-| CHAT-07 | Phase 7 | Pending |
-| CHAT-08 | Phase 7 | Pending |
+| CHAT-01 | Phase 7 | Complete |
+| CHAT-02 | Phase 7 | Complete |
+| CHAT-03 | Phase 7 | Complete |
+| CHAT-04 | Phase 7 | Complete |
+| CHAT-05 | Phase 7 | Complete |
+| CHAT-06 | Phase 7 | Complete |
+| CHAT-07 | Phase 7 | Complete |
+| CHAT-08 | Phase 7 | Complete |
 | CHAT-09 | Phase 2 | Complete |
 | PUSH-01 | Phase 2 | Complete |
 | PUSH-02 | Phase 2 | Complete |

@@ -1,45 +1,45 @@
 ---
 gsd_state_version: "1.0"
-current_phase: 07
-current_phase_name: Chat
-current_plan: 9
+current_phase: 3
+current_phase_name: Booked Sessions and Joining
+current_plan: 17
 status: verifying
-stopped_at: Completed 07-09-PLAN.md
-last_updated: "2026-11-18T15:35:21.875Z"
-last_activity: 2026-11-17
-last_activity_desc: Phase 07 execution started
-state_head: 472cb2a95b966419cbf43d835a141ecba240e8e8
+stopped_at: Phase 07 complete, ready to verify Phase 3
+last_updated: "2026-11-19T03:58:44.028Z"
+last_activity: 2026-11-18
+last_activity_desc: Phase 07 complete, transitioned to Phase 3
+state_head: 72223638fef36e7419acc35f8f6d591078e2b3d5
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 124
   completed_plans: 124
-  percent: 50
+  percent: 63
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-11-15)
+See: .planning/PROJECT.md (updated 2026-11-19)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 07 — Chat
+**Current focus:** Phase 3 — Booked Sessions and Joining (verification)
 
 ## Current Position
 
-Phase: 07 (Chat) — EXECUTING
-Current Plan: 9
-Total Plans in Phase: 9
+Phase: 3 — Booked Sessions and Joining
+Current Plan: 17
+Total Plans in Phase: 17
 Status: Phase complete — ready for verification
-Last activity: 2026-11-17 — Phase 07 execution started
+Last activity: 2026-11-18 — Phase 07 complete, transitioned to Phase 3
 
-Progress: [█████░░░░░] 50%
+Progress: [████████████████████] 124/124 plans (100%); phases 3 and 4 await verification, Phase 8 not started
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 81
+- Total plans completed: 90
 - Average duration: -
 - Total execution time: 0.0 hours
 
@@ -51,6 +51,7 @@ Progress: [█████░░░░░] 50%
 | 05 | 22 | - | - |
 | 02 | 15 | - | - |
 | 06 | 18 | - | - |
+| 07 | 9 | - | - |
 
 **Recent Trend:**
 - Last 5 plans: -
@@ -398,6 +399,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-08: CHAT-08 recorded as closed as not reproducible in REQUIREMENTS.md only after the D-17 guard passed (handleMessageRead byte-identical to 16fe88e); box left unticked for verify-work
 - [Phase 07]: 07-08: 07-VALIDATION signed off (nyquist_compliant, wave_0_complete true, status draft); D-18 row stays pending for plan 07-09
 - [Phase 07]: 07-09 D-18: user reported the expert chat booking row failure reproduced on a device; expert shell chat booking rows now open ExpertBookingSummaryView via ChatBookingRowRoute. Shell decides the route; dual-role users logged as a pending todo, not built.
+- [Phase 07]: Review fixes (2026-11-18): GET /chats scans dropped after a block-state change (revision guard); Chats-list reloads keep local preview, time, order and unread changes; a first message from an unknown thread during a load triggers one follow-up fetch; 408 and 429 sends stay Failed with Retry; Socket.IO logging DEBUG-only
+- [Phase 07]: UAT 2026-11-19: judgements 15-17 KEEP (120 s send timeout, brief count after a quick pop, profile toast height); VoiceOver pass deferred to backlog 999.5
 
 ### Pending Todos
 
@@ -468,7 +471,7 @@ Captured todos:
 - [Phase 3]: If Q2 changes the backend refund policy, that is backend work outside Phase 1. It can be pulled forward into Phase 1's discuss step.
 - [Phase 4]: Every environment points at the production backend and live Stripe, so payment UAT places real holds.
 - [Phase 4]: D-11 real-money session not yet run; BACK-06, BACK-07, BACK-15, BACK-19, EXPL-03 and EXPL-07 stay Pending until `04-DEVICE-UAT-CHECKLIST.md` passes (written by plan 04-14; the user runs every production step). D-12 is live as backend `ae3ec1a` (rollback base `32fa6ec`) plus CR-02 `28da165` (rollback base `ae3ec1a`; transient errors after the stamp still reach the 6 h window, todo 2026-11-12); the Dashboard subscription to `payment_method.detached` is user-reported and first proved by D-11 step f. Check `/health` reports a commit containing `ae3ec1a` and `28da165` before the session.
-- [Phase 7]: CHAT-08 needs a device re-test before planning (Q8).
+- [Phase 7]: Open review items (07-REVIEW-DISPOSITION.md): WR-07 (a nil-content message.new can put a stale preview over a newer server one; verifier recommends fixing before the release build), IN-08, IN-09 (Android still treats 408/429 as refusals), IN-10 open; IN-06 banner copy skipped pending a product decision. VoiceOver pass (backlog 999.5) and the WR-02 device step (needs an unavailable test account) not run on a device. 07-UI-SPEC still describes the pre-IN-01 4xx behavior.
 - [Phase 4]: Open decision from 01-13: when the confirm insert fails with no replay, confirm does not void the authorized PaymentIntent, and whether a webhook or sweep clears it is unchecked. Needs a user decision before Phase 4 payment UAT.
 - [Phase 1]: Open decision from 01-12: a pending_approval hold past end_time stays until expireBookings voids it (up to about 12h after the request). Accepted in effect by pushing wave 2, not explicitly confirmed by the user.
 - [Phase 1]: BACK-06/BACK-07 real-card smoke not run (user skip 2026-11-08); run the 01-17 checklist before those requirements close, at the latest during Phase 4 payment UAT.
@@ -499,6 +502,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-18T15:35:21.061Z
-Stopped at: Completed 07-09-PLAN.md
+Last session: 2026-11-19T04:30:00.000Z
+Stopped at: Phase 07 complete, ready to verify Phase 3 (Booked Sessions and Joining)
 Resume file: None

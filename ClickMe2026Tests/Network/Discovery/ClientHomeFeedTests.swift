@@ -301,12 +301,14 @@ struct ClientHomeFeedTests {
         #expect(viewModel.expertsState == .loaded)
     }
 
-    @Test("a failed reload clears stale featured topics and shows readable text")
-    func failedReloadClearsFeaturedTopics() async throws {
+    @Test("a failed refresh over loaded content keeps it on screen and reports the error in a toast (IN-11)")
+    func failedRefreshKeepsLoadedContent() async throws {
+        let toasts = ToastCenter(displayDuration: .seconds(60))
         let api = makeAPI(serving: HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic()]))
-        let viewModel = ExploreClientViewModel(api: api)
+        let viewModel = ExploreClientViewModel(api: api, toasts: toasts)
         await viewModel.load()
         #expect(viewModel.featuredTopics.count == 1)
+        #expect(toasts.current == nil)
 
         // A recommended expert with a bad id fails the whole decode.
         serve(HomeFeedFixture.envelope(
@@ -315,11 +317,55 @@ struct ClientHomeFeedTests {
         ))
         await viewModel.reload()
 
+        #expect(viewModel.categoriesState == .loaded)
+        #expect(viewModel.expertsState == .loaded)
+        #expect(viewModel.featuredTopicsState == .loaded)
+        #expect(viewModel.featuredTopics.count == 1)
+        #expect(viewModel.categories.count == 1)
+        #expect(viewModel.experts.count == 1)
+        #expect(toasts.current?.message == HomeFeedFixture.genericError)
+    }
+
+    @Test("a failed first load shows the failure in every section and no toast")
+    func failedFirstLoadShowsFailure() async throws {
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let api = makeAPI(serving: HomeFeedFixture.envelope(
+            featured: "[]",
+            experts: HomeFeedFixture.recommendedExpert(id: "not-a-uuid")
+        ))
+        let viewModel = ExploreClientViewModel(api: api, toasts: toasts)
+
+        await viewModel.load()
+
         let failed = LoadState.failed(HomeFeedFixture.genericError)
-        #expect(viewModel.featuredTopics.isEmpty)
         #expect(viewModel.categoriesState == failed)
         #expect(viewModel.expertsState == failed)
         #expect(viewModel.featuredTopicsState == failed)
+        #expect(viewModel.featuredTopics.isEmpty)
+        #expect(toasts.current == nil)
+    }
+
+    @Test("a category change that fails clears the stale featured topics and shows the failure in the sections")
+    func failedCategoryChangeReplacesContent() async throws {
+        let toasts = ToastCenter(displayDuration: .seconds(60))
+        let api = makeAPI(serving: HomeFeedFixture.envelope(topics: [HomeFeedFixture.topic()]))
+        let viewModel = ExploreClientViewModel(api: api, toasts: toasts)
+        await viewModel.load()
+        #expect(viewModel.featuredTopics.count == 1)
+
+        serve(HomeFeedFixture.envelope(
+            featured: "[]",
+            experts: HomeFeedFixture.recommendedExpert(id: "not-a-uuid")
+        ))
+        viewModel.applySelectedCategories(["technology"])
+        let failed = LoadState.failed(HomeFeedFixture.genericError)
+        await waitUntil("the filtered fetch to fail") { viewModel.expertsState == failed }
+
+        #expect(viewModel.categoriesState == failed)
+        #expect(viewModel.expertsState == failed)
+        #expect(viewModel.featuredTopicsState == failed)
+        #expect(viewModel.featuredTopics.isEmpty)
+        #expect(toasts.current == nil)
     }
 
     @Test("a cancelled reload keeps the featured topics and sets no failure")

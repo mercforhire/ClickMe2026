@@ -38,6 +38,7 @@ final class ExploreClientViewModel: ObservableObject {
 
     // MARK: Dependencies
     private let api: ClickMeAPI
+    private let toasts: ToastCenter
 
     /// Orders the `/client/home` fetches (WR-08). Each fetch takes the next value when it
     /// starts and applies its response only while it still holds the newest one, so a slower
@@ -46,8 +47,9 @@ final class ExploreClientViewModel: ObservableObject {
 
     // MARK: Inits
 
-    init(api: ClickMeAPI = .shared) {
+    init(api: ClickMeAPI = .shared, toasts: ToastCenter = .shared) {
         self.api = api
+        self.toasts = toasts
     }
 
     /// Preview seam — bypasses the network entirely and installs canned data
@@ -58,6 +60,7 @@ final class ExploreClientViewModel: ObservableObject {
         previewFeaturedTopics: [FeaturedTopic] = []
     ) {
         self.api = .shared
+        self.toasts = .shared
         self.categories = previewCategories
         self.experts = previewExperts
         self.featuredTopics = previewFeaturedTopics
@@ -82,7 +85,8 @@ final class ExploreClientViewModel: ObservableObject {
     /// runs in an unstructured `Task`, which is not a child of its caller, so
     /// that cancellation never reaches URLSession (G-04-3). Awaiting its value
     /// keeps the refresh spinner up until the fetch ends. Sections that already
-    /// show content keep it until the response replaces it.
+    /// show content keep it until the response replaces it, and also when the
+    /// refresh fails: the error then shows as a toast (IN-11).
     func load() async {
         await Task { await self.fetchHome(replacingLoadedContent: false) }.value
     }
@@ -134,11 +138,21 @@ final class ExploreClientViewModel: ObservableObject {
                 set(\.featuredTopicsState, to: Self.stateAfterCancelledFetch(current: featuredTopicsState, before: featuredBefore))
             } else {
                 let msg = error.userMessage
-                // Don't leave stale Featured Topics beside the section errors.
-                featuredTopics = []
-                categoriesState = .failed(msg)
-                expertsState = .failed(msg)
-                featuredTopicsState = .failed(msg)
+                // IN-11: a refresh over content that is on screen keeps it and reports the failure
+                // as a toast, so pulling to refresh offline does not replace the experts the user
+                // was looking at with a Retry card. A first load, a Retry and a category change
+                // (the content no longer matches the filter) still show the failure in the section.
+                let keepsCategories = !replacingLoadedContent && categoriesBefore == .loaded
+                let keepsExperts = !replacingLoadedContent && expertsBefore == .loaded
+                let keepsFeatured = !replacingLoadedContent && featuredBefore == .loaded
+                // Don't leave stale Featured Topics beside a section error.
+                if !keepsFeatured { featuredTopics = [] }
+                set(\.categoriesState, to: keepsCategories ? .loaded : .failed(msg))
+                set(\.expertsState, to: keepsExperts ? .loaded : .failed(msg))
+                set(\.featuredTopicsState, to: keepsFeatured ? .loaded : .failed(msg))
+                if keepsCategories || keepsExperts || keepsFeatured {
+                    toasts.show(msg, systemImage: "exclamationmark.triangle.fill")
+                }
             }
         }
 

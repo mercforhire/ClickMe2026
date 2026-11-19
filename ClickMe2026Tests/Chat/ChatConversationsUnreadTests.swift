@@ -479,6 +479,100 @@ struct ChatConversationsUnreadTests {
         #expect(viewModel.loadState == .loaded)
     }
 
+    /// A server whose first request is held on `gate` and lists A and B. Later requests list
+    /// thread C, except those whose number (1-based, in request order) is in `failing`, which
+    /// answer 500.
+    private static func makeFollowUpViewModel(gate: RequestGate, failing: ClosedRange<Int>) -> ChatConversationsViewModel {
+        let withC = ChatFixtures.threadsPage([
+            ChatFixtures.thread(id: threadC, partnerId: UUID(), partnerName: "Cara", unreadCount: 1),
+            ChatFixtures.thread(id: threadA, partnerId: peerA, partnerName: "Alice", unreadCount: 0)
+        ])
+        let api = APITestFactory.make { request in
+            // Requests run one at a time here, so the log's size is this request's number.
+            let number = chatsGets().count
+            gate.waitIfArmed()
+            if number == 1 { return ClientBookingFixtures.response(for: request, body: page()) }
+            if failing.contains(number) {
+                return ClientBookingFixtures.response(
+                    for: request,
+                    status: 500,
+                    body: ClientBookingFixtures.errorBody(code: "INTERNAL_ERROR", message: "Boom")
+                )
+            }
+            return ClientBookingFixtures.response(for: request, body: withC)
+        }
+        return ChatConversationsViewModel(api: api, currentUserId: { myId }, visibleThreadId: { nil })
+    }
+
+    @Test("a follow-up fetch that fails is retried by the next load() and then stops (IN-08)")
+    func failedFollowUpIsRetriedByNextLoad() async {
+        let gate = RequestGate()
+        let viewModel = Self.makeFollowUpViewModel(gate: gate, failing: 2...2)
+
+        gate.arm()
+        let load = Task { await viewModel.load() }
+        await waitUntil("the first GET /chats") { Self.chatsGets().count >= 1 }
+        viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
+        gate.open()
+        await load.value
+
+        // The follow-up ran and failed: the list is still the first response.
+        #expect(Self.chatsGets().count == 2)
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadA, Self.threadB])
+        #expect(viewModel.loadState == .loaded)
+
+        await viewModel.load()
+        #expect(Self.chatsGets().count == 3)
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
+
+        // The retry succeeded, so the flag is gone and a further load() is a no-op.
+        await viewModel.load()
+        #expect(Self.chatsGets().count == 3)
+    }
+
+    @Test("a retried follow-up that fails again waits for the next load() instead of looping (IN-08)")
+    func failedRetryDoesNotLoop() async {
+        let gate = RequestGate()
+        let viewModel = Self.makeFollowUpViewModel(gate: gate, failing: 2...3)
+
+        gate.arm()
+        let load = Task { await viewModel.load() }
+        await waitUntil("the first GET /chats") { Self.chatsGets().count >= 1 }
+        viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
+        gate.open()
+        await load.value
+        #expect(Self.chatsGets().count == 2)
+
+        await viewModel.load()
+        #expect(Self.chatsGets().count == 3)
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadA, Self.threadB])
+
+        // Still owed, one more attempt per load(), never a loop inside one call.
+        await viewModel.load()
+        #expect(Self.chatsGets().count == 4)
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
+    }
+
+    @Test("a pull-to-refresh after a failed follow-up covers it without an extra fetch (IN-08)")
+    func refreshCoversFailedFollowUp() async {
+        let gate = RequestGate()
+        let viewModel = Self.makeFollowUpViewModel(gate: gate, failing: 2...2)
+
+        gate.arm()
+        let load = Task { await viewModel.load() }
+        await waitUntil("the first GET /chats") { Self.chatsGets().count >= 1 }
+        viewModel.handleMessageNew(Self.event(thread: Self.threadC, sender: UUID()))
+        gate.open()
+        await load.value
+
+        await viewModel.reload()
+        #expect(Self.chatsGets().count == 3)
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadC, Self.threadA])
+
+        await viewModel.load()
+        #expect(Self.chatsGets().count == 3)
+    }
+
     @Test("a live message for an unknown thread before the first load started adds no request")
     func unknownThreadBeforeFirstLoadIsIgnored() async {
         let server = ChatsServer(Self.page())

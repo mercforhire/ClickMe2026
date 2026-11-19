@@ -56,7 +56,10 @@ final class ChatConversationsViewModel: ObservableObject {
     private var movedToTopDuringReload: [UUID] = []
 
     /// An unknown thread's message arrived while a load was running. That load's
-    /// response may predate the message, so one more fetch runs when it ends.
+    /// response may predate the message, so one more fetch runs when it ends. If that
+    /// follow-up fails, the flag is set again and the next `load()` or `silentReload()`
+    /// retries it once. Every fetch clears the flag when it starts, because it starts
+    /// after the message, so a failed retry is the only way the flag survives.
     private var needsReloadAfterLoad = false
 
     // MARK: Realtime
@@ -125,7 +128,11 @@ final class ChatConversationsViewModel: ObservableObject {
     /// clobbered.
     ///
     func load() async {
-        if case .loaded = loadState { return }
+        if case .loaded = loadState {
+            // A failed follow-up (IN-08) left a thread missing: retry it once.
+            if needsReloadAfterLoad { await silentReload() }
+            return
+        }
         await forceLoad()
     }
 
@@ -137,7 +144,8 @@ final class ChatConversationsViewModel: ObservableObject {
     /// — so the UI doesn't flash the full-screen spinner. Used when the
     /// user pops back from a chat and we want the row's last-message /
     /// unread-count to reflect their activity. Fetch failures leave the
-    /// existing list intact.
+    /// existing list intact. A failure also keeps a pending follow-up (see
+    /// `needsReloadAfterLoad`) pending, so the next load retries it.
     func silentReload() async {
         guard case .loaded = loadState else {
             // Nothing meaningful to preserve yet — fall through to the
@@ -145,12 +153,18 @@ final class ChatConversationsViewModel: ObservableObject {
             await forceLoad()
             return
         }
-        if let rows = try? await fetchChats() {
-            chats = rows
+        let followUpOwed = needsReloadAfterLoad
+        needsReloadAfterLoad = false
+        do {
+            chats = try await fetchChats()
+        } catch {
+            if followUpOwed { needsReloadAfterLoad = true }
         }
     }
 
     private func forceLoad() async {
+        // This fetch starts after any message that set the flag earlier, so it covers it.
+        needsReloadAfterLoad = false
         loadState = .loading
         do {
             chats = try await fetchChats()
@@ -161,7 +175,6 @@ final class ChatConversationsViewModel: ObservableObject {
             return
         }
         if needsReloadAfterLoad {
-            needsReloadAfterLoad = false
             await silentReload()
         }
     }

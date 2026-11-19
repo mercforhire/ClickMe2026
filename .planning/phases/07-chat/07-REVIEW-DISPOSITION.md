@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: WR-07
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "A live message without text content makes the late-reload overlay replace the server's newer preview with the stale local one (regression from the WR-05 fix)"
   - id: IN-06
     severity: info
@@ -71,16 +71,16 @@ findings:
     severity: warning
     disposition: fixed
     title: "Chats list reloads can overwrite local unread changes and double-fetch during the first load"
-open: 4
+open: 3
 total: 17
-recorded: 2026-11-19T03:48:58.980Z
+recorded: 2026-11-19T04:07:11.806Z
 ---
 
 # Phase 07: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-07 | warning | open | - |
+| WR-07 | warning | fixed | 07-REVIEW-FIX.md |
 | IN-06 | info | skipped | 07-REVIEW-FIX.md |
 | IN-08 | info | open | - |
 | IN-09 | info | open | - |

@@ -618,7 +618,7 @@ final class MakeABookingViewModel: ObservableObject {
             )
             paidStep = .collectingPaymentMethod
         } catch {
-            handlePaidFlowError(error, phase: .createIntent, topic: topic, slot: slot)
+            handlePaidFlowError(error, phase: .createIntent, slot: slot)
         }
     }
 
@@ -689,7 +689,7 @@ final class MakeABookingViewModel: ObservableObject {
             if BookingErrorMapper.code(for: error) != .paymentRequiresAction {
                 confirmPaymentMethodId = nil
             }
-            handlePaidFlowError(error, phase: .confirm, topic: attempt.topic, slot: attempt.slot)
+            handlePaidFlowError(error, phase: .confirm, slot: attempt.slot)
         case .outcomeUnknown:
             // D-03: keep every id and stay on `.confirming`. The hold may
             // exist, so the flow must not reset and the attempt id must not
@@ -727,7 +727,7 @@ final class MakeABookingViewModel: ObservableObject {
     /// Maps `ErrorCode` → user-visible message + side effects, per the
     /// backend Stripe integration doc. Codes without a specific action
     /// fall back to the server's `message`.
-    private func handlePaidFlowError(_ error: Error, phase: PaidPhase, topic: BookingTopic, slot: BookingTimeSlot) {
+    private func handlePaidFlowError(_ error: Error, phase: PaidPhase, slot: BookingTimeSlot) {
         let code = BookingErrorMapper.code(for: error)
         let message = error.userMessage
 
@@ -757,9 +757,13 @@ final class MakeABookingViewModel: ObservableObject {
             bookingError = BookingErrorMapper.message(for: code, fallback: message)
             resetPaidFlow()
 
-        case .intentExpired, .piContextMismatch, .piAmountMismatch:
+        case .intentExpired, .piContextMismatch, .piAmountMismatch, .piCurrencyMismatch:
             // PI is unusable. Regenerate attempt id and reset so the
-            // user can retry cleanly.
+            // user can retry cleanly. `PI_CURRENCY_MISMATCH` (409, topic currency
+            // changed after the PI was created) says "discard the PI and restart
+            // from /bookings/payment-intent" (backend STRIPE-INTEGRATION.md §6).
+            // The old attempt id would replay the same idempotency key with a
+            // different currency, which Stripe answers with BOOKING_ATTEMPT_CONFLICT.
             newBookingAttempt()
             bookingError = message
             resetPaidFlow()
@@ -855,7 +859,6 @@ final class MakeABookingViewModel: ObservableObject {
             }
             resetPaidFlow()
         }
-        _ = topic; _ = slot // reserved for future retry recovery
     }
 
     // MARK: - Date helpers

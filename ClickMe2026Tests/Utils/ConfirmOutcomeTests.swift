@@ -65,6 +65,12 @@ struct ConfirmOutcomeTests {
         #expect(ConfirmOutcome.classify(httpError(422, code: "INTENT_EXPIRED")) == .serverCoded)
     }
 
+    @Test("PI_CURRENCY_MISMATCH is one of the mapped codes, so a 5xx carrying it is server-coded")
+    func currencyMismatchIsMapped() {
+        #expect(ConfirmOutcome.explicitlyMappedCodes.contains(.piCurrencyMismatch))
+        #expect(ConfirmOutcome.classify(httpError(503, code: "PI_CURRENCY_MISMATCH")) == .serverCoded)
+    }
+
     @Test("Every explicitly mapped code stays server-coded on a 500")
     func mappedCodesStayCodedOn500() {
         for code in ConfirmOutcome.explicitlyMappedCodes {

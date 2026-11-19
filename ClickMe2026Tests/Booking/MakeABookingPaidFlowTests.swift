@@ -667,6 +667,35 @@ struct MakeABookingPaidFlowTests {
         #expect(!ledgerHolds(viewModel, start: start))
     }
 
+    @Test(
+        "A confirm that says the PaymentIntent is unusable ends the attempt and starts a new booking attempt",
+        arguments: [
+            (422, "INTENT_EXPIRED"),
+            (409, "PI_CONTEXT_MISMATCH"),
+            (409, "PI_AMOUNT_MISMATCH"),
+            (409, "PI_CURRENCY_MISMATCH"),
+        ]
+    )
+    func unusableIntentStartsNewAttempt(status: Int, code: String) async {
+        let viewModel = makeViewModel { _, request in
+            PaidFlowFixture.coded(request, status: status, code: code)
+        }
+        let attemptId = viewModel.bookingAttemptId
+        let start = ledgerKey(viewModel).start
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+
+        // One request: a coded answer is not retried.
+        #expect(confirmRequests().count == 1)
+        #expect(viewModel.bookingAttemptId != attemptId)
+        #expect(viewModel.paidAttempt == nil)
+        #expect(viewModel.confirmPaymentMethodId == nil)
+        #expect(viewModel.paidStep == .idle)
+        #expect(viewModel.bookingError?.contains("Payment reference") == false)
+        #expect(viewModel.bookingError != nil)
+        #expect(!ledgerHolds(viewModel, start: start))
+    }
+
     @Test("A 409 SLOT_UNAVAILABLE confirm keeps the record")
     func slotUnavailableKeepsRecord() async {
         let viewModel = makeViewModel { _, request in

@@ -35,6 +35,7 @@ enum ConfirmOutcome: Equatable {
         .intentExpired,
         .piContextMismatch,
         .piAmountMismatch,
+        .piCurrencyMismatch,
         .expertNotBookable,
         .longLeadRequiresSavedCard,
         .longLeadNotAvailable,

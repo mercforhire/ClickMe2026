@@ -44,6 +44,11 @@ final class ExpertProfileViewModel: ObservableObject {
     /// fails. Cleared when the alert dismisses.
     @Published var apiError: String?
 
+    /// Surfaced to the view for an alert when `POST /chats/initiate` fails, so a
+    /// Message tap never ends with no change on screen (WR-12). Kept apart from
+    /// `apiError`, whose alert is titled for favorites. Cleared when the alert dismisses.
+    @Published var messageError: String?
+
     /// Decided only by the details call; see `loadProfileDetails()`.
     @Published private(set) var loadState: ExpertProfileLoadState = .loading
 
@@ -296,6 +301,25 @@ final class ExpertProfileViewModel: ObservableObject {
                 isFavorited = previous
             }
             apiError = Self.message(for: error)
+        }
+    }
+
+    // MARK: - Messaging
+
+    /// Gets or creates the chat thread with this expert (`POST /chats/initiate`).
+    ///
+    /// - Returns: The thread id, or nil when there is nothing to open: the profile has no
+    ///   server id (preview data), the call failed (`messageError` then holds the text for
+    ///   the alert), or the task was cancelled (the screen went away, which is not an error).
+    func startChat() async -> UUID? {
+        guard let expertId = expert.expertId else { return nil }
+        messageError = nil
+        do {
+            return try await api.initiateChat(peerId: expertId).data.threadId
+        } catch {
+            guard !Self.isCancellation(error) else { return nil }
+            messageError = error.userMessage
+            return nil
         }
     }
 

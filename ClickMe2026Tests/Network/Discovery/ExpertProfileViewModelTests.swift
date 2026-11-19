@@ -224,6 +224,93 @@ struct ExpertProfileViewModelTests {
         #expect(!viewModel.isRetrying)
     }
 
+    // MARK: Message button (WR-12)
+
+    private static let threadId = UUID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!
+
+    private static func isInitiate(_ request: URLRequest) -> Bool {
+        request.httpMethod == "POST" && request.url?.path.hasSuffix("/chats/initiate") == true
+    }
+
+    @Test("startChat returns the thread id and leaves no error")
+    func startChatSucceeds() async {
+        let body = Data(#"{"status":"success","data":{"thread_id":"\#(Self.threadId.uuidString)"}}"#.utf8)
+        let viewModel = makeViewModel { request in
+            ProfileFixture.response(for: request, status: 201, body: body)
+        }
+
+        let threadId = await viewModel.startChat()
+
+        #expect(threadId == Self.threadId)
+        #expect(viewModel.messageError == nil)
+        #expect(requestCount(pathSuffix: "/chats/initiate") == 1)
+    }
+
+    @Test("startChat on a server error returns nil and sets the server message")
+    func startChatServerError() async {
+        let viewModel = makeViewModel { request in
+            ProfileFixture.response(for: request, status: 500, body: ProfileFixture.serverErrorBody)
+        }
+
+        let threadId = await viewModel.startChat()
+
+        #expect(threadId == nil)
+        #expect(viewModel.messageError == "Server exploded")
+        #expect(viewModel.apiError == nil)
+    }
+
+    @Test("startChat offline returns nil and sets a message")
+    func startChatOffline() async {
+        let viewModel = makeViewModel { _ in throw URLError(.notConnectedToInternet) }
+
+        let threadId = await viewModel.startChat()
+
+        #expect(threadId == nil)
+        #expect(viewModel.messageError?.isEmpty == false)
+    }
+
+    @Test("a cancelled startChat is not an error")
+    func startChatCancelledIsSilent() async {
+        let viewModel = makeViewModel { _ in throw URLError(.cancelled) }
+
+        let threadId = await viewModel.startChat()
+
+        #expect(threadId == nil)
+        #expect(viewModel.messageError == nil)
+    }
+
+    @Test("a later successful startChat clears the earlier error")
+    func startChatClearsEarlierError() async {
+        let viewModel = makeViewModel { request in
+            ProfileFixture.response(for: request, status: 500, body: ProfileFixture.serverErrorBody)
+        }
+        _ = await viewModel.startChat()
+        #expect(viewModel.messageError != nil)
+
+        let body = Data(#"{"status":"success","data":{"thread_id":"\#(Self.threadId.uuidString)"}}"#.utf8)
+        MockURLProtocol.handler = { request in
+            ProfileFixture.response(for: request, status: 201, body: body)
+        }
+        let threadId = await viewModel.startChat()
+
+        #expect(threadId == Self.threadId)
+        #expect(viewModel.messageError == nil)
+    }
+
+    @Test("startChat on a profile with no server id makes no request")
+    func startChatWithoutExpertId() async {
+        let api = APITestFactory.make { request in
+            ProfileFixture.response(for: request, status: 500, body: ProfileFixture.serverErrorBody)
+        }
+        let viewModel = ExpertProfileViewModel(expert: .placeholder, api: api)
+
+        let threadId = await viewModel.startChat()
+
+        #expect(threadId == nil)
+        #expect(viewModel.messageError == nil)
+        #expect(requestCount(pathSuffix: "/chats/initiate") == 0)
+    }
+
     // MARK: Re-load over a loaded profile (WR-09)
 
     @Test("a failed re-load keeps a loaded profile on screen")

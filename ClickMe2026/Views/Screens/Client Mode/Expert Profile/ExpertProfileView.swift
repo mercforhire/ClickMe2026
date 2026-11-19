@@ -335,6 +335,15 @@ struct ExpertProfileView: View {
         } message: { message in
             Text(message)
         }
+        .alert(
+            "Couldn't start chat",
+            isPresented: presenting(\.messageError),
+            presenting: viewModel.messageError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 
     /// The profile content, shown while loading (seeded) and once loaded.
@@ -432,29 +441,20 @@ struct ExpertProfileView: View {
     /// Message tap handler. Fires `onMessage` (caller escape hatch),
     /// then calls `POST /chats/initiate` to get or create a thread with
     /// this expert and asks the shell to open the Chats tab + push the
-    /// thread. Silently no-ops without an expertId (preview / placeholder
-    /// data) or when no ambient shell action is installed.
+    /// thread. No-ops without an expertId (preview / placeholder data) or when
+    /// no ambient shell action is installed. A failed call raises an alert.
     private func handleMessage() {
         onMessage()
-        guard let expertId = expert.expertId,
-              let openChatThread
-        else { return }
+        guard expert.expertId != nil, let openChatThread else { return }
 
         Task {
-            do {
-                let response = try await ClickMeAPI.shared.initiateChat(peerId: expertId)
-                openChatThread(
-                    threadId: response.data.threadId,
-                    peerName: expert.name,
-                    peerAvatarURL: expert.imageURL
-                )
-            } catch {
-                // Silent — the caller's expected UX is a thread appearing.
-                // On failure the user can retry from the Chats tab.
-                // TODO: surface via viewModel.apiError once we have a
-                // dedicated messaging error state distinct from favorite
-                // toggling.
-            }
+            // A failure raises the "Couldn't start chat" alert through `messageError` (WR-12).
+            guard let threadId = await viewModel.startChat() else { return }
+            openChatThread(
+                threadId: threadId,
+                peerName: expert.name,
+                peerAvatarURL: expert.imageURL
+            )
         }
     }
 }

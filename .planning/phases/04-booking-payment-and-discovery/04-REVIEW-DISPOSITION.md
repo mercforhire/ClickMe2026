@@ -5,67 +5,67 @@ titles: json
 findings:
   - id: WR-13
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "The Favorites revalidation flag can be set after the list has already reloaded, so the stale list returns in a narrow window"
   - id: WR-14
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "After `SLOT_UNAVAILABLE` the calendar is not reloaded, so the same taken slot stays tappable (Android reloads)"
   - id: WR-15
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "`HeldURLProtocol` keeps process-wide state that two separate suites reset, and a cancelled held request stays queued"
   - id: IN-10
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Explore's cancelled-fetch settle logic documents an invariant it does not hold, and is unreachable today"
   - id: IN-11
     severity: info
-    disposition: open
+    disposition: fixed
     title: "A failed pull-to-refresh wipes the Explore content that was on screen"
   - id: IN-12
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Two view models still carry a private copy of `Error.userMessage`"
   - id: IN-13
     severity: info
-    disposition: open
+    disposition: fixed
     title: "`PI_CURRENCY_MISMATCH` on confirm falls through to the default branch and keeps the stale attempt id"
   - id: IN-14
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Dead branch in `PaymentLifecycleCard.titleColor`"
   - id: IN-15
     severity: info
-    disposition: open
+    disposition: fixed
     title: "A cancelled first load shows as a failure in four view models"
   - id: IN-16
     severity: info
-    disposition: open
+    disposition: fixed
     title: "The paid attempt's snapshot reads the form after two awaits, and its lock starts one turn late"
   - id: IN-17
     severity: info
-    disposition: open
+    disposition: fixed
     title: "A slot kept across a reload can stay selected while the refreshed calendar shows it unavailable"
   - id: IN-18
     severity: info
-    disposition: open
+    disposition: fixed
     title: "The calendar adds a stray filler row for months that end exactly on a Saturday"
   - id: IN-19
     severity: info
-    disposition: open
+    disposition: fixed
     title: "A late details response can flip the heart back after the user has toggled it"
   - id: IN-20
     severity: info
-    disposition: open
+    disposition: fixed
     title: "`MockURLProtocol` is only partly thread-safe"
   - id: IN-21
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Async tests depend on a semaphore parked on the URL thread and on wall-clock polling"
   - id: IN-22
     severity: info
-    disposition: open
+    disposition: fixed
     title: "The Message button has no in-flight guard, so a double tap opens the chat twice"
   - id: CR-03
     severity: critical
@@ -163,31 +163,31 @@ findings:
     severity: info
     disposition: deferred
     title: "Wall-clock timing in the confirm-race tests can flake under load (new)"
-open: 16
+open: 0
 total: 40
-recorded: 2026-11-19T15:49:11.825Z
+recorded: 2026-11-19T16:46:05.346Z
 ---
 
 # Phase 04: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-13 | warning | open | - |
-| WR-14 | warning | open | - |
-| WR-15 | warning | open | - |
-| IN-10 | info | open | - |
-| IN-11 | info | open | - |
-| IN-12 | info | open | - |
-| IN-13 | info | open | - |
-| IN-14 | info | open | - |
-| IN-15 | info | open | - |
-| IN-16 | info | open | - |
-| IN-17 | info | open | - |
-| IN-18 | info | open | - |
-| IN-19 | info | open | - |
-| IN-20 | info | open | - |
-| IN-21 | info | open | - |
-| IN-22 | info | open | - |
+| WR-13 | warning | fixed | 04-REVIEW-FIX.md |
+| WR-14 | warning | fixed | 04-REVIEW-FIX.md |
+| WR-15 | warning | fixed | 04-REVIEW-FIX.md |
+| IN-10 | info | fixed | 04-REVIEW-FIX.md |
+| IN-11 | info | fixed | 04-REVIEW-FIX.md |
+| IN-12 | info | fixed | 04-REVIEW-FIX.md |
+| IN-13 | info | fixed | 04-REVIEW-FIX.md |
+| IN-14 | info | fixed | 04-REVIEW-FIX.md |
+| IN-15 | info | fixed | 04-REVIEW-FIX.md |
+| IN-16 | info | fixed | 04-REVIEW-FIX.md |
+| IN-17 | info | fixed | 04-REVIEW-FIX.md |
+| IN-18 | info | fixed | 04-REVIEW-FIX.md |
+| IN-19 | info | fixed | 04-REVIEW-FIX.md |
+| IN-20 | info | fixed | 04-REVIEW-FIX.md |
+| IN-21 | info | fixed | 04-REVIEW-FIX.md |
+| IN-22 | info | fixed | 04-REVIEW-FIX.md |
 | CR-03 | critical | fixed | 04-REVIEW-FIX.md (not in the current review) |
 | WR-08 | warning | fixed | 04-REVIEW-FIX.md (not in the current review) |
 | WR-09 | warning | fixed | 04-REVIEW-FIX.md (not in the current review) |

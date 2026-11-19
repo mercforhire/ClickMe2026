@@ -27,6 +27,10 @@ struct ConfirmRetryPolicy {
     /// The wait before each retry. `delays.count` is the number of retries.
     let delays: [Duration]
 
+    /// How one delay is waited out. A test seam: tests pass a gate they open themselves, so a
+    /// retry never depends on a wall-clock delay (IN-21). Production sleeps for the delay.
+    var wait: (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+
     /// One attempt plus two automatic retries, 2 s then 4 s apart.
     static let standard = ConfirmRetryPolicy(delays: [.seconds(2), .seconds(4)])
 
@@ -50,7 +54,7 @@ struct ConfirmRetryPolicy {
                     guard let delay = remainingDelays.popFirst() else {
                         return .outcomeUnknown(error)
                     }
-                    try? await Task.sleep(for: delay)
+                    await wait(delay)
                 }
             }
         }

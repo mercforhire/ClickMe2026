@@ -1241,30 +1241,53 @@ struct MakeABookingPaidFlowTests {
         #expect(expired.paidAttempt == nil)
     }
 
-    /// A view model whose first confirm times out and whose second answers 201,
-    /// with its first confirm running (one request recorded, `isConfirmRunning`)
-    /// and waiting 500 ms before the automatic retry. The handler is never
-    /// blocked: the wait is the retry delay, a `Task.sleep` on the main actor.
-    private func startSlowConfirm() async throws -> (MakeABookingViewModel, Task<Void, Never>) {
-        let viewModel = makeViewModel(timingOut: 1)
-        viewModel.confirmRetryPolicy = ConfirmRetryPolicy(delays: [.milliseconds(500), .zero])
-        let run = Task { await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId) }
-        for _ in 0 ..< 150 where !(confirmRequests().count == 1 && viewModel.isConfirmRunning) {
-            try? await Task.sleep(for: .milliseconds(20))
+    /// The wait before the automatic retry. The retry runs only after `open()`, so a test acts while
+    /// the first confirm has failed and the retry is pending, with no wall-clock delay involved.
+    @MainActor
+    private final class RetryGate {
+        private var waiter: CheckedContinuation<Void, Never>?
+        private var isOpen = false
+        private(set) var isWaiting = false
+
+        func wait() async {
+            if isOpen { return }
+            await withCheckedContinuation { continuation in
+                waiter = continuation
+                isWaiting = true
+            }
         }
+
+        func open() {
+            isOpen = true
+            isWaiting = false
+            waiter?.resume()
+            waiter = nil
+        }
+    }
+
+    /// A view model whose first confirm times out and whose second answers 201, with its first
+    /// confirm run (one request recorded, `isConfirmRunning`) and the automatic retry waiting for
+    /// `gate`. The handler is never blocked.
+    private func startSlowConfirm() async throws -> (MakeABookingViewModel, Task<Void, Never>, RetryGate) {
+        let viewModel = makeViewModel(timingOut: 1)
+        let gate = RetryGate()
+        viewModel.confirmRetryPolicy = ConfirmRetryPolicy(delays: [.seconds(2), .zero], wait: { _ in await gate.wait() })
+        let run = Task { await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId) }
+        try #require(await waitUntil("the first confirm to fail and the retry to wait") { gate.isWaiting })
         try #require(confirmRequests().count == 1)
         try #require(viewModel.isConfirmRunning)
-        return (viewModel, run)
+        return (viewModel, run, gate)
     }
 
     @Test("A form edit while a confirm runs changes nothing the confirm or its retry sends")
     func formEditWhileConfirmRunsKeepsRequest() async throws {
-        let (viewModel, run) = try await startSlowConfirm()
+        let (viewModel, run, gate) = try await startSlowConfirm()
         let slot = try #require(viewModel.selectedTimeSlot)
 
         changeForm(viewModel)
         try #require(confirmRequests().count == 1)
 
+        gate.open()
         await run.value
 
         let requests = confirmRequests()
@@ -1280,7 +1303,7 @@ struct MakeABookingPaidFlowTests {
 
     @Test("A second confirm cannot start while one runs")
     func secondConfirmWhileRunningIsRejected() async throws {
-        let (viewModel, run) = try await startSlowConfirm()
+        let (viewModel, run, gate) = try await startSlowConfirm()
 
         await viewModel.retryConfirm()
         await viewModel.completePaidBooking(paymentMethodId: "pm_other")
@@ -1288,6 +1311,7 @@ struct MakeABookingPaidFlowTests {
         #expect(confirmRequests().count == 1)
         #expect(viewModel.confirmPaymentMethodId == PaidFlowFixture.paymentMethodId)
 
+        gate.open()
         await run.value
 
         let requests = confirmRequests()

@@ -3,6 +3,78 @@ phase: 04
 review: 04-REVIEW.md
 titles: json
 findings:
+  - id: CR-03
+    severity: critical
+    disposition: open
+    title: "The 3DS retry sends the connected-account clone's `pm_` id, so a card that needs 3DS ends with a hold and no booking (needs device verification, touches payment state)"
+  - id: WR-08
+    severity: warning
+    disposition: open
+    title: "Overlapping `/client/home` fetches race, and the last response to land wins regardless of the filter"
+  - id: WR-09
+    severity: warning
+    disposition: open
+    title: "A failed re-load replaces an already-loaded expert profile with the full-screen error"
+  - id: WR-10
+    severity: warning
+    disposition: open
+    title: "Returning to Make a Booking re-runs the load and silently clears the chosen slot (needs device verification)"
+  - id: WR-11
+    severity: warning
+    disposition: open
+    title: "Favorites list goes stale after an unfavorite from the profile, and a refresh can undo an optimistic remove"
+  - id: WR-12
+    severity: warning
+    disposition: open
+    title: "The Message button drops a failed chat start with no feedback"
+  - id: IN-10
+    severity: info
+    disposition: open
+    title: "Explore's cancelled-fetch settle logic documents an invariant it does not hold, and is unreachable today"
+  - id: IN-11
+    severity: info
+    disposition: open
+    title: "A failed pull-to-refresh wipes the Explore content that was on screen"
+  - id: IN-12
+    severity: info
+    disposition: open
+    title: "Two view models still carry a private copy of `Error.userMessage`"
+  - id: IN-13
+    severity: info
+    disposition: open
+    title: "`PI_CURRENCY_MISMATCH` on confirm falls through to the default branch and keeps the stale attempt id"
+  - id: IN-14
+    severity: info
+    disposition: open
+    title: "Dead branch in `PaymentLifecycleCard.titleColor`"
+  - id: IN-15
+    severity: info
+    disposition: open
+    title: "A cancelled first load shows as a failure in four view models"
+  - id: IN-16
+    severity: info
+    disposition: open
+    title: "The paid attempt's snapshot reads the form after two awaits, and its lock starts one turn late"
+  - id: IN-17
+    severity: info
+    disposition: open
+    title: "A slot kept across a reload can stay selected while the refreshed calendar shows it unavailable"
+  - id: IN-18
+    severity: info
+    disposition: open
+    title: "The calendar adds a stray filler row for months that end exactly on a Saturday"
+  - id: IN-19
+    severity: info
+    disposition: open
+    title: "A late details response can flip the heart back after the user has toggled it"
+  - id: IN-20
+    severity: info
+    disposition: open
+    title: "`MockURLProtocol` is only partly thread-safe"
+  - id: IN-21
+    severity: info
+    disposition: open
+    title: "Async tests depend on a semaphore parked on the URL thread and on wall-clock polling"
   - id: WR-01
     severity: warning
     disposition: open
@@ -75,22 +147,40 @@ findings:
     severity: info
     disposition: open
     title: "Wall-clock timing in the confirm-race tests can flake under load (new)"
-open: 14
-total: 18
-recorded: 2026-11-13T04:39:32.935Z
+open: 32
+total: 36
+recorded: 2026-11-19T05:32:51.569Z
 ---
 
 # Phase 04: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | open | - |
-| WR-02 | warning | open | - |
-| WR-03 | warning | open | - |
-| IN-01 | info | open | - |
-| IN-02 | info | open | - |
-| IN-03 | info | open | - |
-| IN-04 | info | open | - |
+| CR-03 | critical | open | - |
+| WR-08 | warning | open | - |
+| WR-09 | warning | open | - |
+| WR-10 | warning | open | - |
+| WR-11 | warning | open | - |
+| WR-12 | warning | open | - |
+| IN-10 | info | open | - |
+| IN-11 | info | open | - |
+| IN-12 | info | open | - |
+| IN-13 | info | open | - |
+| IN-14 | info | open | - |
+| IN-15 | info | open | - |
+| IN-16 | info | open | - |
+| IN-17 | info | open | - |
+| IN-18 | info | open | - |
+| IN-19 | info | open | - |
+| IN-20 | info | open | - |
+| IN-21 | info | open | - |
+| WR-01 | warning | open | - (not in the current review) |
+| WR-02 | warning | open | - (not in the current review) |
+| WR-03 | warning | open | - (not in the current review) |
+| IN-01 | info | open | - (not in the current review) |
+| IN-02 | info | open | - (not in the current review) |
+| IN-03 | info | open | - (not in the current review) |
+| IN-04 | info | open | - (not in the current review) |
 | CR-01 | critical | fixed | plan 04-15 (6184f6c, 50f55de, 2baa72d) (not in the current review) |
 | CR-02 | critical | fixed | plan 04-16 (backend 28da165, deployed) (not in the current review) |
 | WR-04 | warning | open | - (not in the current review) |

@@ -54,3 +54,9 @@ skipped: 0
 blocked: 0
 
 ## Gaps
+
+## Deferred Follow-Ups
+
+- test: 4
+  idea: "VoiceOver pass not run (checklist item 12, the VoiceOver parts of items 3 and 4, and the IN-04 check that a delivered bubble is not read as pending); run it on a device later."
+  deferred_at: 2026-11-19

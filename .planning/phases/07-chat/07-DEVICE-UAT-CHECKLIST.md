@@ -66,7 +66,7 @@ Expected:
 
 Also look at (07-02 device observations, answer in the Result line): (a) the Sending to Failed change no longer cross-fades the status line, because the Failed bubble is a different view; is that acceptable? (b) tapping the red glyph itself does nothing (it sits outside the tap target); is that acceptable?
 
-Result:
+Result: PASS (2026-11-19; on a fresh build from main, 500c9a1. (a) no cross-fade is acceptable; (b) the glyph not being tappable is acceptable)
 
 ### 2. C1 (second half), D1 — Retry delivers exactly once; Delete needs no prompt; failed bubbles do not survive a reopen (07-02)
 
@@ -81,7 +81,7 @@ Expected:
 - The Failed bubble group is comfortably tappable.
 - Judge the wait too: while the network was dead, how long did a send stay on `Sending…` before it turned Failed? Record your answer in judgement item 15.
 
-Result:
+Result: PASS (2026-11-19; airplane-mode send stayed on Sending about 1 s)
 
 ### 3. C2, OV2 (counter) — the composer stops at 10,000, the counter shows from 9,000 (07-02)
 
@@ -95,7 +95,7 @@ Expected:
 - Send still works at exactly 10,000.
 - With VoiceOver on, typing up to the cap announces `Message length limit reached` once, not on every key; below the cap the counter is silent, at the cap it reads `{n} of 10,000 characters`.
 
-Result:
+Result: PASS (2026-11-19; VoiceOver part not run, at the user's request)
 
 ### 4. C3 (profile part) — Block from the Expert Profile asks first, blocks without leaving the profile (07-06)
 
@@ -109,7 +109,7 @@ Expected:
 - On Phone 2 the thread shows `You can't reply to this conversation`, there is no Unblock anywhere, and the menu entries are `View Profile` and `Report` only.
 - If the block fails (try airplane mode once), the alert `Couldn't block user` shows and no toast appears.
 
-Result:
+Result: PASS (2026-11-19; VoiceOver repeat with the second test client not run, at the user's request)
 
 ### 5. C7, D4, A12 — the profile toast is not hidden behind the tab bar or the home indicator (07-06)
 
@@ -119,7 +119,7 @@ Steps: during item 4, when `You blocked {name}` appears, look at where it sits o
 
 Expected: the toast is fully visible above the tab bar and the home indicator, wrapped and readable. UI-SPEC A12 accepts that the toast may float slightly higher than needed if the profile hides the tab bar; whether that looks acceptable is judgement item 17.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 6. C3 and C4 (card part), D2, A13 — the Block & Report screen on each side, and the report (07-05)
 
@@ -136,7 +136,7 @@ Expected:
 - **UI-SPEC A13 verification row:** the reason picker lists, in this order, `Harassment or abuse`, `Spam`, `Inappropriate content`, `Scam or fraud`, `Impersonation`, `Something else`, with nothing preselected. You confirmed this list on 2026-11-17 (07-CONTEXT D-09 note), so this is a plain check with no KEEP or CHANGE question.
 - Description stops at 1,000 characters with the counter at `1000/1000`; the report submits and shows the submitted state. A failed submit (try airplane mode) shows `Couldn't send report`.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 7. C4 (banner), D2 — the blocker sees Unblock on the thread banner, the blocked side never does (07-04)
 
@@ -150,7 +150,7 @@ Expected:
 - Tapping `Unblock` shows a spinner labelled `Unblocking`, then brings back an empty, unfocused composer with a short fade. Both phones can send again.
 - A thread blocked before this build existed (a legacy block with no recorded blocker, if you have one) shows "can't reply" with no Unblock on either phone.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 8. C5, OV2 — a send refused because the thread was blocked while it was open (07-04)
 
@@ -160,7 +160,7 @@ Steps: with Phone 2 (test expert) on the thread, composer showing and keyboard u
 
 Expected: the message bubble disappears, the text returns to the composer, the banner `You can't reply to this conversation` replaces the composer, the keyboard hides, no alert appears, and with VoiceOver on the banner title is announced once. Unblock again when done.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 9. C6 (open-clears part), CHAT-05, CHAT-06 — push open, Load earlier, a brand-new thread (07-03)
 
@@ -173,7 +173,7 @@ Expected:
 - `Load earlier` never shows a message twice, and older messages appear above the newer ones.
 - On the brand-new thread `View Profile` is enabled right away and Phone 2 sees Phone 1 typing as soon as Phone 1 types.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 10. C6 (pill part), D3, A9 — the unread pill counts, caps and clears live (07-07)
 
@@ -188,7 +188,7 @@ Expected:
 - There is no badge on the Chats tab icon and no `Blocked` label on any row.
 - Your own messages never add to a count.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 11. C6 (CHAT-08 regression), D3 — the sender sees `· Read` live (D-17)
 
@@ -200,7 +200,7 @@ Expected: Phone 1 sees `· Read` appear on the message live, with no reload or r
 
 If this fails: start with the backend `message.read` delivery, not the iOS handler. Check room membership (is Phone 1 in the thread's socket room), the emit target (does the server send `message.read` to the sender), and the thread id and message ids in the event. The sender-side handler (`ChattingViewModel.handleMessageRead`) is byte-identical to the phase base, so a failure here is a regression of the shipped behavior or a backend problem, not a Phase 7 edit to that handler.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 12. C8, D5 — VoiceOver on the failed bubble, the counter, the banner and a row with an unread count (07-02, 07-04, 07-06, 07-07)
 
@@ -215,7 +215,8 @@ Expected:
 - Profile overlay: `Blocking`, with the screen behind it hidden from VoiceOver until the request ends; the toast is announced once, not twice.
 - Chats row: one element reading `{name}. {n} unread messages. {preview}. {time}` (`1 unread message` for one, `More than 99 unread messages` above 99, `Online.` appended when online).
 
-Result:
+Result: skipped
+reason: "Deferred follow-up: VoiceOver pass not run during the 2026-11-19 UAT, at the user's request. Covers item 12 plus the VoiceOver parts of items 3 and 4 and the IN-04 pending-label check; to be run on a device later."
 
 ### 13. C9, LT3 — largest Dynamic Type: the banner stacks, nothing truncates (07-04)
 
@@ -229,7 +230,7 @@ Expected:
 - The block card body wraps without truncation.
 - The unread pill grows with the text and never truncates; the preview line truncates instead.
 
-Result:
+Result: PASS (2026-11-19)
 
 ### 14. C10, D-18 — the expert opens a chat booking row (07-09)
 
@@ -241,7 +242,7 @@ After step (only if plan 07-09 changed the route; install a build at or after it
 
 07-09 outcome: reproduced. On 2026-11-18 the user ran the "before" step on App Store build 6 as the test expert (chat booking row) and reported "reproduced" at the plan's decision checkpoint: the row opened the wrong screen or failed to load. Plan 07-09 then changed the route in commit `491b600`: in the expert shell a booking row opens the expert Booking Summary for active and finished bookings alike; the client shell is unchanged. The "after" step (a build at or after `491b600`, as the test expert, then as the test client) has not been run on a device yet.
 
-Result:
+Result: PASS (2026-11-19; after step on a build at or after 491b600)
 
 ### 15. Judgement — Open Question 3: how long a send may stay on `Sending…` on a dead network (07-RESEARCH)
 
@@ -251,7 +252,7 @@ Context: the request timeout is 120 s, so on a network that drops packets withou
 
 Answer: `KEEP` or `CHANGE (what)`. A `CHANGE` answer becomes a follow-up todo, not a Phase 7 change.
 
-Result:
+Result: PASS - KEEP (2026-11-19; the 120 s timeout stays)
 
 ### 16. Judgement — research A4: a count may reappear briefly after a very quick pop (07-07)
 
@@ -263,7 +264,7 @@ Steps: open a thread that has an unread pill from item 10 and go back within a s
 
 Answer: `KEEP` or `CHANGE (what)`.
 
-Result:
+Result: PASS - KEEP (2026-11-19)
 
 ### 17. Judgement — UI-SPEC A12: toast height on the profile (07-06)
 
@@ -273,7 +274,7 @@ Context: `ToastHost` is built for a screen with the tab bar visible and adds 49 
 
 Answer: `KEEP` or `CHANGE (what)`.
 
-Result:
+Result: PASS - KEEP (2026-11-19)
 
 ### 18. PO1 — every delta in its normal filled state (backstop sweep)
 
@@ -283,4 +284,4 @@ Steps: after items 1 to 17, take one last look, on Phone 1 and Phone 2, at each 
 
 Expected: each looks like the UI-SPEC describes (accent only on the Unblock capsule and the pill, red only on the failed state, the counter at the cap and destructive actions), nothing overlaps or clips at the default text size, and the dark appearance and nav bars match the rest of the app. Unblock every thread you blocked.
 
-Result:
+Result: PASS (2026-11-19)

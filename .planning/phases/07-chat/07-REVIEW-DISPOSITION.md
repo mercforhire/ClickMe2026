@@ -3,17 +3,13 @@ phase: 07
 review: 07-REVIEW.md
 titles: json
 findings:
-  - id: WR-07
-    severity: warning
-    disposition: fixed
-    title: "A live message without text content makes the late-reload overlay replace the server's newer preview with the stale local one (regression from the WR-05 fix)"
   - id: IN-06
     severity: info
     disposition: skipped
     title: "The \"unavailable\" banner does not tell the user that pull-to-refresh retries"
   - id: IN-08
     severity: info
-    disposition: open
+    disposition: fixed
     title: "The WR-06 follow-up fetch swallows its own failure"
   - id: IN-09
     severity: info
@@ -21,8 +17,12 @@ findings:
     title: "iOS and Android now differ on 408 and 429 for a failed chat send"
   - id: IN-10
     severity: info
-    disposition: open
+    disposition: fixed
     title: "Recorded row changes are not scoped to the reloads that started before them"
+  - id: WR-07
+    severity: warning
+    disposition: fixed
+    title: "A live message without text content makes the late-reload overlay replace the server's newer preview with the stale local one (regression from the WR-05 fix)"
   - id: WR-05
     severity: warning
     disposition: fixed
@@ -71,20 +71,20 @@ findings:
     severity: warning
     disposition: fixed
     title: "Chats list reloads can overwrite local unread changes and double-fetch during the first load"
-open: 3
+open: 1
 total: 17
-recorded: 2026-11-19T04:07:11.806Z
+recorded: 2026-11-19T04:27:21.840Z
 ---
 
 # Phase 07: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-07 | warning | fixed | 07-REVIEW-FIX.md |
 | IN-06 | info | skipped | 07-REVIEW-FIX.md |
-| IN-08 | info | open | - |
+| IN-08 | info | fixed | 07-REVIEW-FIX.md |
 | IN-09 | info | open | - |
-| IN-10 | info | open | - |
+| IN-10 | info | fixed | 07-REVIEW-FIX.md |
+| WR-07 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
 | WR-05 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
 | WR-06 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
 | IN-01 | info | fixed | 07-REVIEW-FIX.md (not in the current review) |

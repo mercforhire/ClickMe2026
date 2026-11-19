@@ -39,6 +39,11 @@ final class ExploreClientViewModel: ObservableObject {
     // MARK: Dependencies
     private let api: ClickMeAPI
 
+    /// Orders the `/client/home` fetches (WR-08). Each fetch takes the next value when it
+    /// starts and applies its response only while it still holds the newest one, so a slower
+    /// response for an older filter can never overwrite a newer one.
+    private var fetchGeneration = 0
+
     // MARK: Inits
 
     init(api: ClickMeAPI = .shared) {
@@ -89,10 +94,15 @@ final class ExploreClientViewModel: ObservableObject {
     ///   response replaces it. When `true` (a category change), every section shows
     ///   its skeleton, because the loaded experts no longer match the new filter.
     private func fetchHome(replacingLoadedContent: Bool) async {
+        fetchGeneration += 1
+        let generation = fetchGeneration
         // What each section showed before this fetch, for a cancelled fetch to restore.
-        let categoriesBefore = categoriesState
-        let expertsBefore = expertsState
-        let featuredBefore = featuredTopicsState
+        // An older fetch that left a section `.loading` is superseded and never settles it,
+        // so this fetch cannot hand the section back to it: that state restores as `.idle`.
+        func restorable(_ state: LoadState) -> LoadState { state == .loading ? .idle : state }
+        let categoriesBefore = restorable(categoriesState)
+        let expertsBefore = restorable(expertsState)
+        let featuredBefore = restorable(featuredTopicsState)
         // Assign only when the value changes, so a refresh over loaded content publishes nothing.
         func begin(_ state: LoadState) -> LoadState {
             (state == .loaded && !replacingLoadedContent) ? state : .loading
@@ -107,6 +117,8 @@ final class ExploreClientViewModel: ObservableObject {
             let response = try await api.getClientHome(
                 categorySlugs: selectedCategorySlugs.isEmpty ? nil : selectedCategorySlugs.sorted()
             )
+            // A newer fetch owns the screen. Its own response settles every section.
+            guard generation == fetchGeneration else { return }
             categories = response.data.trendingCategories.map(Self.mapCategory)
             experts = response.data.recommendedExperts.map(Self.mapExpert)
             featuredTopics = (response.data.featuredTopics ?? []).map(Self.mapFeaturedTopic)
@@ -115,6 +127,7 @@ final class ExploreClientViewModel: ObservableObject {
             expertsState = .loaded
             featuredTopicsState = .loaded
         } catch {
+            guard generation == fetchGeneration else { return }
             // A cancelled fetch (`URLError.cancelled` or `CancellationError`) is not a
             // failure. Since `load()` shields the fetch, only the URL loading system can
             // still cancel it, and no other fetch is guaranteed to follow. The old revert
@@ -138,6 +151,7 @@ final class ExploreClientViewModel: ObservableObject {
             }
         }
 
+        guard generation == fetchGeneration else { return }
         await loadTodaysSessions()
     }
 

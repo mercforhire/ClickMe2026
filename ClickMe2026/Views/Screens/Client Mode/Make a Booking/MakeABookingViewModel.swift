@@ -357,11 +357,16 @@ final class MakeABookingViewModel: ObservableObject {
     /// is still the displayed month, so a slower older month never lands on
     /// top of a newer one. A cancelled or superseded request is not a
     /// failure and never sets `.failed`; the newest load owns the state.
-    func loadAvailability(for month: Date) async {
+    ///
+    /// - Parameter keepVisible: When `true` the calendar stays on screen while the request
+    ///   runs, instead of switching to the skeleton. The reload after a taken slot uses it
+    ///   (Android `loadAvailability(keepVisible = true)`).
+    func loadAvailability(for month: Date, keepVisible: Bool = false) async {
         let token = availabilityGate.begin()
-        availabilityState = .loading
-        // The chosen slot is not cleared here (WR-10). Only a month change clears it,
-        // because a reload of the same month must not drop a choice the user made.
+        if !keepVisible { availabilityState = .loading }
+        // A reload of the same month does not drop a choice the user made (WR-10); only a month
+        // change clears it. After the response lands, `reconcileSelectedSlot()` drops a choice the
+        // refreshed calendar no longer offers (IN-17).
 
         // Center month — surfaces the error if this one fails.
         let center: SuccessDataResponse<ExpertAvailabilityData>
@@ -401,6 +406,38 @@ final class MakeABookingViewModel: ObservableObject {
         expertTimezone = center.data.expertTimezone
         availabilityByDate = merged
         availabilityState = .loaded
+        reconcileSelectedSlot()
+    }
+
+    /// IN-17: after a calendar load, a selected slot must still be offered by it. A slot the
+    /// refreshed calendar lacks, or marks unavailable (held, or taken by another client), is
+    /// dropped, so the summary and `canBook` never keep a slot the chips show as disabled. A
+    /// slot that is still offered is replaced by the refreshed copy, so the chip stays selected
+    /// (the chip compares the whole slot). An attempt in flight keeps its slot (CR-01): the
+    /// confirm reads `paidAttempt`, and if the slot has really gone the server says so.
+    private func reconcileSelectedSlot() {
+        guard !isSubmitting, let slot = selectedTimeSlot else { return }
+        let offered = availabilityByDate[Self.dateKey(slot.startTime, calendar: calendar)]?
+            .first { $0.startTime == slot.startTime && $0.isAvailable }
+        if let offered {
+            if offered != slot { selectedTimeSlot = offered }
+        } else {
+            selectedTimeSlot = nil
+        }
+    }
+
+    /// WR-14: the slot the user chose was taken (409 `SLOT_UNAVAILABLE`), so the calendar still
+    /// offers a chip the server refuses. Reloads it, as Android's `clearSlotAndReload` does. The
+    /// calendar stays visible while the request runs.
+    private func reloadAvailabilityAfterSlotTaken() {
+        availabilityTask?.cancel()
+        availabilityTask = Task { await loadAvailability(for: displayedMonth, keepVisible: true) }
+    }
+
+    /// Waits for the load that a month change or a taken slot started. A test seam: the load runs in
+    /// an unstructured `Task`, so a test awaits it here instead of polling.
+    func finishAvailabilityLoad() async {
+        await availabilityTask?.value
     }
 
     // MARK: - Month navigation
@@ -512,8 +549,10 @@ final class MakeABookingViewModel: ObservableObject {
             let code = BookingErrorMapper.code(for: error)
             if code == .slotUnavailable {
                 // Same side effect as the paid path: send the user back to
-                // the slot picker, the slot they chose is gone.
+                // the slot picker, the slot they chose is gone, and refresh
+                // the calendar so its chip stops offering it (WR-14).
                 selectedTimeSlot = nil
+                reloadAvailabilityAfterSlotTaken()
             }
             bookingError = BookingErrorMapper.message(for: code, fallback: error.userMessage)
         }
@@ -743,6 +782,8 @@ final class MakeABookingViewModel: ObservableObject {
             selectedTimeSlot = nil
             newBookingAttempt()
             resetPaidFlow()
+            // WR-14: the calendar still offers the taken slot; reload it (Android `clearSlotAndReload`).
+            reloadAvailabilityAfterSlotTaken()
             // D-04: when a confirm of ours for this expert and slot may have
             // succeeded, "taken" could be the client's own booking, so say so
             // and point to My Bookings. The record stays. The alert is set after

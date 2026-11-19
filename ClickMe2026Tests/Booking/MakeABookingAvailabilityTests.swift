@@ -25,6 +25,20 @@ private final class RequestCounter: @unchecked Sendable {
     }
 }
 
+/// What the mocked calendar says about the slot on the 15th. Changed between loads (under a lock,
+/// because the handler runs on a URL loading thread).
+private final class SlotMode: @unchecked Sendable {
+    enum Kind { case available, held, absent }
+
+    private let lock = NSLock()
+    private var kind = Kind.available
+
+    var value: Kind {
+        get { lock.withLock { kind } }
+        set { lock.withLock { kind = newValue } }
+    }
+}
+
 private enum AvailabilityFixture {
     static let serverText = "availability exploded"
 
@@ -38,13 +52,29 @@ private enum AvailabilityFixture {
 
     /// `ExpertAvailabilityData` body for `month`: `expert_timezone` is
     /// `Zone/<tag>` and the single available slot is on the 15th at 15:00 UTC.
-    nonisolated static func availabilityBody(month: String, zoneTag: String) -> Data {
-        Data("""
+    nonisolated static func availabilityBody(
+        month: String,
+        zoneTag: String,
+        slot: SlotMode.Kind = .available
+    ) -> Data {
+        let slots = switch slot {
+        case .available:
+            """
+            {"start_utc":"\(month)-15T15:00:00.000Z","end_utc":"\(month)-15T15:30:00.000Z",\
+            "available":true,"held":false}
+            """
+        case .held:
+            """
+            {"start_utc":"\(month)-15T15:00:00.000Z","end_utc":"\(month)-15T15:30:00.000Z",\
+            "available":false,"held":true}
+            """
+        case .absent:
+            ""
+        }
+        return Data("""
         {"status":"success","data":{
           "expert_timezone":"Zone/\(zoneTag)","client_timezone":"UTC","month":"\(month)",
-          "days":[{"date":"\(month)-15","slots":[
-            {"start_utc":"\(month)-15T15:00:00.000Z","end_utc":"\(month)-15T15:30:00.000Z",
-             "available":true,"held":false}]}]}}
+          "days":[{"date":"\(month)-15","slots":[\(slots)]}]}}
         """.utf8)
     }
 
@@ -197,5 +227,86 @@ struct MakeABookingAvailabilityTests {
         await viewModel.loadAvailability(for: viewModel.displayedMonth)
 
         #expect(viewModel.availabilityState == .failed(AvailabilityFixture.serverText))
+    }
+
+    // MARK: - A kept slot must still be offered (IN-17)
+
+    /// A view model whose calendar has loaded once with the slot available and whose displayed
+    /// month's slot is selected. `mode` shapes every later load.
+    private func loadedViewModel(mode: SlotMode) async throws -> (MakeABookingViewModel, BookingTimeSlot) {
+        let api = APITestFactory.make { request in
+            let month = AvailabilityFixture.requestedMonth(request)
+            return AvailabilityFixture.ok(
+                request,
+                body: AvailabilityFixture.availabilityBody(month: month, zoneTag: month, slot: mode.value)
+            )
+        }
+        let viewModel = makeViewModel(api: api)
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+        let slot = try #require(viewModel.availabilityByDate.values.flatMap { $0 }.first {
+            viewModel.calendar.isDate($0.startTime, equalTo: viewModel.displayedMonth, toGranularity: .month)
+        })
+        viewModel.selectedTimeSlot = slot
+        return (viewModel, slot)
+    }
+
+    @Test("A reload that still offers the selected slot keeps it selected")
+    func reloadKeepsStillOfferedSlot() async throws {
+        let (viewModel, slot) = try await loadedViewModel(mode: SlotMode())
+        let attemptId = viewModel.bookingAttemptId
+
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+
+        #expect(viewModel.selectedTimeSlot == slot)
+        #expect(viewModel.bookingAttemptId == attemptId)
+    }
+
+    @Test("A reload that shows the selected slot held drops it")
+    func reloadDropsHeldSlot() async throws {
+        let mode = SlotMode()
+        let (viewModel, _) = try await loadedViewModel(mode: mode)
+        mode.value = .held
+
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+
+        #expect(viewModel.availabilityState == .loaded)
+        #expect(viewModel.selectedTimeSlot == nil)
+    }
+
+    @Test("A reload that no longer lists the selected slot drops it")
+    func reloadDropsAbsentSlot() async throws {
+        let mode = SlotMode()
+        let (viewModel, _) = try await loadedViewModel(mode: mode)
+        mode.value = .absent
+
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+
+        #expect(viewModel.selectedTimeSlot == nil)
+    }
+
+    @Test("A failed reload keeps the selected slot")
+    func failedReloadKeepsSlot() async throws {
+        let mode = SlotMode()
+        let (viewModel, slot) = try await loadedViewModel(mode: mode)
+        MockURLProtocol.handler = { request in
+            let http = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: "HTTP/1.1", headerFields: nil)!
+            return (http, Data(#"{"status":"error","code":"INTERNAL_ERROR","message":"down"}"#.utf8))
+        }
+
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+
+        #expect(viewModel.selectedTimeSlot == slot)
+    }
+
+    @Test("A reload while a booking attempt is in flight keeps the selected slot")
+    func reloadDuringAttemptKeepsSlot() async throws {
+        let mode = SlotMode()
+        let (viewModel, slot) = try await loadedViewModel(mode: mode)
+        viewModel.paidStep = .confirming
+        mode.value = .held
+
+        await viewModel.loadAvailability(for: viewModel.displayedMonth)
+
+        #expect(viewModel.selectedTimeSlot == slot)
     }
 }

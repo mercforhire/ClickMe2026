@@ -8,6 +8,7 @@
 //  by a mocked URLSession, so no real hold is ever placed.
 //
 
+import Combine
 import Foundation
 import Testing
 @testable import ClickMe2026
@@ -209,6 +210,7 @@ struct MakeABookingPaidFlowTests {
         }
 
         await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        await viewModel.finishAvailabilityLoad()
 
         // The confirm itself recorded the slot (D-04), so "taken" could be the
         // client's own booking and the plain copy must not be shown.
@@ -219,6 +221,103 @@ struct MakeABookingPaidFlowTests {
         #expect(viewModel.completedBookingId == nil)
         #expect(viewModel.paidStep == .idle)
         #expect(viewModel.paymentIntentId == nil)
+    }
+
+    // MARK: A taken slot reloads the calendar (WR-14)
+
+    private let freeTopic = BookingTopic(
+        id: UUID(), title: "Free chat", durationMinutes: 30, description: nil,
+        priceAmount: nil, currency: nil, isFree: true
+    )
+
+    @Test("A confirm 409 SLOT_UNAVAILABLE reloads the calendar and keeps it on screen while it loads")
+    func confirmSlotUnavailableReloadsCalendar() async {
+        let viewModel = makeViewModel { _, request in
+            if request.url?.path.hasSuffix("/availability") == true { return Self.availabilityAnswer(request) }
+            return PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+        viewModel.availabilityState = .loaded
+        var states: [LoadState] = []
+        let sink = viewModel.$availabilityState.sink { states.append($0) }
+        defer { sink.cancel() }
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        await viewModel.finishAvailabilityLoad()
+
+        #expect(viewModel.selectedTimeSlot == nil)
+        // The center month and its two neighbours.
+        #expect(availabilityRequests().count == 3)
+        #expect(viewModel.availabilityState == .loaded)
+        #expect(!viewModel.availabilityByDate.isEmpty)
+        #expect(!states.contains(.loading))
+    }
+
+    @Test("A payment-intent 409 SLOT_UNAVAILABLE reloads the calendar")
+    func intentSlotUnavailableReloadsCalendar() async {
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in
+            if request.url?.path.hasSuffix("/availability") == true { return Self.availabilityAnswer(request) }
+            return PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+
+        await bookAndWaitForOutcome(viewModel)
+
+        #expect(viewModel.bookingError == slotTakenCopy)
+        #expect(availabilityRequests().count == 3)
+        #expect(viewModel.availabilityState == .loaded)
+    }
+
+    @Test("A free booking 409 SLOT_UNAVAILABLE clears the slot and reloads the calendar")
+    func freeSlotUnavailableReloadsCalendar() async {
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in
+            if request.url?.path.hasSuffix("/availability") == true { return Self.availabilityAnswer(request) }
+            return PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+        viewModel.selectedTopic = freeTopic
+        #expect(viewModel.selectedTimeSlot != nil)
+
+        await bookAndWaitForOutcome(viewModel)
+
+        #expect(viewModel.bookingError == slotTakenCopy)
+        #expect(viewModel.selectedTimeSlot == nil)
+        #expect(availabilityRequests().count == 3)
+        #expect(viewModel.availabilityState == .loaded)
+    }
+
+    @Test("A coded error other than SLOT_UNAVAILABLE does not reload the calendar")
+    func otherCodedErrorDoesNotReloadCalendar() async {
+        let viewModel = makeViewModel { _, request in
+            PaidFlowFixture.coded(request, status: 422, code: "INTENT_EXPIRED")
+        }
+
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        await viewModel.finishAvailabilityLoad()
+
+        #expect(availabilityRequests().isEmpty)
+    }
+
+    @Test("The reload after SLOT_UNAVAILABLE shows the held slot as unavailable and leaves nothing selected")
+    func reloadAfterTakenSlotShowsHeldSlotUnavailable() async throws {
+        // The calendar still lists the slot, now held by someone else.
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in
+            if request.url?.path.hasSuffix("/availability") == true {
+                let month = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?
+                    .queryItems?.first { $0.name == "month" }?.value ?? "2030-01"
+                let body = """
+                {"status":"success","data":{"expert_timezone":"UTC","client_timezone":"UTC","month":"\(month)",\
+                "days":[{"date":"\(month)-15","slots":[{"start_utc":"\(month)-15T15:00:00.000Z",\
+                "end_utc":"\(month)-15T15:30:00.000Z","available":false,"held":true}]}]}}
+                """
+                return PaidFlowFixture.http(request, status: 200, body: Data(body.utf8))
+            }
+            return PaidFlowFixture.coded(request, status: 409, code: "SLOT_UNAVAILABLE")
+        }
+
+        await bookAndWaitForOutcome(viewModel)
+
+        #expect(viewModel.selectedTimeSlot == nil)
+        let offered = viewModel.availabilityByDate.values.flatMap { $0 }
+        #expect(!offered.isEmpty)
+        #expect(offered.allSatisfy { !$0.isAvailable })
     }
 
     // MARK: Retries exhausted (alert)
@@ -576,17 +675,20 @@ struct MakeABookingPaidFlowTests {
         let start = ledgerKey(viewModel).start
 
         await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        await viewModel.finishAvailabilityLoad()
 
         #expect(ledgerHolds(viewModel, start: start))
     }
 
-    /// Waits up to 3 s for the book() task to reach a result.
+    /// Waits up to 3 s for the book() task to reach a result, then for the calendar reload a
+    /// taken slot starts (WR-14), so no request outlives the test.
     private func bookAndWaitForOutcome(_ viewModel: MakeABookingViewModel) async {
         viewModel.book()
         for _ in 0 ..< 150 {
             if viewModel.completedBookingId != nil || viewModel.bookingError != nil { break }
             try? await Task.sleep(for: .milliseconds(20))
         }
+        await viewModel.finishAvailabilityLoad()
     }
 
     @Test("After a lost confirm, a DUPLICATE_BOOKING on the same slot opens that booking (D-15)")
@@ -642,6 +744,7 @@ struct MakeABookingPaidFlowTests {
         for _ in 0 ..< 150 where viewModel.paidFlowAlert == nil && viewModel.bookingError == nil {
             try? await Task.sleep(for: .milliseconds(20))
         }
+        await viewModel.finishAvailabilityLoad()
 
         #expect(viewModel.paidFlowAlert == .mayAlreadyBeBooked)
         #expect(viewModel.bookingError == nil)
@@ -658,6 +761,7 @@ struct MakeABookingPaidFlowTests {
         let start = ledgerKey(viewModel).start
 
         await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        await viewModel.finishAvailabilityLoad()
 
         #expect(viewModel.paidFlowAlert == .mayAlreadyBeBooked)
         #expect(viewModel.bookingError == nil)

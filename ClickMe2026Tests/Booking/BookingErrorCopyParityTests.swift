@@ -94,6 +94,8 @@ struct BookingErrorCopyParityTests {
             if viewModel.bookingError != nil { break }
             try? await Task.sleep(for: .milliseconds(20))
         }
+        // A taken slot starts a calendar reload (WR-14); let it end so no request outlives the test.
+        await viewModel.finishAvailabilityLoad()
         return viewModel.bookingError
     }
 

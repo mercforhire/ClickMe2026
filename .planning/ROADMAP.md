@@ -532,3 +532,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-17 during /gsd-verify-work 06 session completion
 **Follow-ups:**
 - [ ] Test 9: Run the two iOS 26 Liquid Glass readability checks (checklist items 13 and 16: Availability Save, and the Booking Confirmed back chevron and title, with Reduce Transparency and Liquid Glass Tinted) before Phase 8. Item 12 (09:15 and 24:00 slot edges) is accepted on AvailabilitySlotRulesTests. (deferred 2026-11-17)
+
+### Phase 999.5: Follow-up — Phase 07 deferred UAT follow-up: Test 4 (BACKLOG)
+
+**Goal:** Resolve the UAT checkpoint deferred during Phase 07 verification
+**Source phase:** 07
+**Deferred at:** 2026-11-19 during /gsd-verify-work 07 session completion
+**Follow-ups:**
+- [ ] Test 4: VoiceOver pass not run (checklist item 12, the VoiceOver parts of items 3 and 4, and the IN-04 check that a delivered bubble is not read as pending); run it on a device later. (deferred 2026-11-19)

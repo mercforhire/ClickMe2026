@@ -364,7 +364,7 @@ struct ExpertProfileViewModelTests {
         )
         await viewModel.loadProfileDetails()
 
-        MockURLProtocol.recordedRequests = []
+        MockURLProtocol.clearRecordedRequests()
         MockURLProtocol.handler = route()
         let first = Task { await viewModel.retry() }
         let second = Task { await viewModel.retry() }

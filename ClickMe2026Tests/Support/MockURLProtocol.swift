@@ -11,24 +11,40 @@ import Foundation
 
 final class MockURLProtocol: URLProtocol {
 
-    /// Set by each test to shape the mocked response.
-    /// Return `(HTTPURLResponse, Data)` on success, or throw to simulate a
-    /// transport-layer error.
-    nonisolated(unsafe) static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+    typealias Handler = (URLRequest) throws -> (HTTPURLResponse, Data)
 
-    /// Guards `requestLog`. The URL loading thread appends while a test may be polling `recordedRequests`.
+    /// Guards `storedHandler` and `requestLog`. A test writes the handler on the main actor while
+    /// the URL loading thread reads it, and the URL loading thread appends to the log while a test
+    /// may be polling `recordedRequests`.
     private static let requestLock = NSLock()
+    nonisolated(unsafe) private static var storedHandler: Handler?
     nonisolated(unsafe) private static var requestLog: [URLRequest] = []
 
+    /// Set by each test to shape the mocked response.
+    /// Return `(HTTPURLResponse, Data)` on success, or throw to simulate a
+    /// transport-layer error. Reads and writes go through the lock; `startLoading` reads a snapshot
+    /// and runs it outside the lock.
+    static var handler: Handler? {
+        get { requestLock.withLock { storedHandler } }
+        set { requestLock.withLock { storedHandler = newValue } }
+    }
+
     /// Records every request that flows through the mock. Reset per-test.
-    /// Reads and writes go through one lock, so a test can poll it while the URL loading thread appends.
+    /// Read-only: a read-modify-write such as `append` would not be atomic. Clear it with
+    /// `reset()`, or `clearRecordedRequests()` when the handler must stay.
     static var recordedRequests: [URLRequest] {
-        get { requestLock.withLock { requestLog } }
-        set { requestLock.withLock { requestLog = newValue } }
+        requestLock.withLock { requestLog }
     }
 
     static func reset() {
-        handler = nil
+        requestLock.withLock {
+            storedHandler = nil
+            requestLog = []
+        }
+    }
+
+    /// Empties the request log and keeps the handler, for a test that stops counting the setup requests.
+    static func clearRecordedRequests() {
         requestLock.withLock { requestLog = [] }
     }
 
@@ -37,8 +53,11 @@ final class MockURLProtocol: URLProtocol {
 
     override func startLoading() {
         let recorded = request
-        Self.requestLock.withLock { Self.requestLog.append(recorded) }
-        guard let handler = Self.handler else {
+        let handler: Handler? = Self.requestLock.withLock {
+            Self.requestLog.append(recorded)
+            return Self.storedHandler
+        }
+        guard let handler else {
             client?.urlProtocol(self, didFailWithError: URLError(.cannotFindHost))
             return
         }

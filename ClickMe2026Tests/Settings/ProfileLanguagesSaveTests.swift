@@ -68,7 +68,7 @@ struct ProfileLanguagesSaveTests {
         let vm = ClientProfileSettingsViewModel(api: api, autoSaveDebounce: debounce)
         vm.hydrate(from: try await profile(from: api))
         // The hydration GET is not what the tests count.
-        MockURLProtocol.recordedRequests = []
+        MockURLProtocol.clearRecordedRequests()
         return (vm, api)
     }
 
@@ -223,7 +223,7 @@ struct ProfileLanguagesSaveTests {
         let api = makeAPI(languagesJSON: languagesJSON)
         let vm = ExpertProfileSettingsViewModel(api: api)
         vm.hydrate(from: try await profile(from: api))
-        MockURLProtocol.recordedRequests = []
+        MockURLProtocol.clearRecordedRequests()
         return (vm, api)
     }
 

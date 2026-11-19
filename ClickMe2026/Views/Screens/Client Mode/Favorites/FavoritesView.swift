@@ -68,7 +68,12 @@ struct FavoritesView: View {
     var body: some View {
         content
             .navigationDestination(for: FavoriteExpert.self) { expert in
-                ExpertProfileView(expert: PublicExpertProfile(from: expert), isFavorited: true)
+                // The heart on the profile changes the server's list behind this screen (WR-11).
+                ExpertProfileView(
+                    expert: PublicExpertProfile(from: expert),
+                    isFavorited: true,
+                    onFavorite: { viewModel.noteProfileFavoriteChanged() }
+                )
             }
             .navigationTitle("Favorite Experts")
             .navigationBarTitleDisplayMode(.inline)

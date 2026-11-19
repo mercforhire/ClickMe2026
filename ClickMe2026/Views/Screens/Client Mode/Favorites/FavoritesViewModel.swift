@@ -43,6 +43,26 @@ final class FavoritesViewModel: ObservableObject {
     /// pull cannot start another one.
     private var isRefreshing = false
 
+    /// True after the profile pushed from this list toggled the heart, so the
+    /// list may no longer match the server. The next `load()` revalidates once
+    /// and clears it (WR-11).
+    private var needsRevalidation = false
+
+    // MARK: Removal bookkeeping (WR-11)
+
+    /// Experts whose `DELETE` is running. A list response never shows them.
+    private var pendingRemovals: Set<UUID> = []
+
+    /// Counts the requests that read the list (page 1, refresh, next page). A
+    /// request takes the next number when it starts.
+    private var requestSerial = 0
+
+    /// For an expert whose `DELETE` succeeded, the value of `requestSerial` at
+    /// that moment. A list request numbered at or below it started before the
+    /// `DELETE` ended, so the server may have answered it with the row still in
+    /// it. Later requests are not affected, so a re-favorited expert comes back.
+    private var removalFinishedAt: [UUID: Int] = [:]
+
     // MARK: Inits
 
     /// Runtime init — starts empty; call `load()` on view appear to populate
@@ -66,11 +86,24 @@ final class FavoritesViewModel: ObservableObject {
 
     // MARK: - Load
 
-    /// Fetches page 1 of `GET /client/favorites` and populates the list. Skips
-    /// re-fetching when already `.loaded`.
+    /// Fetches page 1 of `GET /client/favorites` and populates the list. When
+    /// already `.loaded` it fetches nothing, unless the profile opened from this
+    /// list changed a favorite (`noteProfileFavoriteChanged()`). Then it
+    /// revalidates quietly: the rows stay on screen and a failure raises no alert.
     func load() async {
-        if case .loaded = state { return }
+        if case .loaded = state {
+            guard needsRevalidation else { return }
+            await refresh(quietly: true)
+            return
+        }
         await forceLoad()
+    }
+
+    /// Called when the profile pushed from this list toggled the favorite heart.
+    /// The server state changed behind the list, so the next `load()` (the
+    /// list's `.task` runs again when the profile pops) revalidates it.
+    func noteProfileFavoriteChanged() {
+        needsRevalidation = true
     }
 
     /// Retry handler for the first-page error view.
@@ -81,12 +114,14 @@ final class FavoritesViewModel: ObservableObject {
     private func forceLoad() async {
         state = .loading
         generation += 1
+        let serial = beginListRequest()
         do {
             let response = try await api.getClientFavorites(page: 1, limit: Self.pageSize)
             list.replace(
-                withFirstPage: response.data.experts.map(Self.map),
+                withFirstPage: rows(from: response.data.experts, requestSerial: serial),
                 hasMore: response.data.pagination?.hasMoreOrDerived ?? false
             )
+            needsRevalidation = false
             state = .loaded
         } catch {
             state = .failed(error.userMessage)
@@ -137,7 +172,11 @@ final class FavoritesViewModel: ObservableObject {
     /// Pull-to-refresh. Restarts at page 1 without touching `state`, so the
     /// rows stay on screen. A success replaces the list; a failure keeps it and
     /// raises the "Couldn't update favorites" alert through `apiError`.
-    func refresh() async {
+    ///
+    /// - Parameter quietly: True for the revalidation after the profile changed a
+    ///   favorite (WR-11). A failure then keeps the list and raises no alert,
+    ///   and the next `load()` tries again.
+    func refresh(quietly: Bool = false) async {
         guard case .loaded = state, !isRefreshing else { return }
         isRefreshing = true
         generation += 1
@@ -145,20 +184,22 @@ final class FavoritesViewModel: ObservableObject {
         // and its `defer` no longer clears the marker, so clear it here.
         list.isLoadingMore = false
         let requestedGeneration = generation
+        let serial = beginListRequest()
         defer { isRefreshing = false }
 
         do {
             let response = try await api.getClientFavorites(page: 1, limit: Self.pageSize)
             guard requestedGeneration == generation else { return }
             list.replace(
-                withFirstPage: response.data.experts.map(Self.map),
+                withFirstPage: rows(from: response.data.experts, requestSerial: serial),
                 hasMore: response.data.pagination?.hasMoreOrDerived ?? false
             )
+            needsRevalidation = false
         } catch {
             // The pull gesture's task is cancelled when the view goes away;
             // that is not a failed refresh.
             if error is CancellationError || (error as? URLError)?.code == .cancelled { return }
-            apiError = error.userMessage
+            if !quietly { apiError = error.userMessage }
         }
     }
 
@@ -167,6 +208,7 @@ final class FavoritesViewModel: ObservableObject {
 
         let requestedGeneration = generation
         let requestedPage = list.nextPage
+        let serial = beginListRequest()
         list.isLoadingMore = true
         list.pageError = nil
         defer {
@@ -177,7 +219,7 @@ final class FavoritesViewModel: ObservableObject {
             let response = try await api.getClientFavorites(page: requestedPage, limit: Self.pageSize)
             guard requestedGeneration == generation else { return }
             list.append(
-                page: response.data.experts.map(Self.map),
+                page: rows(from: response.data.experts, requestSerial: serial),
                 hasMore: response.data.pagination?.hasMoreOrDerived ?? false
             )
         } catch {
@@ -213,11 +255,16 @@ final class FavoritesViewModel: ObservableObject {
         let removed = withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
             list.remove(key: expert.pagingKey)
         }
+        // From here no list response may bring the row back until the DELETE ends (WR-11).
+        pendingRemovals.insert(expert.pagingKey)
 
         return Task { [weak self] in
             guard let self else { return }
+            defer { self.pendingRemovals.remove(expert.pagingKey) }
             do {
                 _ = try await self.api.removeFavorite(expertId: expertId)
+                // A list request that started before this moment may still carry the row.
+                self.removalFinishedAt[expert.pagingKey] = self.requestSerial
                 // Every later row moved up one place on the server; see
                 // `loadNextPageIfNeeded`. No effect once every page is loaded.
                 self.list.markStale()
@@ -231,6 +278,27 @@ final class FavoritesViewModel: ObservableObject {
                 self.apiError = error.userMessage
             }
         }
+    }
+
+    // MARK: - Removal filter (WR-11)
+
+    /// Numbers a list request as it starts. See `removalFinishedAt`.
+    private func beginListRequest() -> Int {
+        requestSerial += 1
+        return requestSerial
+    }
+
+    /// Maps a list response and drops every expert the user removed while the
+    /// request was in flight, so a response that predates the `DELETE` cannot
+    /// bring the row back.
+    private func rows(from items: [FavoriteExpertItem], requestSerial serial: Int) -> [FavoriteExpert] {
+        items.map(Self.map).filter { !isRemoved($0.pagingKey, requestSerial: serial) }
+    }
+
+    private func isRemoved(_ key: UUID, requestSerial serial: Int) -> Bool {
+        if pendingRemovals.contains(key) { return true }
+        guard let finishedAt = removalFinishedAt[key] else { return false }
+        return finishedAt >= serial
     }
 
     // MARK: - Mapping helpers

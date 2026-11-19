@@ -111,7 +111,8 @@ struct PaymentLifecycleCard: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.brand(.subheadline, weight: .semibold))
-                    .foregroundColor(titleColor(index: index))
+                    // Every title reads at full strength; the badge and the connector carry the progress.
+                    .foregroundColor(Brand.onSurface)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(subtitle)
                     .font(.brand(.caption, weight: .regular))
@@ -168,10 +169,6 @@ struct PaymentLifecycleCard: View {
             return "Your session runs on \(when)"
         }
         return "Your session runs at the scheduled time"
-    }
-
-    private func titleColor(index: Int) -> Color {
-        index <= currentStepIndex ? Brand.onSurface : Brand.onSurface
     }
 
     private func connectorColor(above stepIndex: Int) -> Color {

@@ -28,7 +28,7 @@ created: "2026-11-18"
 
 | Threat ID | Category | Component | Severity | Disposition | Mitigation | Status |
 |-----------|----------|-----------|----------|-------------|------------|--------|
-| T-07-01 | Information disclosure | Message text in debug logs | medium | mitigate | No `print`/`os_log`/`Logger`/`NSLog` in the Chat folder (grep: 0) | closed |
+| T-07-01 | Information disclosure | Message text in debug logs | medium | mitigate | No `print`/`os_log`/`Logger`/`NSLog` in the Chat folder or `Utils/Chat*.swift` (grep: 0); Socket.IO client logging, which prints decoded chat event payloads, is now `#if DEBUG` only (`RealtimeService.swift` `.log(socketLogging)`, WR-03 `d9dc9b6`) | closed |
 | T-07-02 | Tampering | Duplicate delivery from concurrent or retried sends | low | mitigate | `ChatSendCoordinator.isInFlight` guard; one `client_msg_id` per bubble; server `UNIQUE(thread_id, sender_id, client_msg_id)` | closed |
 | T-07-03 | Information disclosure | Failed message text persisted on device | low | mitigate | No UserDefaults/FileManager/Valet/write in the view model or coordinator (grep: 0) | closed |
 | T-07-04 | Denial of service | Oversized message rejected after Send | low | mitigate | `ChatComposerRules.limit = 10_000` UTF-16 cap via `UTF16Prefix` | closed |
@@ -44,7 +44,7 @@ created: "2026-11-18"
 | T-07-14 | Tampering | Block sent without consent (accidental tap) | medium | mitigate | `blockAction.block(` has a single call site, inside the `Block {name}?` alert action (`ExpertProfileView.swift`) | closed |
 | T-07-15 | Elevation of privilege | Blocking oneself | low | mitigate | `isSameAsCurrentUser` guard; server `CANNOT_BLOCK_SELF` | closed |
 | T-07-16 | Denial of service | Repeated block requests from double taps | low | mitigate | `isBlocking` guard, scrim, disabled menu (ProfileBlockActionTests) | closed |
-| T-07-17 | Spoofing | Own or spoofed messages inflating the unread count | low | mitigate | `event.senderId != currentUserId()` in `ChatConversationsViewModel`; GET /chats replaces local count | closed |
+| T-07-17 | Spoofing | Own or spoofed messages inflating the unread count | low | mitigate | `event.senderId != currentUserId()` in `ChatConversationsViewModel` (still the only path that raises a count); since WR-04/WR-05 a local count overlays only a `GET /chats` that was in flight when it changed (`reloadsInFlight > 0` guard; the overlay is cleared when the last reload ends), so the next `GET /chats` is still authoritative; an unknown thread's message triggers a server refetch, never a local count (WR-06) | closed |
 | T-07-18 | Information disclosure | Visible thread carried into the next account | low | mitigate | `ChatPresence.clearSessionData()` kept and called on logout | closed |
 | T-07-19 | Information disclosure | Secrets or real emails in the UAT checklist | low | mitigate | Secret-pattern grep on `07-DEVICE-UAT-CHECKLIST.md`: 0 | closed |
 | T-07-20 | Information disclosure | Booking read through the wrong role's endpoint | low | mitigate | `ChatBookingRowRoute` sends the expert shell to `.expertBookingSummary`; endpoints role-scoped server-side | closed |
@@ -75,6 +75,9 @@ created: "2026-11-18"
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-11-18 | 22 | 22 | 0 | secure-phase (L1 grep verification, orchestrator) |
+| 2026-11-18 | 22 | 22 | 0 | secure-phase re-audit after the code-review fixes `82050a4..aea7ecb` (L1 grep re-verification of all 22 mitigations at HEAD `3ba8468`, orchestrator) |
+
+**Re-audit notes (code-review fixes):** No new endpoint, trust boundary, storage or dependency was added (no `ClickMe.xcodeproj` or package change in `82050a4..HEAD`). WR-03 closed a gap the first audit missed: before `d9dc9b6`, `.log(true)` on the Socket.IO manager was unconditional, so Release builds printed decoded chat payloads to the device console. The first audit's grep covered only the Chat folder, not `Realtime/`. T-07-01 now covers both. WR-01's scan revision counter keeps a late `GET /chats` scan from undoing an unblock, an adopted block or a refused send. This strengthens the UI side of T-07-08 and T-07-09; the server still enforces both. IN-01 keeps 408 and 429 as retryable Failed bubbles. Retry stays manual and deduplicated by `client_msg_id` (T-07-02, T-07-05), so the client never auto-retries. IN-03 (`Int(exactly:)`) removes a crash caused by an out-of-range `event_data` number from the server. T-07-19 secret-pattern grep re-run on `07-DEVICE-UAT-CHECKLIST.md` and `07-UAT.md`: 0.
 
 ---
 
@@ -85,4 +88,12 @@ created: "2026-11-18"
 - [x] `threats_open: 0` confirmed
 - [x] `status: verified` set in frontmatter
 
-**Approval:** verified 2026-11-18
+**Approval:** verified 2026-11-18; re-verified 2026-11-18 after the code-review fixes
+
+## Security Audit 2026-11-19
+
+| Metric | Count |
+|---|---|
+| Threats found | 22 |
+| Closed | 22 |
+| Open | 0 |

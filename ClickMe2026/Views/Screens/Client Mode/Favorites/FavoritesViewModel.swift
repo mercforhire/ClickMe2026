@@ -44,9 +44,14 @@ final class FavoritesViewModel: ObservableObject {
     private var isRefreshing = false
 
     /// True after the profile pushed from this list toggled the heart, so the
-    /// list may no longer match the server. The next `load()` revalidates once
-    /// and clears it (WR-11).
+    /// list may no longer match the server. `noteProfileFavoriteChanged()`
+    /// revalidates at once; `load()` retries while it is still set (WR-11, WR-13).
     private var needsRevalidation = false
+
+    /// Counts the profile heart changes. A response clears `needsRevalidation` only
+    /// when no change happened since its request started: an older response may
+    /// predate the toggle and must not wipe the flag (WR-13).
+    private var revalidationEpoch = 0
 
     // MARK: Removal bookkeeping (WR-11)
 
@@ -100,10 +105,20 @@ final class FavoritesViewModel: ObservableObject {
     }
 
     /// Called when the profile pushed from this list toggled the favorite heart.
-    /// The server state changed behind the list, so the next `load()` (the
-    /// list's `.task` runs again when the profile pops) revalidates it.
-    func noteProfileFavoriteChanged() {
+    /// The server state changed behind the list, so it revalidates now, quietly:
+    /// this view model is owned by the list's `@StateObject` and stays alive while
+    /// the profile is pushed or has already been popped. Waiting for the next
+    /// `load()` missed a toggle that finished after the user had gone back, because
+    /// the `.task` had already run (WR-13). If a refresh is already running, it runs
+    /// once more when it ends, so its older response cannot stand for this change.
+    /// A failed revalidation leaves the flag set, so the next `load()` tries again.
+    ///
+    /// - Returns: The revalidation, so a test can await it. The view ignores it.
+    @discardableResult
+    func noteProfileFavoriteChanged() -> Task<Void, Never> {
+        revalidationEpoch += 1
         needsRevalidation = true
+        return Task { await refresh(quietly: true) }
     }
 
     /// Retry handler for the first-page error view.
@@ -115,13 +130,14 @@ final class FavoritesViewModel: ObservableObject {
         state = .loading
         generation += 1
         let serial = beginListRequest()
+        let epoch = revalidationEpoch
         do {
             let response = try await api.getClientFavorites(page: 1, limit: Self.pageSize)
             list.replace(
                 withFirstPage: rows(from: response.data.experts, requestSerial: serial),
                 hasMore: response.data.pagination?.hasMoreOrDerived ?? false
             )
-            needsRevalidation = false
+            if revalidationEpoch == epoch { needsRevalidation = false }
             state = .loaded
         } catch {
             state = .failed(error.userMessage)
@@ -179,13 +195,28 @@ final class FavoritesViewModel: ObservableObject {
     func refresh(quietly: Bool = false) async {
         guard case .loaded = state, !isRefreshing else { return }
         isRefreshing = true
+        defer { isRefreshing = false }
+
+        var quiet = quietly
+        while true {
+            let epoch = revalidationEpoch
+            await restartAtFirstPage(quietly: quiet, epoch: epoch)
+            // The profile changed a favorite while this request ran (WR-13): its response may
+            // predate the change, so ask again. A later change repeats this; a failure does not.
+            guard revalidationEpoch != epoch, !Task.isCancelled, case .loaded = state else { return }
+            quiet = true
+        }
+    }
+
+    /// One page-1 request for `refresh(quietly:)`. Clears `needsRevalidation` only when no heart
+    /// change happened since it started (`epoch`).
+    private func restartAtFirstPage(quietly: Bool, epoch: Int) async {
         generation += 1
         // A next-page fetch still in flight is now stale: its result is dropped
         // and its `defer` no longer clears the marker, so clear it here.
         list.isLoadingMore = false
         let requestedGeneration = generation
         let serial = beginListRequest()
-        defer { isRefreshing = false }
 
         do {
             let response = try await api.getClientFavorites(page: 1, limit: Self.pageSize)
@@ -194,7 +225,7 @@ final class FavoritesViewModel: ObservableObject {
                 withFirstPage: rows(from: response.data.experts, requestSerial: serial),
                 hasMore: response.data.pagination?.hasMoreOrDerived ?? false
             )
-            needsRevalidation = false
+            if revalidationEpoch == epoch { needsRevalidation = false }
         } catch {
             // The pull gesture's task is cancelled when the view goes away;
             // that is not a failed refresh.

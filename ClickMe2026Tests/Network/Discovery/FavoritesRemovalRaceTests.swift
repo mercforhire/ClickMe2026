@@ -193,14 +193,13 @@ struct FavoritesRemovalRaceTests {
         #expect(counter.value == 1)
     }
 
-    @Test("after the profile changed a favorite, load() revalidates quietly and the list follows the server")
+    @Test("when the profile changes a favorite, the list revalidates quietly and follows the server")
     func profileChangeRevalidatesList() async throws {
         let viewModel = await loadedViewModel()
         HeldURLProtocol.setHold(RaceFixture.isList)
 
-        // The user unfavorited expert 1 on the profile and came back.
-        viewModel.noteProfileFavoriteChanged()
-        let reload = Task { await viewModel.load() }
+        // The user unfavorited expert 1 on the profile.
+        let revalidation = viewModel.noteProfileFavoriteChanged()
         try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
 
         // The rows stay on screen while the request runs.
@@ -208,20 +207,65 @@ struct FavoritesRemovalRaceTests {
         #expect(ids(viewModel) == [1, 2, 3])
 
         HeldURLProtocol.release(where: RaceFixture.isList, body: RaceFixture.page([2, 3]))
-        await reload.value
+        await revalidation.value
 
         #expect(ids(viewModel) == [2, 3])
         #expect(viewModel.state == .loaded)
         #expect(viewModel.apiError == nil)
     }
 
+    @Test("a toggle that finishes after the list's task already ran still revalidates the list (WR-13)")
+    func toggleFinishingAfterPopStillRevalidates() async throws {
+        let counter = ListCounter()
+        let viewModel = await loadedViewModel(counter: counter)
+        // The user tapped the heart and went back at once. The list's `.task` ran then, found
+        // nothing to do, and the toggle finished afterwards.
+        await viewModel.load()
+        #expect(counter.value == 1)
+
+        HeldURLProtocol.setHold(RaceFixture.isList)
+        viewModel.noteProfileFavoriteChanged()
+        try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
+        HeldURLProtocol.release(where: RaceFixture.isList, body: RaceFixture.page([2, 3]))
+        try #require(await waitUntil { ids(viewModel) == [2, 3] })
+
+        #expect(viewModel.apiError == nil)
+    }
+
+    @Test("a refresh that started before the profile change cannot clear the flag (WR-13)")
+    func olderRefreshResponseDoesNotClearTheFlag() async throws {
+        let counter = ListCounter()
+        let viewModel = await loadedViewModel(counter: counter)
+        HeldURLProtocol.setHold(RaceFixture.isList)
+
+        // A pull-to-refresh is in flight; the profile toggles and notes the change meanwhile.
+        let pull = Task { await viewModel.refresh() }
+        try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
+        viewModel.noteProfileFavoriteChanged()
+
+        // The older response still lists expert 1. It is applied, but it may predate the change,
+        // so the refresh asks again.
+        HeldURLProtocol.release(where: RaceFixture.isList, body: RaceFixture.page([1, 2, 3]))
+        try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
+        #expect(ids(viewModel) == [1, 2, 3])
+
+        HeldURLProtocol.release(where: RaceFixture.isList, body: RaceFixture.page([2, 3]))
+        await pull.value
+        #expect(ids(viewModel) == [2, 3])
+
+        // The flag is clear now: the list's next `.task` makes no request.
+        HeldURLProtocol.setHold { _ in false }
+        let before = counter.value
+        await viewModel.load()
+        #expect(counter.value == before)
+    }
+
     @Test("a failed revalidation keeps the rows, raises no alert and tries again on the next load()")
     func failedRevalidationIsQuietAndRetried() async throws {
         let viewModel = await loadedViewModel()
         HeldURLProtocol.setHold(RaceFixture.isList)
-        viewModel.noteProfileFavoriteChanged()
 
-        let first = Task { await viewModel.load() }
+        let first = viewModel.noteProfileFavoriteChanged()
         try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
         HeldURLProtocol.release(where: RaceFixture.isList, status: 500, body: RaceFixture.errorBody)
         await first.value
@@ -242,9 +286,8 @@ struct FavoritesRemovalRaceTests {
     func revalidationClearsTheFlag() async throws {
         let counter = ListCounter()
         let viewModel = await loadedViewModel(counter: counter)
-        viewModel.noteProfileFavoriteChanged()
 
-        await viewModel.load()
+        await viewModel.noteProfileFavoriteChanged().value
         #expect(counter.value == 2)
 
         await viewModel.load()

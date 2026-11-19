@@ -543,7 +543,8 @@ struct ClientHomeFeedTests {
         #expect(VM.stateAfterCancelledFetch(current: .loading, before: .loaded) == .loaded)
         #expect(VM.stateAfterCancelledFetch(current: .loading, before: .failed("Offline")) == .failed("Offline"))
         #expect(VM.stateAfterCancelledFetch(current: .loading, before: .idle) == .failed(VM.interruptedLoadMessage))
-        #expect(VM.stateAfterCancelledFetch(current: .loading, before: .loading) == .loading)
+        // An older fetch left the skeleton and was dropped, so nothing is loading it: it settles like a first load.
+        #expect(VM.stateAfterCancelledFetch(current: .loading, before: .loading) == .failed(VM.interruptedLoadMessage))
         #expect(VM.stateAfterCancelledFetch(current: .loaded, before: .idle) == .loaded)
         #expect(VM.stateAfterCancelledFetch(current: .failed("Later"), before: .loaded) == .failed("Later"))
         #expect(VM.interruptedLoadMessage == HomeFeedFixture.genericError)

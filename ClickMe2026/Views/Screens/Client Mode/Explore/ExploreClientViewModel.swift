@@ -97,22 +97,16 @@ final class ExploreClientViewModel: ObservableObject {
         fetchGeneration += 1
         let generation = fetchGeneration
         // What each section showed before this fetch, for a cancelled fetch to restore.
-        // An older fetch that left a section `.loading` is superseded and never settles it,
-        // so this fetch cannot hand the section back to it: that state restores as `.idle`.
-        func restorable(_ state: LoadState) -> LoadState { state == .loading ? .idle : state }
-        let categoriesBefore = restorable(categoriesState)
-        let expertsBefore = restorable(expertsState)
-        let featuredBefore = restorable(featuredTopicsState)
-        // Assign only when the value changes, so a refresh over loaded content publishes nothing.
+        let categoriesBefore = categoriesState
+        let expertsBefore = expertsState
+        let featuredBefore = featuredTopicsState
+        // A refresh keeps a loaded section on screen; everything else shows its skeleton.
         func begin(_ state: LoadState) -> LoadState {
             (state == .loaded && !replacingLoadedContent) ? state : .loading
         }
-        let nextCategories = begin(categoriesState)
-        if categoriesState != nextCategories { categoriesState = nextCategories }
-        let nextExperts = begin(expertsState)
-        if expertsState != nextExperts { expertsState = nextExperts }
-        let nextFeatured = begin(featuredTopicsState)
-        if featuredTopicsState != nextFeatured { featuredTopicsState = nextFeatured }
+        set(\.categoriesState, to: begin(categoriesState))
+        set(\.expertsState, to: begin(expertsState))
+        set(\.featuredTopicsState, to: begin(featuredTopicsState))
         do {
             let response = try await api.getClientHome(
                 categorySlugs: selectedCategorySlugs.isEmpty ? nil : selectedCategorySlugs.sorted()
@@ -135,12 +129,9 @@ final class ExploreClientViewModel: ObservableObject {
             // loading returns to what it showed before this fetch, and a section another
             // fetch has already settled is left alone.
             if Self.isCancellation(error) {
-                let settledCategories = Self.stateAfterCancelledFetch(current: categoriesState, before: categoriesBefore)
-                if categoriesState != settledCategories { categoriesState = settledCategories }
-                let settledExperts = Self.stateAfterCancelledFetch(current: expertsState, before: expertsBefore)
-                if expertsState != settledExperts { expertsState = settledExperts }
-                let settledFeatured = Self.stateAfterCancelledFetch(current: featuredTopicsState, before: featuredBefore)
-                if featuredTopicsState != settledFeatured { featuredTopicsState = settledFeatured }
+                set(\.categoriesState, to: Self.stateAfterCancelledFetch(current: categoriesState, before: categoriesBefore))
+                set(\.expertsState, to: Self.stateAfterCancelledFetch(current: expertsState, before: expertsBefore))
+                set(\.featuredTopicsState, to: Self.stateAfterCancelledFetch(current: featuredTopicsState, before: featuredBefore))
             } else {
                 let msg = error.userMessage
                 // Don't leave stale Featured Topics beside the section errors.
@@ -153,6 +144,11 @@ final class ExploreClientViewModel: ObservableObject {
 
         guard generation == fetchGeneration else { return }
         await loadTodaysSessions()
+    }
+
+    /// Assigns a section's state only when it changes, so a refresh over loaded content publishes nothing.
+    private func set(_ section: ReferenceWritableKeyPath<ExploreClientViewModel, LoadState>, to state: LoadState) {
+        if self[keyPath: section] != state { self[keyPath: section] = state }
     }
 
     /// Populates `todaysSessions` from `GET /client/bookings?type=upcoming`.
@@ -342,24 +338,24 @@ final class ExploreClientViewModel: ObservableObject {
 
     /// Where a section lands when its fetch is cancelled.
     ///
-    /// Anything other than `.loading` stays as it is, because another fetch has already settled it.
+    /// Only the newest fetch settles anything (`fetchGeneration`), so a section still `.loading` when
+    /// this runs was set by this fetch or by an older one that the generation guard dropped. Either way
+    /// no other fetch is in flight for it, so it must not stay on a skeleton. Anything other than
+    /// `.loading` stays as it is, because another fetch has already settled it.
+    ///
     /// For a section still `.loading`, `before` is what it showed ahead of the cancelled fetch:
     /// - `.loaded` returns `.loaded`, since the content arrays were never cleared.
     /// - `.failed` returns the same failure, with its Retry.
     /// - `.idle` returns the generic failure with Retry, because a first load must not strand a skeleton.
-    /// - `.loading` stays `.loading`, because an earlier fetch set it and is still in flight and will settle it.
-    ///
-    /// The invariant: a section becomes `.loading` only at the start of a fetch whose own prior state was not
-    /// loading, so while a section is `.loading`, the fetch that set it is still in flight.
+    /// - `.loading` means an older, dropped fetch left the skeleton and nothing is loading it, so it is
+    ///   treated like `.idle`.
     static func stateAfterCancelledFetch(current: LoadState, before: LoadState) -> LoadState {
         guard current == .loading else { return current }
         switch before {
         case .loaded, .failed:
             return before
-        case .idle:
+        case .idle, .loading:
             return .failed(interruptedLoadMessage)
-        case .loading:
-            return .loading
         }
     }
 

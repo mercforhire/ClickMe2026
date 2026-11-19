@@ -67,6 +67,11 @@ final class ExpertProfileViewModel: ObservableObject {
     /// by an older response that lands later.
     private var loadGate = ReloadGeneration()
 
+    /// True once the user has toggled the heart since the latest details load started. That
+    /// load's `is_favorite` was read before the toggle, so it must not overwrite the heart,
+    /// even after the toggle's request has finished (IN-19).
+    private var favoriteTouchedDuringLoad = false
+
     init(
         expert: PublicExpertProfile = .placeholder,
         glowPulse: Bool = false,
@@ -106,6 +111,9 @@ final class ExpertProfileViewModel: ObservableObject {
             return
         }
         let token = loadGate.begin()
+        // A toggle still running when this load starts is not in what the server reads for it,
+        // so the flag stays until that toggle's own response has been applied.
+        if !isFavoriteInFlight { favoriteTouchedDuringLoad = false }
 
         // Sequential rather than `async let` — `async let` bodies run in
         // a nonisolated context, which Swift 6 concurrency rejects for
@@ -124,9 +132,9 @@ final class ExpertProfileViewModel: ObservableObject {
         }
         guard loadGate.isCurrent(token) else { return }
         expert = Self.merge(details.data, into: expert)
-        // The server value replaces the caller's seed (D-09), but never an
-        // optimistic toggle that is still running: its response reconciles.
-        if !isFavoriteInFlight {
+        // The server value replaces the caller's seed (D-09), but never a toggle made while this
+        // load was in flight, running or finished: the server read the old state (IN-19).
+        if !isFavoriteInFlight && !favoriteTouchedDuringLoad {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                 isFavorited = details.data.isFavorite ?? false
             }
@@ -271,6 +279,7 @@ final class ExpertProfileViewModel: ObservableObject {
     func toggleFavorite() async {
         guard let expertId = expert.expertId else { return }
         guard !isFavoriteInFlight else { return }
+        favoriteTouchedDuringLoad = true
 
         let previous = isFavorited
 

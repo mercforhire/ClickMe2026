@@ -5,10 +5,10 @@ current_phase_name: Booked Sessions and Joining
 current_plan: 17
 status: verifying
 stopped_at: Phase 07 complete, ready to verify Phase 3
-last_updated: "2026-11-19T03:58:44.028Z"
+last_updated: "2026-11-19T04:47:56.901Z"
 last_activity: 2026-11-18
 last_activity_desc: Phase 07 complete, transitioned to Phase 3
-state_head: 72223638fef36e7419acc35f8f6d591078e2b3d5
+state_head: fa3bfb568a747108d61c56937e3ac40e651df554
 progress:
   total_phases: 8
   completed_phases: 5
@@ -491,6 +491,7 @@ Captured todos:
 | 261110-mmr | Fix WR-02: logout waits for push cleanup (Android order) so a fast re-login keeps push registration; Log out shows progress (IN-02) | 2026-11-10 | 81f8797 | [261110-mmr-fix-wr-02-fast-re-login-after-logout-ski](./quick/261110-mmr-fix-wr-02-fast-re-login-after-logout-ski/) |
 | 261110-nzy | Make a Booking calendar: filler cells hidden from VoiceOver; E1/A1/C1 gap resolved in 02-UI-SPEC | 2026-11-10 | 88c6a23 | [261110-nzy-make-a-booking-calendar-month-blank-capt](./quick/261110-nzy-make-a-booking-calendar-month-blank-capt/) |
 | 261117-1le | fix phase 06 review findings WR-01, IN-03, IN-07 per 06-REVIEW.md | 2026-11-17 | c0cbfff | [261117-1le-fix-phase-06-review-findings-wr-01-in-03](./quick/261117-1le-fix-phase-06-review-findings-wr-01-in-03/) |
+| 261118-in6 | IN-06 (phase 07): chat unavailable banner copy now says pull down to try again | 2026-11-18 | fa3bfb5 | — |
 
 ## Deferred Items
 

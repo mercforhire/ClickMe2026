@@ -4,9 +4,9 @@ fixed_at: 2026-11-18T00:00:00Z
 review_path: .planning/phases/07-chat/07-REVIEW.md
 iteration: 1
 findings_in_scope: 4
-fixed: 3
-skipped: 1
-status: partial
+fixed: 4
+skipped: 0
+status: all_fixed
 ---
 
 # Phase 7: Code Review Fix Report
@@ -19,10 +19,10 @@ status: partial
 
 **Summary:**
 - Findings in scope: 4 (IN-06, IN-08, IN-09, IN-10; no Critical or Warning findings were open)
-- Fixed: 3 (IN-08, IN-09, IN-10)
-- Skipped: 1 (IN-06)
+- Fixed: 4 (IN-06, IN-08, IN-09, IN-10)
+- Skipped: 0 (IN-06 was skipped in this pass for a copy decision, then fixed in a follow-up once the user approved the copy)
 
-Commits were made directly on `main` in each checkout. No worktree or temporary branch was used (per the orchestrator), so none is left behind. No backend file was touched. One commit is in the Android repo, local only, not pushed.
+Commits were made directly on `main` in each checkout. No worktree or temporary branch was used (per the orchestrator), so none is left behind. No backend file was touched. Two commits are in the Android repo (IN-09 and IN-06), local only, not pushed.
 
 ## Fixed Issues
 
@@ -65,13 +65,13 @@ The tests read the two answers through a `$chats` recorder, because the second a
 **Failed on the old code first:** with the view model reverted, 27 tests ran and the first two new tests failed (`threadB` count was 0, expected 5). The third passes on both versions and guards the clearing rule.
 **Trade-off to confirm on a device:** a reload that starts after `markOpened` no longer gets the local 0, so if the server has not yet processed the read when that request is answered, the pill can reappear on a row for a thread that is open. This is what the review asked for (the server value is the newer one), it only happens with a socket gap, and the next reload corrects it.
 
-## Skipped Issues
-
 ### IN-06: The "unavailable" banner does not tell the user that pull-to-refresh retries
 
-**File:** `ClickMe2026/Utils/ChatBlockState.swift:126`, `ClickMe2026/Views/Screens/Chat/Chatting/ChattingViewModel.swift:173-180`
-**Reason:** skipped: needs a product copy decision. The string is mirrored in Android (`BlockState.kt`) and specified in 07-04-PLAN.md, so changing it needs the user's decision on the wording and a matching Android change. I did not change anything. This is the same disposition as the previous reports. I did not re-read the two lines for this pass (the orchestrator said to skip), so the cited locations are as the review described them.
-**Original issue:** WR-02 made pull-to-refresh clear `recipientUnavailable`, but the banner copy is still "This user is unavailable." with no hint that pulling down retries.
+**Status:** fixed (follow-up after the user approved the copy on 2026-11-18)
+**Files modified:** `ClickMe2026/Utils/ChatBlockState.swift`, `ClickMe2026Tests/Chat/ChatBlockStateTests.swift` (iOS); `app/src/main/res/values/strings_chat_thread.xml`, `app/src/main/java/com/uptrendinvestments/clickmeapp/screens/chat/chatting/ChatThreadViewModel.kt`, `app/src/test/java/com/uptrendinvestments/clickmeapp/screens/chat/chatting/ChatThreadScreenTest.kt`, `app/src/test/java/com/uptrendinvestments/clickmeapp/screens/chat/chatting/ChatThreadViewModelSendTest.kt` (Android)
+**Commit:** fa3bfb5 (iOS repo); 27e024bf (Android repo, branch `main`, local only, not pushed)
+**Applied fix:** `ChatBlockState.bannerTitle(for: .unavailable)` now returns "This user is unavailable. Pull down to try again." Only the chat composer banner changed. The other "This user is unavailable." strings (the expert profile block error, the chat entry dialog and the report error) are not the banner and were left as they were. On Android, `chat_banner_unavailable` got the same copy. Android's pull to refresh never cleared `recipientUnavailable` (iOS gained that in WR-02), so the new copy would have promised a recovery Android did not have. The `LoadMode.Pull` branch of `startLoad` now clears the flag when the pull starts, as iOS `ChattingViewModel.reload()` does.
+**Tests:** the iOS `ChatBlockStateTests.bannerCopy` assertion was updated, and all 30 tests in that suite pass. On Android, the `ChatThreadScreenTest.bannerForUnavailableRecipient` assertion was updated and `pullToRefreshLiftsTheUnavailableBanner` was added to `ChatThreadViewModelSendTest`. `./gradlew :app:testDevDebugUnitTest --tests '*ChatThread*' --offline` ran 141 tests with no failures.
 
 ## Verification
 

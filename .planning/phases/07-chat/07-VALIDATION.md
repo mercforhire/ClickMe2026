@@ -66,7 +66,16 @@ Rules:
 | CHAT-03 | Thread open scan, unblock outcomes (success, NOT_BLOCKER, server and transport error, repeat tap), self-thread | unit (stubbed, serialized) | `ChattingViewModelOpenTests` | ✅ exists | ✅ green |
 | CHAT-03 / CHAT-04 | Report & Block screen: block, unblock, NOT_BLOCKER and stale-lookup outcomes handed back to the thread | unit (stubbed, serialized) | `ReportChatViewModelTests` | ✅ exists | ✅ green |
 | CHAT-01 to CHAT-07 | Phase gate: the full unit suite, one invocation, 1168 tests in 107 suites; Debug build; Phase 7 grep gates; `ChattingViewModel.swift` at 624 lines | full suite + build + grep | Plan 07-08 Task 1 (`/tmp/07-08-full.log`, `/tmp/07-08-build.log`) | ✅ exists | ✅ green |
-| CHAT-08 | "Read" label updates live between two devices | manual | Device UAT row C6 | n/a | ⬜ pending |
+| CHAT-03 / WR-01 | A late `GET /chats` scan is dropped after the block state changed (revision counter on `ChatBlockState.Session`); a listed thread resets `sessionBlockedByMe` | unit (pure + stubbed, serialized) | `ChatBlockStateTests`, `ChattingViewModelOpenTests` | ✅ exists | ✅ green |
+| CHAT-03 / WR-02 | Pull-to-refresh clears `recipientUnavailable` | unit (pure + stubbed) | `ChatBlockStateTests`, `ChattingViewModelSendTests` | ✅ exists | ✅ green |
+| WR-03 | Socket.IO client logging is on in DEBUG builds only | grep gate | `grep -n -A4 "#if DEBUG" ClickMe2026/Realtime/RealtimeService.swift` shows `socketLogging = true` / `#else` / `false`, and `.log(socketLogging)` is the only `.log(` call | n/a | ✅ green |
+| CHAT-07 / WR-04, WR-05 | Local unread count, last message, time label and top position win over a late `GET /chats`; `markOpened` during the first load is kept | unit (stubbed, serialized, `RequestGate`) | `ChatConversationsUnreadTests` | ✅ exists | ✅ green |
+| CHAT-07 / WR-06 | An unknown thread's message during a load triggers exactly one follow-up fetch (first load and pull-to-refresh); none on a plain load; flag dropped on failure | unit (stubbed, serialized, `RequestGate`) | `ChatConversationsUnreadTests` | ✅ exists | ✅ green |
+| CHAT-01 / IN-01 | 408 and 429 keep the bubble as Failed; 409 and 428 stay refusals; 404 → `.refused(.notFound)` | unit (pure) | `ChatThreadReducerTests` | ✅ exists | ✅ green |
+| IN-03 | `extractInt` reads whole doubles and returns nil for fractional, NaN, infinite and out-of-range values without trapping | unit (pure) | `ChatItemMapperTests` | ✅ exists | ✅ green |
+| CHAT-01 to CHAT-07 | Post-review regression gate: the full unit suite, one invocation, 1192 tests in 109 suites, `** TEST SUCCEEDED **`, at HEAD `024899e` (last app commit `aea7ecb`) | full suite | `/tmp/07-validate-full.log` (2026-11-18 re-audit) | ✅ exists | ✅ green |
+| CHAT-08 | "Read" label updates live between two devices | manual | Device UAT row C6 (checklist item 11) | n/a | ✅ green (UAT 2026-11-19) |
+| IN-04 | A delivered bubble is not read by VoiceOver as pending (label attached only while pending) | manual | VoiceOver pass, backlog 999.5 | n/a | ⬜ pending (deferred) |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -90,6 +99,11 @@ Rules:
 | Pending → Failed → Retry on a real dead network | CHAT-01 | Real network conditions | Device UAT C1: turn on airplane mode, send, wait for Failed, reconnect, then Retry |
 | Block banner on both sides; only the blocker sees Unblock | CHAT-03 | Two accounts | Device UAT: A blocks B, then check both devices |
 | Unread badge appears and clears live | CHAT-07 | Realtime | Device UAT: B sends while A is on the Chats list |
+| Live row kept over a refresh; new thread's first message during a refresh; pill stays cleared (WR-05, WR-06) | CHAT-07 | Real socket plus a reload in flight | Device UAT test 6, steps 1-3: passed 2026-11-19 |
+| Unavailable recipient re-enabled by pull-to-refresh (WR-02) | CHAT-03 | Needs an unavailable test account | Device UAT test 6, step 4: not run (no such account); unit tests cover it |
+| VoiceOver: failed bubble actions, counter at the cap, banners, profile Block overlay, unread row, and IN-04 (a delivered bubble is not read as pending) | CHAT-01, CHAT-03, CHAT-04, CHAT-07 | Needs VoiceOver on a device | Checklist item 12 plus the VoiceOver parts of items 3, 4 and test 6: deferred to backlog 999.5 |
+
+Device UAT result (07-UAT.md, 2026-11-19): 6 passed, 0 issues. Only the VoiceOver checks (backlog 999.5) and the WR-02 device step are still open.
 
 ---
 
@@ -104,10 +118,20 @@ Rules:
 
 **Approval:** approved 2026-11-18 by plan 07-08 on the green phase gate: full suite 1168 tests in 107 suites passed at HEAD `003aff8` (last Phase 7 app commit `7452bc0`), evidence committed in `8fdc9fd`. `status` stays `draft` and the Manual-Only rows stay pending for `/gsd-verify-work 07`; the D-18 row is closed by plan 07-09.
 
+**Re-audit 2026-11-18 (after the code-review fixes `82050a4..aea7ecb`):** every fix that can be unit tested has tests in the suites listed above (WR-01, WR-02, WR-04, WR-05, WR-06, IN-01, IN-03; IN-05 and IN-07 are test-support changes, and IN-02 only changes comments). WR-03 is checked by a grep gate. IN-04 is a SwiftUI modifier and needs the VoiceOver check deferred to backlog 999.5. The full unit suite passed: 1192 tests in 109 suites at HEAD `024899e`. No new Nyquist gaps were found, so no tests were generated.
+
 ## Validation Audit 2026-11-18
 
 | Metric | Count |
 |---|---|
 | Gaps found | 1 |
 | Resolved | 1 |
+| Escalated | 0 |
+
+## Validation Audit 2026-11-19
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 0 |
 | Escalated | 0 |

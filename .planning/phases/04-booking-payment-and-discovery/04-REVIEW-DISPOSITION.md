@@ -3,30 +3,18 @@ phase: 04
 review: 04-REVIEW.md
 titles: json
 findings:
-  - id: CR-03
-    severity: critical
-    disposition: fixed
-    title: "The 3DS retry sends the connected-account clone's `pm_` id, so a card that needs 3DS ends with a hold and no booking (needs device verification, touches payment state)"
-  - id: WR-08
+  - id: WR-13
     severity: warning
-    disposition: fixed
-    title: "Overlapping `/client/home` fetches race, and the last response to land wins regardless of the filter"
-  - id: WR-09
+    disposition: open
+    title: "The Favorites revalidation flag can be set after the list has already reloaded, so the stale list returns in a narrow window"
+  - id: WR-14
     severity: warning
-    disposition: fixed
-    title: "A failed re-load replaces an already-loaded expert profile with the full-screen error"
-  - id: WR-10
+    disposition: open
+    title: "After `SLOT_UNAVAILABLE` the calendar is not reloaded, so the same taken slot stays tappable (Android reloads)"
+  - id: WR-15
     severity: warning
-    disposition: fixed
-    title: "Returning to Make a Booking re-runs the load and silently clears the chosen slot (needs device verification)"
-  - id: WR-11
-    severity: warning
-    disposition: fixed
-    title: "Favorites list goes stale after an unfavorite from the profile, and a refresh can undo an optimistic remove"
-  - id: WR-12
-    severity: warning
-    disposition: fixed
-    title: "The Message button drops a failed chat start with no feedback"
+    disposition: open
+    title: "`HeldURLProtocol` keeps process-wide state that two separate suites reset, and a cancelled held request stays queued"
   - id: IN-10
     severity: info
     disposition: open
@@ -75,6 +63,34 @@ findings:
     severity: info
     disposition: open
     title: "Async tests depend on a semaphore parked on the URL thread and on wall-clock polling"
+  - id: IN-22
+    severity: info
+    disposition: open
+    title: "The Message button has no in-flight guard, so a double tap opens the chat twice"
+  - id: CR-03
+    severity: critical
+    disposition: fixed
+    title: "The 3DS retry sends the connected-account clone's `pm_` id, so a card that needs 3DS ends with a hold and no booking (needs device verification, touches payment state)"
+  - id: WR-08
+    severity: warning
+    disposition: fixed
+    title: "Overlapping `/client/home` fetches race, and the last response to land wins regardless of the filter"
+  - id: WR-09
+    severity: warning
+    disposition: fixed
+    title: "A failed re-load replaces an already-loaded expert profile with the full-screen error"
+  - id: WR-10
+    severity: warning
+    disposition: fixed
+    title: "Returning to Make a Booking re-runs the load and silently clears the chosen slot (needs device verification)"
+  - id: WR-11
+    severity: warning
+    disposition: fixed
+    title: "Favorites list goes stale after an unfavorite from the profile, and a refresh can undo an optimistic remove"
+  - id: WR-12
+    severity: warning
+    disposition: fixed
+    title: "The Message button drops a failed chat start with no feedback"
   - id: WR-01
     severity: warning
     disposition: fixed
@@ -147,21 +163,18 @@ findings:
     severity: info
     disposition: deferred
     title: "Wall-clock timing in the confirm-race tests can flake under load (new)"
-open: 12
-total: 36
-recorded: 2026-11-19T06:07:43.271Z
+open: 16
+total: 40
+recorded: 2026-11-19T15:49:11.825Z
 ---
 
 # Phase 04: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| CR-03 | critical | fixed | 04-REVIEW-FIX.md |
-| WR-08 | warning | fixed | 04-REVIEW-FIX.md |
-| WR-09 | warning | fixed | 04-REVIEW-FIX.md |
-| WR-10 | warning | fixed | 04-REVIEW-FIX.md |
-| WR-11 | warning | fixed | 04-REVIEW-FIX.md |
-| WR-12 | warning | fixed | 04-REVIEW-FIX.md |
+| WR-13 | warning | open | - |
+| WR-14 | warning | open | - |
+| WR-15 | warning | open | - |
 | IN-10 | info | open | - |
 | IN-11 | info | open | - |
 | IN-12 | info | open | - |
@@ -174,6 +187,13 @@ recorded: 2026-11-19T06:07:43.271Z
 | IN-19 | info | open | - |
 | IN-20 | info | open | - |
 | IN-21 | info | open | - |
+| IN-22 | info | open | - |
+| CR-03 | critical | fixed | 04-REVIEW-FIX.md (not in the current review) |
+| WR-08 | warning | fixed | 04-REVIEW-FIX.md (not in the current review) |
+| WR-09 | warning | fixed | 04-REVIEW-FIX.md (not in the current review) |
+| WR-10 | warning | fixed | 04-REVIEW-FIX.md (not in the current review) |
+| WR-11 | warning | fixed | 04-REVIEW-FIX.md (not in the current review) |
+| WR-12 | warning | fixed | 04-REVIEW-FIX.md (not in the current review) |
 | WR-01 | warning | fixed | superseded in full re-review 25ec5a6: e6c7488 WR-01 → CR-03 (f3bdb3f), 04-17 WR-01 → WR-08 (23c4d3a) (not in the current review) |
 | WR-02 | warning | deferred | superseded in full re-review 25ec5a6: e6c7488 WR-02 → WR-09 (fixed aed0c22), 04-17 WR-02 → IN-10 (not in the current review) |
 | WR-03 | warning | deferred | superseded in full re-review 25ec5a6: e6c7488 WR-03 → WR-08 (fixed 23c4d3a), 04-17 WR-03 → IN-10 (not in the current review) |

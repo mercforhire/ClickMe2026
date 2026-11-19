@@ -300,7 +300,7 @@ final class ExpertProfileViewModel: ObservableObject {
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
                 isFavorited = previous
             }
-            apiError = Self.message(for: error)
+            apiError = error.userMessage
         }
     }
 
@@ -321,16 +321,5 @@ final class ExpertProfileViewModel: ObservableObject {
             messageError = error.userMessage
             return nil
         }
-    }
-
-    // MARK: - Error helpers
-
-    private static func message(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 }

@@ -112,7 +112,7 @@ final class BookingRequestSentViewModel: ObservableObject {
             apply(response.data)
             state = .loaded
         } catch {
-            state = .failed(Self.message(for: error))
+            state = .failed(error.userMessage)
         }
     }
 
@@ -161,15 +161,6 @@ final class BookingRequestSentViewModel: ObservableObject {
         let startText = DateUtil.shortTime(start, timeZone: timeZone, locale: locale)
         let endText = DateUtil.shortTime(end, timeZone: timeZone, locale: locale)
         return "\(day) | \(startText) - \(endText)"
-    }
-
-    private static func message(for error: Error) -> String {
-        if case let NetworkError.httpError(_, data) = error,
-           let response = try? JSONDecoder().decode(StandardErrorResponse.self, from: data)
-        {
-            return response.message
-        }
-        return (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
     }
 
     // MARK: - Actions

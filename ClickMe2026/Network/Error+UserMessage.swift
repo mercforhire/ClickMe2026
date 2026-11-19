@@ -29,6 +29,14 @@ extension Error {
         return (self as? LocalizedError)?.errorDescription ?? localizedDescription
     }
 
+    /// True for a request that was cancelled rather than one that failed: a
+    /// `CancellationError`, or the `URLError.cancelled` that `URLSession` throws
+    /// when the task awaiting it is cancelled (a `.task` whose screen went away).
+    /// A cancelled load is not an error to show the user.
+    var isCancellation: Bool {
+        self is CancellationError || (self as? URLError)?.code == .cancelled
+    }
+
     /// The per-field failures of a `422 VALIDATION_ERROR`, or `[]` for any
     /// other error.
     ///

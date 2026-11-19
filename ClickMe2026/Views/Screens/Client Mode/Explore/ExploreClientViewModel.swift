@@ -132,7 +132,7 @@ final class ExploreClientViewModel: ObservableObject {
             // to idle left skeletons with nothing loading (G-04-3). Each section still
             // loading returns to what it showed before this fetch, and a section another
             // fetch has already settled is left alone.
-            if Self.isCancellation(error) {
+            if error.isCancellation {
                 set(\.categoriesState, to: Self.stateAfterCancelledFetch(current: categoriesState, before: categoriesBefore))
                 set(\.expertsState, to: Self.stateAfterCancelledFetch(current: expertsState, before: expertsBefore))
                 set(\.featuredTopicsState, to: Self.stateAfterCancelledFetch(current: featuredTopicsState, before: featuredBefore))
@@ -371,11 +371,5 @@ final class ExploreClientViewModel: ObservableObject {
         case .idle, .loading:
             return .failed(interruptedLoadMessage)
         }
-    }
-
-    private static func isCancellation(_ error: Error) -> Bool {
-        if error is CancellationError { return true }
-        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
-        return false
     }
 }

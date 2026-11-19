@@ -114,7 +114,7 @@ final class ExpertProfileViewModel: ObservableObject {
         do {
             details = try await api.getExpertDetails(id: expertId)
         } catch {
-            guard loadGate.isCurrent(token), !Self.isCancellation(error) else { return }
+            guard loadGate.isCurrent(token), !error.isCancellation else { return }
             // WR-09: the screen re-runs this load on every appear. A profile that already
             // loaded stays on screen when the re-load fails, so a dropped request does not
             // replace it with the full-screen error. A 404 still wins, because the account is gone.
@@ -159,10 +159,6 @@ final class ExpertProfileViewModel: ObservableObject {
             return true
         }
         return BookingErrorMapper.code(for: error) == .notFound
-    }
-
-    private static func isCancellation(_ error: Error) -> Bool {
-        error is CancellationError || (error as? URLError)?.code == .cancelled
     }
 
     /// Overlays the fields the details endpoint owns (name, title, bio,
@@ -317,7 +313,7 @@ final class ExpertProfileViewModel: ObservableObject {
         do {
             return try await api.initiateChat(peerId: expertId).data.threadId
         } catch {
-            guard !Self.isCancellation(error) else { return nil }
+            guard !error.isCancellation else { return nil }
             messageError = error.userMessage
             return nil
         }

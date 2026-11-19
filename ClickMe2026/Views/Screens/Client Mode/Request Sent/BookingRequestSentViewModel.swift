@@ -106,13 +106,16 @@ final class BookingRequestSentViewModel: ObservableObject {
     }
 
     private func forceLoad() async {
+        let previous = state
         state = .loading
         do {
             let response = try await api.getClientBookingDetail(id: bookingId)
             apply(response.data)
             state = .loaded
         } catch {
-            state = .failed(error.userMessage)
+            // IN-15: a cancelled load (the screen went away) must not read "Couldn't load your
+            // booking" over a booking that was just made; `.task` loads again on appear.
+            state = error.isCancellation ? state.afterCancelledLoad(previous: previous) : .failed(error.userMessage)
         }
     }
 

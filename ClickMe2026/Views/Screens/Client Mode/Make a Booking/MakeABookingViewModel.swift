@@ -326,6 +326,7 @@ final class MakeABookingViewModel: ObservableObject {
 
     func loadTopics() async {
         if case .loaded = topicsState { return }
+        let previous = topicsState
         topicsState = .loading
         do {
             let response = try await api.getExpertDetails(id: expertId)
@@ -334,7 +335,12 @@ final class MakeABookingViewModel: ObservableObject {
             self.selectedTopic = mapped.first
             self.topicsState = .loaded
         } catch {
-            self.topicsState = .failed(error.userMessage)
+            // IN-15: the screen's task was cancelled (a push, a tab switch). That is not a failed load.
+            if error.isCancellation {
+                topicsState = topicsState.afterCancelledLoad(previous: previous)
+            } else {
+                topicsState = .failed(error.userMessage)
+            }
         }
     }
 
@@ -373,7 +379,7 @@ final class MakeABookingViewModel: ObservableObject {
         do {
             center = try await api.getExpertAvailability(id: expertId, month: Self.monthKey(month))
         } catch {
-            guard availabilityGate.isCurrent(token), !Self.isCancellation(error) else { return }
+            guard availabilityGate.isCurrent(token), !error.isCancellation else { return }
             availabilityState = .failed(error.userMessage)
             return
         }
@@ -461,14 +467,6 @@ final class MakeABookingViewModel: ObservableObject {
     /// regenerate `bookingAttemptId`. The disabled calendar already stops a month change then.
     private func clearSelectedSlotForMonthChange() {
         if !isSubmitting { selectedTimeSlot = nil }
-    }
-
-    /// A cancelled request is not a failure (same rule as
-    /// `ExploreClientViewModel.isCancellation`).
-    private static func isCancellation(_ error: Error) -> Bool {
-        if error is CancellationError { return true }
-        if let urlError = error as? URLError, urlError.code == .cancelled { return true }
-        return false
     }
 
     // MARK: - Slots for the selected day

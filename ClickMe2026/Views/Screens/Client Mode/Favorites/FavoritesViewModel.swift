@@ -127,6 +127,7 @@ final class FavoritesViewModel: ObservableObject {
     }
 
     private func forceLoad() async {
+        let previous = state
         state = .loading
         generation += 1
         let serial = beginListRequest()
@@ -140,7 +141,8 @@ final class FavoritesViewModel: ObservableObject {
             if revalidationEpoch == epoch { needsRevalidation = false }
             state = .loaded
         } catch {
-            state = .failed(error.userMessage)
+            // IN-15: a cancelled load (the screen went away) is not a failure; `.task` loads again on appear.
+            state = error.isCancellation ? state.afterCancelledLoad(previous: previous) : .failed(error.userMessage)
         }
     }
 
@@ -229,7 +231,7 @@ final class FavoritesViewModel: ObservableObject {
         } catch {
             // The pull gesture's task is cancelled when the view goes away;
             // that is not a failed refresh.
-            if error is CancellationError || (error as? URLError)?.code == .cancelled { return }
+            if error.isCancellation { return }
             if !quietly { apiError = error.userMessage }
         }
     }

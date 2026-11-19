@@ -114,6 +114,7 @@ final class ExpertReviewsViewModel: ObservableObject {
             state = .loaded
             return
         }
+        let previous = state
         state = .loading
         generation += 1
         do {
@@ -121,7 +122,8 @@ final class ExpertReviewsViewModel: ObservableObject {
             install(firstPage: response.data)
             state = .loaded
         } catch {
-            state = .failed(error.userMessage)
+            // IN-15: a cancelled load (the screen went away) is not a failure; `.task` loads again on appear.
+            state = error.isCancellation ? state.afterCancelledLoad(previous: previous) : .failed(error.userMessage)
         }
     }
 

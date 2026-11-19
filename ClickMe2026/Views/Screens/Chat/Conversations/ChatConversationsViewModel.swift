@@ -212,9 +212,16 @@ final class ChatConversationsViewModel: ObservableObject {
     }
 
     /// Remembers a live message's effect on its row when a reload is in flight.
-    private func noteLocalActivity(_ row: ChatPreview) {
+    ///
+    /// - Parameters:
+    ///   - hasContent: Whether the event carried text. Without it the row's preview is
+    ///     just the old one, so recording it would override a newer preview from the
+    ///     server (WR-07).
+    private func noteLocalActivity(_ row: ChatPreview, hasContent: Bool) {
         guard reloadsInFlight > 0 else { return }
-        changesDuringReload[row.threadId, default: LocalRowChange()].lastMessage = row.lastMessage
+        if hasContent {
+            changesDuringReload[row.threadId, default: LocalRowChange()].lastMessage = row.lastMessage
+        }
         changesDuringReload[row.threadId, default: LocalRowChange()].timeLabel = row.timeLabel
         movedToTopDuringReload.removeAll { $0 == row.threadId }
         movedToTopDuringReload.insert(row.threadId, at: 0)
@@ -265,7 +272,7 @@ final class ChatConversationsViewModel: ObservableObject {
         )
         chats.remove(at: idx)
         chats.insert(updated, at: 0)
-        noteLocalActivity(updated)
+        noteLocalActivity(updated, hasContent: event.content != nil)
     }
 
     /// The thread for `threadId` just became the visible thread, from any

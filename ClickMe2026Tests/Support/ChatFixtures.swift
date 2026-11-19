@@ -76,11 +76,13 @@ enum ChatFixtures {
         partnerName: String = "Peer",
         unreadCount: Int = 0,
         isBlocked: Bool = false,
-        blockedByMe: Bool? = false
+        blockedByMe: Bool? = false,
+        lastMessage: String? = nil
     ) -> String {
         let blockedByMeJSON = blockedByMe.map { #","blocked_by_me":\#($0)"# } ?? ""
+        let lastMessageJSON = lastMessage.map { #""\#($0)""# } ?? "null"
         return #"""
-        {"thread_id":"\#(id.uuidString)","partner":{"id":"\#(partnerId.uuidString)","name":"\#(partnerName)","avatar_url":null,"roles":["expert"]},"last_message":null,"last_msg_at":null,"unread_count":\#(unreadCount),"is_online":false,"is_blocked":\#(isBlocked)\#(blockedByMeJSON)}
+        {"thread_id":"\#(id.uuidString)","partner":{"id":"\#(partnerId.uuidString)","name":"\#(partnerName)","avatar_url":null,"roles":["expert"]},"last_message":\#(lastMessageJSON),"last_msg_at":null,"unread_count":\#(unreadCount),"is_online":false,"is_blocked":\#(isBlocked)\#(blockedByMeJSON)}
         """#
     }
 

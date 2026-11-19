@@ -96,7 +96,9 @@ struct ChatConversationsUnreadTests {
         )
     }
 
-    private static func event(thread: UUID, sender: UUID, content: String = "hello") -> RealtimeMessageNewEvent {
+    /// - Parameters:
+    ///   - content: Pass `nil` for a live event that carries no text.
+    private static func event(thread: UUID, sender: UUID, content: String? = "hello") -> RealtimeMessageNewEvent {
         RealtimeMessageNewEvent(
             messageId: UUID(),
             threadId: thread,
@@ -331,6 +333,39 @@ struct ChatConversationsUnreadTests {
 
         #expect(viewModel.chats.map(\.threadId) == [Self.threadA, Self.threadB])
         #expect(viewModel.chats.map(\.lastMessage) == ["second", "first"])
+    }
+
+    @Test("a live message without text during a reload leaves the server's newer preview in place (WR-07)")
+    func lateReloadKeepsServerPreviewForTextlessEvent() async {
+        let server = ChatsServer(Self.page())
+        let gate = RequestGate()
+        let viewModel = Self.makeViewModel(server: server, gate: gate)
+        await viewModel.load()
+
+        // The server already holds a newer preview than the one the list shows.
+        server.body = ChatFixtures.threadsPage([
+            ChatFixtures.thread(id: Self.threadA, partnerId: Self.peerA, partnerName: "Alice"),
+            ChatFixtures.thread(
+                id: Self.threadB,
+                partnerId: Self.peerB,
+                partnerName: "Bob",
+                unreadCount: 2,
+                lastMessage: "newer on the server"
+            )
+        ])
+        gate.arm()
+        let reload = Task { await viewModel.silentReload() }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
+        viewModel.handleMessageNew(Self.event(thread: Self.threadB, sender: Self.peerB, content: nil))
+        gate.open()
+        await reload.value
+
+        // The event carried no text, so it says nothing about the preview. The row
+        // still moves to the top and counts as unread.
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadB, Self.threadA])
+        #expect(viewModel.chats.first?.lastMessage == "newer on the server")
+        #expect(viewModel.chats.first?.timeLabel.isEmpty == false)
+        #expect(count(viewModel, Self.threadB) == 3)
     }
 
     @Test("markOpened while the first load runs keeps the row at 0 even though the row is not listed yet")

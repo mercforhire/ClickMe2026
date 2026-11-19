@@ -293,9 +293,19 @@ final class MakeABookingViewModel: ObservableObject {
 
     func onAppear() async {
         async let t: Void = loadTopics()
-        async let a: Void = loadAvailability(for: displayedMonth)
+        async let a: Void = loadAvailabilityIfNeeded()
         async let p: Void = loadPaymentMethods()
         _ = await (t, a, p)
+    }
+
+    /// `.task` restarts every time the screen reappears: after Payment Methods,
+    /// a sheet or any push and pop. A calendar that already loaded stays as it is,
+    /// so the chosen slot and the booking attempt survive the round trip (WR-10).
+    /// An idle, failed or interrupted (`.loading` with nothing running) calendar
+    /// still loads.
+    private func loadAvailabilityIfNeeded() async {
+        if case .loaded = availabilityState { return }
+        await loadAvailability(for: displayedMonth)
     }
 
     /// Fetches the client's saved cards to gate the paid-booking CTA.
@@ -350,9 +360,8 @@ final class MakeABookingViewModel: ObservableObject {
     func loadAvailability(for month: Date) async {
         let token = availabilityGate.begin()
         availabilityState = .loading
-        // A paid attempt in flight keeps its slot (CR-01): the confirm reads
-        // `paidAttempt`, and clearing would also regenerate `bookingAttemptId`.
-        if !isSubmitting { selectedTimeSlot = nil }
+        // The chosen slot is not cleared here (WR-10). Only a month change clears it,
+        // because a reload of the same month must not drop a choice the user made.
 
         // Center month — surfaces the error if this one fails.
         let center: SuccessDataResponse<ExpertAvailabilityData>
@@ -398,14 +407,23 @@ final class MakeABookingViewModel: ObservableObject {
 
     func goToPreviousMonth() {
         displayedMonth = calendar.date(byAdding: .month, value: -1, to: displayedMonth) ?? displayedMonth
+        clearSelectedSlotForMonthChange()
         availabilityTask?.cancel()
         availabilityTask = Task { await loadAvailability(for: displayedMonth) }
     }
 
     func goToNextMonth() {
         displayedMonth = calendar.date(byAdding: .month, value: 1, to: displayedMonth) ?? displayedMonth
+        clearSelectedSlotForMonthChange()
         availabilityTask?.cancel()
         availabilityTask = Task { await loadAvailability(for: displayedMonth) }
+    }
+
+    /// A slot belongs to the month the user picked it in. A paid attempt in flight keeps
+    /// its slot (CR-01): the confirm reads `paidAttempt`, and clearing would also
+    /// regenerate `bookingAttemptId`. The disabled calendar already stops a month change then.
+    private func clearSelectedSlotForMonthChange() {
+        if !isSubmitting { selectedTimeSlot = nil }
     }
 
     /// A cancelled request is not a failure (same rule as

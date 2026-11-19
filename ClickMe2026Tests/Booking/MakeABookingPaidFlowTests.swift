@@ -799,17 +799,119 @@ struct MakeABookingPaidFlowTests {
         }
     }
 
-    @Test("With no attempt in flight a reload still clears the selected slot")
-    func idleReloadClearsSlot() async {
+    @Test("With no attempt in flight a reload of the same month keeps the selected slot")
+    func idleReloadKeepsSlot() async throws {
         let viewModel = makeViewModel(installingAttempt: false) { _, request in
             PaidFlowFixture.coded(request, status: 500, code: "INTERNAL")
         }
-        #expect(viewModel.selectedTimeSlot != nil)
+        let slot = try #require(viewModel.selectedTimeSlot)
+        let attemptId = viewModel.bookingAttemptId
         #expect(!viewModel.isSubmitting)
 
         await viewModel.loadAvailability(for: viewModel.displayedMonth)
 
+        #expect(viewModel.selectedTimeSlot == slot)
+        #expect(viewModel.bookingAttemptId == attemptId)
+    }
+
+    /// `/availability` answers a one-slot month; every other path answers 500 (payment methods then read as none).
+    nonisolated private static func availabilityAnswer(_ request: URLRequest) -> (HTTPURLResponse, Data) {
+        guard request.url?.path.hasSuffix("/availability") == true else {
+            return PaidFlowFixture.coded(request, status: 500, code: "INTERNAL")
+        }
+        let month = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?
+            .queryItems?.first { $0.name == "month" }?.value ?? "2030-01"
+        let body = """
+        {"status":"success","data":{"expert_timezone":"UTC","client_timezone":"UTC","month":"\(month)",\
+        "days":[{"date":"\(month)-15","slots":[{"start_utc":"\(month)-15T15:00:00.000Z",\
+        "end_utc":"\(month)-15T15:30:00.000Z","available":true,"held":false}]}]}}
+        """
+        return PaidFlowFixture.http(request, status: 200, body: Data(body.utf8))
+    }
+
+    private func availabilityRequests() -> [URLRequest] {
+        MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix("/availability") == true }
+    }
+
+    /// Month navigation starts an unstructured load. Waits (10 ms steps, up to 3 s) until it
+    /// has loaded, so it cannot send requests into the next test's handler.
+    private func settleAvailability(_ viewModel: MakeABookingViewModel) async {
+        for _ in 0 ..< 300 {
+            if viewModel.availabilityState == .loaded { return }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+    }
+
+    @Test("Coming back to Make a Booking keeps the chosen slot and the booking attempt (WR-10)")
+    func reappearKeepsSlot() async throws {
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in Self.availabilityAnswer(request) }
+        await viewModel.onAppear()
+        guard case .loaded = viewModel.availabilityState else {
+            Issue.record("expected the first appear to load the calendar, got \(viewModel.availabilityState)")
+            return
+        }
+        let loadedRequests = availabilityRequests().count
+
+        // The user picks a slot, opens Payment Methods and pops back.
+        let slot = BookingTimeSlot(startTime: Date().addingTimeInterval(2 * 24 * 3600), endTime: nil, isAvailable: true)
+        viewModel.selectedTimeSlot = slot
+        let attemptId = viewModel.bookingAttemptId
+        await viewModel.onAppear()
+
+        #expect(viewModel.selectedTimeSlot == slot)
+        #expect(viewModel.bookingAttemptId == attemptId)
+        guard case .loaded = viewModel.availabilityState else {
+            Issue.record("a reappear must not flip the calendar to \(viewModel.availabilityState)")
+            return
+        }
+        #expect(availabilityRequests().count == loadedRequests)
+    }
+
+    @Test("A calendar that failed to load loads again on the next appear")
+    func reappearRetriesFailedCalendar() async {
+        let failing = CallCounter()
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in
+            if request.url?.path.hasSuffix("/availability") == true, failing.next() == 1 {
+                return PaidFlowFixture.coded(request, status: 500, code: "INTERNAL")
+            }
+            return Self.availabilityAnswer(request)
+        }
+        await viewModel.onAppear()
+        guard case .failed = viewModel.availabilityState else {
+            Issue.record("expected .failed, got \(viewModel.availabilityState)")
+            return
+        }
+
+        await viewModel.onAppear()
+
+        guard case .loaded = viewModel.availabilityState else {
+            Issue.record("expected .loaded, got \(viewModel.availabilityState)")
+            return
+        }
+    }
+
+    @Test("Changing the month clears the chosen slot", arguments: [true, false])
+    func monthChangeClearsSlot(forward: Bool) async {
+        let viewModel = makeViewModel(installingAttempt: false) { _, request in Self.availabilityAnswer(request) }
+        #expect(viewModel.selectedTimeSlot != nil)
+
+        if forward { viewModel.goToNextMonth() } else { viewModel.goToPreviousMonth() }
+
         #expect(viewModel.selectedTimeSlot == nil)
+        await settleAvailability(viewModel)
+    }
+
+    @Test("A month change while a paid attempt is in flight keeps the slot")
+    func monthChangeKeepsSlotDuringAttempt() async throws {
+        let viewModel = makeViewModel { _, request in Self.availabilityAnswer(request) }
+        let slot = try #require(viewModel.selectedTimeSlot)
+        viewModel.paidStep = .confirming
+        #expect(viewModel.isSubmitting)
+
+        viewModel.goToNextMonth()
+
+        #expect(viewModel.selectedTimeSlot == slot)
+        await settleAvailability(viewModel)
     }
 
     @Test("The 3DS retry sends the topic and slot the payment was made for")

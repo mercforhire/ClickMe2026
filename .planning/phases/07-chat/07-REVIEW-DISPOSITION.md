@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: IN-06
     severity: info
-    disposition: skipped
+    disposition: fixed
     title: "The \"unavailable\" banner does not tell the user that pull-to-refresh retries"
   - id: IN-08
     severity: info
@@ -73,14 +73,14 @@ findings:
     title: "Chats list reloads can overwrite local unread changes and double-fetch during the first load"
 open: 0
 total: 17
-recorded: 2026-11-19T04:27:30.514Z
+recorded: 2026-11-19T04:49:49.729Z
 ---
 
 # Phase 07: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| IN-06 | info | skipped | 07-REVIEW-FIX.md |
+| IN-06 | info | fixed | 07-REVIEW-FIX.md |
 | IN-08 | info | fixed | 07-REVIEW-FIX.md |
 | IN-09 | info | fixed | 07-REVIEW-FIX.md |
 | IN-10 | info | fixed | 07-REVIEW-FIX.md |

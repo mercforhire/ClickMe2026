@@ -51,7 +51,9 @@ Expected:
 - A failed accept or decline shows "Couldn't update booking", dismissed by "Back to Booking", and no toast.
 - **WR-01 (03-16):** the card is cleared as soon as the server accepts or declines, before the refetch, so it also disappears when that refetch fails; the date, time and status pill then update on the next successful fetch. A phone cannot fail only the follow-up request on demand, so this edge is proven by unit tests (`RescheduleResponderTests`, `UpcomingBookingViewModelTests`, `BookingSummaryViewModelTests`) and has no device step. The Expected lines above are unchanged on the normal path.
 
-Result:
+Result: FAIL (2026-11-19, backend) — the push A receives when B proposes a new time says "booking has been rescheduled"; it should read as a reschedule request. Source: backend `src/services/events.js` `BOOKING_RESCHEDULED` push (title "Booking Rescheduled", body "A booking has been rescheduled."). Gap G-03-1-ITEM1 in 03-UAT.md.
+FAIL (2026-11-19, step 3) — the decline with an emoji reason goes through, but B never sees the reason: no screen shows it and it is not added to the chat. Backend stores it in `decline_reason_text` but only exposes that column for `declined` bookings, and the reschedule-decline event carries no reason. Gap G-03-1-ITEM1B in 03-UAT.md.
+Rest of item 1 PASS (2026-11-19): accept, decline toast, payment-conversion disclosure, Booking Summary parity and in-place update, failed-accept alert.
 
 ### 2. BOOK-07 — cancellation comment is sent with the reason (03-10)
 
@@ -68,7 +70,7 @@ Expected:
 - The counter and field wrap without clipping at the largest size.
 - **Comment-visibility note (threat T-03-19, accepted, RESEARCH A5):** the comment is stored (BACK-14) and shown to the expert on `GET /expert/bookings/{id}/summary`. The field label is locked and does not tell the client. Record your judgment in Result.
 
-Result:
+Result: PASS (2026-11-19). No comment on the label-visibility judgment; label kept as locked.
 
 ### 3. BOOK-08 — cancel preview and post-cancel toast match the server refund (03-02, 03-10)
 
@@ -86,7 +88,7 @@ Steps and expected (compare each confirm-step line and each toast with the refun
 9. The toast survives the pop to My Bookings and sits above the tab bar.
 10. **WR-02 (03-17):** if a cancel the confirm step showed as refundable ('Refund: {amount}, cancelled more than 24 hours before the start') ends with the toast 'Booking cancelled. Any refund due will follow our cancellation policy.', the server returned refund_amount 0: the phone clock was behind the server's at the 24 h line, a refund is being retried, or the booking was already cancelled. That toast is expected for those cases and names no amount. Record which case it was and compare with the Payments list. The edge is proven by unit tests (`CancelToastMessageTests`, `ClientCancellationViewModelTests`). Do not change the phone clock to force it, because on a real captured booking that forfeits the refund.
 
-Result:
+Result: PASS (2026-11-19).
 
 ### 4. BOOK-09 — Upcoming details status pill shows the real status (03-14)
 
@@ -101,7 +103,7 @@ Expected:
 - Each pill reads its real status, not a fixed "Confirmed".
 - The pill and ID row read as **one VoiceOver element** and stay readable at the largest size (UI-SPEC L2).
 
-Result:
+Result: SKIPPED (2026-11-19) — "Skip item 4 due to voiceover. Not testing voiceover." Whole item skipped, including the non-VoiceOver status-pill and Dynamic Type checks.
 
 ### 5. BOOK-11 — Past tab empty state (03-11)
 
@@ -114,7 +116,7 @@ Expected:
 - A failed load shows "Couldn't load bookings", never the empty state.
 - The empty state is not scrollable, so there is no pull-to-refresh on it; the same holds for the existing Upcoming empty state. Judge whether that is acceptable.
 
-Result:
+Result: PASS (2026-11-19). No pull-to-refresh on the empty state accepted.
 
 ### 6. BOOK-12 — Keep Booking returns one level (03-11, 03-12)
 
@@ -130,7 +132,7 @@ Expected:
 - Keep Booking goes back **one level** to Upcoming details in every case (BOOK-12).
 - A confirmed cancel from My Bookings lands on the My Bookings list. A confirmed cancel from a push-opened, chat-opened, Explore-opened or Payments-opened screen **pops two levels, past the cancelled booking** to the screen that opened it, with the post-cancel toast (03-12 assumption).
 
-Result:
+Result: PASS (2026-11-19).
 
 ### 7. BOOK-13 — Cancel and Reschedule visibility by status and time (03-09)
 

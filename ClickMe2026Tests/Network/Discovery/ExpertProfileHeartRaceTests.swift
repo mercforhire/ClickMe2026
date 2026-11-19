@@ -140,3 +140,81 @@ extension HeldResponseTests {
         }
     }
 }
+
+// MARK: - Message button (IN-22)
+
+extension HeldResponseTests {
+
+    @Suite("Expert profile · Message button in flight (IN-22)", .serialized)
+    @MainActor
+    struct ExpertProfileMessageTests {
+
+        private static let threadId = UUID(uuidString: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")!
+
+        nonisolated private static func isInitiate(_ request: URLRequest) -> Bool {
+            request.httpMethod == "POST" && request.url?.path.hasSuffix("/chats/initiate") == true
+        }
+
+        private func makeViewModel() -> ExpertProfileViewModel {
+            HeldURLProtocol.configure(
+                hold: { Self.isInitiate($0) },
+                otherwise: { _ in (404, Data(#"{"status":"error","message":"nope"}"#.utf8)) }
+            )
+            return ExpertProfileViewModel(expert: HeartFixture.seed(), api: HeldURLProtocol.makeAPI())
+        }
+
+        @Test("a second Message tap while the chat is being started does nothing")
+        func secondTapIsIgnored() async throws {
+            let viewModel = makeViewModel()
+            #expect(!viewModel.isStartingChat)
+
+            let first = Task { await viewModel.startChat() }
+            try #require(await waitUntil("the chat request to be held") { HeldURLProtocol.heldCount == 1 })
+            #expect(viewModel.isStartingChat)
+
+            let second = await viewModel.startChat()
+            #expect(second == nil)
+            #expect(HeldURLProtocol.heldCount == 1)
+            #expect(viewModel.messageError == nil)
+
+            let body = Data(#"{"status":"success","data":{"thread_id":"\#(Self.threadId.uuidString)"}}"#.utf8)
+            HeldURLProtocol.release(where: Self.isInitiate, status: 201, body: body)
+
+            #expect(await first.value == Self.threadId)
+            #expect(!viewModel.isStartingChat)
+        }
+
+        @Test("the in-flight flag clears after a failure, so Message can be tapped again")
+        func flagClearsAfterFailure() async throws {
+            let viewModel = makeViewModel()
+            let first = Task { await viewModel.startChat() }
+            try #require(await waitUntil("the chat request to be held") { HeldURLProtocol.heldCount == 1 })
+
+            HeldURLProtocol.release(
+                where: Self.isInitiate,
+                status: 500,
+                body: Data(#"{"status":"error","message":"Server exploded"}"#.utf8)
+            )
+
+            #expect(await first.value == nil)
+            #expect(!viewModel.isStartingChat)
+            #expect(viewModel.messageError == "Server exploded")
+        }
+
+        @Test("a second tap does not clear a message error shown meanwhile")
+        func secondTapDoesNotClearTheError() async throws {
+            let viewModel = makeViewModel()
+            let first = Task { await viewModel.startChat() }
+            try #require(await waitUntil("the chat request to be held") { HeldURLProtocol.heldCount == 1 })
+            viewModel.messageError = "Shown meanwhile"
+
+            _ = await viewModel.startChat()
+
+            #expect(viewModel.messageError == "Shown meanwhile")
+
+            let body = Data(#"{"status":"success","data":{"thread_id":"\#(Self.threadId.uuidString)"}}"#.utf8)
+            HeldURLProtocol.release(where: Self.isInitiate, status: 201, body: body)
+            _ = await first.value
+        }
+    }
+}

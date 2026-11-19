@@ -19,6 +19,9 @@ struct ExpertProfileActionButtons: View {
     /// the server. Backend field `is_bookable` on
     /// `/experts/:id/details` seeds this.
     var isBookable: Bool = true
+    /// True while the chat thread is being fetched. The Message button shows a spinner and ignores
+    /// taps, so a slow connection shows progress and a double tap cannot open the thread twice.
+    var isMessageBusy: Bool = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -67,8 +70,13 @@ struct ExpertProfileActionButtons: View {
     private var messageButton: some View {
         Button(action: onMessage) {
             HStack(spacing: 8) {
-                Image(systemName: "bubble.left")
-                    .font(.body.weight(.medium))
+                if isMessageBusy {
+                    ProgressView()
+                        .tint(ExpertProfileBrand.brandGreen)
+                } else {
+                    Image(systemName: "bubble.left")
+                        .font(.body.weight(.medium))
+                }
                 Text("Message")
                     .font(.brand(.callout, weight: .bold))
             }
@@ -85,5 +93,6 @@ struct ExpertProfileActionButtons: View {
             )
         }
         .buttonStyle(ProfileActionStyle())
+        .disabled(isMessageBusy)
     }
 }

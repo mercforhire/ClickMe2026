@@ -49,6 +49,11 @@ final class ExpertProfileViewModel: ObservableObject {
     /// `apiError`, whose alert is titled for favorites. Cleared when the alert dismisses.
     @Published var messageError: String?
 
+    /// True while `POST /chats/initiate` runs. A second Message tap then does nothing, and the
+    /// button shows a spinner and is disabled, so a slow connection does not look like a dead
+    /// button and a double tap cannot open the thread twice (IN-22).
+    @Published private(set) var isStartingChat = false
+
     /// Decided only by the details call; see `loadProfileDetails()`.
     @Published private(set) var loadState: ExpertProfileLoadState = .loading
 
@@ -314,10 +319,13 @@ final class ExpertProfileViewModel: ObservableObject {
     /// Gets or creates the chat thread with this expert (`POST /chats/initiate`).
     ///
     /// - Returns: The thread id, or nil when there is nothing to open: the profile has no
-    ///   server id (preview data), the call failed (`messageError` then holds the text for
-    ///   the alert), or the task was cancelled (the screen went away, which is not an error).
+    ///   server id (preview data), a chat is already being started (this call does nothing),
+    ///   the call failed (`messageError` then holds the text for the alert), or the task was
+    ///   cancelled (the screen went away, which is not an error).
     func startChat() async -> UUID? {
-        guard let expertId = expert.expertId else { return nil }
+        guard let expertId = expert.expertId, !isStartingChat else { return nil }
+        isStartingChat = true
+        defer { isStartingChat = false }
         messageError = nil
         do {
             return try await api.initiateChat(peerId: expertId).data.threadId

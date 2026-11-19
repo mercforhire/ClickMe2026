@@ -371,7 +371,8 @@ struct ExpertProfileView: View {
                     ExpertProfileActionButtons(
                         onBookSession: handleBookSession,
                         onMessage: handleMessage,
-                        isBookable: expert.isBookable
+                        isBookable: expert.isBookable,
+                        isMessageBusy: viewModel.isStartingChat
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 28)

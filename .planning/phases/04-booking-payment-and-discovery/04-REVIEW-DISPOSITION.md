@@ -5,27 +5,27 @@ titles: json
 findings:
   - id: CR-03
     severity: critical
-    disposition: open
+    disposition: fixed
     title: "The 3DS retry sends the connected-account clone's `pm_` id, so a card that needs 3DS ends with a hold and no booking (needs device verification, touches payment state)"
   - id: WR-08
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Overlapping `/client/home` fetches race, and the last response to land wins regardless of the filter"
   - id: WR-09
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "A failed re-load replaces an already-loaded expert profile with the full-screen error"
   - id: WR-10
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Returning to Make a Booking re-runs the load and silently clears the chosen slot (needs device verification)"
   - id: WR-11
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Favorites list goes stale after an unfavorite from the profile, and a refresh can undo an optimistic remove"
   - id: WR-12
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "The Message button drops a failed chat start with no feedback"
   - id: IN-10
     severity: info
@@ -147,21 +147,21 @@ findings:
     severity: info
     disposition: open
     title: "Wall-clock timing in the confirm-race tests can flake under load (new)"
-open: 32
+open: 26
 total: 36
-recorded: 2026-11-19T05:32:51.569Z
+recorded: 2026-11-19T06:07:09.042Z
 ---
 
 # Phase 04: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| CR-03 | critical | open | - |
-| WR-08 | warning | open | - |
-| WR-09 | warning | open | - |
-| WR-10 | warning | open | - |
-| WR-11 | warning | open | - |
-| WR-12 | warning | open | - |
+| CR-03 | critical | fixed | 04-REVIEW-FIX.md |
+| WR-08 | warning | fixed | 04-REVIEW-FIX.md |
+| WR-09 | warning | fixed | 04-REVIEW-FIX.md |
+| WR-10 | warning | fixed | 04-REVIEW-FIX.md |
+| WR-11 | warning | fixed | 04-REVIEW-FIX.md |
+| WR-12 | warning | fixed | 04-REVIEW-FIX.md |
 | IN-10 | info | open | - |
 | IN-11 | info | open | - |
 | IN-12 | info | open | - |

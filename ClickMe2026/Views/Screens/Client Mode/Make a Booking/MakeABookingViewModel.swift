@@ -160,10 +160,10 @@ final class MakeABookingViewModel: ObservableObject {
     @Published var paidFlowAlert: PaidFlowAlert?
     /// The paid attempt in flight: topic, slot, PaymentIntent, meeting type and
     /// notes as they were when Book Now created the PaymentIntent (CR-01). Set
-    /// only by `beginPaidBooking` and cleared only by `resetPaidFlow()`. Internal
-    /// so tests can install one (a test seam, like `confirmRetryPolicy`); not
-    /// published because no view renders it.
-    var paidAttempt: PaidAttempt?
+    /// only by `beginPaidBooking` and cleared only by `resetPaidFlow()` (IN-16). Tests
+    /// install one through `installPaidAttemptForTesting(_:)`. Not published because
+    /// no view renders it.
+    private(set) var paidAttempt: PaidAttempt?
     /// The PaymentIntent of the current paid attempt.
     var paymentIntentId: String? { paidAttempt?.paymentIntentId }
     @Published var paymentSummary: PaymentSummary?
@@ -521,15 +521,32 @@ final class MakeABookingViewModel: ObservableObject {
             return
         }
 
+        // IN-16: read the form and take the lock here, before the Task starts. A second tap that
+        // arrives before the Task body runs then stops at `isSubmitting`, and nothing read after an
+        // `await` can see a form the user changed meanwhile.
+        let meetingType = self.meetingType
+        let clientNotes = self.clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+
         if topic.isFree {
-            Task { await performFreeBooking(topic: topic, slot: slot) }
+            isBooking = true
+            Task {
+                await performFreeBooking(topic: topic, slot: slot, meetingType: meetingType, clientNotes: clientNotes)
+            }
         } else {
-            Task { await beginPaidBooking(topic: topic, slot: slot) }
+            paidStep = .creatingIntent
+            Task {
+                await beginPaidBooking(topic: topic, slot: slot, meetingType: meetingType, clientNotes: clientNotes)
+            }
         }
     }
 
-    private func performFreeBooking(topic: BookingTopic, slot: BookingTimeSlot) async {
-        isBooking = true
+    /// Runs with `isBooking` already set by `book()`; clears it when the request ends.
+    private func performFreeBooking(
+        topic: BookingTopic,
+        slot: BookingTimeSlot,
+        meetingType: MeetingType,
+        clientNotes: String?
+    ) async {
         defer { isBooking = false }
         do {
             let iso = Self.iso8601String(from: slot.startTime)
@@ -540,7 +557,7 @@ final class MakeABookingViewModel: ObservableObject {
                 durationMinutes: topic.durationMinutes,
                 meetingType: meetingType,
                 timezone: TimeZone.current.identifier,
-                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+                clientNotes: clientNotes
             )
             completedBookingId = response.data.bookingId
         } catch {
@@ -575,9 +592,15 @@ final class MakeABookingViewModel: ObservableObject {
     /// imperceptible and only paid once per booking attempt. On any
     /// failure the flow resets — `bookingAttemptId` is preserved so a
     /// user-triggered retry lands on the same idempotency key.
-    private func beginPaidBooking(topic: BookingTopic, slot: BookingTimeSlot) async {
-        paidStep = .creatingIntent
-
+    ///
+    /// Runs with `paidStep` already `.creatingIntent`, set by `book()`. It takes the form values as
+    /// arguments, read once by `book()`, so the attempt records exactly what Book Now saw.
+    private func beginPaidBooking(
+        topic: BookingTopic,
+        slot: BookingTimeSlot,
+        meetingType: MeetingType,
+        clientNotes: String?
+    ) async {
         let selectedDateUTC = Self.utcDateString(from: slot.startTime)
         let timeSlotUTC = Self.utcTimeSlotString(from: slot.startTime)
 
@@ -599,7 +622,7 @@ final class MakeABookingViewModel: ObservableObject {
                 slot: slot,
                 paymentIntentId: intent.paymentIntentId,
                 meetingType: meetingType,
-                clientNotes: clientNotes.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+                clientNotes: clientNotes
             )
             setupIntentClientSecret = setup.clientSecret
             // Customer + ephemeral come from the SetupIntent so PaymentSheet
@@ -695,6 +718,11 @@ final class MakeABookingViewModel: ObservableObject {
             // D-04: the ledger record stays, also after Not now or leaving the screen.
             paidFlowAlert = .confirmUnknown(paymentReference: attempt.paymentIntentId)
         }
+    }
+
+    /// Test seam: starts a confirm from a known attempt without running Book Now (IN-16).
+    func installPaidAttemptForTesting(_ attempt: PaidAttempt) {
+        paidAttempt = attempt
     }
 
     /// Clears every paid-flow field. Internal so `MakeABookingViewModel+PaidFlow.swift`

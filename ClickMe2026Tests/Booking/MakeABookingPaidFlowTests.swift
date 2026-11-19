@@ -153,13 +153,13 @@ struct MakeABookingPaidFlowTests {
         )
         viewModel.selectedTimeSlot = slot
         if installingAttempt {
-            viewModel.paidAttempt = MakeABookingViewModel.PaidAttempt(
+            viewModel.installPaidAttemptForTesting(MakeABookingViewModel.PaidAttempt(
                 topic: PaidFlowFixture.paidTopic,
                 slot: slot,
                 paymentIntentId: PaidFlowFixture.intentId,
                 meetingType: viewModel.meetingType,
                 clientNotes: nil
-            )
+            ))
         }
         viewModel.confirmRetryPolicy = ConfirmRetryPolicy(delays: [.zero, .zero])
         return viewModel
@@ -410,6 +410,77 @@ struct MakeABookingPaidFlowTests {
         #expect(bodyString(request, "topic_id") == PaidFlowFixture.paidTopic.id.uuidString.lowercased())
         #expect(bodyString(request, "start_time") == formatter.string(from: slot.startTime))
         #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+    }
+
+    // MARK: Book Now locks the form at once and snapshots it (IN-16)
+
+    /// Answers the two kick-off calls of a paid attempt and counts the PaymentIntent requests.
+    private func makeKickOffViewModel() -> MakeABookingViewModel {
+        makeViewModel(installingAttempt: false) { _, request in
+            let path = request.url?.path ?? ""
+            if path.hasSuffix("/bookings/payment-intent") { return PaidFlowFixture.intentCreated(request) }
+            if path.hasSuffix("/payment-methods/setup-intent") { return PaidFlowFixture.setupCreated(request) }
+            if path.hasSuffix("/bookings/request") { return PaidFlowFixture.created(request) }
+            return PaidFlowFixture.coded(request, status: 500, code: "INTERNAL")
+        }
+    }
+
+    private func intentRequests() -> [URLRequest] {
+        MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix("/bookings/payment-intent") == true }
+    }
+
+    @Test("A second Book Now tap before the first one's task runs sends no second PaymentIntent request")
+    func doubleTapSendsOnePaymentIntent() async {
+        let viewModel = makeKickOffViewModel()
+
+        viewModel.book()
+        // The lock is on before any task body runs.
+        #expect(viewModel.isSubmitting)
+        viewModel.book()
+
+        for _ in 0 ..< 150 where viewModel.paidStep != .collectingPaymentMethod {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.paidStep == .collectingPaymentMethod)
+        #expect(intentRequests().count == 1)
+    }
+
+    @Test("A second Book Now tap on a free topic sends one booking request")
+    func doubleTapSendsOneFreeRequest() async {
+        let viewModel = makeKickOffViewModel()
+        viewModel.selectedTopic = freeTopic
+
+        viewModel.book()
+        #expect(viewModel.isSubmitting)
+        viewModel.book()
+
+        for _ in 0 ..< 150 where viewModel.completedBookingId == nil {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        let requests = MockURLProtocol.recordedRequests.filter { $0.url?.path.hasSuffix("/bookings/request") == true }
+        #expect(requests.count == 1)
+        #expect(!viewModel.isSubmitting)
+    }
+
+    @Test("The attempt keeps the meeting type and notes Book Now saw, not what the form says after its awaits")
+    func attemptKeepsBookNowFormValues() async {
+        let viewModel = makeKickOffViewModel()
+        viewModel.clientNotes = "  Please cover Swift concurrency  "
+
+        viewModel.book()
+        // Edits that land before the first request has answered.
+        viewModel.clientNotes = "changed"
+        viewModel.meetingType = .skypeZoom
+
+        for _ in 0 ..< 150 where viewModel.paidStep != .collectingPaymentMethod {
+            try? await Task.sleep(for: .milliseconds(20))
+        }
+
+        #expect(viewModel.paidAttempt?.clientNotes == "Please cover Swift concurrency")
+        #expect(viewModel.paidAttempt?.meetingType == .inAppVoice)
     }
 
     @Test("paymentIntentId reads the attempt and a reset clears both")

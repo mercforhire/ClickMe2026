@@ -77,31 +77,31 @@ findings:
     title: "Async tests depend on a semaphore parked on the URL thread and on wall-clock polling"
   - id: WR-01
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Overlapping `/client/home` fetches race, and the last response to land wins regardless of filter"
   - id: WR-02
     severity: warning
-    disposition: open
+    disposition: deferred
     title: "A cancelled category-change fetch restores `.loaded` with the previous filter's experts"
   - id: WR-03
     severity: warning
-    disposition: open
+    disposition: deferred
     title: "The \"while `.loading`, the fetch that set it is in flight\" invariant does not hold, so a cancelled fetch can settle sections a different fetch owns"
   - id: IN-01
     severity: info
-    disposition: open
+    disposition: deferred
     title: "A failed refresh still wipes loaded content, which is inconsistent with the stated \"keep what's on screen\" intent"
   - id: IN-02
     severity: info
-    disposition: open
+    disposition: deferred
     title: "Triplicated per-section state code, with lines past the advisory 120 columns"
   - id: IN-03
     severity: info
-    disposition: open
+    disposition: deferred
     title: "`MockURLProtocol` is only partly made thread-safe"
   - id: IN-04
     severity: info
-    disposition: open
+    disposition: deferred
     title: "Held-response tests block the shared URL protocol thread and depend on wall-clock polling"
   - id: CR-01
     severity: critical
@@ -113,11 +113,11 @@ findings:
     title: "RESOLVED for the platform-card check (backend `28da165`); the broader promise is still open as WR-06"
   - id: WR-04
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Returning to Make a Booking re-runs `onAppear` and silently clears the chosen slot"
   - id: WR-05
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Favorites list races and stale state"
   - id: WR-06
     severity: warning
@@ -129,27 +129,27 @@ findings:
     title: "The pre-stamp retry has no deadline, so a persistent error can leave a delivered session uncharged (accepted by the user, recorded for visibility) (new)"
   - id: IN-05
     severity: info
-    disposition: open
+    disposition: deferred
     title: "The paid-flow alert binding ignores dismissal"
   - id: IN-06
     severity: info
-    disposition: open
+    disposition: deferred
     title: "D-12 backend operational notes"
   - id: IN-07
     severity: info
-    disposition: open
+    disposition: deferred
     title: "The snapshot reads `meetingType` and `clientNotes` after the network calls, and `paidAttempt` is writable from anywhere (new)"
   - id: IN-08
     severity: info
-    disposition: open
+    disposition: deferred
     title: "A slot kept across a reload can be selected while the refreshed calendar shows it unavailable (new)"
   - id: IN-09
     severity: info
-    disposition: open
+    disposition: deferred
     title: "Wall-clock timing in the confirm-race tests can flake under load (new)"
-open: 26
+open: 12
 total: 36
-recorded: 2026-11-19T06:07:09.042Z
+recorded: 2026-11-19T06:07:43.271Z
 ---
 
 # Phase 04: Code Review Disposition
@@ -174,24 +174,24 @@ recorded: 2026-11-19T06:07:09.042Z
 | IN-19 | info | open | - |
 | IN-20 | info | open | - |
 | IN-21 | info | open | - |
-| WR-01 | warning | open | - (not in the current review) |
-| WR-02 | warning | open | - (not in the current review) |
-| WR-03 | warning | open | - (not in the current review) |
-| IN-01 | info | open | - (not in the current review) |
-| IN-02 | info | open | - (not in the current review) |
-| IN-03 | info | open | - (not in the current review) |
-| IN-04 | info | open | - (not in the current review) |
+| WR-01 | warning | fixed | superseded in full re-review 25ec5a6: e6c7488 WR-01 → CR-03 (f3bdb3f), 04-17 WR-01 → WR-08 (23c4d3a) (not in the current review) |
+| WR-02 | warning | deferred | superseded in full re-review 25ec5a6: e6c7488 WR-02 → WR-09 (fixed aed0c22), 04-17 WR-02 → IN-10 (not in the current review) |
+| WR-03 | warning | deferred | superseded in full re-review 25ec5a6: e6c7488 WR-03 → WR-08 (fixed 23c4d3a), 04-17 WR-03 → IN-10 (not in the current review) |
+| IN-01 | info | deferred | superseded in full re-review 25ec5a6: e6c7488 IN-01 → IN-12, 04-17 IN-01 → IN-11 (not in the current review) |
+| IN-02 | info | deferred | superseded in full re-review 25ec5a6: e6c7488 IN-02 → IN-13, 04-17 IN-02 → IN-10 (not in the current review) |
+| IN-03 | info | deferred | superseded in full re-review 25ec5a6: e6c7488 IN-03 → IN-14, 04-17 IN-03 → IN-20 (not in the current review) |
+| IN-04 | info | deferred | superseded in full re-review 25ec5a6: e6c7488 IN-04 → IN-15, 04-17 IN-04 → IN-21 (not in the current review) |
 | CR-01 | critical | fixed | plan 04-15 (6184f6c, 50f55de, 2baa72d) (not in the current review) |
 | CR-02 | critical | fixed | plan 04-16 (backend 28da165, deployed) (not in the current review) |
-| WR-04 | warning | open | - (not in the current review) |
-| WR-05 | warning | open | - (not in the current review) |
+| WR-04 | warning | fixed | superseded in full re-review 25ec5a6: → WR-10 (f6adf4a) (not in the current review) |
+| WR-05 | warning | fixed | superseded in full re-review 25ec5a6: → WR-11 (753da57) (not in the current review) |
 | WR-06 | warning | deferred | todo 2026-11-12-long-lead-sweep-transient-errors-after-stamp; T-04-45 (not in the current review) |
 | WR-07 | warning | deferred | user-accepted limit (a)/(b), 04-16 checkpoint 2026-11-12; T-04-44 (not in the current review) |
-| IN-05 | info | open | - (not in the current review) |
-| IN-06 | info | open | - (not in the current review) |
-| IN-07 | info | open | - (not in the current review) |
-| IN-08 | info | open | - (not in the current review) |
-| IN-09 | info | open | - (not in the current review) |
+| IN-05 | info | deferred | no longer applicable per full re-review 25ec5a6 (HomeShellExit resets the tab stack) (not in the current review) |
+| IN-06 | info | deferred | backend-only D-12 notes, not re-checked in full re-review 25ec5a6 (not in the current review) |
+| IN-07 | info | deferred | superseded in full re-review 25ec5a6: → IN-16 (not in the current review) |
+| IN-08 | info | deferred | superseded in full re-review 25ec5a6: → IN-17 (not in the current review) |
+| IN-09 | info | deferred | superseded in full re-review 25ec5a6: → IN-21 (not in the current review) |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.

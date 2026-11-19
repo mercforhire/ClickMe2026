@@ -74,80 +74,82 @@ private func waitUntil(_ condition: () -> Bool) async -> Bool {
     return condition()
 }
 
-@Suite("Explore · overlapping /client/home fetches (WR-08)", .serialized)
-@MainActor
-struct ExploreFetchOrderingTests {
+extension HeldResponseTests {
+    @Suite("Explore · overlapping /client/home fetches (WR-08)", .serialized)
+    @MainActor
+    struct ExploreFetchOrderingTests {
 
-    @Test("a slower unfiltered response never overwrites the filtered feed that landed first")
-    func filteredResponseLandingFirstStays() async throws {
-        let viewModel = ExploreClientViewModel(api: makeHeldAPI())
+        @Test("a slower unfiltered response never overwrites the filtered feed that landed first")
+        func filteredResponseLandingFirstStays() async throws {
+            let viewModel = ExploreClientViewModel(api: makeHeldAPI())
 
-        // Fetch 1: the screen's load, no filter.
-        let firstLoad = Task { await viewModel.load() }
-        try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
+            // Fetch 1: the screen's load, no filter.
+            let firstLoad = Task { await viewModel.load() }
+            try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
 
-        // Fetch 2: the user taps the "Technology" chip before fetch 1 lands.
-        viewModel.applySelectedCategories(["technology"])
-        try #require(await waitUntil { HeldURLProtocol.heldCount == 2 })
+            // Fetch 2: the user taps the "Technology" chip before fetch 1 lands.
+            viewModel.applySelectedCategories(["technology"])
+            try #require(await waitUntil { HeldURLProtocol.heldCount == 2 })
 
-        // The filtered response lands first.
-        HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered)
-        try #require(await waitUntil { viewModel.expertsState == .loaded })
-        #expect(viewModel.experts.count == 1)
+            // The filtered response lands first.
+            HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered)
+            try #require(await waitUntil { viewModel.expertsState == .loaded })
+            #expect(viewModel.experts.count == 1)
 
-        // The slower unfiltered response lands second and must be dropped.
-        HeldURLProtocol.release(where: { !OrderingFixture.isFiltered($0) }, body: OrderingFixture.unfiltered)
-        await firstLoad.value
+            // The slower unfiltered response lands second and must be dropped.
+            HeldURLProtocol.release(where: { !OrderingFixture.isFiltered($0) }, body: OrderingFixture.unfiltered)
+            await firstLoad.value
 
-        #expect(viewModel.experts.count == 1)
-        #expect(viewModel.categoriesState == .loaded)
-        #expect(viewModel.expertsState == .loaded)
-        #expect(viewModel.featuredTopicsState == .loaded)
-        #expect(viewModel.selectedCategorySlugs == ["technology"])
-        #expect(viewModel.categories.first?.isSelected == true)
-    }
+            #expect(viewModel.experts.count == 1)
+            #expect(viewModel.categoriesState == .loaded)
+            #expect(viewModel.expertsState == .loaded)
+            #expect(viewModel.featuredTopicsState == .loaded)
+            #expect(viewModel.selectedCategorySlugs == ["technology"])
+            #expect(viewModel.categories.first?.isSelected == true)
+        }
 
-    @Test("an older response that lands first leaves the skeletons up until the newest fetch answers")
-    func olderResponseLandingFirstIsDropped() async throws {
-        let viewModel = ExploreClientViewModel(api: makeHeldAPI())
+        @Test("an older response that lands first leaves the skeletons up until the newest fetch answers")
+        func olderResponseLandingFirstIsDropped() async throws {
+            let viewModel = ExploreClientViewModel(api: makeHeldAPI())
 
-        let firstLoad = Task { await viewModel.load() }
-        try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
-        viewModel.applySelectedCategories(["technology"])
-        try #require(await waitUntil { HeldURLProtocol.heldCount == 2 })
+            let firstLoad = Task { await viewModel.load() }
+            try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
+            viewModel.applySelectedCategories(["technology"])
+            try #require(await waitUntil { HeldURLProtocol.heldCount == 2 })
 
-        // The unfiltered response lands first. It belongs to a fetch that is no longer the newest.
-        HeldURLProtocol.release(where: { !OrderingFixture.isFiltered($0) }, body: OrderingFixture.unfiltered)
-        await firstLoad.value
+            // The unfiltered response lands first. It belongs to a fetch that is no longer the newest.
+            HeldURLProtocol.release(where: { !OrderingFixture.isFiltered($0) }, body: OrderingFixture.unfiltered)
+            await firstLoad.value
 
-        #expect(viewModel.experts.isEmpty)
-        #expect(viewModel.categoriesState == .loading)
-        #expect(viewModel.expertsState == .loading)
-        #expect(viewModel.featuredTopicsState == .loading)
+            #expect(viewModel.experts.isEmpty)
+            #expect(viewModel.categoriesState == .loading)
+            #expect(viewModel.expertsState == .loading)
+            #expect(viewModel.featuredTopicsState == .loading)
 
-        HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered)
-        try #require(await waitUntil { viewModel.expertsState == .loaded })
+            HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered)
+            try #require(await waitUntil { viewModel.expertsState == .loaded })
 
-        #expect(viewModel.experts.count == 1)
-        #expect(viewModel.categories.first?.isSelected == true)
-    }
+            #expect(viewModel.experts.count == 1)
+            #expect(viewModel.categories.first?.isSelected == true)
+        }
 
-    @Test("a refresh started over a pending filter fetch asks for the filter and wins")
-    func refreshOverPendingFilterKeepsFilter() async throws {
-        let viewModel = ExploreClientViewModel(api: makeHeldAPI())
+        @Test("a refresh started over a pending filter fetch asks for the filter and wins")
+        func refreshOverPendingFilterKeepsFilter() async throws {
+            let viewModel = ExploreClientViewModel(api: makeHeldAPI())
 
-        viewModel.applySelectedCategories(["technology"])
-        try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
-        let refresh = Task { await viewModel.reload() }
-        try #require(await waitUntil { HeldURLProtocol.heldCount == 2 })
+            viewModel.applySelectedCategories(["technology"])
+            try #require(await waitUntil { HeldURLProtocol.heldCount == 1 })
+            let refresh = Task { await viewModel.reload() }
+            try #require(await waitUntil { HeldURLProtocol.heldCount == 2 })
 
-        // Both requests carry the filter, so both bodies are the filtered feed.
-        #expect(HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered))
-        #expect(HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered))
-        await refresh.value
-        try #require(await waitUntil { viewModel.expertsState == .loaded })
+            // Both requests carry the filter, so both bodies are the filtered feed.
+            #expect(HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered))
+            #expect(HeldURLProtocol.release(where: OrderingFixture.isFiltered, body: OrderingFixture.filtered))
+            await refresh.value
+            try #require(await waitUntil { viewModel.expertsState == .loaded })
 
-        #expect(viewModel.experts.count == 1)
-        #expect(viewModel.selectedCategorySlugs == ["technology"])
+            #expect(viewModel.experts.count == 1)
+            #expect(viewModel.selectedCategorySlugs == ["technology"])
+        }
     }
 }

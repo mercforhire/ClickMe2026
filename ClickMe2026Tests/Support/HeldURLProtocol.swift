@@ -10,9 +10,22 @@
 //
 //  Requests the test does not hold are answered straight away by `otherwise`.
 //
+//  The held requests and the rules are static, so two tests that use this
+//  protocol at once would reset each other's state. Swift Testing runs separate
+//  top-level suites in parallel, and `.serialized` orders tests only inside one
+//  suite and the suites nested in it. Every suite that uses this protocol is
+//  therefore nested in `HeldResponseTests` (WR-15).
+//
 
 import Foundation
+import Testing
 @testable import ClickMe2026
+
+/// Parent of every suite that uses `HeldURLProtocol`. Declare a suite as
+/// `extension HeldResponseTests { @Suite struct ... }`, so the shared protocol state is
+/// never used by two tests at the same time.
+@Suite("Held-response tests", .serialized)
+struct HeldResponseTests {}
 
 final class HeldURLProtocol: URLProtocol {
 
@@ -58,10 +71,16 @@ final class HeldURLProtocol: URLProtocol {
     }
 
     /// Answers the oldest held request for which `matches` is true. Returns false when none matches.
+    ///
+    /// `matches` runs outside the lock, on a snapshot, so a matcher may call `heldCount` without
+    /// deadlocking the non-recursive lock.
     @discardableResult
     static func release(where matches: (URLRequest) -> Bool, status: Int = 200, body: Data) -> Bool {
+        let snapshot = lock.withLock { held }
+        guard let candidate = snapshot.first(where: { matches($0.request) }) else { return false }
+        // The request may have been cancelled (and so removed) since the snapshot.
         let target: HeldURLProtocol? = lock.withLock {
-            guard let index = held.firstIndex(where: { matches($0.request) }) else { return nil }
+            guard let index = held.firstIndex(where: { $0 === candidate }) else { return nil }
             return held.remove(at: index)
         }
         guard let target else { return false }
@@ -82,7 +101,11 @@ final class HeldURLProtocol: URLProtocol {
         }
     }
 
-    override func stopLoading() {}
+    /// A request the system cancels while it is held leaves the queue, so `heldCount` stays honest and
+    /// `release` never picks a dead entry.
+    override func stopLoading() {
+        Self.lock.withLock { Self.held.removeAll { $0 === self } }
+    }
 
     private func finish(status: Int, body: Data) {
         let response = HTTPURLResponse(

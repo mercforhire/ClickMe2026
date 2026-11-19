@@ -39,7 +39,7 @@ Commits were made directly on `main` in each checkout. No worktree or temporary 
 - `refreshCoversFailedFollowUp`: a pull-to-refresh after a failed follow-up fetches once, and the next `load()` adds no request.
 **Failed on the old code first:** with the view model reverted and the new tests in place, `ChatConversationsUnreadTests` ran 24 tests and the first two new tests failed (expected 3 GET /chats, got 2, and the new thread was missing). The third passes on both versions, because the old code never retried at all. It guards against an extra fetch.
 
-### IN-09: iOS and Android differ on 408 and 429 for a failed chat send
+### IN-09: iOS and Android now differ on 408 and 429 for a failed chat send
 
 **Status:** fixed (Android repo)
 **Files modified:** `/Users/LeonChen/Documents/ClickMe_Android/app/src/main/java/com/uptrendinvestments/clickmeapp/screens/chat/chatting/ChatThreadViewModel.kt`, `/Users/LeonChen/Documents/ClickMe_Android/app/src/test/java/com/uptrendinvestments/clickmeapp/screens/chat/chatting/ChatThreadViewModelSendTest.kt`

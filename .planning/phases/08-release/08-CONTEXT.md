@@ -87,6 +87,22 @@ The phase starts from this state, as of 2026-11-19:
   - **Reversibility:** one-way — once released to everyone, a regression can only be fixed by a new App Store review cycle.
 - **D-22:** Claude drafts the App Store "What's New" text in plain language from the closed requirements, and the user approves it before submission.
 
+### Decisions made at planning time (2026-11-19)
+- **D-23:** Saved cards on account deletion: **disclose it**. Add a line to the Delete Account copy on iOS (`AccountDeletionCopy`) and port it to Android, for example `Saved cards are not removed by deleting your account.` (UI-SPEC row U3 wording). No backend or payment change. Update the `AccountDeletionCopy` tests that currently forbid `saved card`. Closes todo `2026-11-13-decide-saved-cards-on-account-deletion.md`.
+- **D-24:** USD renders as **`US$` everywhere**, with CAD as `CA$`, as `docs/ios/USD-TOPIC-PRICING.md` §0 item 5 specifies. Change the iOS `Money` symbol table (`ClickMe2026/Utils/Money.swift`) and update the pinned tests (`MoneyCallSiteTests`, `ClientProfileHistoryEarningsTests` and any other `$42.50`-style pins). Fold `TopicsSetupTopicCard.cardSymbol(for:)` onto `Money` if it becomes redundant. Android `util/Money.kt` must match: an explicit `US$` / `CA$` table, not the device locale. Closes todo `2026-11-16-usd-symbol-us-dollar-prefix.md`.
+
+- **D-25:** Build path: fix CI with a fallback to Xcode Organizer. Wave 0 fixes `XCODE_PROJECT` in `build.yml` (`ClickMe.xcodeproj`), the `ExportOptions.plist` `teamID` (`V68J585TK5`), and the clean-checkout compile. For the compile, add a tracked, token-free `PreviewSecrets` with the real tokens staying local or in env vars, and re-run `git grep eyJhbGciOi` before any push. Then do a `workflow_dispatch` dry run. If CI signing still fails, a checkpoint asks the user to approve uploading via Xcode Organizer. D-19 is amended to allow that fallback.
+- **D-26:** Pushing the full iOS history to GitHub (`mercforhire/ClickMe2026`, private) is approved. The token grep still runs before the push.
+- **D-27:** BACK-19 closes on real-money hold-release evidence for a held booking, plus the existing mocked captured-refund tests. The reason is recorded the way D-08 records BACK-15's: a device cannot force a captured refund. This amends D-06 for BACK-19's captured-refund branch.
+- **D-28:** The carried-over device items are folded into the TestFlight regression checklist:
+  - the Phase 6 iOS 26 Liquid Glass checks (items 13 and 16);
+  - Phase 5 items 24 (SIGN-02 resume keeps the verified email) and 45 (U4 flash), using a fresh unpublished expert signup;
+  - the Phase 2 Android `call.ended` teardown check, with the paid session waiting until end+60 after the iPhone auto-ends.
+- **D-29:** Long-lead sweep fix (todo Option 1). On an error thrown strictly before `createManualPI`, do a guarded stamp reset so the next 5-minute run retries. Stop resetting once `start_time` is within 6 hours, and let today's 6 h cancel path take over. A persistent platform-card error follows the same deadline. Errors after `createManualPI` are unchanged. This is a live-payment change: full suite, then a deploy approval (D-14).
+- **D-30:** Profile name validation is message-only: hand-written `min(1)` messages, with OpenAPI matched. Field paths, `VALIDATION_ERROR` and the payloads that are accepted all stay unchanged. Accepting an empty `last_name` is deferred, because the new iOS build does not depend on it.
+- **D-31:** The reschedule-decline push (ITEM1C) goes to the proposer with `sub_category: 'reschedules'`, so iOS routes it to `bookingDetail`. Request declines keep `declines`. The regression run checks the route on a device.
+- **D-32:** For D-24 on Android, override only the currency symbol (`US$` / `CA$`) via `DecimalFormatSymbols`, and keep locale placement and grouping. Update the 6 `Locale.US` rows in `MoneyTest.kt`. Full iOS parity is logged as a follow-up.
+
 ### Claude's Discretion
 - How the remaining work is grouped into plans and waves:
   - the Phase 3 gaps: backend first, then iOS and Android display;

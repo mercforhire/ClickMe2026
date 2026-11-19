@@ -93,11 +93,17 @@ extension MakeABookingViewModel {
     }
 
     /// Called by the SCA challenge sheet after 3DS finishes. Re-hits
-    /// `/bookings/confirm` with the SAME `pm_…` — server sees the PI is
-    /// now `requires_capture` and skips its own confirm, just creating
-    /// the booking.
-    func retryConfirmAfterSCA(paymentMethodId: String) async {
+    /// `/bookings/confirm` with the SAME platform `pm_…` the client chose
+    /// (CR-03, Android `pendingPaymentMethodId`). The id the Stripe SDK hands
+    /// back belongs to the connected account's clone and is ignored: the backend
+    /// looks the id up on the platform account. The server sees the PI is now
+    /// `requires_capture` and skips its own confirm, just creating the booking.
+    func retryConfirmAfterSCA() async {
         pendingSCAChallenge = nil
+        guard let paymentMethodId = confirmPaymentMethodId else {
+            cancelSCA(withMessage: "Payment method couldn't be resolved after verification.")
+            return
+        }
         await completePaidBooking(paymentMethodId: paymentMethodId)
     }
 

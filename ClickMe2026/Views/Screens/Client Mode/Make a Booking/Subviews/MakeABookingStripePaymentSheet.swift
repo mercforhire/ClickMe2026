@@ -203,7 +203,7 @@ private struct MakeABookingStripePaymentSheetModifier: ViewModifier {
             forPayment: challenge.clientSecret,
             with: context,
             returnURL: nil as String?
-        ) { status, paymentIntent, error in
+        ) { status, _, error in
             // Restore whatever account (nil in the common case) was
             // scoped before we started, so unrelated Stripe calls
             // aren't accidentally scoped to a connected account.
@@ -211,13 +211,9 @@ private struct MakeABookingStripePaymentSheetModifier: ViewModifier {
 
             switch status {
             case .succeeded:
-                Task {
-                    guard let pmId = paymentIntent?.paymentMethodId else {
-                        viewModel.cancelSCA(withMessage: "Payment method couldn't be resolved after verification.")
-                        return
-                    }
-                    await viewModel.retryConfirmAfterSCA(paymentMethodId: pmId)
-                }
+                // CR-03: the SDK's PaymentIntent carries the connected account's
+                // clone id. The retry uses the platform `pm_` the view model kept.
+                Task { await viewModel.retryConfirmAfterSCA() }
             case .canceled:
                 viewModel.cancelSCA()
             case .failed:

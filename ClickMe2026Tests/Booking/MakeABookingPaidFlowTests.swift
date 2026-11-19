@@ -826,8 +826,11 @@ struct MakeABookingPaidFlowTests {
         #expect(viewModel.pendingSCAChallenge != nil)
         #expect(viewModel.paidStep == .confirming)
 
+        // CR-03: the card survives the 402, so the retry can resend it.
+        #expect(viewModel.confirmPaymentMethodId == PaidFlowFixture.paymentMethodId)
+
         changeForm(viewModel)
-        await viewModel.retryConfirmAfterSCA(paymentMethodId: "pm_after_sca")
+        await viewModel.retryConfirmAfterSCA()
 
         let requests = confirmRequests()
         #expect(requests.count == 2)
@@ -837,8 +840,33 @@ struct MakeABookingPaidFlowTests {
         #expect(bodyString(second, "topic_id") == bodyString(first, "topic_id"))
         #expect(bodyString(second, "topic_id") == PaidFlowFixture.paidTopic.id.uuidString.lowercased())
         #expect(bodyString(second, "payment_intent_id") == PaidFlowFixture.intentId)
-        #expect(bodyString(second, "stripe_payment_method_id") == "pm_after_sca")
+        // CR-03: the platform `pm_` the client chose, never the connected-account
+        // clone id the Stripe SDK returns after the challenge.
+        #expect(bodyString(second, "stripe_payment_method_id") == PaidFlowFixture.paymentMethodId)
+        #expect(bodyString(second, "stripe_payment_method_id") == bodyString(first, "stripe_payment_method_id"))
         #expect(viewModel.completedBookingId == PaidFlowFixture.bookingId)
+        #expect(viewModel.confirmPaymentMethodId == nil)
+    }
+
+    @Test("A 3DS retry with no card left ends the attempt and sends no second confirm")
+    func scaRetryWithoutCardCancels() async {
+        let body402 = """
+        {"status":"error","code":"PAYMENT_REQUIRES_ACTION","message":"Authentication required.",\
+        "detail":{"client_secret":"pi_test_secret_sca","stripe_account":"acct_test"}}
+        """
+        let viewModel = makeViewModel { _, request in
+            PaidFlowFixture.http(request, status: 402, body: Data(body402.utf8))
+        }
+        await viewModel.completePaidBooking(paymentMethodId: PaidFlowFixture.paymentMethodId)
+        #expect(viewModel.pendingSCAChallenge != nil)
+        viewModel.confirmPaymentMethodId = nil
+
+        await viewModel.retryConfirmAfterSCA()
+
+        #expect(confirmRequests().count == 1)
+        #expect(viewModel.pendingSCAChallenge == nil)
+        #expect(viewModel.paidStep == .idle)
+        #expect(viewModel.bookingError != nil)
     }
 
     @Test("The unconfirmed-booking record stays on the attempt's slot when the form changes")

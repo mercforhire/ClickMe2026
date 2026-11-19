@@ -625,7 +625,13 @@ final class MakeABookingViewModel: ObservableObject {
             if !UnconfirmedBookingLedger.keepsRecord(afterServerCode: BookingErrorMapper.code(for: error)) {
                 ledger.clear(expertId: expertId, start: attempt.slot.startTime)
             }
-            confirmPaymentMethodId = nil
+            // CR-03: the 3DS retry needs the platform `pm_` the client chose. The
+            // PaymentIntent that `handleNextAction` returns carries the connected
+            // account's clone id, which the backend cannot resolve on the platform
+            // account. Every other code ends the attempt.
+            if BookingErrorMapper.code(for: error) != .paymentRequiresAction {
+                confirmPaymentMethodId = nil
+            }
             handlePaidFlowError(error, phase: .confirm, topic: attempt.topic, slot: attempt.slot)
         case .outcomeUnknown:
             // D-03: keep every id and stay on `.confirming`. The hold may

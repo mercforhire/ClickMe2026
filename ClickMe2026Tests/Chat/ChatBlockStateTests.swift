@@ -145,7 +145,7 @@ struct ChatBlockStateTests {
         #expect(State.bannerTitle(for: .normal) == nil)
         #expect(State.bannerTitle(for: .blockedByMe) == "You blocked this conversation")
         #expect(State.bannerTitle(for: .blockedByPeer) == "You can't reply to this conversation")
-        #expect(State.bannerTitle(for: .unavailable) == "This user is unavailable.")
+        #expect(State.bannerTitle(for: .unavailable) == "This user is unavailable. Pull down to try again.")
         #expect(State.bannerSymbol(for: .normal) == nil)
         #expect(State.bannerSymbol(for: .blockedByMe) == "hand.raised.fill")
         #expect(State.bannerSymbol(for: .blockedByPeer) == "hand.raised.fill")

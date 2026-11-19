@@ -123,7 +123,8 @@ struct ChatBlockState: Equatable {
         case .normal: return nil
         case .blockedByMe: return "You blocked this conversation"
         case .blockedByPeer: return "You can't reply to this conversation"
-        case .unavailable: return "This user is unavailable."
+        // Pull to refresh clears `recipientUnavailable` (`ChattingViewModel.reload()`), so the copy names it.
+        case .unavailable: return "This user is unavailable. Pull down to try again."
         }
     }
 

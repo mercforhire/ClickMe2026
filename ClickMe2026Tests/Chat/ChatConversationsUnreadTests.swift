@@ -10,6 +10,7 @@
 //  request; the server count wins again on the next quiet reload.
 //
 
+import Combine
 import Foundation
 import Testing
 @testable import ClickMe2026
@@ -366,6 +367,129 @@ struct ChatConversationsUnreadTests {
         #expect(viewModel.chats.first?.lastMessage == "newer on the server")
         #expect(viewModel.chats.first?.timeLabel.isEmpty == false)
         #expect(count(viewModel, Self.threadB) == 3)
+    }
+
+    // MARK: Overlapping reloads (IN-10)
+
+    /// After the first load, `silentReload` runs twice: request 2 (reload A) is held on `gate`.
+    /// The mock runs one request at a time, so request 3 (reload B) reaches the handler only
+    /// after A's answer. Reload B has still started by then as far as the view model can tell:
+    /// its bookkeeping begins before its request is sent. Each answer is the page the server
+    /// held when its request arrived, as a real server would answer.
+    private static func makeOverlapViewModel(server: ChatsServer, gate: RequestGate) -> ChatConversationsViewModel {
+        let api = APITestFactory.make { request in
+            let snapshot = server.body
+            if chatsGets().count == 2 { gate.waitIfArmed() }
+            return ClientBookingFixtures.response(for: request, body: snapshot)
+        }
+        return ChatConversationsViewModel(api: api, currentUserId: { myId }, visibleThreadId: { nil })
+    }
+
+    /// Every value `chats` takes from now on, in order. Reload B's request goes out right after
+    /// reload A's answer, so a test cannot stop between the two answers; it reads them here.
+    private func recordChats(of viewModel: ChatConversationsViewModel) -> ChatsRecorder {
+        let recorder = ChatsRecorder()
+        recorder.cancellable = viewModel.$chats.dropFirst().sink { recorder.values.append($0) }
+        return recorder
+    }
+
+    private final class ChatsRecorder {
+        var values: [[ChatPreview]] = []
+        var cancellable: AnyCancellable?
+    }
+
+    /// Lets a task that was just created run up to its first suspension (the request it sends).
+    private func letReloadStart() async {
+        for _ in 0..<5 { await Task.yield() }
+        try? await Task.sleep(for: .milliseconds(50))
+    }
+
+    @Test("a change recorded before a second reload started is not laid over that reload's newer response (IN-10)")
+    func changeBeforeSecondReloadDoesNotReachIt() async {
+        let server = ChatsServer(Self.page(aUnread: 0, bUnread: 2))
+        let gate = RequestGate()
+        let viewModel = Self.makeOverlapViewModel(server: server, gate: gate)
+        await viewModel.load()
+
+        gate.arm()
+        let reloadA = Task { await viewModel.silentReload() }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
+        viewModel.markOpened(threadId: Self.threadB)
+        // More peer messages reached the server before reload B's request was sent.
+        server.body = Self.page(aUnread: 0, bUnread: 5)
+        let reloadB = Task { await viewModel.silentReload() }
+        await letReloadStart()
+
+        let recorder = recordChats(of: viewModel)
+        gate.open()
+        await reloadA.value
+        await reloadB.value
+
+        // Reload A started before the change, so its answer takes the change. Reload B
+        // started after it, so its answer is the server's.
+        #expect(recorder.values.count == 2)
+        #expect(recorder.values.first?.first { $0.threadId == Self.threadB }?.unreadCount == 0)
+        #expect(count(viewModel, Self.threadB) == 5)
+    }
+
+    @Test("each overlapping reload takes only the changes recorded after its own request started (IN-10)")
+    func eachReloadTakesItsOwnChanges() async {
+        let server = ChatsServer(Self.page(aUnread: 0, bUnread: 2))
+        let gate = RequestGate()
+        let viewModel = Self.makeOverlapViewModel(server: server, gate: gate)
+        await viewModel.load()
+
+        gate.arm()
+        let reloadA = Task { await viewModel.silentReload() }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
+        viewModel.markOpened(threadId: Self.threadB)
+        server.body = Self.page(aUnread: 0, bUnread: 5)
+        let reloadB = Task { await viewModel.silentReload() }
+        await letReloadStart()
+        // A live message for A arrives while both requests are out.
+        viewModel.handleMessageNew(Self.event(thread: Self.threadA, sender: Self.peerA, content: "fresh"))
+
+        let recorder = recordChats(of: viewModel)
+        gate.open()
+        await reloadA.value
+        await reloadB.value
+
+        // Reload A started before both changes and takes both.
+        #expect(recorder.values.count == 2)
+        let answerA = recorder.values.first ?? []
+        #expect(answerA.map(\.threadId) == [Self.threadA, Self.threadB])
+        #expect(answerA.first?.lastMessage == "fresh")
+        #expect(answerA.first?.unreadCount == 1)
+        #expect(answerA.last?.unreadCount == 0)
+
+        // Reload B started after markOpened, so it takes only the live message.
+        #expect(viewModel.chats.map(\.threadId) == [Self.threadA, Self.threadB])
+        #expect(viewModel.chats.first?.lastMessage == "fresh")
+        #expect(count(viewModel, Self.threadA) == 1)
+        #expect(count(viewModel, Self.threadB) == 5)
+    }
+
+    @Test("once every reload has ended, no recorded change is left for the next one (IN-10)")
+    func changesEndWithTheLastOverlappingReload() async {
+        let server = ChatsServer(Self.page(aUnread: 0, bUnread: 2))
+        let gate = RequestGate()
+        let viewModel = Self.makeOverlapViewModel(server: server, gate: gate)
+        await viewModel.load()
+
+        gate.arm()
+        let reloadA = Task { await viewModel.silentReload() }
+        await waitUntil("the second GET /chats") { Self.chatsGets().count >= 2 }
+        let reloadB = Task { await viewModel.silentReload() }
+        await letReloadStart()
+        viewModel.markOpened(threadId: Self.threadB)
+        gate.open()
+        await reloadA.value
+        await reloadB.value
+        #expect(count(viewModel, Self.threadB) == 0)
+
+        server.body = Self.page(aUnread: 0, bUnread: 1)
+        await viewModel.silentReload()
+        #expect(count(viewModel, Self.threadB) == 1)
     }
 
     @Test("markOpened while the first load runs keeps the row at 0 even though the row is not listed yet")

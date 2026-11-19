@@ -38,22 +38,28 @@ final class ChatConversationsViewModel: ObservableObject {
     /// while it travelled, so those changes are remembered until the last one ends.
     private var reloadsInFlight = 0
 
-    /// What changed locally on a row while a reload was in flight.
+    /// Number of `fetchChats()` calls started so far. The latest call's number stamps
+    /// every change recorded after it.
+    private var fetchCounter = 0
+
+    /// One local change to a row, with the number of the newest fetch that had started
+    /// when it was made. Only a fetch started at or before that number may apply it.
     private struct LocalRowChange {
+        let threadId: UUID
+        let fetchNumber: Int
         var unreadCount: Int?
         var lastMessage: String?
         var timeLabel: String?
+        var movedToTop = false
     }
 
     /// Row changes made by `markOpened` and live peer messages while a reload was in
-    /// flight. A response applies them over the server's row, so a late page never
-    /// brings back a pill the user just cleared or an older preview. A change can be
-    /// recorded for a thread the list does not hold yet (the first load is running).
-    private var changesDuringReload: [UUID: LocalRowChange] = [:]
-
-    /// Threads a live message moved to the top while a reload was in flight, newest
-    /// first. A response puts them back at the top in this order.
-    private var movedToTopDuringReload: [UUID] = []
+    /// flight, oldest first. A response applies the ones made after its own request
+    /// started over the server's row, so a late page never brings back a pill the user
+    /// just cleared or an older preview. A request that started later may carry newer
+    /// server values, so it does not take changes made before it (IN-10). A change can
+    /// be recorded for a thread the list does not hold yet (the first load is running).
+    private var changesDuringReload: [LocalRowChange] = []
 
     /// An unknown thread's message arrived while a load was running. That load's
     /// response may predate the message, so one more fetch runs when it ends. If that
@@ -179,49 +185,60 @@ final class ChatConversationsViewModel: ObservableObject {
         }
     }
 
-    /// One `GET /chats` page mapped to rows. Rows changed locally while the request
-    /// ran keep those changes (see `changesDuringReload`).
+    /// One `GET /chats` page mapped to rows. Rows changed locally after the request
+    /// started keep those changes (see `changesDuringReload`).
     private func fetchChats() async throws -> [ChatPreview] {
         reloadsInFlight += 1
+        fetchCounter += 1
+        let fetchNumber = fetchCounter
         defer {
             reloadsInFlight -= 1
             if reloadsInFlight == 0 {
                 changesDuringReload.removeAll()
-                movedToTopDuringReload.removeAll()
             }
         }
         let response = try await api.getChats(page: 1, limit: 50)
         let rows = response.data.threads.map(Self.mapThread(from:))
-        return applyLocalChanges(to: rows)
+        return applyLocalChanges(to: rows, startedAt: fetchNumber)
     }
 
-    /// Puts the changes made while the request ran back over the server's rows:
+    /// Puts the changes made after the request started back over the server's rows:
     /// unread count, preview text and time label, then the rows a live message moved
-    /// go first, newest first.
-    private func applyLocalChanges(to rows: [ChatPreview]) -> [ChatPreview] {
-        guard !changesDuringReload.isEmpty else { return rows }
+    /// go first, newest first. Of several changes to one field the latest wins.
+    ///
+    /// - Parameter fetchNumber: The number `fetchChats()` took when it started. A change
+    ///   stamped with a lower number was made before this request was sent, so the
+    ///   response already accounts for it.
+    private func applyLocalChanges(to rows: [ChatPreview], startedAt fetchNumber: Int) -> [ChatPreview] {
+        let applicable = changesDuringReload.filter { $0.fetchNumber >= fetchNumber }
+        guard !applicable.isEmpty else { return rows }
         let patched = rows.map { row -> ChatPreview in
-            guard let change = changesDuringReload[row.threadId] else { return row }
+            let mine = applicable.filter { $0.threadId == row.threadId }
+            guard !mine.isEmpty else { return row }
             return ChatPreview(
                 threadId: row.threadId,
                 partnerId: row.partnerId,
                 name: row.name,
-                lastMessage: change.lastMessage ?? row.lastMessage,
-                timeLabel: change.timeLabel ?? row.timeLabel,
+                lastMessage: mine.last { $0.lastMessage != nil }?.lastMessage ?? row.lastMessage,
+                timeLabel: mine.last { $0.timeLabel != nil }?.timeLabel ?? row.timeLabel,
                 imageURL: row.imageURL,
                 isOnline: row.isOnline,
-                unreadCount: change.unreadCount ?? row.unreadCount
+                unreadCount: mine.last { $0.unreadCount != nil }?.unreadCount ?? row.unreadCount
             )
         }
-        let moved = movedToTopDuringReload.compactMap { id in patched.first { $0.threadId == id } }
-        let rest = patched.filter { !movedToTopDuringReload.contains($0.threadId) }
+        var movedIds: [UUID] = []
+        for change in applicable.reversed() where change.movedToTop && !movedIds.contains(change.threadId) {
+            movedIds.append(change.threadId)
+        }
+        let moved = movedIds.compactMap { id in patched.first { $0.threadId == id } }
+        let rest = patched.filter { !movedIds.contains($0.threadId) }
         return moved + rest
     }
 
     /// Remembers a local unread count when a reload is in flight.
     private func noteLocalUnread(_ count: Int, threadId: UUID) {
         guard reloadsInFlight > 0 else { return }
-        changesDuringReload[threadId, default: LocalRowChange()].unreadCount = count
+        changesDuringReload.append(LocalRowChange(threadId: threadId, fetchNumber: fetchCounter, unreadCount: count))
     }
 
     /// Remembers a live message's effect on its row when a reload is in flight.
@@ -232,13 +249,16 @@ final class ChatConversationsViewModel: ObservableObject {
     ///     server (WR-07).
     private func noteLocalActivity(_ row: ChatPreview, hasContent: Bool) {
         guard reloadsInFlight > 0 else { return }
-        if hasContent {
-            changesDuringReload[row.threadId, default: LocalRowChange()].lastMessage = row.lastMessage
-        }
-        changesDuringReload[row.threadId, default: LocalRowChange()].timeLabel = row.timeLabel
-        movedToTopDuringReload.removeAll { $0 == row.threadId }
-        movedToTopDuringReload.insert(row.threadId, at: 0)
-        noteLocalUnread(row.unreadCount, threadId: row.threadId)
+        changesDuringReload.append(
+            LocalRowChange(
+                threadId: row.threadId,
+                fetchNumber: fetchCounter,
+                unreadCount: row.unreadCount,
+                lastMessage: hasContent ? row.lastMessage : nil,
+                timeLabel: row.timeLabel,
+                movedToTop: true
+            )
+        )
     }
 
     // MARK: - Realtime

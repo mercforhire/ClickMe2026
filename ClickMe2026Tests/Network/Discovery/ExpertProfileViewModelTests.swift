@@ -224,6 +224,52 @@ struct ExpertProfileViewModelTests {
         #expect(!viewModel.isRetrying)
     }
 
+    // MARK: Re-load over a loaded profile (WR-09)
+
+    @Test("a failed re-load keeps a loaded profile on screen")
+    func failedReloadKeepsLoadedProfile() async {
+        let viewModel = makeViewModel(handler: route())
+        await viewModel.loadProfileDetails()
+        #expect(viewModel.loadState == .loaded)
+
+        MockURLProtocol.handler = route(detailsStatus: 500, detailsBody: ProfileFixture.serverErrorBody)
+        await viewModel.loadProfileDetails()
+
+        #expect(viewModel.loadState == .loaded)
+        #expect(viewModel.expert.name == ProfileFixture.serverName)
+    }
+
+    @Test("a transport failure on a re-load keeps a loaded profile on screen")
+    func offlineReloadKeepsLoadedProfile() async {
+        let viewModel = makeViewModel(handler: route())
+        await viewModel.loadProfileDetails()
+
+        MockURLProtocol.handler = route(detailsError: URLError(.notConnectedToInternet))
+        await viewModel.loadProfileDetails()
+
+        #expect(viewModel.loadState == .loaded)
+    }
+
+    @Test("a 404 on a re-load still replaces a loaded profile, because the account is gone")
+    func notFoundReloadReplacesLoadedProfile() async {
+        let viewModel = makeViewModel(handler: route())
+        await viewModel.loadProfileDetails()
+
+        MockURLProtocol.handler = route(detailsStatus: 404, detailsBody: ProfileFixture.notFoundBody)
+        await viewModel.loadProfileDetails()
+
+        #expect(viewModel.loadState == .notFound)
+    }
+
+    @Test("a failed re-load after a failed first load stays failed, so Retry remains")
+    func failedReloadAfterFailureStaysFailed() async {
+        let viewModel = makeViewModel(handler: route(detailsStatus: 500, detailsBody: ProfileFixture.serverErrorBody))
+        await viewModel.loadProfileDetails()
+        await viewModel.loadProfileDetails()
+
+        #expect(viewModel.loadState == .failed("Server exploded"))
+    }
+
     @Test("two retries started back to back make one details request")
     func doubleRetryIsOneRequest() async {
         let viewModel = makeViewModel(

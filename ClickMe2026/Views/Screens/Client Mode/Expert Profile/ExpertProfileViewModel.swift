@@ -82,7 +82,8 @@ final class ExpertProfileViewModel: ObservableObject {
     ///
     /// The details call alone decides `loadState` (D-10). A 404 (status or
     /// `ErrorCode.notFound`, never message text) means `.notFound`; any other
-    /// thrown error means `.failed` with `Error.userMessage`. While it runs
+    /// thrown error means `.failed` with `Error.userMessage`, unless the profile
+    /// already loaded, in which case it stays `.loaded` (WR-09). While it runs
     /// the seeded profile shows as before, with no spinner. The reviews call
     /// runs only after details succeeded and stays best-effort and silent.
     ///
@@ -109,6 +110,10 @@ final class ExpertProfileViewModel: ObservableObject {
             details = try await api.getExpertDetails(id: expertId)
         } catch {
             guard loadGate.isCurrent(token), !Self.isCancellation(error) else { return }
+            // WR-09: the screen re-runs this load on every appear. A profile that already
+            // loaded stays on screen when the re-load fails, so a dropped request does not
+            // replace it with the full-screen error. A 404 still wins, because the account is gone.
+            if case .loaded = loadState, !Self.isNotFound(error) { return }
             loadState = Self.isNotFound(error) ? .notFound : .failed(error.userMessage)
             return
         }

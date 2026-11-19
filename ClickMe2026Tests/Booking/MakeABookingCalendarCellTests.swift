@@ -52,8 +52,7 @@ struct MakeABookingCalendarCellTests {
     @Test("filler cells are exactly the cells with no date")
     func fillersAreDatelessCells() throws {
         let viewModel = makeViewModel(selecting: freeTopic)
-        // February and October 2026 end on a Saturday, so they carry the
-        // extra trailing cell, which must count as a filler too.
+        // February and October 2026 end on a Saturday, so they need no trailing cells.
         for (year, monthNumber) in [(2026, 11), (2026, 2), (2026, 10)] {
             let days = viewModel.generateDays(for: try month(year, monthNumber, in: viewModel.calendar))
             #expect(!days.isEmpty)
@@ -66,6 +65,25 @@ struct MakeABookingCalendarCellTests {
                 }
             }
         }
+    }
+
+    @Test("the grid is whole weeks, and a month that ends on a Saturday gets no filler row (IN-18)")
+    func gridIsWholeWeeks() throws {
+        let viewModel = makeViewModel(selecting: freeTopic)
+        let calendar = viewModel.calendar
+        // Feb 2026 starts on a Sunday and ends on a Saturday (4 rows); Oct 2026 ends on a Saturday
+        // (5 rows); Nov 2026 starts on a Sunday and ends on a Monday (5 rows); May 2026 spills into a
+        // 6th row.
+        let expectedRows = [(2026, 2, 4), (2026, 10, 5), (2026, 11, 5), (2026, 5, 6)]
+        for (year, monthNumber, rows) in expectedRows {
+            let first = try month(year, monthNumber, in: calendar)
+            let days = viewModel.generateDays(for: first)
+            #expect(days.count % 7 == 0, "\(year)-\(monthNumber) has \(days.count) cells")
+            #expect(days.count == rows * 7, "\(year)-\(monthNumber) has \(days.count) cells")
+        }
+        // A full last week carries no trailing filler at all.
+        let october = viewModel.generateDays(for: try month(2026, 10, in: calendar))
+        #expect(october.last?.isCurrentMonth == true)
     }
 
     @Test("every day of the displayed month stays announced")

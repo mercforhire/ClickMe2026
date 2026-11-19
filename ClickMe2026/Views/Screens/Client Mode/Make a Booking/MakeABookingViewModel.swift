@@ -934,9 +934,13 @@ final class MakeABookingViewModel: ObservableObject {
         }
 
         let total = days.count
+        // Pad to whole weeks. A month that already fills its last week adds nothing: a filler
+        // there would start a new row holding one greyed "1" (IN-18). Android pads the same way.
         let trailing = (7 - total % 7) % 7
-        for i in 1 ... max(1, trailing) {
-            days.append(CalendarDay(label: "\(i)", date: nil, isCurrentMonth: false))
+        if trailing > 0 {
+            for i in 1 ... trailing {
+                days.append(CalendarDay(label: "\(i)", date: nil, isCurrentMonth: false))
+            }
         }
 
         return days

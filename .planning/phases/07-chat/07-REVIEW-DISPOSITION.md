@@ -13,7 +13,7 @@ findings:
     title: "The WR-06 follow-up fetch swallows its own failure"
   - id: IN-09
     severity: info
-    disposition: open
+    disposition: fixed
     title: "iOS and Android now differ on 408 and 429 for a failed chat send"
   - id: IN-10
     severity: info
@@ -71,9 +71,9 @@ findings:
     severity: warning
     disposition: fixed
     title: "Chats list reloads can overwrite local unread changes and double-fetch during the first load"
-open: 1
+open: 0
 total: 17
-recorded: 2026-11-19T04:27:21.840Z
+recorded: 2026-11-19T04:27:30.514Z
 ---
 
 # Phase 07: Code Review Disposition
@@ -82,7 +82,7 @@ recorded: 2026-11-19T04:27:21.840Z
 |---------|----------|-------------|--------|
 | IN-06 | info | skipped | 07-REVIEW-FIX.md |
 | IN-08 | info | fixed | 07-REVIEW-FIX.md |
-| IN-09 | info | open | - |
+| IN-09 | info | fixed | 07-REVIEW-FIX.md |
 | IN-10 | info | fixed | 07-REVIEW-FIX.md |
 | WR-07 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |
 | WR-05 | warning | fixed | 07-REVIEW-FIX.md (not in the current review) |

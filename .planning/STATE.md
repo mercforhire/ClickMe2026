@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 11
+current_plan: 12
 status: executing
-stopped_at: Completed 08-27-PLAN.md
-last_updated: "2026-11-20T06:20:41.110Z"
+stopped_at: Completed 08-28-PLAN.md
+last_updated: "2026-11-20T06:25:38.460Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 08 execution started
-state_head: ec3e7afe45d0811c0f193afacb21595c5b9cda3e
+state_head: 9853f9136d03810f7b83e18b18d53c833ccfbca6
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 155
-  completed_plans: 134
+  completed_plans: 135
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 11
+Current Plan: 12
 Total Plans in Phase: 26
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 08 execution started
@@ -195,6 +195,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P25 | 5 min | 2 tasks | 4 files |
 | Phase 08 P26 | 2 sessions | 3 tasks | 3 files |
 | Phase 08 P27 | 25 min | 2 tasks | 7 files |
+| Phase 08 P28 | 14 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -424,6 +425,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-25: third deletion test row (network failure keeps the remembered email) added beyond 0c9ecc55's two, since the plan names both the 409 and the network error
 - [Phase 08]: P1-P6 requested as Android ports, P7 closed with its device step in the regression checklist Android section; both parity todos stay pending until the ports land (08-26, user 2026-11-20). Port list is in 08-26-SUMMARY.md for /gsd-plan-phase 08 --gaps.
 - [Phase 08]: 08-27 P5: Android client and expert applyLanguages refuse a Done that leaves no language (sheet closes, list kept, dialog 'Keep at least one language.', silent when the profile had none) and buildProfilePatch never sends an empty languages group; Android main b1e37ca2, local only, origin/main 27e024bf
+- [Phase 08]: 08-28: Android status endpoint only seeds the verified-email flag (refreshEmailStatus skips the call when verified; mergeStatus ORs server into local), matching iOS 05-11
 
 ### Pending Todos
 
@@ -525,6 +527,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T06:20:39.789Z
-Stopped at: Completed 08-27-PLAN.md
+Last session: 2026-11-20T06:25:37.165Z
+Stopped at: Completed 08-28-PLAN.md
 Resume file: None

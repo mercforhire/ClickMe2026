@@ -44,3 +44,13 @@ iOS also fixed a reload that kept a cleared link on screen (a server nil kept th
 - Make sure `updateMeetingUrl("")` sends "" rather than dropping it.
 - Check on a device.
 - No backend change is needed.
+
+## Resolution
+
+Done by plan 08-06, in the Android repo on `main` (local only, not pushed): `ad190070` "fix(ios-p8): clearing the expert meeting link sends meeting_url "" (iOS CR-01 parity)".
+
+- A blank field over a saved link, typed or restored after process recreation, enters the saver snapshot as "" and `PATCH /expert/profile` sends `professional_details.meeting_url: ""`. An expert with no saved link never sends the key. A non-blank link is sent trimmed and still has to pass `isAllowedMeetingUrl`, so the `javascript:` guard is intact; only "" bypasses it (the backend stores NULL, BACK-04).
+- `ExpertProfileSettingsRepository.updateMeetingUrl("")` needed no code change: Moshi writes "" as `""`, and the request always carries a non-null `MeetingUrlBody`. Its doc now says so.
+- Tests in `ExpertProfileSettingsViewModelTest`: clear sends "", whitespace-only clears, no saved link sends nothing, trimmed send, `javascript:` after a clear is not sent, blank restored text is a clear, invalid restored text keeps the server link. Two older rows that asserted the bug (`invalidOrBlankLinkNotSent`, `blankMeetingLinkNeverSent`) were rewritten.
+
+Device check: 08-REGRESSION-CHECKLIST.md Android section. Nothing here was run on an Android device.

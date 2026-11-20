@@ -56,9 +56,10 @@ Read from the Android source by plan 08-12 (nothing was run on an Android device
 
 Recorded by plan 08-26 from the user's message of 2026-11-20: "Since the iOS store review has still not been completed, let's continue to do the Android fixes." That message is read as a port request for each `differs` row. Port work is planned separately (`/gsd-plan-phase 08 --gaps`); the gap plan that lands a port rewrites its line to `ported (<Android SHA>)`.
 
-The `Expert-mode gate and Not now` row (device check needed) has no decision yet: the message does not say whether to close it now or keep it open until the device result, so plan 08-26 asks the user separately.
+The `Expert-mode gate and Not now` row (device check needed) was decided separately: the message above does not cover it, so plan 08-26 asked the user, who answered on 2026-11-20 to close it now. Its device step stays in the Android section of 08-REGRESSION-CHECKLIST.md, and a difference found there becomes a new todo.
 
 - Photo required to publish: port requested (user, 2026-11-20)
 - Feedback minimum: port requested (user, 2026-11-20)
 - Settings language save: port requested (user, 2026-11-20)
 - Resume keeps the verified email: port requested (user, 2026-11-20)
+- Expert-mode gate and Not now: closed, device step in the regression checklist Android section (user, 2026-11-20)

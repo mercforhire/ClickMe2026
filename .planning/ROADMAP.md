@@ -474,7 +474,7 @@ Plans:
   3. Every backend change is deployed to production before the iOS build is submitted, and the current Android build still works against it.
   4. One new iOS build containing every fix builds cleanly with no new warnings, is on TestFlight, and is submitted to the App Store.
 
-**Plans**: 9/26 plans executed in 11 waves on three lanes (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
+**Plans**: 9/31 plans executed: 26 in 11 waves on three lanes, plus 5 Android gap-closure plans 08-27 to 08-31 (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
 
 Plans:
 **Wave 1**
@@ -525,6 +525,13 @@ Plans:
 **Wave 11**
 - [ ] 08-24-PLAN.md — Closeout: REL-01/REL-02 ticks, Phase 3 gaps, D-01 overrides for Phases 3 and 4, folded todo outcomes
 
+**Gap closure** (Android parity ports P1-P6 requested by the user 2026-11-20, from 08-26-SUMMARY.md; Android lane, sequential, local commits only; must land before 08-24)
+- [ ] 08-27-PLAN.md — P5: Android client and expert settings keep at least one language (iOS 05-09 A9, data loss)
+- [ ] 08-28-PLAN.md — P6: the Android setup hub never unticks a verified email (iOS 05-11)
+- [ ] 08-29-PLAN.md — P3 + P4: Publish refuses a missing step with the iOS message instead of disabling; feedback minimum copy (iOS 05-04, 05-05)
+- [ ] 08-30-PLAN.md — P1: a stored off-grid or 24:00 time stays a picker row; rows equal iOS pickerRows (iOS 06-03 D-08)
+- [ ] 08-31-PLAN.md — P2: client Profile hub online dot (iOS 06-06 U2); close both parity todos with the Android SHAs
+
 **Notes**:
 - No hotfix build comes before this one (user decision 2026-11-07).
 - `Environments.plist` stays on Production for the release build (P9, by design).
@@ -544,7 +551,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
 | 7. Chat | 9/9 | Complete    | 2026-11-18 |
-| 8. Release | 9/26 | In Progress | - |
+| 8. Release | 9/31 | In Progress | - |
 
 ---
 *Roadmap created: 2026-11-07*

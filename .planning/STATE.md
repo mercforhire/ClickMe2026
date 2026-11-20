@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 17
+current_plan: 2
 status: executing
-stopped_at: Phase 8 context gathered
-last_updated: "2026-11-20T03:50:03.992Z"
-last_activity: 2026-11-18
-last_activity_desc: Phase 07 complete, transitioned to Phase 3
-state_head: 1ea1a7a46b9466fc51b7c74510fba9d50330aee8
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-11-20T04:06:17.960Z"
+last_activity: 2026-11-19
+last_activity_desc: Phase 08 execution started
+state_head: c968c7b7a7c96db8870dbcc09ae60d6c3dcee0cf
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 150
-  completed_plans: 124
+  completed_plans: 125
   percent: 63
 ---
 
@@ -24,15 +24,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-11-19)
 
 **Core value:** Live iOS users can book, pay for, join and finish a session without the app cutting them off, charging them wrongly, or silently dropping their actions.
-**Current focus:** Phase 3 — Booked Sessions and Joining (verification)
+**Current focus:** Phase 08 — Release
 
 ## Current Position
 
-Phase: 08 (Release) — READY TO EXECUTE
-Current Plan: 17
+Phase: 08 (Release) — EXECUTING
+Current Plan: 2
 Total Plans in Phase: 26
 Status: Ready to execute
-Last activity: 2026-11-18 — Phase 07 complete, transitioned to Phase 3
+Last activity: 2026-11-19 — Phase 08 execution started
 
 Progress: [████████████████████] 124/124 plans ([██████░░░░] 63%); phases 3 and 4 await verification, Phase 8 not started
 
@@ -185,6 +185,7 @@ Progress: [████████████████████] 124/124
 | Phase 07 P07 | 17 min | 2 tasks | 7 files |
 | Phase 07 P08 | 10 min | 2 tasks | 4 files |
 | Phase 07 P09 | 15 min | 3 tasks | 9 files |
+| Phase 08 P01 | 12 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -401,6 +402,8 @@ Recent decisions affecting current work:
 - [Phase 07]: 07-09 D-18: user reported the expert chat booking row failure reproduced on a device; expert shell chat booking rows now open ExpertBookingSummaryView via ChatBookingRowRoute. Shell decides the route; dual-role users logged as a pending todo, not built.
 - [Phase 07]: Review fixes (2026-11-18): GET /chats scans dropped after a block-state change (revision guard); Chats-list reloads keep local preview, time, order and unread changes; a first message from an unknown thread during a load triggers one follow-up fetch; 408 and 429 sends stay Failed with Retry; Socket.IO logging DEBUG-only
 - [Phase 07]: UAT 2026-11-19: judgements 15-17 KEEP (120 s send timeout, brief count after a quick pop, profile toast height); VoiceOver pass deferred to backlog 999.5
+- [Phase 08]: 08-01: PreviewSecrets.swift is tracked and token-free; DEBUG reads CLICKME_PREVIEW_*_TOKEN env vars then the gitignored repo-root PreviewSecrets.local.json (outside the synchronized app group, never bundled); Release returns nil (D-25)
+- [Phase 08]: 08-01: scripts/release-build-check.sh is the no-new-warnings gate (baseline a48c664 vs candidate, identical Release command); measured 4 / 4 / 0; rerun it in 08-20 (D-19)
 
 ### Pending Todos
 
@@ -503,6 +506,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-19T23:00:40.515Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-release/08-CONTEXT.md
+Last session: 2026-11-20T04:06:16.702Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None

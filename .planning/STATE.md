@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 5
+current_plan: 6
 status: executing
-stopped_at: Completed 08-05-PLAN.md
-last_updated: "2026-11-20T04:33:37.554Z"
+stopped_at: Completed 08-06-PLAN.md
+last_updated: "2026-11-20T04:46:30.526Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 08 execution started
-state_head: 2d10b7a830fb0e5464c4f55b4d1b5f50333c87e5
+state_head: 7ef85e56346f3bfb7752a5045ea066ada03043c2
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 150
-  completed_plans: 128
+  completed_plans: 129
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 5
+Current Plan: 6
 Total Plans in Phase: 26
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 08 execution started
@@ -189,6 +189,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P02 | 4 min | 3 tasks | 8 files |
 | Phase 08 P03 | 25 min | 2 tasks | 17 files |
 | Phase 08 P05 | 4 min | 3 tasks | 8 files |
+| Phase 08 P06 | 30 min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -410,6 +411,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-02: backend branch ios-p8-x1 (D12 worktree) holds 5da3976 (clean cherry-pick of 94d659b, D-11 rebuild not needed) and 162f1d7 (reschedule declines notify the proposer with sub_category reschedules and event_data.reschedule_decline; proposal push reads Reschedule Requested); local only, not deployed, origin/main still 28da165; full suite 3850 passed / 6 redis failures — G-03-1-ITEM1C (D-31), G-03-1-ITEM1B backend half, G-03-1-ITEM1 (D-03); additive for build 6 and Android (D-13), no migration (D-15); deploy is 08-08 under D-14
 - [Phase 08]: 08-03: Android chat rows show reason captions built in ChatMessageMapping (plain English, label from reason_by; request declines fall back to decline_reason_text as the expert's) and a reschedule_decline row reads 'Reschedule Declined' and is non-terminal; Android Money pins US$ / CA$ by overriding only the DecimalFormatSymbols currency symbol (D-32). Two local commits in ClickMe_Android (8aaee356, 50626142), not pushed; nine other Android tests updated from $ to US$
 - [Phase 08]: 08-05: null topic currency built after the client tolerance gate passed (build 6 decoder read, iOS 44 tests, Android 68 tests); D-30 name change is message-only and pinned by exact errors[] equality
+- [Phase 08]: 08-06: Android 422 profile-save alert text lives in ProfileSaveErrorMapper (plain English), not string resources, because the view models have no Context and FieldError.Res takes no format args
+- [Phase 08]: 08-06: Android holds a cleared set name in the view model (server names tracked), never sends an empty first_name/last_name; blank meeting-link text over a saved link sends meeting_url ""
 
 ### Pending Todos
 
@@ -511,6 +514,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T04:33:35.958Z
-Stopped at: Completed 08-05-PLAN.md
+Last session: 2026-11-20T04:46:29.221Z
+Stopped at: Completed 08-06-PLAN.md
 Resume file: None

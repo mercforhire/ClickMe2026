@@ -36,3 +36,17 @@ If this is revived, the change is, in a fresh worktree based on `origin/main` (o
 Expected client safety facts (as read 2026-11-16, to be re-checked): iOS `ExpertTopicItem.Price.currency` is `String?` at both `a48c664` and HEAD, with no `init(from` or `CodingKeys`; Android `TopicPriceDto.currency` is `String? = null` and `ResponseDecodingTest.expertDetailsDecodesFreeAndPaidTopics` decodes `"currency":null`.
 
 Reviving it means rerunning the client tolerance gate from plan 06-17 Task 2 first, because both clients may have changed by then: the iOS `"currency":null` rows in `TopicsSetupTopicCardLabelTests` (run with `TopicCurrencyTests`), the build 6 `a48c664` `Price` decoder check (identical stored properties, no custom decoder), and the Android decode tests (`ResponseDecodingTest.expertDetailsDecodesFreeAndPaidTopics`, `ExpertTopicDtoTest`). If any part fails, build nothing. Deploying stays a separate user decision: a push of that one commit to `main` as a fast-forward by explicit refspec, never forced, with a read-only check of production `/health` and `origin/main` first, and `master` must later take it in by merging `origin/main` (see `2026-11-11-merge-d12-into-backend-master.md`).
+
+## Resolution
+
+Revived and built by plan 08-05, after the client tolerance gate passed (backend repo, branch `ios-p8-x1`, commit `412f1aa`, not pushed).
+
+Gate results (2026-11-19):
+
+- Build 6 `a48c664`: `ExpertTopicItem.Price.currency` is `String?`, with no `init(from` and no `CodingKeys` in `Price`.
+- iOS `TopicsSetupTopicCardLabelTests` and `TopicCurrencyTests`: 44 tests in 2 suites passed.
+- Android `ResponseDecodingTest` (65 tests, includes `expertDetailsDecodesFreeAndPaidTopics`) and `ExpertTopicDtoTest` (3 tests): BUILD SUCCESSFUL, 0 failures.
+
+`serializeTopic` now sends the stored code uppercased, or `null` when the topic has none. A paid topic stored as `usd` still returns `USD`; `is_free`, `amount` 0 and the `Free` label are unchanged. OpenAPI `ExpertOwnedTopic` `price.currency` is `["string", "null"]` with the key kept in `required`, and `docs/ios/USD-TOPIC-PRICING.md` §2 notes the null. Three rows in `tests/expertTopics.test.js` name G-06-1-currency (two of them were RED first).
+
+Not done, still user decisions: backfilling NULL `price_currency` rows in production, and whether a free create must require or default a currency. The change is serializer-only: no migration and no production rows written. The deploy is plan 08-08.

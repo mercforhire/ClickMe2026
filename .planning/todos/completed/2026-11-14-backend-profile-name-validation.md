@@ -33,3 +33,11 @@ Found by UAT gap G-05-6 and traced in `.planning/debug/profile-settings-save-fai
 - Precondition: backend `master` must MERGE origin/main first (todo `2026-11-11-merge-d12-into-backend-master.md`).
 - One commit in the backend repo. The user deploys, because production is live and serves build 6.
 - Log an Android follow-up if the backend changes.
+
+## Resolution
+
+Fixed by plan 08-05 under D-30, as a message-only change (backend repo, branch `ios-p8-x1`, commit `0767cf4`, not pushed). `basic.first_name` and `basic.last_name` keep `min(1).max(100).optional()`; the `min(1)` rule now carries "First name can't be empty." and "Last name can't be empty.". The 422 keeps code `VALIDATION_ERROR` and the field paths `basic.first_name` / `basic.last_name`, and every payload accepted before is still accepted (empty strings are still refused), so build 6 and Android are unaffected. The top-level 422 `message` is now the hand-written sentence instead of the generic one. OpenAPI documents `minLength: 1` and `maxLength: 100` for both names.
+
+Deferred, because the new iOS build does not depend on either: decision A (accept an empty `last_name`, which would unblock build 6 and Android saves for accounts that signup created with `''`) and decision B (collect a last name at signup or setup). Both stay product questions. The Android follow-up is unchanged.
+
+The deploy is plan 08-08. Backend master receives the commit through the 08-21 merge of origin/main.

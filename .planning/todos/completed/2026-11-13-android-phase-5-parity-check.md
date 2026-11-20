@@ -58,8 +58,12 @@ Recorded by plan 08-26 from the user's message of 2026-11-20: "Since the iOS sto
 
 The `Expert-mode gate and Not now` row (device check needed) was decided separately: the message above does not cover it, so plan 08-26 asked the user, who answered on 2026-11-20 to close it now. Its device step stays in the Android section of 08-REGRESSION-CHECKLIST.md, and a difference found there becomes a new todo.
 
-- Photo required to publish: port requested (user, 2026-11-20)
-- Feedback minimum: port requested (user, 2026-11-20)
-- Settings language save: port requested (user, 2026-11-20)
-- Resume keeps the verified email: port requested (user, 2026-11-20)
+- Photo required to publish: ported (3634f415, 4ca8326b)
+- Feedback minimum: ported (68509208)
+- Settings language save: ported (4bd04caa, b1e37ca2)
+- Resume keeps the verified email: ported (1b536ef2, 5a044d0a)
 - Expert-mode gate and Not now: closed, device step in the regression checklist Android section (user, 2026-11-20)
+
+## Resolution
+
+Closed by plan 08-31 on 2026-11-20. Every requested port landed on ClickMe_Android `main` as local commits (not pushed), and each decision line above now reads `ported` with its SHAs. The device checks are in the Android section of 08-REGRESSION-CHECKLIST.md, taken from items (P1) to (P6) consolidated in 08-31-SUMMARY.md.

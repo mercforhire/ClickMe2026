@@ -43,5 +43,9 @@ Read from the Android source by plan 08-12 (nothing was run on an Android device
 
 Recorded by plan 08-26 from the user's message of 2026-11-20: "Since the iOS store review has still not been completed, let's continue to do the Android fixes." That message is read as a port request for each `differs` row. Port work is planned separately (`/gsd-plan-phase 08 --gaps`); the gap plan that lands a port rewrites its line to `ported (<Android SHA>)`.
 
-- item 2 Off-grid stored time: port requested (user, 2026-11-20)
-- item 4 Client hub online dot: port requested (user, 2026-11-20)
+- item 2 Off-grid stored time: ported (96933b85, da7002ce)
+- item 4 Client hub online dot: ported (fa9057ad)
+
+## Resolution
+
+Closed by plan 08-31 on 2026-11-20. Every requested port landed on ClickMe_Android `main` as local commits (not pushed), and each decision line above now reads `ported` with its SHAs. The device checks are in the Android section of 08-REGRESSION-CHECKLIST.md, taken from items (P1) to (P6) consolidated in 08-31-SUMMARY.md.

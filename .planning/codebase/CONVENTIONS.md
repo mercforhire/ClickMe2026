@@ -214,7 +214,7 @@ Imports are not alphabetised. Keep the group order above, and keep `@testable im
 - Relative times use `Utils.timeAgo(since:)` (`ClickMe2026/Utils/Utils.swift`).
 
 **Secrets:**
-- Never commit secrets. `ClickMe2026/Debug/PreviewSecrets.swift` is git-ignored and must stay out of source control. Test credentials come from environment variables or UserDefaults (see `ClickMe2026Tests/Support/SmokeConfig.swift`).
+- Never commit secrets. `ClickMe2026/Debug/PreviewSecrets.swift` is tracked and holds no token: in DEBUG it reads the preview bearer tokens from `CLICKME_PREVIEW_CLIENT_TOKEN` / `CLICKME_PREVIEW_EXPERT_TOKEN` or from the gitignored repo-root `PreviewSecrets.local.json`, and Release reads nothing. Never write a token into the tracked file, and run the Phase 8 JWT scans before any push (D-25). Test credentials come from environment variables or UserDefaults (see `ClickMe2026Tests/Support/SmokeConfig.swift`).
 
 ---
 

@@ -202,7 +202,7 @@ Third-party SDK surface (from `ClickMe.xcodeproj/project.xcworkspace/xcshareddat
 
 **Preview seams:**
 - Purpose: Render screens without network.
-- Examples: `ExploreClientViewModel.init(...)` second initializer; `ClickMe2026/Views/Extensions/PreviewNavHarness.swift`; `ClickMe2026/Debug/PreviewSecrets.swift` (gitignored).
+- Examples: `ExploreClientViewModel.init(...)` second initializer; `ClickMe2026/Views/Extensions/PreviewNavHarness.swift`; `ClickMe2026/Debug/PreviewSecrets.swift` (tracked and token-free; tokens come from the gitignored `PreviewSecrets.local.json`).
 - Pattern: A ViewModel init that installs canned data as if a load succeeded.
 
 ## Entry Points

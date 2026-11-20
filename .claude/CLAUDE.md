@@ -90,7 +90,7 @@ A bug-fix project for the live ClickMe iOS app (SwiftUI), a marketplace where cl
 - Entitlements: `ClickMe2026/ClickMe2026.entitlements` sets `aps-environment` to `production` (push notifications)
 - Info.plist: custom URL scheme `clickme` (`CFBundleURLTypes`), `ITSAppUsesNonExemptEncryption = false`, background modes `audio` and `remote-notification`
 - Privacy manifest: `ClickMe2026/PrivacyInfo.xcprivacy` (no tracking; declares UserDefaults API usage reason `CA92.1` and collected data categories)
-- Debug-only preview fixtures: `ClickMe2026/Debug/PreviewSecrets.swift` contains bearer-token placeholders for SwiftUI previews. Contents are intentionally not reproduced in this document
+- Debug-only preview fixtures: `ClickMe2026/Debug/PreviewSecrets.swift` (tracked, token-free) supplies the SwiftUI preview bearer tokens from environment variables or the gitignored repo-root `PreviewSecrets.local.json`; token values are never reproduced in this document
 - Smoke-test credentials are injected through environment variables (`CLICKME_TEST_EMAIL`, `CLICKME_TEST_PASSWORD`) by `scripts/run-smoke-tests.sh`. Values are not stored in the repo
 - `.env` files: none detected
 - `ClickMe.xcodeproj/project.pbxproj` - targets `ClickMe2026`, `ClickMe2026Tests`, `ClickMe2026UITests`
@@ -224,7 +224,7 @@ A bug-fix project for the live ClickMe iOS app (SwiftUI), a marketplace where cl
 - Dynamic JSON is modeled with `JSONValue` (`ClickMe2026/Model/Enums/JSONValue.swift`).
 - Date parsing and formatting is centralized in `ClickMe2026/Utils/DateUtil.swift` and `ClickMe2026/Network/NetworkService.swift`. Use these instead of creating new `DateFormatter` instances.
 - Relative times use `Utils.timeAgo(since:)` (`ClickMe2026/Utils/Utils.swift`).
-- Never commit secrets. `ClickMe2026/Debug/PreviewSecrets.swift` is git-ignored and must stay out of source control. Test credentials come from environment variables or UserDefaults (see `ClickMe2026Tests/Support/SmokeConfig.swift`).
+- Never commit secrets. `ClickMe2026/Debug/PreviewSecrets.swift` is tracked and holds no token: in DEBUG it reads the preview bearer tokens from `CLICKME_PREVIEW_CLIENT_TOKEN` / `CLICKME_PREVIEW_EXPERT_TOKEN` or from the gitignored repo-root `PreviewSecrets.local.json`, and Release reads nothing. Never write a token into the tracked file, and run the Phase 8 JWT scans before any push (D-25). Test credentials come from environment variables or UserDefaults (see `ClickMe2026Tests/Support/SmokeConfig.swift`).
 
 <!-- GSD:conventions-end -->
 
@@ -324,7 +324,7 @@ A bug-fix project for the live ClickMe iOS app (SwiftUI), a marketplace where cl
 - Examples: `ClickMe2026/Views/Extensions/HomeNavigationPath.swift`, `ClickMe2026/Managers/PushRouter.swift`
 - Pattern: Typed `Hashable` route values appended to `NavigationPath`. Push events map to `PushDestination` cases such as `.bookingDetail(bookingId:)`.
 - Purpose: Render screens without network.
-- Examples: `ExploreClientViewModel.init(...)` second initializer; `ClickMe2026/Views/Extensions/PreviewNavHarness.swift`; `ClickMe2026/Debug/PreviewSecrets.swift` (gitignored).
+- Examples: `ExploreClientViewModel.init(...)` second initializer; `ClickMe2026/Views/Extensions/PreviewNavHarness.swift`; `ClickMe2026/Debug/PreviewSecrets.swift` (tracked and token-free; tokens come from the gitignored `PreviewSecrets.local.json`).
 - Pattern: A ViewModel init that installs canned data as if a load succeeded.
 
 ## Entry Points

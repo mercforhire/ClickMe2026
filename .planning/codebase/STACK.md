@@ -92,7 +92,7 @@ All versions below are taken from `ClickMe.xcodeproj/project.xcworkspace/xcshare
 - Entitlements: `ClickMe2026/ClickMe2026.entitlements` sets `aps-environment` to `production` (push notifications)
 - Info.plist: custom URL scheme `clickme` (`CFBundleURLTypes`), `ITSAppUsesNonExemptEncryption = false`, background modes `audio` and `remote-notification`
 - Privacy manifest: `ClickMe2026/PrivacyInfo.xcprivacy` (no tracking; declares UserDefaults API usage reason `CA92.1` and collected data categories)
-- Debug-only preview fixtures: `ClickMe2026/Debug/PreviewSecrets.swift` contains bearer-token placeholders for SwiftUI previews. Contents are intentionally not reproduced in this document
+- Debug-only preview fixtures: `ClickMe2026/Debug/PreviewSecrets.swift` (tracked, token-free) supplies the SwiftUI preview bearer tokens from environment variables or the gitignored repo-root `PreviewSecrets.local.json`; token values are never reproduced in this document
 - Smoke-test credentials are injected through environment variables (`CLICKME_TEST_EMAIL`, `CLICKME_TEST_PASSWORD`) by `scripts/run-smoke-tests.sh`. Values are not stored in the repo
 - `.env` files: none detected
 

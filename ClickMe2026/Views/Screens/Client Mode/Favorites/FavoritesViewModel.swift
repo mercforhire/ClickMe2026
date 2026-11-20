@@ -280,7 +280,7 @@ final class FavoritesViewModel: ObservableObject {
         guard let expertId = expert.expertId else {
             // Preview / sample rows with no server id — behave locally only.
             withAnimation(.spring(response: 0.35, dampingFraction: 0.65)) {
-                list.remove(key: expert.pagingKey)
+                _ = list.remove(key: expert.pagingKey)
             }
             return Task {}
         }

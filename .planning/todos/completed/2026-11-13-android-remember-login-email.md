@@ -28,3 +28,17 @@ Match the iOS behavior (05-UI-SPEC section 7, Login: remembered email):
 - Tests: remembers a trimmed email, ignores whitespace-only, pre-fill after sign-out, explicit email wins, deletion forgets, failed deletion keeps. The iOS suite is `ClickMe2026Tests/Auth/RememberedLoginEmailTests.swift` (8 tests).
 
 Verify on an Android device: sign in, sign out, the email is filled and the password is empty; delete a throwaway account, the field is empty.
+
+## Resolution
+
+Ported by hand onto Android `main` (not merged or cherry-picked; branch `feature/remember-login-email` untouched, `0c9ecc55` is still not an ancestor of `main`), in `/Users/LeonChen/Documents/ClickMe_Android`, local only:
+
+- `adc3647a` - remember the last login email after sign-out (store, manager; plan 08-09)
+- `e3676ef1` - pre-fill the login email after sign-out (plan 08-09)
+- `2d75fb97` - account deletion forgets the remembered email; a failed deletion keeps it (plan 08-25)
+
+Full Android unit run plus ktlint green (5397 tests, 0 failures).
+
+Device check: 08-REGRESSION-CHECKLIST.md Android section (throwaway account for the deletion step).
+
+Closed by plans 08-09 and 08-25 (REL-02).

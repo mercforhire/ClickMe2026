@@ -51,3 +51,14 @@ Read from the Android source by plan 08-12 (nothing was run on an Android device
 - Settings language save: differs: language_ids and custom_languages go together and only when the selection changed (matches iOS), but Done with nothing selected on Android sends an empty list and the server deletes every language, while iOS keeps the previous list and shows "Keep at least one language." (ClientProfileSettingsViewModel.applyLanguages and ExpertProfileSettingsViewModel.applyLanguages have no guard)
 - Resume keeps the verified email: differs: the hub re-reads GET /auth/email/status on every appearance (SignupOverviewViewModel.onShown), but SignupSetupRepository.mergeStatus overwrites the local flag, so a stale "not verified" answer could untick Verify email, while iOS never downgrades a local success
 - Expert-mode gate and Not now: device check needed: with an unfinished expert account, tap an expert-targeted push and see the notifications list open instead of the setup hub; tap a push for the other mode during a call and see it wait until the call ends with no mode switch; relaunch and foreground a client-only account and see it stay client-only
+
+## Phase 8 decisions
+
+Recorded by plan 08-26 from the user's message of 2026-11-20: "Since the iOS store review has still not been completed, let's continue to do the Android fixes." That message is read as a port request for each `differs` row. Port work is planned separately (`/gsd-plan-phase 08 --gaps`); the gap plan that lands a port rewrites its line to `ported (<Android SHA>)`.
+
+The `Expert-mode gate and Not now` row (device check needed) has no decision yet: the message does not say whether to close it now or keep it open until the device result, so plan 08-26 asks the user separately.
+
+- Photo required to publish: port requested (user, 2026-11-20)
+- Feedback minimum: port requested (user, 2026-11-20)
+- Settings language save: port requested (user, 2026-11-20)
+- Resume keeps the verified email: port requested (user, 2026-11-20)

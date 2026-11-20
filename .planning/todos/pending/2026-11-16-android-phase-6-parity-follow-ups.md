@@ -38,3 +38,10 @@ Read from the Android source by plan 08-12 (nothing was run on an Android device
 - item 2 Off-grid stored time: differs: a stored 09:15 or 24:00 opens as a selected row, as on iOS, but once the expert taps another row that off-grid or 24:00 row leaves the list on Android (AvailabilityScheduleLogic.startOptions/endOptions keep only the current draft value), while iOS keeps it as a row for as long as the sheet is open
 - item 3 409 ALREADY_PROCESSED on accept or decline: matches (RequestDecisionViewModel.onDecisionFailed and dismissDialog, RequestDecisionErrors.toRequestDecisionFailure: "Couldn't update request" with the server message, OK pops and posts an Incoming Requests reload)
 - item 4 Client hub online dot: differs: the Android client Profile hub shows no online dot on the avatar (nothing in screens/clientmode/profile reads online or presence), while the iOS client hub keeps its green dot (user decision U2, 2026-11-16)
+
+## Phase 8 decisions
+
+Recorded by plan 08-26 from the user's message of 2026-11-20: "Since the iOS store review has still not been completed, let's continue to do the Android fixes." That message is read as a port request for each `differs` row. Port work is planned separately (`/gsd-plan-phase 08 --gaps`); the gap plan that lands a port rewrites its line to `ported (<Android SHA>)`.
+
+- item 2 Off-grid stored time: port requested (user, 2026-11-20)
+- item 4 Client hub online dot: port requested (user, 2026-11-20)

@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 14
+current_plan: 15
 status: executing
-stopped_at: Completed 08-30-PLAN.md
-last_updated: "2026-11-20T06:38:29.592Z"
+stopped_at: Completed 08-31-PLAN.md
+last_updated: "2026-11-20T06:44:29.766Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 08 execution started
-state_head: 68c7c4be89dda48435c72e70c2389999c6c3050c
+state_head: 14cb260f6272c488952bfc6f11e186083f630182
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 155
-  completed_plans: 137
+  completed_plans: 138
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 14
+Current Plan: 15
 Total Plans in Phase: 26
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 08 execution started
@@ -198,6 +198,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P28 | 14 min | 2 tasks | 3 files |
 | Phase 08 P29 | 20 min | 3 tasks | 9 files |
 | Phase 08 P30 | 5 min | 2 tasks | 4 files |
+| Phase 08 P31 | 6 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -430,6 +431,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-28: Android status endpoint only seeds the verified-email flag (refreshEmailStatus skips the call when verified; mergeStatus ORs server into local), matching iOS 05-11
 - [Phase 08]: 08-29: Android Publish Profile stays usable with a step missing; publish() refuses locally (publishRefusal, no request) with iOS 'Finish these first: ...' text, reusing AuthErrorDialog and dismissDialog; server 422 path unchanged — iOS 05-04 parity; the server stays the enforcer and the client never sends a publish it knows is incomplete
 - [Phase 08]: 08-30: Android pickerRows uses one 00:00-23:30 grid for both lists and no draft injection, matching iOS pickerRows; LATEST_START kept for canAddHours
+- [Phase 08]: 08-31: the Android client hub online dot is static and unconditional (no presence data), opt-in on ProfileHubUserCard and off on the expert hub, as iOS 06-06 U2
 
 ### Pending Todos
 
@@ -531,6 +533,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T06:38:28.304Z
-Stopped at: Completed 08-30-PLAN.md
+Last session: 2026-11-20T06:44:28.474Z
+Stopped at: Completed 08-31-PLAN.md
 Resume file: None

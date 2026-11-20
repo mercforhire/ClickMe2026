@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 4
+current_plan: 5
 status: executing
-stopped_at: Completed 08-03-PLAN.md
-last_updated: "2026-11-20T04:24:46.389Z"
+stopped_at: Completed 08-05-PLAN.md
+last_updated: "2026-11-20T04:33:37.554Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 08 execution started
-state_head: 78ff7c09fcb4b40f7823e00324a1f4e99c181e74
+state_head: 2d10b7a830fb0e5464c4f55b4d1b5f50333c87e5
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 150
-  completed_plans: 127
+  completed_plans: 128
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 4
+Current Plan: 5
 Total Plans in Phase: 26
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 08 execution started
@@ -188,6 +188,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P01 | 12 min | 3 tasks | 8 files |
 | Phase 08 P02 | 4 min | 3 tasks | 8 files |
 | Phase 08 P03 | 25 min | 2 tasks | 17 files |
+| Phase 08 P05 | 4 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -408,6 +409,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-01: scripts/release-build-check.sh is the no-new-warnings gate (baseline a48c664 vs candidate, identical Release command); measured 4 / 4 / 0; rerun it in 08-20 (D-19)
 - [Phase 08]: 08-02: backend branch ios-p8-x1 (D12 worktree) holds 5da3976 (clean cherry-pick of 94d659b, D-11 rebuild not needed) and 162f1d7 (reschedule declines notify the proposer with sub_category reschedules and event_data.reschedule_decline; proposal push reads Reschedule Requested); local only, not deployed, origin/main still 28da165; full suite 3850 passed / 6 redis failures — G-03-1-ITEM1C (D-31), G-03-1-ITEM1B backend half, G-03-1-ITEM1 (D-03); additive for build 6 and Android (D-13), no migration (D-15); deploy is 08-08 under D-14
 - [Phase 08]: 08-03: Android chat rows show reason captions built in ChatMessageMapping (plain English, label from reason_by; request declines fall back to decline_reason_text as the expert's) and a reschedule_decline row reads 'Reschedule Declined' and is non-terminal; Android Money pins US$ / CA$ by overriding only the DecimalFormatSymbols currency symbol (D-32). Two local commits in ClickMe_Android (8aaee356, 50626142), not pushed; nine other Android tests updated from $ to US$
+- [Phase 08]: 08-05: null topic currency built after the client tolerance gate passed (build 6 decoder read, iOS 44 tests, Android 68 tests); D-30 name change is message-only and pinned by exact errors[] equality
 
 ### Pending Todos
 
@@ -461,7 +463,6 @@ Captured todos:
 - [2026-11-12] [payments] Long-lead T-24h sweep: transient errors after the stamp still cancel at 6 h — [todo file](.planning/todos/pending/2026-11-12-long-lead-sweep-transient-errors-after-stamp.md)
 - [2026-11-13] [account] Decide what to do about saved cards when an account is deleted (RESEARCH Open Question 1) — [todo file](.planning/todos/pending/2026-11-13-decide-saved-cards-on-account-deletion.md)
 - [2026-11-13] [testing] Flaky test: MakeABookingAvailabilityTests "An older load that lands last writes nothing" — [todo file](.planning/todos/pending/2026-11-13-flaky-make-a-booking-availability-test.md)
-- [2026-11-14] [api] Backend: PATCH /user/profile name validation and the empty last name decision (G-05-6) — [todo file](.planning/todos/pending/2026-11-14-backend-profile-name-validation.md)
 - [2026-11-16] [android] Android: Phase 6 parity follow-ups (Add hours end of day, off-grid rows, 409, client hub dot) — [todo file](.planning/todos/pending/2026-11-16-android-phase-6-parity-follow-ups.md)
 - [2026-11-16] [ui] Decide how USD renders: `$` (shipped Money table) or `US$` (backend doc and topic editor label) — [todo file](.planning/todos/pending/2026-11-16-usd-symbol-us-dollar-prefix.md)
 
@@ -510,6 +511,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T04:24:44.926Z
-Stopped at: Completed 08-03-PLAN.md
+Last session: 2026-11-20T04:33:35.958Z
+Stopped at: Completed 08-05-PLAN.md
 Resume file: None

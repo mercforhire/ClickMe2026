@@ -474,7 +474,56 @@ Plans:
   3. Every backend change is deployed to production before the iOS build is submitted, and the current Android build still works against it.
   4. One new iOS build containing every fix builds cleanly with no new warnings, is on TestFlight, and is submitted to the App Store.
 
-**Plans**: TBD
+**Plans**: 26 plans in 11 waves on three lanes (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
+
+Plans:
+**Wave 1**
+- [ ] 08-01-PLAN.md — Wave 0: tracked token-free PreviewSecrets so a clean checkout compiles; Favorites warning fix; scripts/release-build-check.sh (D-19, D-25)
+- [ ] 08-02-PLAN.md — Backend X1a: cherry-pick 94d659b (chat reasons); reschedule decline pushes the proposer with sub_category reschedules; proposal wording (G-03-1-ITEM1B/1C/1, D-11, D-31)
+- [ ] 08-03-PLAN.md — Android: chat reasons rows (ITEM1B) and US$/CA$ symbol override (D-24, D-32)
+
+**Wave 2**
+- [ ] 08-04-PLAN.md — Wave 0: CI project name, team id, build number kept, dry_run switch; publish main after the token gate; dry run and release-path decision (D-25, D-26)
+- [ ] 08-05-PLAN.md — Backend X1b: profile-name messages (D-30); null topic currency behind the client tolerance gate
+- [ ] 08-06-PLAN.md — Android: clear the expert meeting link; never send an empty name; 422 field labels (G-05-6 / CR-01 ports)
+
+**Wave 3**
+- [ ] 08-07-PLAN.md — iOS: action reasons and reschedule-decline rows in chat (G-03-1-ITEM1B)
+- [ ] 08-08-PLAN.md — Deploy X1: gate, user approval, fast-forward push, /health (checkpoint)
+- [ ] 08-09-PLAN.md — Android: remember-login-email port of 0c9ecc55 (secure store, UserManager, login pre-fill)
+
+**Wave 4**
+- [ ] 08-10-PLAN.md — iOS: USD renders as US$ everywhere (D-24)
+- [ ] 08-11-PLAN.md — Live smoke after X1 on build 6 and Android (checkpoint)
+- [ ] 08-12-PLAN.md — Android: cancellation policy link and copy; Add-hours end of day (button disabled near midnight); parity answers for 08-26
+
+**Wave 5**
+- [ ] 08-13-PLAN.md — iOS: saved-cards disclosure on Delete Account, wording approved by the user (D-23) (checkpoint)
+- [ ] 08-14-PLAN.md — Backend X2: long-lead transient-error retry with the 6 h deadline (D-29)
+- [ ] 08-25-PLAN.md — Android: account deletion forgets the remembered email (rest of the 0c9ecc55 port); close the remember-login-email todo
+- [ ] 08-26-PLAN.md — Android parity decisions: the user ports, defers or accepts each remaining Phase 5/6 difference before those todos close (checkpoint)
+
+**Wave 6**
+- [ ] 08-15-PLAN.md — Regression checklist, release record, REQUIREMENTS/ROADMAP amendments (D-01, D-07, D-08, D-27)
+- [ ] 08-16-PLAN.md — Deploy X2 (live payments): gate, user approval, push (checkpoint)
+- [ ] 08-17-PLAN.md — Android: truthful Delete Account copy, saved-cards line, 409 blocker alert
+
+**Wave 7**
+- [ ] 08-18-PLAN.md — Live smoke after X2 and backend freeze (checkpoint)
+- [ ] 08-19-PLAN.md — Regenerate Phase 3 verification via /gsd-execute-phase 03; classify Phase 3/4 human items (D-05) (checkpoint)
+
+**Wave 8**
+- [ ] 08-20-PLAN.md — Release candidate 1.1 (7): version bump, full suite, no-new-warnings check, go/no-go, release/1.1 or Organizer tag (D-18, D-19) (checkpoint)
+- [ ] 08-21-PLAN.md — Backend master merges origin/main (D-17), not deployed
+
+**Wave 9**
+- [ ] 08-22-PLAN.md — TestFlight regression run with real money and an Android peer (D-04, D-06, D-27, D-28, D-09); on sign-off, closes BACK-06/07/19 and the 17 Phase 4 rows on their evidence (D-01) (checkpoint)
+
+**Wave 10**
+- [ ] 08-23-PLAN.md — What's New (D-22), App Store submission with immediate release (D-21) (checkpoint)
+
+**Wave 11**
+- [ ] 08-24-PLAN.md — Closeout: REL-01/REL-02 ticks, Phase 3 gaps, D-01 overrides for Phases 3 and 4, folded todo outcomes
 **Notes**:
 - No hotfix build comes before this one (user decision 2026-11-07).
 - `Environments.plist` stays on Production for the release build (P9, by design).
@@ -494,7 +543,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
 | 7. Chat | 9/9 | Complete    | 2026-11-18 |
-| 8. Release | 0/TBD | Not started | - |
+| 8. Release | 0/26 | Planned | - |
 
 ---
 *Roadmap created: 2026-11-07*

@@ -597,17 +597,17 @@ Use three sessions on build 7 (internal TestFlight), client **A** (iPhone) and e
 | A8 | The 55 + 5 minute overtime wait is optional for the regression | Regression layout | If the user wants the Android `call.ended` observation (Phase 2 follow-up) the S1 session runs about 90 minutes |
 | A9 | GitHub repo `mercforhire/ClickMe2026` is private | Release branch hygiene | If public, pushing 780 commits publishes planning docs and config; confirm before pushing |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does the CI build get fixed, or does the build ship via Xcode Organizer?** What we know: three verified blockers (project name, team id, PreviewSecrets) plus unverifiable secrets and 780 unpublished commits. D-19 says CI. Recommendation: plan the fixes and a `workflow_dispatch` dry run as Wave 0; add a user checkpoint "CI green on the dry run, or approve the Organizer fallback" before the release branch is cut.
-2. **BACK-19's captured-refund branch.** What we know: 01-19 states a device cannot force it; D-06 asks for it. Recommendation: ask the user to accept hold-release evidence plus mocked captured-refund tests (as D-08 does for BACK-15), or define a T-24h charged booking that the expert cancels before start (possible only with a long-lead booking that has crossed T-24h, which the sweep must have charged).
-3. **Which carried-over device items are run, folded or deferred?** The Phase 6 glass checks, Phase 5 items 24/45, the Phase 2 Android overtime observation (see the table). Recommendation: a single `checkpoint:decision` listing them with a proposed disposition each, recorded in the release record.
-4. **Android `Money.kt` scope for D-24.** Symbol override only (keeps locale placement and grouping) or full iOS parity (prefix, no grouping). Recommendation: symbol override for USD and CAD via `DecimalFormatSymbols`, keep everything else, and update the six `Locale.US` rows in `MoneyTest.kt` (lines 15, 20, 40, 60, 67, 82); log full parity as a follow-up unless the user wants it.
-5. **Is publishing the repo history to GitHub acceptable?** Confirm visibility and secrets before the first push of `release/1.1`.
-6. **App Review notes** for 1.1: reuse the notes that passed for 1.0; the checklist's Stripe test-card instructions look stale.
-7. **Long-lead sweep design and deadline** (needs the user before any code): bound and margin for the retry, and whether a persistent profiles/platform-card error needs the same deadline (todo Option 3).
-8. **Profile name rule:** message-only change now, or also accept an empty `last_name`.
-9. **Reschedule-decline push `sub_category`:** `declines` (summary) or `reschedules` (detail).
+1. **Does the CI build get fixed, or does the build ship via Xcode Organizer?** What we know: three verified blockers (project name, team id, PreviewSecrets) plus unverifiable secrets and 780 unpublished commits. D-19 says CI. Recommendation: plan the fixes and a `workflow_dispatch` dry run as Wave 0; add a user checkpoint "CI green on the dry run, or approve the Organizer fallback" before the release branch is cut. **RESOLVED: D-25.**
+2. **BACK-19's captured-refund branch.** What we know: 01-19 states a device cannot force it; D-06 asks for it. Recommendation: ask the user to accept hold-release evidence plus mocked captured-refund tests (as D-08 does for BACK-15), or define a T-24h charged booking that the expert cancels before start (possible only with a long-lead booking that has crossed T-24h, which the sweep must have charged). **RESOLVED: D-27.**
+3. **Which carried-over device items are run, folded or deferred?** The Phase 6 glass checks, Phase 5 items 24/45, the Phase 2 Android overtime observation (see the table). Recommendation: a single `checkpoint:decision` listing them with a proposed disposition each, recorded in the release record. **RESOLVED: D-28.**
+4. **Android `Money.kt` scope for D-24.** Symbol override only (keeps locale placement and grouping) or full iOS parity (prefix, no grouping). Recommendation: symbol override for USD and CAD via `DecimalFormatSymbols`, keep everything else, and update the six `Locale.US` rows in `MoneyTest.kt` (lines 15, 20, 40, 60, 67, 82); log full parity as a follow-up unless the user wants it. **RESOLVED: D-32.**
+5. **Is publishing the repo history to GitHub acceptable?** Confirm visibility and secrets before the first push of `release/1.1`. **RESOLVED: D-26.**
+6. **App Review notes** for 1.1: reuse the notes that passed for 1.0; the checklist's Stripe test-card instructions look stale. **RESOLVED: plan 08-23 (App Review notes at the submission checkpoint).**
+7. **Long-lead sweep design and deadline** (needs the user before any code): bound and margin for the retry, and whether a persistent profiles/platform-card error needs the same deadline (todo Option 3). **RESOLVED: D-29.**
+8. **Profile name rule:** message-only change now, or also accept an empty `last_name`. **RESOLVED: D-30.**
+9. **Reschedule-decline push `sub_category`:** `declines` (summary) or `reschedules` (detail). **RESOLVED: D-31.**
 
 ## Environment Availability
 

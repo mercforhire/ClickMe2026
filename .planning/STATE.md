@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-11-20T04:06:17.960Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-11-20T04:11:36.072Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 08 execution started
-state_head: c968c7b7a7c96db8870dbcc09ae60d6c3dcee0cf
+state_head: 63df052b5f4dc77dee2a1a07a8c95e935f7627a7
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 150
-  completed_plans: 125
+  completed_plans: 126
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 26
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 08 execution started
@@ -186,6 +186,7 @@ Progress: [████████████████████] 124/124
 | Phase 07 P08 | 10 min | 2 tasks | 4 files |
 | Phase 07 P09 | 15 min | 3 tasks | 9 files |
 | Phase 08 P01 | 12 min | 3 tasks | 8 files |
+| Phase 08 P02 | 4 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -404,6 +405,7 @@ Recent decisions affecting current work:
 - [Phase 07]: UAT 2026-11-19: judgements 15-17 KEEP (120 s send timeout, brief count after a quick pop, profile toast height); VoiceOver pass deferred to backlog 999.5
 - [Phase 08]: 08-01: PreviewSecrets.swift is tracked and token-free; DEBUG reads CLICKME_PREVIEW_*_TOKEN env vars then the gitignored repo-root PreviewSecrets.local.json (outside the synchronized app group, never bundled); Release returns nil (D-25)
 - [Phase 08]: 08-01: scripts/release-build-check.sh is the no-new-warnings gate (baseline a48c664 vs candidate, identical Release command); measured 4 / 4 / 0; rerun it in 08-20 (D-19)
+- [Phase 08]: 08-02: backend branch ios-p8-x1 (D12 worktree) holds 5da3976 (clean cherry-pick of 94d659b, D-11 rebuild not needed) and 162f1d7 (reschedule declines notify the proposer with sub_category reschedules and event_data.reschedule_decline; proposal push reads Reschedule Requested); local only, not deployed, origin/main still 28da165; full suite 3850 passed / 6 redis failures — G-03-1-ITEM1C (D-31), G-03-1-ITEM1B backend half, G-03-1-ITEM1 (D-03); additive for build 6 and Android (D-13), no migration (D-15); deploy is 08-08 under D-14
 
 ### Pending Todos
 
@@ -506,6 +508,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T04:06:16.702Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-11-20T04:11:32.936Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None

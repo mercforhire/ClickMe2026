@@ -20,7 +20,7 @@ if [[ -z "${CLICKME_TEST_EMAIL:-}" ]]; then
 fi
 
 SCHEME="${SCHEME:-ClickMe2026}"
-PROJECT="${PROJECT:-ClickMe2026.xcodeproj}"
+PROJECT="${PROJECT:-ClickMe.xcodeproj}"
 CONFIGURATION="${CONFIGURATION:-Debug}"
 SIMULATOR="${SIMULATOR:-iPhone 17}"
 

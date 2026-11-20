@@ -34,3 +34,20 @@ For each row, check Android against the iOS behavior. If it already matches, rec
 | Expert-mode gate and Not now (05-07, 05-10, 05-12, 05-16; SIGN-06, D-17, D-27) | Already on Android (`Not now`, `resolvePostAuthDestination`, `recheckSetupIfPending`). Parity check only: a push for the other mode never opens the hub (an expert-targeted push for an unfinished expert opens the notifications list); no mode switch is applied during a call and a push tapped during a call waits until it ends; a client-only account is never promoted by a launch or a foreground |
 
 Two iOS-only changes need no Android work: `ReadyToStartCallView` was unreachable dead code and was deleted (05-17, D-13), and the iOS Pause Account card (05-15) should be confirmed absent on Android.
+
+## Phase 8 answers
+
+Read from the Android source by plan 08-12 (nothing was run on an Android device). The todo stays pending: plan 08-26 asks the user to port, defer or accept each `differs` row, and to decide each `device check needed` row, before it closes.
+
+- Tag and language tap order: matches (SignupTagsViewModel.selected, SignupBasicInfoViewModel.toggleLanguage, ClientProfileSettingsViewModel.applyLanguages, and SignupSetupRepository.listFieldFor sends tap order, so the first tag is primary)
+- Crop on upload: matches (AndroidPhotoProcessor.cropToJpeg draws the chosen square, PhotoMath.outputSide caps it at 1024 px, import applies the EXIF rotation and the JPEG re-encode carries no source metadata; CropMathTest and PhotoCropCircleRegressionTest cover the crop)
+- Photo required to publish: differs: Android disables Publish and shows "Still needed: profile picture." when the photo is missing, so no request is sent (SignupDraft.missingForPublish, SignupReviewScreen); iOS leaves the button usable and refuses with "Finish these first: Add profile picture."
+- Country normalized on publish: matches (SignupSetupRepository publish sends Countries.normalize, so "ca " becomes "CAN")
+- Province optional and clearable: matches (SignupSetupRepository.saveBasicInfo omits a blank province and sends "" for a cleared one; ProfileSnapshot.locationBody always sends the trimmed string, never null; SignupReviewViewModel.reviewLocation skips an empty one)
+- City, Country location label: matches (SignupReviewViewModel.reviewLocation drops an empty province, no stray comma, and Countries.displayName returns an unknown code as given)
+- Notification preferences save on open: matches (NotificationSettingsViewModel hydrates through AutoSaver.rebase, so opening the screen sends no PATCH)
+- Feedback minimum: differs: Android sends nothing under 10 trimmed UTF-16 characters and keeps the text, as iOS, but the message reads "Please describe your experience in at least 10 characters." where iOS reads "Please enter at least 10 characters."
+- One support address: matches (AppLinks.SUPPORT_EMAIL is the only address in app/src/main, used by Help and the suspension dialog)
+- Settings language save: differs: language_ids and custom_languages go together and only when the selection changed (matches iOS), but Done with nothing selected on Android sends an empty list and the server deletes every language, while iOS keeps the previous list and shows "Keep at least one language." (ClientProfileSettingsViewModel.applyLanguages and ExpertProfileSettingsViewModel.applyLanguages have no guard)
+- Resume keeps the verified email: differs: the hub re-reads GET /auth/email/status on every appearance (SignupOverviewViewModel.onShown), but SignupSetupRepository.mergeStatus overwrites the local flag, so a stale "not verified" answer could untick Verify email, while iOS never downgrades a local success
+- Expert-mode gate and Not now: device check needed: with an unfinished expert account, tap an expert-targeted push and see the notifications list open instead of the setup hub; tap a push for the other mode during a call and see it wait until the call ends with no mode switch; relaunch and foreground a client-only account and see it stay client-only

@@ -28,3 +28,15 @@ Android's refund note is also the old claim iOS removed: `cancel_booking_refund_
    - Refund footnote, refund cases only: `Your bank decides how long a refund takes to appear.` (no business-days promise). Replace Android's `cancel_booking_refund_note`.
 3. The Deadlines and Refund Eligibility cards are unchanged on iOS: a full refund only when the cancellation is strictly more than 24 hours before the start, otherwise none (`refund.js` and the FAQ migration `20261113000200_faq_content_match_terms.sql`). Check Android's wording says the same.
 4. Out of scope: expert-cancel refund wording (iOS Phase 6, Q2).
+
+## Resolution
+
+Done by plan 08-12, in the Android repo on `main` (local only, not pushed): `2ffb5d23` "feat(ios-p8): cancellation policy link and corrected policy copy (iOS SET-07 parity)".
+
+- Android had no policy screen (re-checked before building). It now has `CancellationPolicyScreen` with the three iOS cards, Cancellation Deadlines, Refund Eligibility and How to Initiate a Cancellation, every line copied word for word from `CancellationDeadlinesCard`, `RefundEligibilityCard` and `HowToInitiateCard`, including the corrected How to Initiate intro and the four steps with `Tap 'Cancel'.`
+- The cancel confirmation step shows a centred, underlined `Cancellation policy` link in the accent colour below the summary card and above the Keep Booking and Confirm Cancellation buttons. It pushes `CancellationPolicyKey` in the client nav host (bottom bar hidden); Back pops to the confirmation, whose entry-scoped ViewModel still holds the reason and comment.
+- `cancel_booking_refund_note` now reads `Your bank decides how long a refund takes to appear.` and still shows for the full-refund case only. The business-days promise is gone from the client cancel flow; a test asserts it.
+- The Deadlines and Refund Eligibility wording is the iOS text, which matches `refund.js`: a full refund only when cancelled more than 24 hours before the start, none within 24 hours.
+- Left alone (item 4, out of scope): the expert cancel confirmation (`expert_cancel_refund_note`) still says refunds appear within 3-5 business days, exactly as iOS `ExpertCancellationMainCard` does today. It is the iOS Phase 6 Q2 wording question, not changed on either platform.
+
+Device check: 08-REGRESSION-CHECKLIST.md Android section (open Cancel Booking, Continue, tap Cancellation policy, Back, and confirm the reason is still selected). Nothing here was run on an Android device.

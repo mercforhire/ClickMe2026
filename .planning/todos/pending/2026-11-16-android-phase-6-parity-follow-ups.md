@@ -29,3 +29,12 @@ For each item, compare with the iOS behavior shipped in plans 06-03 (items 1 and
 - Item 4: open the client Profile hub on an Android device and note whether an avatar dot shows; if it shows a hard-coded one, decide whether to remove it.
 
 No iOS change is implied. Not built in Phase 6.
+
+## Phase 8 answers
+
+Read from the Android source by plan 08-12 (nothing was run on an Android device). The todo stays pending: plan 08-26 asks the user to port, defer or accept each `differs` row before it closes.
+
+- item 1 Add hours end of day: aligned (384142ee)
+- item 2 Off-grid stored time: differs: a stored 09:15 or 24:00 opens as a selected row, as on iOS, but once the expert taps another row that off-grid or 24:00 row leaves the list on Android (AvailabilityScheduleLogic.startOptions/endOptions keep only the current draft value), while iOS keeps it as a row for as long as the sheet is open
+- item 3 409 ALREADY_PROCESSED on accept or decline: matches (RequestDecisionViewModel.onDecisionFailed and dismissDialog, RequestDecisionErrors.toRequestDecisionFailure: "Couldn't update request" with the server message, OK pops and posts an Incoming Requests reload)
+- item 4 Client hub online dot: differs: the Android client Profile hub shows no online dot on the avatar (nothing in screens/clientmode/profile reads online or presence), while the iOS client hub keeps its green dot (user decision U2, 2026-11-16)

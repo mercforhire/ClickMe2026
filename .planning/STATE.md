@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 6
+current_plan: 7
 status: executing
-stopped_at: Completed 08-06-PLAN.md
-last_updated: "2026-11-20T04:46:30.526Z"
+stopped_at: Completed 08-09-PLAN.md
+last_updated: "2026-11-20T04:52:39.873Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 08 execution started
-state_head: 7ef85e56346f3bfb7752a5045ea066ada03043c2
+state_head: c0c729ad137073f9ebef01a32614c55443876bb5
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 150
-  completed_plans: 129
+  completed_plans: 130
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 6
+Current Plan: 7
 Total Plans in Phase: 26
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 08 execution started
@@ -190,6 +190,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P03 | 25 min | 2 tasks | 17 files |
 | Phase 08 P05 | 4 min | 3 tasks | 8 files |
 | Phase 08 P06 | 30 min | 3 tasks | 11 files |
+| Phase 08 P09 | 5 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -413,6 +414,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-05: null topic currency built after the client tolerance gate passed (build 6 decoder read, iOS 44 tests, Android 68 tests); D-30 name change is message-only and pinned by exact errors[] equality
 - [Phase 08]: 08-06: Android 422 profile-save alert text lives in ProfileSaveErrorMapper (plain English), not string resources, because the view models have no Context and FieldError.Res takes no format args
 - [Phase 08]: 08-06: Android holds a cleared set name in the view model (server names tracked), never sends an empty first_name/last_name; blank meeting-link text over a saved link sends meeting_url ""
+- [Phase 08]: 08-09: Android manager accessor is rememberedLoginEmail() (plan contract); store slot keeps lastLoginEmail/saveLastLoginEmail for plan 08-25; blank email never overwrites the remembered one
 
 ### Pending Todos
 
@@ -514,6 +516,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T04:46:29.221Z
-Stopped at: Completed 08-06-PLAN.md
+Last session: 2026-11-20T04:52:38.572Z
+Stopped at: Completed 08-09-PLAN.md
 Resume file: None

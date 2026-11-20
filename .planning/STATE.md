@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 13
+current_plan: 14
 status: executing
-stopped_at: Completed 08-29-PLAN.md
-last_updated: "2026-11-20T06:32:39.207Z"
+stopped_at: Completed 08-30-PLAN.md
+last_updated: "2026-11-20T06:38:29.592Z"
 last_activity: 2026-11-19
 last_activity_desc: Phase 08 execution started
-state_head: 89ca23e028558814438bbc3777973660f40a4af3
+state_head: 68c7c4be89dda48435c72e70c2389999c6c3050c
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 155
-  completed_plans: 136
+  completed_plans: 137
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 13
+Current Plan: 14
 Total Plans in Phase: 26
 Status: Ready to execute
 Last activity: 2026-11-19 — Phase 08 execution started
@@ -197,6 +197,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P27 | 25 min | 2 tasks | 7 files |
 | Phase 08 P28 | 14 min | 2 tasks | 3 files |
 | Phase 08 P29 | 20 min | 3 tasks | 9 files |
+| Phase 08 P30 | 5 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -428,6 +429,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-27 P5: Android client and expert applyLanguages refuse a Done that leaves no language (sheet closes, list kept, dialog 'Keep at least one language.', silent when the profile had none) and buildProfilePatch never sends an empty languages group; Android main b1e37ca2, local only, origin/main 27e024bf
 - [Phase 08]: 08-28: Android status endpoint only seeds the verified-email flag (refreshEmailStatus skips the call when verified; mergeStatus ORs server into local), matching iOS 05-11
 - [Phase 08]: 08-29: Android Publish Profile stays usable with a step missing; publish() refuses locally (publishRefusal, no request) with iOS 'Finish these first: ...' text, reusing AuthErrorDialog and dismissDialog; server 422 path unchanged — iOS 05-04 parity; the server stays the enforcer and the client never sends a publish it knows is incomplete
+- [Phase 08]: 08-30: Android pickerRows uses one 00:00-23:30 grid for both lists and no draft injection, matching iOS pickerRows; LATEST_START kept for canAddHours
 
 ### Pending Todos
 
@@ -529,6 +531,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-20T06:32:36.370Z
-Stopped at: Completed 08-29-PLAN.md
+Last session: 2026-11-20T06:38:28.304Z
+Stopped at: Completed 08-30-PLAN.md
 Resume file: None

@@ -432,6 +432,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-29: Android Publish Profile stays usable with a step missing; publish() refuses locally (publishRefusal, no request) with iOS 'Finish these first: ...' text, reusing AuthErrorDialog and dismissDialog; server 422 path unchanged — iOS 05-04 parity; the server stays the enforcer and the client never sends a publish it knows is incomplete
 - [Phase 08]: 08-30: Android pickerRows uses one 00:00-23:30 grid for both lists and no draft injection, matching iOS pickerRows; LATEST_START kept for canAddHours
 - [Phase 08]: 08-31: the Android client hub online dot is static and unconditional (no presence data), opt-in on ProfileHubUserCard and off on the expert hub, as iOS 06-06 U2
+- [Phase 08]: 08-08: deploy X1 live, production 28da165 -> 412f1aa (user approved 2026-11-20, live 17:30:24Z); rollback branch ios-p8-x1-rollback at 28da165; live smoke is 08-11
+- [Phase 08]: User reported 2026-11-21: App Store approved build 1.0 (6). This is the existing build, not the Phase 8 release candidate 1.1 (7); no Phase 8 plan is completed by it, and the 08-11 smoke and later "build 6" checks run against this approved build
 
 ### Pending Todos
 

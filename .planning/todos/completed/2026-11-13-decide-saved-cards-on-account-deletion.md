@@ -27,3 +27,13 @@ Decide one of:
 3. **Leave it** and record why (for example, the cards are only usable by the deleted customer and Stripe retains them for dispute handling).
 
 Whichever is chosen, update `AccountDeletionCopy` and the Android port together (the Android todo `2026-11-13-android-delete-account-copy-and-blockers.md` carries the current strings).
+
+## Resolution
+
+Resolved 2026-11-22 in phase 08 plan 08-13 (D-23): option 1, disclose it (checkpoint choice `option-a`).
+
+User answer, verbatim: "option-a" (2026-11-22). Final wording, unchanged from the proposed default: "Cards you added to pay for sessions are not deleted with your account."
+
+- iOS: `AccountDeletionCopy.savedCardsNote`, rendered on the Delete Account confirmation step after the three groups (not on the feedback step). Commit e18f70f (`feat(08-13)`), pinned by `AccountDeletionCopyTests`. The text contains none of `removed`, `saved card` or `payment details`, so `noFalseClaims` passes unchanged and needed no exemption.
+- No backend or payment change. Detaching on delete (option 2) was not chosen.
+- Android: the "Saved-cards line (confirmation step only)" row in `2026-11-13-android-delete-account-copy-and-blockers.md` carries the string word for word. The port happens in plan 08-17.

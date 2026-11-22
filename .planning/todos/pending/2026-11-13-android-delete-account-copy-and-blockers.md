@@ -40,8 +40,9 @@ Shown on the confirmation step. The feedback (reason and password) step shows th
 | Group 2 body | `Your past bookings stay on record, shown as from "Deleted user". Your private notes on them are erased.` |
 | Group 3 title | `Kept` |
 | Group 3 body | `Messages and reviews you've written stay visible to the other person, shown as from "Deleted user". Payment records are kept.` |
+| Saved-cards line (confirmation step only) | `Cards you added to pay for sessions are not deleted with your account.` |
 
-Rules iOS tests enforce: none of the strings may contain `removed`, `saved card` or `payment details`; together they must contain `visible to the other person`, `Deleted user` and `upcoming`. No saved-card claim either way (see `2026-11-13-decide-saved-cards-on-account-deletion.md`). The `Before you go...` title and the Pause Account card are removed on iOS (SET-03); check Android has no equivalent.
+Rules iOS tests enforce: none of the strings may contain `removed`, `saved card` or `payment details`; together they must contain `visible to the other person`, `Deleted user` and `upcoming`. D-23 (decided 2026-11-22, option-a, see `.planning/todos/completed/2026-11-13-decide-saved-cards-on-account-deletion.md`): the saved-cards line above is shown on the confirmation step, after the three groups, and never claims removal. Only that one string is allowed to mention cards; `payment details` stays forbidden in every string, and `removed` and `saved card` stay forbidden everywhere (the approved line contains neither). The `Before you go...` title and the Pause Account card are removed on iOS (SET-03); check Android has no equivalent.
 
 ### Blocker alert for the three 409 codes
 

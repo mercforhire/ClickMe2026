@@ -22,7 +22,8 @@ struct AccountDeletionCopyTests {
         ("keptAnonymizedTitle", AccountDeletionCopy.keptAnonymizedTitle),
         ("keptAnonymizedBody", AccountDeletionCopy.keptAnonymizedBody),
         ("keptTitle", AccountDeletionCopy.keptTitle),
-        ("keptBody", AccountDeletionCopy.keptBody)
+        ("keptBody", AccountDeletionCopy.keptBody),
+        ("savedCardsNote", AccountDeletionCopy.savedCardsNote)
     ]
 
     // MARK: - exact strings
@@ -37,6 +38,7 @@ struct AccountDeletionCopyTests {
         #expect(AccountDeletionCopy.keptAnonymizedBody == "Your past bookings stay on record, shown as from \"Deleted user\". Your private notes on them are erased.")
         #expect(AccountDeletionCopy.keptTitle == "Kept")
         #expect(AccountDeletionCopy.keptBody == "Messages and reviews you've written stay visible to the other person, shown as from \"Deleted user\". Payment records are kept.")
+        #expect(AccountDeletionCopy.savedCardsNote == "Cards you added to pay for sessions are not deleted with your account.")
     }
 
     // MARK: - no false claims

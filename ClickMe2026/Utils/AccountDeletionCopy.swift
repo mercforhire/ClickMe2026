@@ -17,11 +17,12 @@ import Foundation
 ///   client requests are cancelled and their card holds voided before the purge.
 /// - Kept: reviews, messages and payment records (no DML on those tables).
 ///
-/// The copy makes no claim about saved cards: the cascade does not detach them, and
-/// whether to say so is a product and privacy decision (Open Question 1).
+/// Saved cards: the cascade does not detach them, so they stay with the payment
+/// provider. `savedCardsNote` discloses that (D-23) and never claims removal.
 ///
-/// Plan 05-13 copies these strings word for word into the Android todo (D-11), so
-/// change them here and there together.
+/// Plan 05-13 copies these strings word for word into the Android todo (D-11), and
+/// plan 08-13 does the same for `savedCardsNote` (D-23, Android port in plan 08-17),
+/// so change them here and there together.
 nonisolated enum AccountDeletionCopy {
     static let permanence = "Deleting your account is permanent and can't be undone."
     static let bookingsFirst = "Before you delete, cancel or finish any upcoming sessions. Requests you've sent that haven't been answered yet are cancelled for you, and any hold on your card is released."
@@ -34,4 +35,7 @@ nonisolated enum AccountDeletionCopy {
 
     static let keptTitle = "Kept"
     static let keptBody = "Messages and reviews you've written stay visible to the other person, shown as from \"Deleted user\". Payment records are kept."
+
+    /// Shown on the confirmation step only, after the three groups (D-23).
+    static let savedCardsNote = "Cards you added to pay for sessions are not deleted with your account."
 }

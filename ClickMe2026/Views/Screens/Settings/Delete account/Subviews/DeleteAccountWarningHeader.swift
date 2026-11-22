@@ -33,6 +33,8 @@ struct DeleteAccountWarningHeader: View {
                 group(title: AccountDeletionCopy.deletedTitle, body: AccountDeletionCopy.deletedBody)
                 group(title: AccountDeletionCopy.keptAnonymizedTitle, body: AccountDeletionCopy.keptAnonymizedBody)
                 group(title: AccountDeletionCopy.keptTitle, body: AccountDeletionCopy.keptBody)
+
+                bodyText(AccountDeletionCopy.savedCardsNote)
             }
         }
     }

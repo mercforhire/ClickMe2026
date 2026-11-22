@@ -24,7 +24,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AgoraIO/AgoraRtcEngine_iOS",
       "state" : {
-        "revision" : "db11601e5cc10e74d4f03157c063711156838e75",
+        "revision" : "94a477c69f9ad730e2225f54948e87f9f4d77c24",
         "version" : "4.6.2"
       }
     },

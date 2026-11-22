@@ -68,9 +68,10 @@ jobs:
       uses: actions/cache@v5
       with:
         path: ${{ runner.temp }}/SourcePackages
-        key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
-        restore-keys: |
-          ${{ runner.os }}-spm-
+        # No restore-keys: a partial match restored a stale checkout pinned to a revision
+        # upstream has since removed (google-ads-on-device-conversion-ios-sdk db11601),
+        # so only an exact Package.resolved match may be reused. Bump v2 to drop all caches.
+        key: ${{ runner.os }}-spm-v2-${{ hashFiles('**/Package.resolved') }}
 
     - name: Install Swift packages
       run: |

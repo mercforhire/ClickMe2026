@@ -21,8 +21,8 @@ struct MoneyCallSiteTests {
 
     @Test("expert dashboard earnings and payout labels keep their cents")
     func expertDashboardBalances() {
-        #expect(ExpertDashboardViewModel.currencyLabel(minorUnits: 1250, currency: "USD") == "$12.50")
-        #expect(ExpertDashboardViewModel.currencyLabel(minorUnits: 12000, currency: "USD") == "$120.00")
+        #expect(ExpertDashboardViewModel.currencyLabel(minorUnits: 1250, currency: "USD") == "US$12.50")
+        #expect(ExpertDashboardViewModel.currencyLabel(minorUnits: 12000, currency: "USD") == "US$120.00")
     }
 
     @Test("payouts balances keep their cents and use fixed symbols")
@@ -35,15 +35,15 @@ struct MoneyCallSiteTests {
 
     @Test("incoming request earnings keep their cents and keep the dash for missing values")
     func incomingRequestEarnings() {
-        #expect(IncomingRequestsViewModel.formatEarnings(amountMajor: 75.0, currency: "USD") == "$75.00")
-        #expect(IncomingRequestsViewModel.formatEarnings(amountMajor: 75.5, currency: "USD") == "$75.50")
+        #expect(IncomingRequestsViewModel.formatEarnings(amountMajor: 75.0, currency: "USD") == "US$75.00")
+        #expect(IncomingRequestsViewModel.formatEarnings(amountMajor: 75.5, currency: "USD") == "US$75.50")
         #expect(IncomingRequestsViewModel.formatEarnings(amountMajor: nil, currency: "USD") == "—")
         #expect(IncomingRequestsViewModel.formatEarnings(amountMajor: 75.0, currency: nil) == "—")
     }
 
     @Test("upcoming session net earnings use the major entry point and hide a bad value")
     func upcomingSessionEarnings() {
-        #expect(UpcomingBookingsViewModel.formatCurrency(75.5, code: "USD") == "$75.50")
+        #expect(UpcomingBookingsViewModel.formatCurrency(75.5, code: "USD") == "US$75.50")
         #expect(UpcomingBookingsViewModel.formatCurrency(.nan, code: "USD") == nil)
     }
 
@@ -52,7 +52,7 @@ struct MoneyCallSiteTests {
     @Test("earnings transaction rows keep their cents and honor zero-decimal currencies")
     func earningsTransactionRows() {
         #expect(EarningsTransactionRow.formatMinorUnits(1200, currency: "JPY") == "¥1200")
-        #expect(EarningsTransactionRow.formatMinorUnits(1250, currency: "USD") == "$12.50")
+        #expect(EarningsTransactionRow.formatMinorUnits(1250, currency: "USD") == "US$12.50")
     }
 
     // MARK: - Topic editor price seed (D-11) and untouched save (D-19)

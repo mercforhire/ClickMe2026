@@ -15,10 +15,11 @@ import Foundation
 /// amount the server will hold or charge.
 ///
 /// Rules:
-/// - Full minor digits always: `$12.00` stays `$12.00`, never `$12`.
+/// - Full minor digits always: `US$12.00` stays `US$12.00`, never `US$12`.
 /// - Symbols come from a fixed table, never from the device region and never
-///   from a system currency formatter (D-10). `$` is USD and `CA$` is CAD, so
-///   the two can't be confused on a Canadian or American phone. Any code
+///   from a system currency formatter (D-10). `US$` is USD and `CA$` is CAD, so
+///   the two can't be confused on a Canadian or American phone (D-24, and
+///   `docs/ios/USD-TOPIC-PRICING.md` section 0 item 5). Any code
 ///   outside the table is shown as the ISO code, then a non-breaking space.
 /// - Digits follow the backend's zero-decimal set (`src/utils/earnings.js`),
 ///   because the server computes minor units with that same set. A currency
@@ -36,7 +37,7 @@ nonisolated enum Money {
     /// Display symbols. Mirrors `src/utils/pricing.js`, except that CHF and any
     /// unlisted code print the ISO code (see `prefix(for:)`).
     private static let symbols: [String: String] = [
-        "USD": "$",
+        "USD": "US$",
         "CAD": "CA$",
         "AUD": "A$",
         "EUR": "€",
@@ -96,8 +97,8 @@ nonisolated enum Money {
     // MARK: - Formatting
 
     /// Formats an amount in minor units, for example `1250` and `"USD"` give
-    /// `"$12.50"`. Integer arithmetic only. The sign goes before the symbol
-    /// (`-$12.50`). `Int.min` and `Int.max` format without trapping because the
+    /// `"US$12.50"`. Integer arithmetic only. The sign goes before the symbol
+    /// (`-US$12.50`). `Int.min` and `Int.max` format without trapping because the
     /// magnitude is taken as an unsigned value.
     static func format(minorUnits: Int, currency: String) -> String {
         let digits = fractionDigits(for: currency)
@@ -117,7 +118,7 @@ nonisolated enum Money {
     }
 
     /// Formats an amount the server already expressed in major units, for
-    /// example `75.5` and `"USD"` give `"$75.50"`. Rounds half away from zero
+    /// example `75.5` and `"USD"` give `"US$75.50"`. Rounds half away from zero
     /// at the currency's last digit. Returns `nil` for a non-finite value or
     /// one too large to represent, so a bad payload can't crash the screen.
     static func format(major: Double, currency: String) -> String? {

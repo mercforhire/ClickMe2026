@@ -27,8 +27,8 @@ struct MoneyTests {
     }
 
     private static let symbolRows: [MinorCase] = [
-        MinorCase(minor: 1250, currency: "USD", expected: "$12.50"),
-        MinorCase(minor: 1200, currency: "USD", expected: "$12.00"),
+        MinorCase(minor: 1250, currency: "USD", expected: "US$12.50"),
+        MinorCase(minor: 1200, currency: "USD", expected: "US$12.00"),
         MinorCase(minor: 1250, currency: "CAD", expected: "CA$12.50"),
         MinorCase(minor: 1200, currency: "JPY", expected: "¥1200"),
         MinorCase(minor: 1250, currency: "EUR", expected: "€12.50"),
@@ -38,18 +38,18 @@ struct MoneyTests {
     ]
 
     private static let boundaryRows: [MinorCase] = [
-        MinorCase(minor: 0, currency: "USD", expected: "$0.00"),
-        MinorCase(minor: 1, currency: "USD", expected: "$0.01"),
-        MinorCase(minor: 5, currency: "USD", expected: "$0.05"),
-        MinorCase(minor: 99, currency: "USD", expected: "$0.99"),
-        MinorCase(minor: 100, currency: "USD", expected: "$1.00"),
-        MinorCase(minor: 123_456_789, currency: "USD", expected: "$1234567.89")
+        MinorCase(minor: 0, currency: "USD", expected: "US$0.00"),
+        MinorCase(minor: 1, currency: "USD", expected: "US$0.01"),
+        MinorCase(minor: 5, currency: "USD", expected: "US$0.05"),
+        MinorCase(minor: 99, currency: "USD", expected: "US$0.99"),
+        MinorCase(minor: 100, currency: "USD", expected: "US$1.00"),
+        MinorCase(minor: 123_456_789, currency: "USD", expected: "US$1234567.89")
     ]
 
     private static let signAndCaseRows: [MinorCase] = [
-        MinorCase(minor: -1250, currency: "USD", expected: "-$12.50"),
+        MinorCase(minor: -1250, currency: "USD", expected: "-US$12.50"),
         MinorCase(minor: -5, currency: "CAD", expected: "-CA$0.05"),
-        MinorCase(minor: 1250, currency: "usd", expected: "$12.50"),
+        MinorCase(minor: 1250, currency: "usd", expected: "US$12.50"),
         MinorCase(minor: 1250, currency: " cad ", expected: "CA$12.50")
     ]
 
@@ -89,8 +89,8 @@ struct MoneyTests {
     func extremes() {
         let high = Money.format(minorUnits: Int.max, currency: "USD")
         let low = Money.format(minorUnits: Int.min, currency: "USD")
-        #expect(high == "$92233720368547758.07")
-        #expect(low == "-$92233720368547758.08")
+        #expect(high == "US$92233720368547758.07")
+        #expect(low == "-US$92233720368547758.08")
         #expect(Money.format(minorUnits: Int.max, currency: "JPY") == "¥9223372036854775807")
         #expect(Money.format(minorUnits: Int.min, currency: "JPY").hasPrefix("-¥"))
     }
@@ -98,7 +98,7 @@ struct MoneyTests {
     @Test("whole amounts keep their zeros and no thousands separator is inserted")
     func noGroupingByDefault() {
         #expect(Money.thousandsSeparator == nil)
-        #expect(Money.format(minorUnits: 1_200_000, currency: "USD") == "$12000.00")
+        #expect(Money.format(minorUnits: 1_200_000, currency: "USD") == "US$12000.00")
         #expect(Money.format(minorUnits: 100_000_000, currency: "JPY") == "¥100000000")
     }
 
@@ -119,7 +119,7 @@ struct MoneyTests {
 
     @Test("prefix table")
     func prefixes() {
-        #expect(Money.prefix(for: "USD") == "$")
+        #expect(Money.prefix(for: "USD") == "US$")
         #expect(Money.prefix(for: "CAD") == "CA$")
         #expect(Money.prefix(for: "CHF") == "CHF\(Self.nbsp)")
         #expect(Money.prefix(for: "") == "")
@@ -130,10 +130,10 @@ struct MoneyTests {
 
     @Test("major units round half away from zero")
     func majorRounding() {
-        #expect(Money.format(major: 75.5, currency: "USD") == "$75.50")
-        #expect(Money.format(major: 75.0, currency: "USD") == "$75.00")
-        #expect(Money.format(major: 0.125, currency: "USD") == "$0.13")
-        #expect(Money.format(major: -0.125, currency: "USD") == "-$0.13")
+        #expect(Money.format(major: 75.5, currency: "USD") == "US$75.50")
+        #expect(Money.format(major: 75.0, currency: "USD") == "US$75.00")
+        #expect(Money.format(major: 0.125, currency: "USD") == "US$0.13")
+        #expect(Money.format(major: -0.125, currency: "USD") == "-US$0.13")
         #expect(Money.format(major: 12.0, currency: "JPY") == "¥12")
     }
 
@@ -169,8 +169,8 @@ struct MoneyTests {
                 isFree: isFree
             )
         }
-        #expect(topic(amount: 1250, currency: "USD", isFree: false).priceLabel == "$12.50")
-        #expect(topic(amount: 1200, currency: "USD", isFree: false).priceLabel == "$12.00")
+        #expect(topic(amount: 1250, currency: "USD", isFree: false).priceLabel == "US$12.50")
+        #expect(topic(amount: 1200, currency: "USD", isFree: false).priceLabel == "US$12.00")
         #expect(topic(amount: 1250, currency: "CAD", isFree: false).priceLabel == "CA$12.50")
         #expect(topic(amount: 1250, currency: "USD", isFree: true).priceLabel == "Free")
         #expect(topic(amount: nil, currency: "USD", isFree: false).priceLabel == "—")

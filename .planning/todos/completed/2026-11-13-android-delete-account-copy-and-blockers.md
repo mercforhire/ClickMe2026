@@ -64,3 +64,11 @@ Title: `You can't delete your account yet`
 - `CLIENT_HAS_UPCOMING_BOOKINGS` mapping: Android already decodes it. Add the `ClientHasUpcomingBookings` branch beside the two existing ones. A 409 on the client side blocks confirmed and pending_reschedule sessions; `pending_approval` requests do not block (they are cancelled for the user, which is what the upfront line says).
 
 Verify on an Android device with a throwaway account. Delete Account is irreversible against the production backend.
+
+## Resolution
+
+Resolved 2026-11-22 in phase 08 plan 08-17. Both commits are local on Android `main` (`ClickMe_Android`); nothing was pushed.
+
+- `2a65e7c7` `fix(ios-p8): truthful Delete Account copy and the saved-cards line (iOS SET-06, D-23 parity)`: `delete_account_body` and its false "payment details ... permanently removed" claim are gone. The permanence line shows on both steps. The upfront line, the three groups and the D-23 saved-cards line show on the first (confirmation) step only. Every string equals `AccountDeletionCopy.swift` word for word; `DeleteAccountScreenTest` pins them and forbids `payment details`, `removed` and `saved card` in every `delete_account_*` string. The Android app had no Pause Account card or "Before you go" title.
+- `e311a74c` `feat(ios-p8): explain why account deletion is blocked (iOS SET-06 parity)`: new `AccountDeletionBlocker` (code and mode to message and the bookings button). A 409 from `delete-request` or `delete` with `EXPERT_HAS_UPCOMING_BOOKINGS`, `CLIENT_HAS_UPCOMING_BOOKINGS` or `SESSION_IN_PROGRESS` shows "You can't delete your account yet" with the todo's text; the branch is on the code, never the server message. An unknown 409 keeps the generic dialog with the server message. The user stays on the reason and password step and a retry mints a new token. "View My Bookings" shows only when the table says so, opens the Bookings tab of the active mode and resets the Profile stack; the dismiss button stays "Got it".
+- Device check on a throwaway account: 08-REGRESSION-CHECKLIST.md Android section. Nothing was run on an Android device; Delete Account is irreversible against the production backend.

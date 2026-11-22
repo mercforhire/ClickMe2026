@@ -77,7 +77,7 @@ struct ClientProfileHistoryEarningsTests {
         let cancelled = ClientProfileViewModel.mapBooking(from: try item(status: "cancelled", net: 42.5, currency: "USD"))
 
         #expect(ClientProfileBookingCard.amountLabel(amountMajor: cad.amountMajor, currency: cad.currency) == "CA$75.00")
-        #expect(ClientProfileBookingCard.amountLabel(amountMajor: usd.amountMajor, currency: usd.currency) == "$42.50")
+        #expect(ClientProfileBookingCard.amountLabel(amountMajor: usd.amountMajor, currency: usd.currency) == "US$42.50")
         #expect(ClientProfileBookingCard.amountLabel(amountMajor: cancelled.amountMajor, currency: cancelled.currency) == "—")
     }
 

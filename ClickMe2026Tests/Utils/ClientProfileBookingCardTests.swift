@@ -20,7 +20,7 @@ struct ClientProfileBookingCardTests {
 
     @Test("a USD major amount shows full cents with the USD symbol")
     func usdMajorAmount() {
-        #expect(ClientProfileBookingCard.amountLabel(amountMajor: 75.0, currency: "USD") == "$75.00")
+        #expect(ClientProfileBookingCard.amountLabel(amountMajor: 75.0, currency: "USD") == "US$75.00")
     }
 
     @Test("a CAD major amount shows CA$ and keeps its cents")

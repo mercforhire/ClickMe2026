@@ -29,3 +29,11 @@ Ask the user to decide before Phase 8 (the release pass), or sooner as a follow-
 - change the `Money` table to `US$` for USD on iOS (and check what Android renders), so a CAD user sees `CA$` and `US$` side by side as the backend doc specifies.
 
 Whichever is chosen applies to both apps. `Money` tests (`MoneyCallSiteTests`, `ClientProfileHistoryEarningsTests`, which pin `$42.50` for USD) change with it, and so do the card's `cardSymbol(for:)` and the `US$` rows in `TopicsSetupTopicCardLabelTests`. No backend change is needed.
+
+## Resolution
+
+Closed 2026-11-22 by plan 08-10 (decision D-24): USD renders as `US$` everywhere on iOS, CAD stays `CA$`.
+
+- iOS: the `Money` symbol table maps `"USD"` to `US$`; `TopicsSetupTopicCard.cardSymbol(for:)` is removed and the card calls `Money.prefix(for:)`; the topic editor's `currencySymbol` reads `Money.prefix` for USD and CAD (other codes stay the bare ISO code). `MoneyTests`, `MoneyCallSiteTests`, `ClientProfileBookingCardTests` and `ClientProfileHistoryEarningsTests` now pin `US$`. Commits from plan 08-10 on iOS `main`.
+- Android: plan 08-03 overrides only the currency symbol so US$ and CA$ show in every locale, commit `50626142` in ClickMe_Android (D-32). Full Android layout parity with iOS (prefix-only symbol, no thousands grouping) is logged as a follow-up, not built.
+- Backend: no change needed.

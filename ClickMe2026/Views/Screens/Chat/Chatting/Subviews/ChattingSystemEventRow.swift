@@ -57,6 +57,15 @@ struct ChattingSystemEventRow: View {
                             .font(.brand(.caption, weight: .regular))
                             .foregroundColor(ChattingBrand.onSurfaceVar)
                     }
+
+                    // Another user's free text: verbatim, so no Markdown,
+                    // link or localized-key interpretation (T-08-17).
+                    if let label = event.reasonCodeLabel {
+                        reasonLine(label)
+                    }
+                    if let caption = event.reasonCaption {
+                        reasonLine(caption)
+                    }
                 }
 
                 Spacer()
@@ -70,6 +79,13 @@ struct ChattingSystemEventRow: View {
                         .stroke(ChattingBrand.systemBorder, lineWidth: 1))
             )
         }
+    }
+
+    private func reasonLine(_ text: String) -> some View {
+        Text(verbatim: text)
+            .font(.brand(.caption, weight: .regular))
+            .foregroundColor(ChattingBrand.onSurfaceVar)
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     /// Composes the "<topic> · <weekday, date · time>" line beneath the

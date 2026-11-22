@@ -73,6 +73,24 @@ enum ChatItemMapper {
         content: String?,
         eventData: JSONValue?
     ) -> BookingEvent {
+        var built = baseBookingEvent(from: event, content: content, eventData: eventData)
+        let reasonText = extractTrimmedString(from: eventData, key: "reason_text")
+        let reasonBy = extractString(from: eventData, key: "reason_by")
+        built.reasonCaption = reasonCaption(
+            kind: event,
+            text: reasonText,
+            reasonBy: reasonBy,
+            isRequestDecline: false
+        )
+        return built
+    }
+
+    /// The display fields every event carries, before any reason is added.
+    private static func baseBookingEvent(
+        from event: MessageEventType,
+        content: String?,
+        eventData: JSONValue?
+    ) -> BookingEvent {
         let bookingId = extractBookingId(from: eventData)
         let topicTitle = extractString(from: eventData, key: "topic_title")
         let startTime = extractDate(from: eventData, key: "start_time")
@@ -118,6 +136,41 @@ enum ChatItemMapper {
         }
     }
 
+    // MARK: - Reason captions
+
+    /// The caption under a row for the reason or note given with the action.
+    /// The role comes from `reason_by` only, never from the text, and the
+    /// text is another user's free text: callers render it as plain text.
+    ///
+    /// - Parameters:
+    ///   - kind: The event kind. Cancelled and declined rows read "Reason",
+    ///     a reschedule proposal reads "Note"; other kinds have no caption.
+    ///   - text: The reason, already trimmed; nil or empty gives no caption.
+    ///   - reasonBy: `reason_by` as sent (`client` or `expert`); anything
+    ///     else uses the plain label.
+    ///   - isRequestDecline: True for a decline of a booking request, which
+    ///     has no `reason_by` and is always the expert's.
+    private static func reasonCaption(
+        kind: MessageEventType,
+        text: String?,
+        reasonBy: String?,
+        isRequestDecline: Bool
+    ) -> String? {
+        guard let text, !text.isEmpty else { return nil }
+        let label: String
+        switch kind {
+        case .bookingCancelled, .bookingDeclined: label = "Reason"
+        case .bookingRescheduled: label = "Note"
+        case .bookingRequest, .bookingConfirmed, .bookingCompleted, .bookingExpired: return nil
+        }
+        let role = isRequestDecline ? "expert" : reasonBy
+        switch role {
+        case "client": return "\(label) from the client: \(text)"
+        case "expert": return "\(label) from the expert: \(text)"
+        default: return "\(label): \(text)"
+        }
+    }
+
     // MARK: - event_data helpers
 
     /// Whether a booking event represents a finished lifecycle state
@@ -148,6 +201,13 @@ enum ChatItemMapper {
         guard case let .object(dict) = data,
               case let .string(str) = dict[key] else { return nil }
         return str
+    }
+
+    /// Reads a string field and trims it; nil when missing or blank.
+    private static func extractTrimmedString(from data: JSONValue?, key: String) -> String? {
+        guard let raw = extractString(from: data, key: key) else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     /// Reads an integer field from `event_data`. Accepts both raw ints

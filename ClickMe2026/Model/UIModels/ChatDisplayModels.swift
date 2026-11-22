@@ -145,4 +145,13 @@ struct BookingEvent: Identifiable {
 
     /// Server `created_at` of this event row; orders it among messages.
     var createdAt: Date? = nil
+
+    /// The reason or note given with the action, already labelled with who
+    /// gave it ("Reason from the client: ..."). Another user's free text from
+    /// `event_data`: render as plain text, never Markdown, and never log it.
+    var reasonCaption: String? = nil
+
+    /// The label for a known `decline_reason_code`, shown as its own line
+    /// above the caption. Nil for a missing or unknown code.
+    var reasonCodeLabel: String? = nil
 }

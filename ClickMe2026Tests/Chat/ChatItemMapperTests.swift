@@ -42,6 +42,69 @@ struct ChatItemMapperTests {
         return event
     }
 
+    private static func mappedEvent(
+        _ kind: MessageEventType,
+        eventData: [String: JSONValue]?
+    ) -> BookingEvent? {
+        let item = ChatMessageItem(
+            id: UUID(),
+            threadId: UUID(),
+            senderId: nil,
+            sender: nil,
+            type: .event,
+            content: nil,
+            status: .sent,
+            clientMsgId: nil,
+            eventType: kind,
+            eventData: eventData.map { .object($0) },
+            createdAt: Date()
+        )
+        guard case let .systemEvent(event) = ChatItemMapper.chatItem(from: item, identity: identity) else {
+            return nil
+        }
+        return event
+    }
+
+    @Test("a cancel reason is trimmed and labelled by reason_by")
+    func cancelReasonIsLabelledByWhoGaveIt() {
+        let client = Self.mappedEvent(
+            .bookingCancelled,
+            eventData: ["reason_text": .string("  Running late  "), "reason_by": .string("client")]
+        )
+        #expect(client?.reasonCaption == "Reason from the client: Running late")
+        let expert = Self.mappedEvent(
+            .bookingCancelled,
+            eventData: ["reason_text": .string("Running late"), "reason_by": .string("expert")]
+        )
+        #expect(expert?.reasonCaption == "Reason from the expert: Running late")
+        let plain = Self.mappedEvent(.bookingCancelled, eventData: ["reason_text": .string("Running late")])
+        #expect(plain?.reasonCaption == "Reason: Running late")
+        let unknown = Self.mappedEvent(
+            .bookingCancelled,
+            eventData: ["reason_text": .string("Running late"), "reason_by": .string("admin")]
+        )
+        #expect(unknown?.reasonCaption == "Reason: Running late")
+    }
+
+    @Test("a whitespace-only reason shows no caption")
+    func blankReasonShowsNothing() {
+        let event = Self.mappedEvent(
+            .bookingCancelled,
+            eventData: ["reason_text": .string("   "), "reason_by": .string("client")]
+        )
+        #expect(event?.reasonCaption == nil)
+    }
+
+    @Test("a cancelled event without the new keys maps as before")
+    func eventWithoutReasonKeysIsUnchanged() {
+        let event = Self.mappedEvent(.bookingCancelled, eventData: ["duration_mins": .int(30)])
+        #expect(event?.reasonCaption == nil)
+        #expect(event?.reasonCodeLabel == nil)
+        #expect(event?.title == "Booking Cancelled")
+        #expect(event?.isTerminal == true)
+        #expect(event?.durationMins == 30)
+    }
+
     @Test("duration_mins reads from an int, a numeric string and a whole double")
     func readsWholeNumbers() {
         #expect(Self.mappedEvent(durationMins: .int(30))?.durationMins == 30)

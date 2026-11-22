@@ -105,6 +105,79 @@ struct ChatItemMapperTests {
         #expect(event?.durationMins == 30)
     }
 
+    @Test("a reschedule proposal note is labelled Note, by who sent it")
+    func rescheduleNoteIsLabelled() {
+        let expert = Self.mappedEvent(
+            .bookingRescheduled,
+            eventData: ["reason_text": .string("Can we do 3pm?"), "reason_by": .string("expert")]
+        )
+        #expect(expert?.reasonCaption == "Note from the expert: Can we do 3pm?")
+        let client = Self.mappedEvent(
+            .bookingRescheduled,
+            eventData: ["reason_text": .string("Can we do 3pm?"), "reason_by": .string("client")]
+        )
+        #expect(client?.reasonCaption == "Note from the client: Can we do 3pm?")
+        let plain = Self.mappedEvent(.bookingRescheduled, eventData: ["reason_text": .string("Can we do 3pm?")])
+        #expect(plain?.reasonCaption == "Note: Can we do 3pm?")
+    }
+
+    @Test("a request decline falls back to decline_reason_text and is the expert's")
+    func requestDeclineFallsBackToDeclineReasonText() {
+        let fallback = Self.mappedEvent(.bookingDeclined, eventData: ["decline_reason_text": .string("Fully booked")])
+        #expect(fallback?.reasonCaption == "Reason from the expert: Fully booked")
+        let both = Self.mappedEvent(
+            .bookingDeclined,
+            eventData: ["reason_text": .string("Primary"), "decline_reason_text": .string("Fallback")]
+        )
+        #expect(both?.reasonCaption == "Reason from the expert: Primary")
+        let blankPrimary = Self.mappedEvent(
+            .bookingDeclined,
+            eventData: ["reason_text": .string("  "), "decline_reason_text": .string("Fallback")]
+        )
+        #expect(blankPrimary?.reasonCaption == "Reason from the expert: Fallback")
+    }
+
+    @Test("a known decline_reason_code adds its label; an unknown one adds nothing, never the raw code")
+    func declineCodeLabel() {
+        let known = Self.mappedEvent(.bookingDeclined, eventData: ["decline_reason_code": .string("UNAVAILABLE")])
+        #expect(known?.reasonCodeLabel == DeclineNote.reasonLine(for: "UNAVAILABLE"))
+        #expect(known?.reasonCodeLabel != nil)
+        let unknown = Self.mappedEvent(.bookingDeclined, eventData: ["decline_reason_code": .string("MYSTERY_CODE")])
+        #expect(unknown?.reasonCodeLabel == nil)
+        #expect(unknown?.reasonCaption == nil)
+    }
+
+    @Test("reschedule_decline makes the row Reschedule Declined and not terminal")
+    func rescheduleDeclineMarker() {
+        let event = Self.mappedEvent(
+            .bookingDeclined,
+            eventData: [
+                "reschedule_decline": .bool(true),
+                "reason_text": .string("Too soon"),
+                "reason_by": .string("client"),
+                "decline_reason_text": .string("ignored"),
+                "decline_reason_code": .string("UNAVAILABLE")
+            ]
+        )
+        #expect(event?.title == "Reschedule Declined")
+        #expect(event?.isTerminal == false)
+        #expect(event?.icon == "xmark.square")
+        #expect(event?.reasonCaption == "Reason from the client: Too soon")
+        #expect(event?.reasonCodeLabel == nil)
+        let plain = Self.mappedEvent(
+            .bookingDeclined,
+            eventData: ["reschedule_decline": .bool(true), "reason_text": .string("Too soon")]
+        )
+        #expect(plain?.reasonCaption == "Reason: Too soon")
+    }
+
+    @Test("a decline without the marker stays Booking Declined and terminal")
+    func declineWithoutMarker() {
+        let event = Self.mappedEvent(.bookingDeclined, eventData: ["reschedule_decline": .bool(false)])
+        #expect(event?.title == "Booking Declined")
+        #expect(event?.isTerminal == true)
+    }
+
     @Test("duration_mins reads from an int, a numeric string and a whole double")
     func readsWholeNumbers() {
         #expect(Self.mappedEvent(durationMins: .int(30))?.durationMins == 30)

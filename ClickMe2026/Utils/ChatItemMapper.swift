@@ -73,15 +73,31 @@ enum ChatItemMapper {
         content: String?,
         eventData: JSONValue?
     ) -> BookingEvent {
-        var built = baseBookingEvent(from: event, content: content, eventData: eventData)
-        let reasonText = extractTrimmedString(from: eventData, key: "reason_text")
-        let reasonBy = extractString(from: eventData, key: "reason_by")
+        // The backend marks a decline of a reschedule proposal; the booking
+        // stays active, so it is neither a "Booking Declined" nor terminal.
+        let isRescheduleDecline = event == .bookingDeclined && extractBool(from: eventData, key: "reschedule_decline")
+        var built = baseBookingEvent(
+            from: event,
+            content: content,
+            eventData: eventData,
+            isRescheduleDecline: isRescheduleDecline
+        )
+        let isRequestDecline = event == .bookingDeclined && !isRescheduleDecline
+        var reasonText = extractTrimmedString(from: eventData, key: "reason_text")
+        if isRequestDecline, reasonText == nil {
+            reasonText = extractTrimmedString(from: eventData, key: "decline_reason_text")
+        }
         built.reasonCaption = reasonCaption(
             kind: event,
             text: reasonText,
-            reasonBy: reasonBy,
-            isRequestDecline: false
+            reasonBy: extractString(from: eventData, key: "reason_by"),
+            isRequestDecline: isRequestDecline
         )
+        if isRequestDecline {
+            built.reasonCodeLabel = DeclineNote.reasonLine(
+                for: extractString(from: eventData, key: "decline_reason_code")
+            )
+        }
         return built
     }
 
@@ -89,13 +105,14 @@ enum ChatItemMapper {
     private static func baseBookingEvent(
         from event: MessageEventType,
         content: String?,
-        eventData: JSONValue?
+        eventData: JSONValue?,
+        isRescheduleDecline: Bool
     ) -> BookingEvent {
         let bookingId = extractBookingId(from: eventData)
         let topicTitle = extractString(from: eventData, key: "topic_title")
         let startTime = extractDate(from: eventData, key: "start_time")
         let durationMins = extractInt(from: eventData, key: "duration_mins")
-        let terminal = isTerminal(event)
+        let terminal = isTerminal(event, isRescheduleDecline: isRescheduleDecline)
 
         switch event {
         case .bookingRequest:
@@ -109,7 +126,8 @@ enum ChatItemMapper {
                                 bookingId: bookingId, isTerminal: terminal,
                                 topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
         case .bookingDeclined:
-            return BookingEvent(icon: "xmark.square", title: "Booking Declined",
+            return BookingEvent(icon: "xmark.square",
+                                title: isRescheduleDecline ? "Reschedule Declined" : "Booking Declined",
                                 subtitle: content, isAccepted: false, avatarURL: nil,
                                 bookingId: bookingId, isTerminal: terminal,
                                 topicTitle: topicTitle, startTime: startTime, durationMins: durationMins)
@@ -149,7 +167,7 @@ enum ChatItemMapper {
     ///   - reasonBy: `reason_by` as sent (`client` or `expert`); anything
     ///     else uses the plain label.
     ///   - isRequestDecline: True for a decline of a booking request, which
-    ///     has no `reason_by` and is always the expert's.
+    ///     has no `reason_by` and is the expert's.
     private static func reasonCaption(
         kind: MessageEventType,
         text: String?,
@@ -163,7 +181,7 @@ enum ChatItemMapper {
         case .bookingRescheduled: label = "Note"
         case .bookingRequest, .bookingConfirmed, .bookingCompleted, .bookingExpired: return nil
         }
-        let role = isRequestDecline ? "expert" : reasonBy
+        let role = isRequestDecline ? (reasonBy ?? "expert") : reasonBy
         switch role {
         case "client": return "\(label) from the client: \(text)"
         case "expert": return "\(label) from the expert: \(text)"
@@ -177,9 +195,11 @@ enum ChatItemMapper {
     /// (nothing more will happen). Decides whether tapping the row
     /// routes to the read-only summary or the still-actionable
     /// upcoming-booking screen.
-    private static func isTerminal(_ event: MessageEventType) -> Bool {
+    private static func isTerminal(_ event: MessageEventType, isRescheduleDecline: Bool) -> Bool {
         switch event {
-        case .bookingDeclined, .bookingCancelled, .bookingCompleted, .bookingExpired:
+        case .bookingDeclined:
+            return !isRescheduleDecline
+        case .bookingCancelled, .bookingCompleted, .bookingExpired:
             return true
         case .bookingRequest, .bookingConfirmed, .bookingRescheduled:
             return false
@@ -201,6 +221,13 @@ enum ChatItemMapper {
         guard case let .object(dict) = data,
               case let .string(str) = dict[key] else { return nil }
         return str
+    }
+
+    /// Reads a boolean field from `event_data`; false when missing or not a boolean.
+    private static func extractBool(from data: JSONValue?, key: String) -> Bool {
+        guard case let .object(dict) = data,
+              case let .bool(value) = dict[key] else { return false }
+        return value
     }
 
     /// Reads a string field and trims it; nil when missing or blank.

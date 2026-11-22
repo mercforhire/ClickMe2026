@@ -87,6 +87,9 @@ jobs:
         build-certificate-base64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
         p12-password: ${{ secrets.P12_PASSWORD }}
         keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+        # App Store profile used by the manual-signing export (ExportOptions.plist).
+        # The App Manager API key cannot use cloud signing, so the profile must be supplied.
+        build-provision-profile-base64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
 
     - name: Install App Store Connect API key
       run: |

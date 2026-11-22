@@ -50,5 +50,8 @@ runs:
         PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
         echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
         # Apply provisioning profile
-        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-        cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+        # Xcode 16+ reads UserData; older Xcode reads MobileDevice. Install to both.
+        for DIR in ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles ~/Library/MobileDevice/Provisioning\ Profiles; do
+          mkdir -p "$DIR"
+          cp $PP_PATH "$DIR/"
+        done

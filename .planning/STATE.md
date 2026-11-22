@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 8
+current_plan: 9
 status: executing
-stopped_at: Completed 08-07-PLAN.md
-last_updated: "2026-11-22T23:22:54.066Z"
+stopped_at: Completed 08-10-PLAN.md
+last_updated: "2026-11-22T23:28:51.213Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: 413e0b9d98f0bf0a0c4ca1ea2936b4d11e51337f
+state_head: c16c8442e0383a56b83ae32011dfd835e2f62291
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 155
-  completed_plans: 144
+  completed_plans: 145
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 8
+Current Plan: 9
 Total Plans in Phase: 31
 Status: Ready to execute
 Last activity: 2026-11-22 — Phase 08 execution started
@@ -200,6 +200,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P30 | 5 min | 2 tasks | 4 files |
 | Phase 08 P31 | 6 min | 2 tasks | 6 files |
 | Phase 08 P07 | 20min | 2 tasks | 4 files |
+| Phase 08 P10 | 15min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -436,6 +437,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-08: deploy X1 live, production 28da165 -> 412f1aa (user approved 2026-11-20, live 17:30:24Z); rollback branch ios-p8-x1-rollback at 28da165; live smoke is 08-11
 - [Phase 08]: User reported 2026-11-21: App Store approved build 1.0 (6). This is the existing build, not the Phase 8 release candidate 1.1 (7); no Phase 8 plan is completed by it, and the 08-11 smoke and later "build 6" checks run against this approved build
 - [Phase 08]: 08-07: iOS chat reason captions match Android 08-03 wording; role from reason_by only, request declines fall back to decline_reason_text as the expert's, marked reschedule declines read reason_text alone and are non-terminal
+- [Phase 08]: D-24: USD renders US$ everywhere on iOS; Topics card and editor symbols come from Money.prefix, cardSymbol removed (08-10)
 
 ### Pending Todos
 
@@ -537,6 +539,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-22T23:22:53.576Z
-Stopped at: Completed 08-07-PLAN.md
+Last session: 2026-11-22T23:28:50.630Z
+Stopped at: Completed 08-10-PLAN.md
 Resume file: None

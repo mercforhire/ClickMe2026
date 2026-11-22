@@ -149,7 +149,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 ### Release
 
 - [ ] **REL-01**: Every phase's fixes pass a device UAT checklist on a real iPhone
-- [ ] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first *(Note 2026-11-08: BACK-08 and BACK-13 are not deployed, because wave 3c was dropped by user decision. Scope unchanged. Update 2026-11-13: BACK-13 is deferred past this release (Phase 5 decision D-04). Reason: App Store build 6 and the current Android build rely on `ensureExpert`'s implicit client-to-expert promotion, so the explicit-promotion change would leave those clients unable to become experts. BACK-08 still needs a new decision before release: ship it, or defer it with a reason.)*
+- [x] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first *(Note 2026-11-08: BACK-08 and BACK-13 are not deployed, because wave 3c was dropped by user decision. Scope unchanged. Update 2026-11-13: BACK-13 is deferred past this release (Phase 5 decision D-04). Reason: App Store build 6 and the current Android build rely on `ensureExpert`'s implicit client-to-expert promotion, so the explicit-promotion change would leave those clients unable to become experts. BACK-08 still needs a new decision before release: ship it, or defer it with a reason.)*
 
 ## v2 Requirements
 
@@ -285,7 +285,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BACK-18 | Phase 1 | Complete |
 | BACK-19 | Phase 1 | Pending |
 | REL-01 | Phase 8 | Pending |
-| REL-02 | Phase 8 | Pending |
+| REL-02 | Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements: 107 total

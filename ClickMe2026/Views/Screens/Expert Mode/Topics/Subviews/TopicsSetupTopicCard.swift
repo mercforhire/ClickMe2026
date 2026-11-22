@@ -16,16 +16,6 @@ struct TopicsSetupTopicCard: View {
     /// card reads as before apart from the cents.
     static let perSessionSuffix = " / session"
 
-    /// Symbol the card shows before the digits. USD keeps `US$`, what the card
-    /// showed through the server label and what the editor's `currencySymbol`
-    /// shows, until the open todo `2026-11-16-usd-symbol-us-dollar-prefix.md`
-    /// decides how USD renders; this rule, and the `US$` rows in
-    /// `TopicsSetupTopicCardLabelTests`, change with that decision. Every other
-    /// code takes the `Money` prefix, so CAD stays `CA$`.
-    static func cardSymbol(for currency: String) -> String {
-        currency == "USD" ? "US$" : Money.prefix(for: currency)
-    }
-
     /// Per-session price display (the amount the client pays per booking).
     /// The server label trims cents (`formatPrice.js`), so the card formats the
     /// stored minor amount itself: the digits come from `Money` (BOOK-10), full
@@ -43,7 +33,7 @@ struct TopicsSetupTopicCard: View {
         let currency = TopicEditorViewModel.resolveInitialCurrency(topic: topic, defaultCurrency: defaultCurrency)
         let formatted = Money.format(minorUnits: amount, currency: currency)
         let digits = String(formatted.dropFirst(Money.prefix(for: currency).count))
-        return cardSymbol(for: currency) + digits + perSessionSuffix
+        return Money.prefix(for: currency) + digits + perSessionSuffix
     }
 
     private var priceLabel: String {

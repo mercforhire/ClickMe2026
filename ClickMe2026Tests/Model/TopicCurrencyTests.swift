@@ -102,6 +102,17 @@ struct TopicCurrencyTests {
         #expect(vm.pickableCurrencies.contains("USD"))
     }
 
+    @Test("the editor symbol comes from Money for USD and CAD, and is the bare ISO code otherwise")
+    func editorSymbolFollowsMoney() {
+        let vm = TopicEditorViewModel(topic: nil)
+        for code in ["USD", "CAD"] {
+            vm.currency = code
+            #expect(vm.currencySymbol == Money.prefix(for: code))
+        }
+        vm.currency = "EUR"
+        #expect(vm.currencySymbol == "EUR")
+    }
+
     // MARK: - validate() sends the topic's own currency (the ROADMAP bug)
 
     @Test("a RETYPED price on a paid USD topic validates in USD on a CAD-default account")

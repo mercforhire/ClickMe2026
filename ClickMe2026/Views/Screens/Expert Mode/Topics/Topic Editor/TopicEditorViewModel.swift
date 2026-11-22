@@ -114,11 +114,12 @@ final class TopicEditorViewModel: ObservableObject {
         return allowed + [currency]
     }
 
-    /// Short symbol for the price field label: `US$`, `CA$`, else the ISO code.
+    /// Short symbol for the price field label: `US$` and `CA$` from `Money`
+    /// (D-24), else the bare ISO code (`Money.prefix` would append a no-break
+    /// space to an unknown code, which the label doesn't want).
     var currencySymbol: String {
         switch currency {
-        case "USD": return "US$"
-        case "CAD": return "CA$"
+        case "USD", "CAD": return Money.prefix(for: currency)
         default: return currency
         }
     }

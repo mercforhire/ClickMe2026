@@ -474,7 +474,7 @@ Plans:
   3. Every backend change is deployed to production before the iOS build is submitted, and the current Android build still works against it.
   4. One new iOS build containing every fix builds cleanly with no new warnings, is on TestFlight, and is submitted to the App Store.
 
-**Plans**: 16/31 plans executed: 26 in 11 waves on three lanes, plus 5 Android gap-closure plans 08-27 to 08-31 (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
+**Plans**: 17/31 plans executed: 26 in 11 waves on three lanes, plus 5 Android gap-closure plans 08-27 to 08-31 (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
 
 Plans:
 **Wave 1**
@@ -499,7 +499,7 @@ Plans:
 
 **Wave 5**
 - [ ] 08-13-PLAN.md — iOS: saved-cards disclosure on Delete Account, wording approved by the user (D-23) (checkpoint)
-- [ ] 08-14-PLAN.md — Backend X2: long-lead transient-error retry with the 6 h deadline (D-29)
+- [x] 08-14-PLAN.md — Backend X2: long-lead transient-error retry with the 6 h deadline (D-29)
 - [x] 08-25-PLAN.md — Android: account deletion forgets the remembered email (rest of the 0c9ecc55 port); close the remember-login-email todo
 - [x] 08-26-PLAN.md — Android parity decisions: the user ports, defers or accepts each remaining Phase 5/6 difference before those todos close (checkpoint)
 
@@ -551,7 +551,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
 | 7. Chat | 9/9 | Complete    | 2026-11-18 |
-| 8. Release | 16/31 | In Progress | - |
+| 8. Release | 17/31 | In Progress | - |
 
 ---
 *Roadmap created: 2026-11-07*

@@ -474,7 +474,7 @@ Plans:
   3. Every backend change is deployed to production before the iOS build is submitted, and the current Android build still works against it.
   4. One new iOS build containing every fix builds cleanly with no new warnings, is on TestFlight, and is submitted to the App Store.
 
-**Plans**: 15/31 plans executed: 26 in 11 waves on three lanes, plus 5 Android gap-closure plans 08-27 to 08-31 (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
+**Plans**: 16/31 plans executed: 26 in 11 waves on three lanes, plus 5 Android gap-closure plans 08-27 to 08-31 (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
 
 Plans:
 **Wave 1**
@@ -494,7 +494,7 @@ Plans:
 
 **Wave 4**
 - [ ] 08-10-PLAN.md — iOS: USD renders as US$ everywhere (D-24)
-- [ ] 08-11-PLAN.md — Live smoke after X1 on build 6 and Android (checkpoint)
+- [x] 08-11-PLAN.md — Live smoke after X1 on build 6 and Android (checkpoint)
 - [x] 08-12-PLAN.md — Android: cancellation policy link and copy; Add-hours end of day (button disabled near midnight); parity answers for 08-26
 
 **Wave 5**
@@ -551,7 +551,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
 | 7. Chat | 9/9 | Complete    | 2026-11-18 |
-| 8. Release | 15/31 | In Progress | - |
+| 8. Release | 16/31 | In Progress | - |
 
 ---
 *Roadmap created: 2026-11-07*

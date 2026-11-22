@@ -31,3 +31,22 @@ TBD, needs a change in the backend repo (separate commit there) and a user decis
 1. A bounded retry only for errors before `createManualPI`: a guarded stamp reset while no PaymentIntent exists (`payment_intent_id IS NULL`), plus a deadline before the session start so a session can never begin uncharged because of retries.
 2. Reconcile a lost confirm by retrieving the PaymentIntent (by the idempotency key or booking metadata) before deciding to cancel, so an authorized hold is never stranded and a missing one is retried.
 3. Decide whether a persistent card-check or profiles read error needs the same deadline (see the accepted limit above).
+
+## Resolution
+
+Fixed by plan 08-14 under D-29 (Option 1 with a 6 h deadline; Option 3 decided the same way), in the backend repo on branch `ios-p8-x2`, commit `1d18aac`, not pushed. The deploy is plan 08-16, with the user's own approval.
+
+- An error after the stamp but strictly before `createManualPI` (connected customer lookup, clone lookup, the pre-charge recheck read) now resets `off_session_attempted_at` to NULL with a guarded UPDATE (`id`, `payment_status = 'scheduled'`, `payment_intent_id IS NULL`, and this run's own stamp value). The next 5-minute run selects the row again and charges it once. The reset only happens while `start_time` is strictly more than `SCA_RECOVERY_WINDOW_MS` (6 h) away. Inside 6 h the stamp stays and `scaRecoveryWindowSweep` takes over as before.
+- A profiles read error or platform-card check error (both before the stamp since CR-02) follows the same deadline: re-thrown unstamped while the session is more than 6 h away, stamped and then re-thrown within 6 h. A session can no longer start uncharged because of endless retries.
+- Errors at or after `createManualPI` (including a non-card `confirmPIOffSession` error) are unchanged: no reset, so a PaymentIntent is never replayed under `booking:{id}:t24h_charge:{account}`. Option 2 (reconciling a lost confirm by retrieving the PaymentIntent) was not built.
+- No route, response, error code, push or migration changes, so build 6 and Android are unaffected.
+
+Rows stamped before this deploy are not rescued by it. At the 08-16 deploy checkpoint the user can run this read-only query to see them:
+
+```sql
+select id, status, charge_due_at, off_session_attempted_at
+from bookings
+where payment_status = 'scheduled'
+  and off_session_attempted_at is not null
+  and payment_intent_id is null;
+```

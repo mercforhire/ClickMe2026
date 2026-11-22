@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 10
+current_plan: 11
 status: executing
-stopped_at: Completed 08-13-PLAN.md
-last_updated: "2026-11-22T23:47:09.767Z"
+stopped_at: Completed 08-17-PLAN.md
+last_updated: "2026-11-22T23:57:38.409Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: ae00a43efd73366cef48e934e89eda76aa32bbcd
+state_head: 18029f49963f425d57eea3ee7433f5d9272319b4
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 155
-  completed_plans: 146
+  completed_plans: 147
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 10
+Current Plan: 11
 Total Plans in Phase: 31
 Status: Ready to execute
 Last activity: 2026-11-22 — Phase 08 execution started
@@ -202,6 +202,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P07 | 20min | 2 tasks | 4 files |
 | Phase 08 P10 | 15min | 3 tasks | 9 files |
 | Phase 08 P13 | 15min | 3 tasks | 5 files |
+| Phase 08 P17 | 45min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -440,6 +441,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-07: iOS chat reason captions match Android 08-03 wording; role from reason_by only, request declines fall back to decline_reason_text as the expert's, marked reschedule declines read reason_text alone and are non-terminal
 - [Phase 08]: D-24: USD renders US$ everywhere on iOS; Topics card and editor symbols come from Money.prefix, cardSymbol removed (08-10)
 - [Phase 08]: D-23: disclose saved cards are not deleted with the account; final wording 'Cards you added to pay for sessions are not deleted with your account.' (user chose option-a)
+- [Phase 08]: 08-17: Android blocker table is an enum (AccountDeletionBlocker); the active mode is applied at render from the registering shell, so DeleteAccountViewModel keeps its constructor
+- [Phase 08]: 08-17: Android View My Bookings resets the Profile stack holding Delete Account, then opens the Bookings tab of the active mode (Android-only reset, as Request Sent)
 
 ### Pending Todos
 
@@ -541,6 +544,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-22T23:47:09.208Z
-Stopped at: Completed 08-13-PLAN.md
+Last session: 2026-11-22T23:57:37.841Z
+Stopped at: Completed 08-17-PLAN.md
 Resume file: None

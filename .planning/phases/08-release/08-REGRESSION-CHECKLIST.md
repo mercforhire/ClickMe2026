@@ -123,7 +123,7 @@ Expected:
 - The `end + 55` banner shows, **Open in {provider}** opens B's meeting link, and **End Session** closes the screen.
 - Q1 and the Dashboard show no payment for this booking.
 
-Result: SKIPPED (2026-11-23): user chose to skip R3 ("skip"); the Skype/Zoom layout (provider label, Open in {provider}, no auto-end promise, end + 55 banner, End Session) was not run on build 7. Open for the 08-24 ruling
+Result: PASS (2026-11-23), short run by user decision (run the short items, waive overtime): free Skype/Zoom booking, accept, provider label, Open in {provider} opens the meeting link, elapsed/remaining time, no auto-end promise, End Session closes the screen and Join is gone; end + 55 banner not waited for (waived with the overtime steps). Earlier the same day: SKIPPED ("skip"), then run
 
 ### R4. BACK-06: one saved card becomes the default (D-06, BACK-06)
 

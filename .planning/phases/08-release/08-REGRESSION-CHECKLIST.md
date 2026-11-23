@@ -243,7 +243,7 @@ Expected:
 - In both settings, the `Save` label and the back chevron on Availability are readable (not white on white).
 - In both settings, the back chevron and the `Booking Confirmed` title are readable.
 
-Result: SKIPPED (2026-11-23): user chose to skip R9 ("R9 skipped", no reason given); Liquid Glass readability of Availability Save and the Booking Confirmed chevron and title not checked on build 7. Open for the 08-24 ruling
+Result: PASS (2026-11-23) on iOS 26: Availability Save and back chevron, Booking Confirmed chevron and title readable with Reduce Transparency on and with Liquid Glass Tinted. Earlier the same day: SKIPPED ("R9 skipped"), then run
 
 ### R10. Resuming signup keeps the verified email ticked, and the flash on resume (D-28, SIGN-02, U4)
 

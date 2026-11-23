@@ -1,9 +1,10 @@
 ---
-status: partial
+status: complete
 phase: 04-booking-payment-and-discovery
 source: [04-VERIFICATION.md]
 started: 2026-11-12T19:43:46Z
-updated: 2026-11-13T04:52:16.248Z
+updated: 2026-11-23T23:55:00Z
+note: "Remaining items closed under Phase 8 D-01 (regression) and D-02 (VoiceOver removed); test 2 (WR-01 3DS/SCA): not run on device; covered by unit tests only (user decision 2026-11-19)"
 ---
 
 ## Current Test

@@ -22,9 +22,9 @@ created: "2026-11-10"
 | **Framework** | Swift Testing (`@Suite`, `@Test`, `#expect`, `#require`), target `ClickMe2026Tests` |
 | **Config file** | `ClickMe2026/AllTests.xctestplan` (new files auto-register through synchronized groups) |
 | **Quick run command** | `set -o pipefail; xcodebuild test -project ClickMe.xcodeproj -scheme ClickMe2026 -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' 'EXCLUDED_SOURCE_FILE_NAMES=LoginTests.swift AuthSmokeTests.swift SignupSmokeTests.swift' -only-testing:ClickMe2026Tests/<Suite> 2>&1 \| tee /tmp/<log> \| tail -30 && grep -Eq 'Test run with [1-9][0-9]* tests? in [0-9]+ suites? passed' /tmp/<log>` |
-| **Full suite command** | same command with `-only-testing:ClickMe2026Tests -skip-testing:ClickMe2026Tests/AuthSmokeTests -skip-testing:ClickMe2026Tests/SignupSmokeTests -collect-test-diagnostics never` (the two smoke suites hit the live production backend and must never run). Last run 2026-11-11: 434 tests in 49 suites, all passed |
-| **Backend command** | `npm test -- tests/expertBooking.test.js` (from `../ClickMe2026 Backend`) |
-| **Android command** | `./gradlew :app:testDevDebugUnitTest --tests '*BookingSummaryScreenTest'` (from `../ClickMe_Android`) |
+| **Full suite command** | same command with `-only-testing:ClickMe2026Tests -skip-testing:ClickMe2026Tests/AuthSmokeTests -skip-testing:ClickMe2026Tests/SignupSmokeTests -collect-test-diagnostics never` (the two smoke suites hit the live production backend and must never run). Last run 2026-11-22 (re-audit against current `main` at 34d41bb, after phases 04–08 and quick-261122-r2o): 1278 tests in 118 suites, all passed, 0 failures. Previous run 2026-11-11: 434 tests in 49 suites |
+| **Backend command** | `npm test -- tests/expertBooking.test.js` (from `../ClickMe2026 Backend`; Supabase and Stripe are mocked, no production calls). Last run 2026-11-22: 162 tests passed |
+| **Android command** | `./gradlew :app:testDevDebugUnitTest --tests '*BookingSummaryScreenTest'` (from `../ClickMe_Android`). Last run 2026-11-22: passed |
 | **Build gate** | `xcodebuild build -project ClickMe.xcodeproj -scheme ClickMe2026 -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest'`, with no new warnings in touched files |
 | **Estimated runtime** | ~180 seconds per targeted run (simulator boot + build); suites run in milliseconds |
 
@@ -70,7 +70,14 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | EXP-11 / D-14, D-16 (backend) | Expert details return `payment_action_required` / `payment_action_deadline` and `payment_not_charged` (true for a converted long-lead row, free and no-money rows; false for requires_capture and captured rows with a PaymentIntent), no raw payment columns | backend jest | `npm --prefix "../ClickMe2026 Backend" test -- tests/expertBooking.test.js` | 03-05 | ✅ | ✅ green, 65bb2ed |
 | EXP-13 | Expert reschedule reachable from Dashboard and Bookings; pop targets originating tab | grep gate + device | n/a | 03-04 | n/a | n/a, UAT item 18 |
 | EXP-13 | Expert picker 6-day paid cap through `PaidBookingWindow`: edge, free uncapped, select guard, paid flag | unit | `ExpertRescheduleWindowTests` (regression: `RescheduleWindowTests`, `PaidBookingWindowTests`) | 03-04 | ✅ | ✅ green |
-| — | Toast: one at a time, replace restarts timer, dismiss | unit | `ToastCenterTests` | 03-06 | ✅ | ✅ green |
+| — | Toast: one at a time, replace restarts timer, dismiss; timer driven by an injected sleeper, not wall clock (WR-06) | unit | `ToastCenterTests` | 03-06, review fix WR-06 | ✅ | ✅ green |
+| BOOK-06 / WR-01 | `RescheduleResponder.onResolved` fires after every 2xx accept (first try and saved-card retry) and decline, before refetch, never after a failure; both owners drop the proposal card even when the refetch fails | unit (stubbed API) | `RescheduleResponderTests`, `UpcomingBookingViewModelTests`, `BookingSummaryViewModelTests` | 03-16 | ✅ | ✅ green |
+| BOOK-06 / WR-08 | After a 2xx accept/decline with a failed refetch, the screen shows the new time and status, retries the GET once, and the retry's answer replaces the local guess | unit (stubbed API) | `RescheduleResponderTests`, `UpcomingBookingViewModelTests`, `BookingSummaryViewModelTests` | review fix WR-08 | ✅ | ✅ green |
+| BOOK-08 / WR-02 | Server `refund_amount` 0 under `.chargedRefundable` shows the neutral policy line (no amount, no timing); already-cancelled 200 idempotent | unit | `CancelToastMessageTests`, `ClientCancellationViewModelTests` | 03-17 | ✅ | ✅ green |
+| BOOK-08 / WR-09 | Post-cancel toast uses the refund case captured before the request; the 60 s tick cannot flip it mid-request | unit (held response) | `ClientCancellationViewModelTests` | review fix WR-09 | ✅ | ✅ green |
+| BOOK-08 / EXP-11 / WR-03 | Refund and hold lines built from the list price say "up to"; `CA$0.00` within-24 h line unchanged | unit | `CancelRefundPreviewTests`, `CancelToastMessageTests`, `ExpertCancelRefundLineTests` | review fix WR-03 | ✅ | ✅ green |
+| BOOK-13 / WR-04 | `canShowReschedule` mirrors backend `canReschedule`: per-status groups, end-time edge, nil end, exhaustive against the Cancel lists | unit | `UpcomingActionPolicyTests` | review fix WR-04 | ✅ | ✅ green |
+| EXP-13 / WR-07 | `submitRefusesFarSlot` uses a stubbed API and asserts zero requests | unit (stubbed API) | `ExpertRescheduleWindowTests` | review fix WR-07 | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -106,6 +113,7 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | Android Booking Summary ID on device | BOOK-20 (Android) | Device check | `03-DEVICE-UAT-CHECKLIST.md` item 14 |
 | Teams label on the smallest iPhone | CALL-08 | Layout on small screen | `03-DEVICE-UAT-CHECKLIST.md` item 23 |
 | Expert shell chat-row item has no client actions | EXP-13 | Visual and navigation | `03-DEVICE-UAT-CHECKLIST.md` item 24 |
+| Reschedule accept/decline toast in the expert shell (WR-05) | BOOK-06 | Toast host wiring in `HomeExpertView` is view-level | Accept or decline a reschedule from the expert shell; the toast shows |
 | BACK-19 production smoke not run | EXP-11 | Production backend smoke was not run, so the EXP-11 copy is code-verified only | Run the BACK-19 production smoke after the 03-05 deploy, then re-check the expert cancel money line |
 
 ---
@@ -119,7 +127,7 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 - [x] Feedback latency < 300s
 - [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** validated 2026-11-11
+**Approval:** validated 2026-11-11; re-validated 2026-11-22 against current code (plans 03-16, 03-17 and review fixes WR-03 to WR-09 added to the map; covered files later touched by phases 04, 05, 06 and quick-261122-r2o re-run green)
 
 ## Validation Audit 2026-11-11
 
@@ -128,3 +136,15 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | Gaps found | 0 |
 | Resolved | 0 |
 | Escalated | 0 |
+
+## Validation Audit 2026-11-22
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+| Map rows added | 7 |
+| iOS tests run | 1278 |
+| iOS suites passed | 118 |
+| Backend tests passed | 162 |

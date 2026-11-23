@@ -150,3 +150,11 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | iOS tests run | 1278 |
 | iOS suites passed | 118 |
 | Backend tests passed | 162 |
+
+## Validation Audit 2026-11-23
+
+| Metric | Count |
+|---|---|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |

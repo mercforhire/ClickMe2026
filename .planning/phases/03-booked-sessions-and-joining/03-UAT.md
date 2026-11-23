@@ -3,25 +3,27 @@ status: partial
 phase: 03-booked-sessions-and-joining
 source: [03-VERIFICATION.md]
 started: 2026-11-11T06:30:00Z
-updated: 2026-11-19T12:00:00Z
+updated: 2026-11-23T03:27:06.743Z
 ---
 
 ## Current Test
 
-[testing paused — resume at 03-DEVICE-UAT-CHECKLIST.md item 7 (BOOK-13); 3 open gaps on test 1, not yet diagnosed]
+[testing complete]
 
 ## Tests
 
-### 1. Run the 24 device checks in 03-DEVICE-UAT-CHECKLIST.md on a real iPhone
+### 1. Run the 26 device checks in 03-DEVICE-UAT-CHECKLIST.md on a real iPhone
 expected: Every item records PASS. JOIN CALL works from every entry. The end + 55 notice shows on the Skype/Zoom layout. The expert cancel sheet line is right for a live hold, a captured booking, a free booking and a converted long-lead booking.
 result: issue
 reported: "Note a bug for the backend. The notification received on phone A says \"booking has been rescheduled,\" but it should word it as a reschedule request of some sort."
 severity: minor
 reported_2: "For step, the decline message of the emoji cannot be seen by the other user because the UI does not display the reason for the decline, nor is it added to the chat."
 severity_2: major
-note: "Device run resumed 2026-11-19 (previously blocked: physical-device). Per-item results are in 03-DEVICE-UAT-CHECKLIST.md. Paused 2026-11-19 by user after item 6: items 1 FAIL (3 backend gaps; rest passed), 2/3/5/6 PASS, 4 SKIPPED (no VoiceOver testing), 7-24 not run. User will not test VoiceOver steps."
+note: "Device run resumed 2026-11-19 (previously blocked: physical-device). Per-item results are in 03-DEVICE-UAT-CHECKLIST.md. Paused 2026-11-19 by user after item 6: items 1 FAIL (3 backend gaps; rest passed), 2/3/5/6 PASS, 4 SKIPPED (no VoiceOver testing), 7-24 not run. User will not test VoiceOver steps. Resumed 2026-11-22 and finished: items 7-11, 13-16, 18-22 and 24-26 PASS; 12 (no Skype/Zoom app), 17 (55-minute wait) and 23 (no smallest iPhone or Teams/Meet booking) SKIPPED. Every item has a Result. Item 14 found gap G-03-1-ITEM14."
 reported_3: "log the decline-push bug"
 severity_3: major
+reported_4: "The iOS session summary screen does not have the price, whereas the Android version says the price or free." Then: "Yes, add \"free\" label to the iOS version."
+severity_4: minor
 
 ### 2. The 11 UI-SPEC backstop truths
 The checks:
@@ -34,9 +36,8 @@ The checks:
 - 03-03 end + 55 on a device
 
 expected: Text wraps without clipping at the largest accessibility size. The toast sits 24 pt above the tab bar and VoiceOver speaks it. Both parties connect on a call.
-result: blocked
-blocked_by: physical-device
-reason: "Passed over by 'Move on to test 3.' All 11 backstops are device-only checks (same deferral as test 1)."
+result: skipped
+reason: "Run on a device 2026-11-22 through the 03-DEVICE-UAT-CHECKLIST.md items: L2 (22), D2 minus VoiceOver (21), D3 (15), D4 (19) and 03-13 parity (1) PASS. L3 (23) and end + 55 (17) were skipped by the user, and the VoiceOver checks are not tested by user decision."
 
 ### 3. Decide whether to fix code-review findings WR-01 and WR-02 before the Phase 8 release
 - WR-01: after an accept or decline, if the refresh fails, the response card stays on screen.
@@ -64,8 +65,8 @@ total: 5
 passed: 1
 issues: 2
 pending: 0
-skipped: 0
-blocked: 2
+skipped: 1
+blocked: 1
 
 ## Gaps
 
@@ -151,3 +152,17 @@ blocked: 2
     - path: "../ClickMe2026 Backend/src/services/events.js"
       issue: "dispatchPushForEvent case 'BOOKING_DECLINED' always calls sendPushToUser(client_id, ...) with 'Your booking request was declined.'; reschedule declines reuse BOOKING_DECLINED, so the recipient and wording are both wrong for them (BOOKING_RESCHEDULED/BOOKING_CANCELLED already route via notify_user_id)"
   missing: []
+- gap_id: G-03-1-ITEM14
+  truth: "The client Booking Summary always shows the price row; a free session reads \"Free\" (matching Android) instead of hiding the row"
+  status: failed
+  reason: "User reported: The iOS session summary screen does not have the price, whereas the Android version says the price or free. User decision 2026-11-22: add the \"Free\" label to iOS."
+  severity: minor
+  test: 1
+  repo: iOS
+  artifacts:
+    - path: "ClickMe2026/Views/Screens/Client Mode/Booking Summary/BookingSummaryViewModel.swift"
+      issue: "formatPrice returns nil when topic.isFree (line 379), so pricePaid is nil and the row is hidden"
+    - path: "ClickMe2026/Views/Screens/Client Mode/Booking Summary/Subviews/BookingSummaryExpertCard.swift"
+      issue: "price row renders only when pricePaid != nil (line 116)"
+  missing: []
+  android_note: "Android already shows Free (BookingSummaryCard.kt PriceText); no Android change needed"

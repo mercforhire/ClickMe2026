@@ -382,6 +382,39 @@ Expected:
 
 Result:
 
+### 25. T-03-23 — declining a reschedule shows the booking's restored status (quick 261122-tcf)
+
+**Status:** PENDING. Added by quick task 261122-tcf.
+
+Steps:
+1. On a booking that is **Pending approval**, user B proposes a new time from the second device, and user A taps **Decline New Time** on Upcoming details. If neither app lets B propose a new time on a pending request, use a **completed** session whose original end time has not passed.
+2. Repeat on a **Confirmed** booking.
+
+Expected:
+- Step 1: the "Reschedule declined" toast, the proposal card gone, and the status pill showing that booking's earlier status (Pending approval, or Completed), **never Confirmed**. Join follows that status.
+- Step 2: the pill reads Confirmed.
+- If step 1's booking cannot be set up, record SKIPPED (why) for that step only.
+
+Result:
+
+### 26. WR-10 — expert Message errors and second taps; 44 pt reschedule buttons (quick 261122-tcf)
+
+**Status:** PENDING. Added by quick task 261122-tcf.
+
+Steps:
+1. As user B on the expert Booking Summary, double-tap **Message Client**.
+2. In airplane mode, tap **Message Client**.
+3. Repeat steps 1 and 2 from a Bookings-tab Upcoming row's Message and from a pending request's Request Decision Message.
+4. On a booking where A proposed a new time, open the expert Booking Summary.
+
+Expected:
+- Step 1: one chat opens, one Back returns, and a spinner shows with the button disabled while the request runs.
+- Step 2: a "Couldn't start chat" alert with a readable message, and OK dismisses it.
+- Step 3: the same single open and the same alert (no spinner on these two).
+- Step 4: Decline and Accept are at least 44 pt tall and easy to hit, and the labels are unchanged.
+
+Result:
+
 ---
 
 ## Sign-off

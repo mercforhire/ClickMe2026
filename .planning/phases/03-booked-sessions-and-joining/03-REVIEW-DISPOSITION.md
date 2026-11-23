@@ -5,7 +5,7 @@ titles: json
 findings:
   - id: WR-10
     severity: warning
-    disposition: open
+    disposition: fixed
     title: "Message Client on the expert Booking Summary fails silently and can push the chat twice"
   - id: WR-11
     severity: warning
@@ -81,9 +81,9 @@ findings:
     title: "Post-cancel toast reads the refund case after the await, so the 60 s tick can change the case the user confirmed under"
   - id: IN-02
     severity: info
-    disposition: open
+    disposition: fixed
     title: "`HomeNavigationPathTests` do not cover the route wiring that makes `pop(2)` correct"
-open: 11
+open: 9
 total: 20
 recorded: 2026-11-23T01:47:38.698Z
 ---
@@ -92,7 +92,7 @@ recorded: 2026-11-23T01:47:38.698Z
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-10 | warning | open | - |
+| WR-10 | warning | fixed | quick 261122-tcf (ChatStarter on the three expert Message buttons) |
 | WR-11 | warning | open | - |
 | IN-01 | info | open | - |
 | IN-03 | info | open | - |
@@ -111,7 +111,7 @@ recorded: 2026-11-23T01:47:38.698Z
 | WR-07 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
 | WR-08 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
 | WR-09 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
-| IN-02 | info | open | - (not in the current review) |
+| IN-02 | info | fixed | HomeClientView.swift:394-398 comment records the pop(2) invariant (03-REVIEW.md) (not in the current review) |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.

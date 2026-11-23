@@ -16,9 +16,9 @@ struct BookingSummaryExpertCard: View {
     let expertImageURL: String
     let topic: String
     let dateTime: String
-    /// Formatted total the client paid (e.g. `"$45.00"`). Hidden when nil
-    /// — used for free sessions or when the server omitted price fields.
-    var pricePaid: String? = nil
+    /// What the price row shows (Free, the amount, or a dash). Nil hides the
+    /// row, which happens only before the detail loads.
+    var price: BookingSummaryPrice? = nil
     /// Session outcome — drives the status badge in the top-right of
     /// the card. Nil hides the badge (used while loading, or when the
     /// server returns a non-terminal status the summary shouldn't have
@@ -113,15 +113,17 @@ struct BookingSummaryExpertCard: View {
                 .font(.brand(.subheadline, weight: .regular))
                 .foregroundColor(BookingSummaryBrand.onSurfaceVar)
 
-            if let pricePaid {
+            if let price {
                 HStack(spacing: 6) {
-                    Text("PAID")
+                    Text(price.label)
                         .font(.brand(.caption2, weight: .semibold))
                         .foregroundColor(BookingSummaryBrand.onSurfaceVar)
                         .tracking(1.4)
-                    Text(pricePaid)
+                    Text(price.text)
                         .font(.brand(.subheadline, weight: .semibold))
-                        .foregroundColor(BookingSummaryBrand.onSurface)
+                        .foregroundColor(
+                            price == .free ? BookingSummaryBrand.brandGreen : BookingSummaryBrand.onSurface
+                        )
                 }
                 .padding(.top, 4)
             }

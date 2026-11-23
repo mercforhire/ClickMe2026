@@ -5,6 +5,7 @@
 //  BOOK-06: Booking Summary answers an expert-proposed reschedule through the
 //  shared `RescheduleResponder` (D-01) and updates in place (D-03).
 //  Message Expert opens the chat through POST /chats/initiate (quick 261122-r2o).
+//  The price row always shows, and a free session reads Session fee · Free (G-03-1-ITEM14).
 //
 
 import Foundation
@@ -422,6 +423,71 @@ struct BookingSummaryViewModelTests {
             extraFields: #""decline_reason_code":"PRICING","decline_reason_text":"Too low""#
         )
         #expect(vm.declineNote == nil)
+    }
+
+    // MARK: Price row (G-03-1-ITEM14)
+
+    private func priceModel(detail: Data) async -> BookingSummaryViewModel {
+        let vm = BookingSummaryViewModel(bookingId: bookingUUID, api: summaryAPI(detail: detail))
+        await vm.load()
+        return vm
+    }
+
+    @Test("a free session shows the price row as Session fee · Free, and nothing before the load")
+    func freeSessionShowsFree() async {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: summaryAPI(detail: Fixtures.detailJSON(status: "completed"))
+        )
+        #expect(vm.price == nil)
+
+        await vm.load()
+
+        #expect(vm.price == .free)
+        #expect(vm.price?.text == "Free")
+        #expect(vm.price?.label == "Session fee")
+    }
+
+    @Test("is_free true wins even when the detail also carries a price")
+    func freeFlagWinsOverPrice() async {
+        let vm = await priceModel(detail: Fixtures.detailJSON(
+            status: "completed",
+            isFree: true,
+            priceAmount: 4500,
+            currency: "CAD"
+        ))
+
+        #expect(vm.price == .free)
+        #expect(vm.price?.text == "Free")
+        #expect(vm.price?.label == "Session fee")
+    }
+
+    @Test("a paid session still shows PAID with the exact amount, cents kept")
+    func paidSessionShowsAmount() async {
+        let vm = await priceModel(detail: Fixtures.detailJSON(
+            status: "completed",
+            paymentStatus: "captured",
+            isFree: false,
+            priceAmount: 4550,
+            currency: "CAD"
+        ))
+
+        #expect(vm.price == .paid("CA$45.50"))
+        #expect(vm.price?.text == Money.format(minorUnits: 4550, currency: "CAD"))
+        #expect(vm.price?.label == "PAID")
+    }
+
+    @Test("a paid topic with no price shows PAID with a dash, never an invented amount")
+    func paidWithoutPriceShowsDash() async {
+        let vm = await priceModel(detail: Fixtures.detailJSON(
+            status: "completed",
+            paymentStatus: "captured",
+            isFree: false
+        ))
+
+        #expect(vm.price == .unknown)
+        #expect(vm.price?.text == "\u{2014}")
+        #expect(vm.price?.label == "PAID")
     }
 
     // MARK: Message Expert (quick 261122-r2o)

@@ -181,7 +181,7 @@ struct BookingSummaryView: View {
                     expertImageURL: viewModel.expertImageURL,
                     topic: viewModel.topic,
                     dateTime: viewModel.dateTime,
-                    pricePaid: viewModel.pricePaid,
+                    price: viewModel.price,
                     status: viewModel.status,
                     bookingIDLabel: viewModel.bookingIDLabel
                 )
@@ -427,6 +427,13 @@ private struct LiveFetchBookingSummaryBootstrap: View {
             feedbackText: nil,
             hasSubmittedReview: false
         ))
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Session Summary — Free Session") {
+    PreviewNavHarness(parentText: "Past sessions", navTitle: "My Bookings", rowTitle: "Session summary") {
+        BookingSummaryView(viewModel: BookingSummaryViewModel(price: .free))
     }
     .preferredColorScheme(.dark)
 }

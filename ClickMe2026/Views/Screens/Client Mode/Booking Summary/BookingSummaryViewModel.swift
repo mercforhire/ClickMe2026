@@ -30,10 +30,10 @@ final class BookingSummaryViewModel: ObservableObject {
     @Published var expertImageURL: String
     @Published var topic: String
     @Published var dateTime: String
-    /// Formatted price the client paid for the session, e.g. `"$45.00"`.
-    /// `nil` when the session was free or the server didn't send amount /
-    /// currency for this booking.
-    @Published var pricePaid: String?
+    /// What the price row shows: Free, the formatted amount, or a dash when a
+    /// paid topic has no price. `nil` only before the detail loads; after a load
+    /// it is always set, so the row always shows (G-03-1-ITEM14).
+    @Published var price: BookingSummaryPrice?
     @Published var feedbackStars: Int
     @Published var feedbackText: String?
 
@@ -128,7 +128,7 @@ final class BookingSummaryViewModel: ObservableObject {
         self.expertImageURL = ""
         self.topic = ""
         self.dateTime = ""
-        self.pricePaid = nil
+        self.price = nil
         self.feedbackStars = 0
         self.feedbackText = nil
         self.status = nil
@@ -164,7 +164,7 @@ final class BookingSummaryViewModel: ObservableObject {
         expertImageURL: String = "https://lh3.googleusercontent.com/aida-public/AB6AXuBnTZGMesjV2RDjvDlTqiAhGQcKvp9VwRAGKeFBQjZ2Ne3kX7qgo1NEGGhlYpLGEM-O7oYGv4ngC22GSYW5O_7nNSrkzsKF21q6DvxVUAClnY1puOrcVVRfxo7a2Q8VsPQTLluTXbfFumBJAsA8IdqCPigzs8DbXKLxdIp29xbIBxU61gPcbgR5RkgqIyJ0vmmgN_pFjG77f1XqxGlAMxxuvd1iOf-mQ1Wzc-mmg94vsBrnZYSiSZuYJ-83ZQi8i5encZyL6jSAENg",
         topic: String = "Machine Learning Consultation",
         dateTime: String = "Oct 8, 2024 • 2:00 PM - 3:00 PM",
-        pricePaid: String? = "$45.00",
+        price: BookingSummaryPrice? = .paid("$45.00"),
         feedbackStars: Int = 5,
         feedbackText: String? = "David is truly an expert in his field. The way he broke down complex GAN concepts was incredible. Already seeing performance improvements in our dev environment. Highly recommended!",
         hasSubmittedReview: Bool = true,
@@ -179,7 +179,7 @@ final class BookingSummaryViewModel: ObservableObject {
         self.expertImageURL = expertImageURL
         self.topic = topic
         self.dateTime = dateTime
-        self.pricePaid = pricePaid
+        self.price = price
         self.feedbackStars = feedbackStars
         self.feedbackText = feedbackText
         self.status = status
@@ -321,7 +321,11 @@ final class BookingSummaryViewModel: ObservableObject {
         expertImageURL = detail.expert.avatarUrl ?? ""
         topic = detail.topic.title
         dateTime = Self.formatDateTime(start: detail.startTime, end: detail.endTime)
-        pricePaid = Self.formatPrice(topic: detail.topic)
+        price = BookingSummaryPrice.make(
+            isFree: detail.topic.isFree,
+            amount: detail.topic.price?.amount,
+            currency: detail.topic.price?.currency
+        )
         status = Self.mapStatus(detail.status)
         declineNote = DeclineNote.make(
             status: detail.status,
@@ -369,19 +373,6 @@ final class BookingSummaryViewModel: ObservableObject {
              .pendingReschedule, .inProgress,
              .rescheduled, .unknown:          return nil
         }
-    }
-
-    /// Returns `nil` for free topics or when the server didn't send both an
-    /// amount and a currency — the UI hides the row in that case. Amounts
-    /// are in minor units; `Money` formats them with integer math so cents
-    /// are never dropped for prices like $45.50.
-    private static func formatPrice(topic: ClientBookingDetail.Topic) -> String? {
-        if topic.isFree { return nil }
-        guard let amount = topic.price?.amount,
-              let currency = topic.price?.currency
-        else { return nil }
-
-        return Money.format(minorUnits: amount, currency: currency)
     }
 
     private func apply(reviewContext: ReviewContextData) {

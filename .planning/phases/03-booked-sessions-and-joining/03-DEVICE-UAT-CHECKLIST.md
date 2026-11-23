@@ -146,7 +146,7 @@ Expected:
 - Cancel disappears within a minute of the end time without leaving the screen.
 - Pending-approval and pending-reschedule bookings still show Cancel before their end (D-13).
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 8. BOOK-16 — reschedule returns one level with a toast (03-11, 03-12)
 
@@ -163,7 +163,7 @@ Expected:
 - The booking's own current time is not greyed in the picker.
 - The unconvertible time shows the RESCHEDULE_OUTSIDE_AUTH_WINDOW copy, wrapping cleanly; with no saved card the alert says "Profile > Payment".
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 9. BOOK-17 — Leave a Review on completed sessions only (03-07, 03-12)
 
@@ -181,7 +181,7 @@ Expected:
 - No Leave a Review on cancelled, missed or already-reviewed sessions.
 - Book Again, Message and Private Note on a **push-opened** Booking Summary stay inert; they are out of scope (RESEARCH Open Question 2) and not a failure.
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 10. BOOK-20 (iOS) — booking ID line (03-07)
 
@@ -191,7 +191,7 @@ Steps: open Booking Summary for a past session. Long-press the ID. Open Upcoming
 
 Expected: the line "ID: #A1B2C3D4" (first 8 characters, upper-cased) is the last line of the topic section, can be selected and copied, and **matches** the ID on Upcoming details for the same booking.
 
-Result:
+Result: PASS (2026-11-22). The Upcoming details ID is not copyable on a long-press; the user confirmed it does not need to be.
 
 ### 11. CALL-03 — JOIN CALL works on every Upcoming details entry (03-09)
 
@@ -209,7 +209,7 @@ Expected:
 - Early: the button is dimmed and VoiceOver reads the hint. On a pending reschedule it is visible and disabled.
 - A failed join shows **one** "Couldn't join call" alert (RESEARCH A1: the alert is attached on this screen and at the My Bookings root; when pushed from My Bookings both are in the hierarchy, so confirm it is not shown twice or missed).
 
-Result:
+Result: PASS (2026-11-22). Free in-app voice booking; VoiceOver hint not checked (user does not test VoiceOver).
 
 ### 12. CALL-06 — Skype/Zoom status line promises no automatic end (03-03)
 
@@ -219,7 +219,7 @@ Steps: on a Skype/Zoom session, tap Open on the session screen and return to the
 
 Expected: the status reads "Meeting in progress. Scheduled to finish at {end}. Tap End Session when you're done."
 
-Result:
+Result: SKIPPED (2026-11-22) — "no skype/zoom app" on the test iPhone.
 
 ### 13. CALL-07 — Skype/Zoom session timer matches the in-app layout (03-03)
 
@@ -229,7 +229,7 @@ Steps: open a Skype/Zoom session early, then keep it open through the start and 
 
 Expected: the hero reads "Starts in M:SS", counts up after the start, and turns amber with an "M:SS left" chip in the last 5 minutes.
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 14. BOOK-20 (Android) — booking ID line on Android (03-15)
 
@@ -239,7 +239,7 @@ Steps: on an Android device, open a client Booking Summary and compare with iOS 
 
 Expected: "ID: #…" appears under the price and **matches** the ID iOS shows for the same booking (item 10).
 
-Result:
+Result: PASS (2026-11-22). The ID matches iOS. Found while comparing: on a free session, iOS Booking Summary has no price row, while Android shows "Free". The user wants iOS to show "Free"; logged as gap G-03-1-ITEM14 in 03-UAT.md.
 
 ### 15. CALL-08 / D3 — Open in {provider} reaches the Skype screen; End Session completes the booking (03-09)
 
@@ -253,7 +253,7 @@ Expected:
 - Open in {provider} opens the Skype/Zoom session screen with the **timer running**; Open there launches the meeting app; End Session completes the booking and `/end` is reported.
 - **Two-tap note (D-10, RESEARCH Open Question 6):** it takes two taps. Record whether that reads acceptably.
 
-Result:
+Result: PASS (2026-11-22). The Open-in-meeting-app tap was not run (no Skype/Zoom app); the two taps were accepted.
 
 ### 16. EXP-11 — expert cancel sheet states the client's money outcome (03-08, backend 03-05)
 
@@ -277,7 +277,7 @@ Expected:
 - **Fail-closed state (D-14):** before the 03-05 deploy, or against a backend lacking the keys, no booking would show a money line. Not expected now that `65bb2ed` is live; record only if you see it.
 - Note the BACK-19 smoke result here once it is run.
 
-Result:
+Result: PASS (2026-11-22). BACK-19 production smoke: still unrun (copy remains code-verified for the backend side).
 
 ### 17. D-15 / K2 — end + 55 notice on the Skype/Zoom layout (03-03)
 
@@ -289,7 +289,7 @@ Expected:
 - The amber **"This call will end in 5 minutes"** notice appears at the top of the Skype screen, and the session ends at end + 60.
 - The in-app voice banners read as before.
 
-Result:
+Result: SKIPPED (2026-11-22). The user skipped it; it needs a session held open 55 minutes past its end.
 
 ### 18. EXP-13 — expert reschedule wiring and 6-day paid cap (03-04)
 
@@ -304,7 +304,7 @@ Expected:
 - Paid: every day is visible, the note **"Paid sessions can be rescheduled up to 6 days ahead."** shows under Time Slots, and chips after now + 6 days are dimmed and untappable.
 - Free: no note and no dimming from the cap.
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 19. CALL-10 / D4 — expert Join Session from Booking Summary across two accounts (03-04)
 
@@ -320,7 +320,7 @@ Expected:
 - Outside the window it is dimmed; on a pending reschedule it is visible and disabled.
 - A refused join shows "Couldn't join call" **once** (the Bookings and Dashboard roots host an alert on the same `joinError`; SwiftUI presents one).
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 20. BACK-02 (iOS) — decline note on the client's Booking Summary (03-07)
 
@@ -330,7 +330,7 @@ Steps: as B, decline a request with a reason and a long note (up to 1000 charact
 
 Expected: the DECLINE NOTE card sits between the expert card and My Note, shows the reason line and the full note wrapped, uses neither the accent nor amber, and the badge still reads **Cancelled**.
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 21. D2 — toast placement, dismissal and VoiceOver (03-06)
 
@@ -343,7 +343,7 @@ Expected:
 - VoiceOver reads it.
 - A multi-line message wraps cleanly; with Reduce Motion it only fades.
 
-Result:
+Result: PASS (2026-11-22). VoiceOver part not run (user does not test VoiceOver).
 
 ### 22. L2 — Dynamic Type at the largest accessibility size (03-01, 03-02, 03-03, 03-06, 03-11)
 
@@ -353,7 +353,7 @@ Steps: set the largest accessibility size and open each new block: the reschedul
 
 Expected: every block wraps, nothing is clipped, no fixed height, and the 44 pt buttons keep that minimum.
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 23. L3 — "Open in Microsoft Teams" on the smallest iPhone (03-09)
 
@@ -363,7 +363,7 @@ Steps: open a Teams or Google Meet booking's Upcoming details inside the window.
 
 Expected: "Open in Microsoft Teams" (and "Open in Google Meet") stays on **one line**, scaling down only if it would otherwise truncate.
 
-Result:
+Result: SKIPPED (2026-11-22). The user skipped it (needs the smallest iPhone and a Teams or Google Meet booking).
 
 ### 24. Expert shell chat-row item — no client actions, no blank screen (03-12)
 
@@ -380,7 +380,7 @@ Expected:
 - For a booking the user is the **expert** on, the client screen may show its load error ("Couldn't load booking"), because the client endpoint returns 404 for a booking the user did not book as a client. This is pre-existing and outside Phase 3: note it in Result without failing the item.
 - A dual-role user's own client booking opened this way loads, and still shows no client actions in the expert shell.
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 25. T-03-23 — declining a reschedule shows the booking's restored status (quick 261122-tcf)
 
@@ -395,7 +395,7 @@ Expected:
 - Step 2: the pill reads Confirmed.
 - If step 1's booking cannot be set up, record SKIPPED (why) for that step only.
 
-Result:
+Result: PASS (2026-11-22).
 
 ### 26. WR-10 — expert Message errors and second taps; 44 pt reschedule buttons (quick 261122-tcf)
 
@@ -413,13 +413,13 @@ Expected:
 - Step 3: the same single open and the same alert (no spinner on these two).
 - Step 4: Decline and Accept are at least 44 pt tall and easy to hit, and the labels are unchanged.
 
-Result:
+Result: PASS (2026-11-22).
 
 ---
 
 ## Sign-off
 
-- [ ] All items above have a Result.
-- [ ] Item 16 notes the BACK-19 smoke result (or that it is still unrun).
+- [x] All items above have a Result. (2026-11-22)
+- [x] Item 16 notes the BACK-19 smoke result (still unrun).
 - [ ] Phase 2 `02-UAT.md` tests 6-17 run before Phase 8.
 - [ ] Failures logged as gaps for a `/gsd-plan-phase 3 --gaps` pass.

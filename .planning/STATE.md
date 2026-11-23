@@ -513,6 +513,7 @@ Captured todos:
 - [2026-11-16] [android] Android: Phase 6 parity follow-ups (Add hours end of day, off-grid rows, 409, client hub dot) — [todo file](.planning/todos/pending/2026-11-16-android-phase-6-parity-follow-ups.md)
 - [2026-11-16] [ui] Decide how USD renders: `$` (shipped Money table) or `US$` (backend doc and topic editor label) — [todo file](.planning/todos/pending/2026-11-16-usd-symbol-us-dollar-prefix.md)
 - [2026-11-23] [expert-payouts] Add an in-app guide before expert Stripe payout setup (next release, not 1.1) — [todo file](.planning/todos/pending/2026-11-23-add-an-in-app-guide-before-expert-stripe-payout-setup.md)
+- [2026-11-23] [calls] Shorten call overtime to 15 minutes (iOS and Android, 1.2; 1.1 ships with 60) — [todo file](.planning/todos/pending/2026-11-23-shorten-call-overtime-to-15-minutes.md)
 
 ### Blockers/Concerns
 

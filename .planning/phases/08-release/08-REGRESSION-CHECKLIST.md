@@ -200,6 +200,7 @@ Side booking SB1 (a free topic of B):
 
 Side booking SB2 (another free topic slot of B):
 6. As A, book it. As B, **decline** the request **with a note**. The chat row on both phones reads the expert's note, and a known decline reason adds its label line.
+7. **Message Expert from Session Summary (quick 261122-r2o):** as A on the iPhone, open My Bookings, Past, tap SB1 to open its Session Summary and tap **Message Expert**. The Chats tab opens on the conversation with B, showing B's name and avatar, and no alert shows. Go back to the Session Summary and tap Message Expert again: the same conversation opens and the Chats list has no second thread with B.
 
 For every row above, read it on the **iPhone** and on **Android** (see Setup for the Android build). Check that long text wraps fully, shows as plain text (a link or Markdown in the text is not rendered), and reads well under the title.
 
@@ -207,6 +208,7 @@ Expected:
 - All four row types show on both phones: cancel, reschedule note, reschedule decline, request decline.
 - The reschedule-decline push reaches the proposer, and its tap opens the booking detail.
 - A declined reschedule reads **Reschedule Declined**, not **Booking Declined**.
+- Message Expert on a cancelled booking's Session Summary opens the chat with that expert.
 
 Result:
 

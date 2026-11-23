@@ -512,6 +512,7 @@ Captured todos:
 - [2026-11-13] [testing] Flaky test: MakeABookingAvailabilityTests "An older load that lands last writes nothing" — [todo file](.planning/todos/pending/2026-11-13-flaky-make-a-booking-availability-test.md)
 - [2026-11-16] [android] Android: Phase 6 parity follow-ups (Add hours end of day, off-grid rows, 409, client hub dot) — [todo file](.planning/todos/pending/2026-11-16-android-phase-6-parity-follow-ups.md)
 - [2026-11-16] [ui] Decide how USD renders: `$` (shipped Money table) or `US$` (backend doc and topic editor label) — [todo file](.planning/todos/pending/2026-11-16-usd-symbol-us-dollar-prefix.md)
+- [2026-11-23] [expert-payouts] Add an in-app guide before expert Stripe payout setup (next release, not 1.1) — [todo file](.planning/todos/pending/2026-11-23-add-an-in-app-guide-before-expert-stripe-payout-setup.md)
 
 ### Blockers/Concerns
 

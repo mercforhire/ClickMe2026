@@ -156,7 +156,49 @@ The disposition files for Phase 2 and Phase 5 also hold findings marked `open` w
 
 ## Regression results
 
-To be filled by plan 08-22, copied from the Result line of each item R1 to R11 in `08-REGRESSION-CHECKLIST.md`. An empty Result means the item was not run.
+Copied by plan 08-22 Task 3 from the one `Result:` line of each item in `08-REGRESSION-CHECKLIST.md`, word for word, in checklist order (R1 to R11, then the Android section). The Result lines were written by the orchestrator from the user's chat replies during the run (commits `e67896e` to `98d9d87`); the leading `WAIVED (D-33)` token on R1 and R2 was added on 2026-11-23 under D-33 with the rest of each line unchanged. An empty Result means the item was not run.
+
+- **TestFlight build installed:** 1.1 (7), from internal testing (the user reported no other build number).
+- **Backend during the run:** frozen at `1d18aac`; the 08-22 pre-flight read /health = `1d18aac` and tag `v1.1` = `1fdcc26` (2026-11-23). No backend push during the run.
+- **Run date:** 2026-11-23, iPhone client A against Android expert B (R9 with roles swapped).
+
+### Gating items (R1 to R11)
+
+- **R1** (S1: paid in-app voice session, book, pay, join, run past the end, finish (D-04, D-08, D-28, PAY-02, CALL-01)): WAIVED (D-33); SKIPPED in part (2026-11-23): booking, pay (no confirm alert), hold, accept, JOIN CALL, two-way audio and the single capture PASS (pi ...QJ0AJ8 Succeeded CA$5.00 = topic price, no refund, no second payment; Q1 completed/captured after the end + 15 sweep; Past shows completed); end + 10, end + 55 notice, end + 60 auto-end and the auto-end Android teardown NOT RUN: user ended the call at end + 2 (Android hung up when the call was ended by hand). Topic price had no cents (CA$5.00). Open for the 08-24 ruling: rerun on build 7 or accept CallOvertimePolicy unit tests (cutoff moves to 15 min in 1.2 by user decision 2026-11-23)
+- **R2** (S2: free in-app voice session, book, join, run past the end, finish (D-04, CALL-01)): WAIVED (D-33); SKIPPED (2026-11-23): user chose to skip R2 ("skip"); the free in-app voice path and the end + 55 / end + 60 overtime were not run on build 7. Open for the 08-24 ruling together with R1's overtime steps
+- **R3** (S3: one Skype/Zoom session on a free topic, book, join, run past the end, finish (D-04, CALL-06, CALL-07, CALL-08)): PASS (2026-11-23), short run by user decision (run the short items, waive overtime): free Skype/Zoom booking, accept, provider label, Open in {provider} opens the meeting link, elapsed/remaining time, no auto-end promise, End Session closes the screen and Join is gone; end + 55 banner not waited for (waived with the overtime steps). Earlier the same day: SKIPPED ("skip"), then run; end + 55 banner waived (D-33)
+- **R4** (BACK-06: one saved card becomes the default (D-06, BACK-06)): PASS (2026-11-23)
+- **R5** (BACK-07: a removed card's clone is detached and cannot be charged (D-06, BACK-07)): PASS (2026-11-23); Q2 returned the S1 clone row before removal, card removed, clone gone from the connected customer, count 0 afterwards; no hold or charge
+- **R6** (BACK-19 hold release: B cancels a held booking and the PaymentIntent is released (D-06, D-27, BACK-19, BACK-07)): PASS (2026-11-23); pi ...VoLGAu Canceled on the connected account, nothing captured or refunded; in-use card removal blocked; cancel push arrived; captured-refund branch not exercised (D-27)
+- **R7** (Chat reasons, the reschedule-request push and the reschedule-decline push (D-31, G-03-1-ITEM1, G-03-1-ITEM1B, G-03-1-ITEM1C)): PASS (2026-11-23), steps 1-7 as reported by the user ("pass"); covers the blocked Phase 3 item 1 re-test (G-03-1-ITEM1, 1B, 1C) and Message Expert (quick 261122-r2o); Android half on the dev build
+- **R8** (US$ and CA$ prices, and the saved-cards line on Delete Account (D-24, D-23)): PASS on iOS (2026-11-23): US$ and CA$ prices, Delete Account cards line; Android dev build FAIL on step 2: the same page shows US$ but the CAD price has no CA$ prefix (Android Money.pinnedSymbol path, todo 2026-11-23-android-cad-price-missing-ca-prefix); Android Delete Account (step 4) PASS. The Android fault is not in the iOS build; 08-24 to confirm it does not gate the iOS submission
+- **R9** (Liquid Glass readability on iOS 26: Availability Save and the Booking Confirmed chevron and title (D-28, EXP-05, EXP-09)): PASS (2026-11-23) on iOS 26: Availability Save and back chevron, Booking Confirmed chevron and title readable with Reduce Transparency on and with Liquid Glass Tinted. Earlier the same day: SKIPPED ("R9 skipped"), then run
+- **R10** (Resuming signup keeps the verified email ticked, and the flash on resume (D-28, SIGN-02, U4)): PASS (2026-11-23); Verify email ticked and counted in the ring after force-quit and relaunch; slow-network pass SKIPPED (not run); U4 flash decision: KEEP
+- **R11** (End state: every hold released, one capture, nothing else charged (D-11, D-06, D-27)): PASS (2026-11-23); requires_capture count 0; refund_failed/requires_capture query returned no rows; Stripe: R6 ...VoLGAu Canceled, S1 ...QJ0AJ8 one Succeeded capture CA$5.00, nothing else; no other card charge; side bookings cancelled
+
+### Android local-build checks (not gating the iOS submission)
+
+- **A1**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A2**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A3**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A4**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A5**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A6**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A7**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A8**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A9**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A10**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A11**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A12**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A13**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A14**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A15**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A16**: Result empty: not run in this regression (does not gate the iOS submission)
+- **A17**: Result empty: not run in this regression (does not gate the iOS submission)
+
+The Android fault seen in R8 step 2 (CAD price without the `CA$` prefix on the Android dev build) is recorded in R8's Result and as todo `2026-11-23-android-cad-price-missing-ca-prefix`; plan 08-24 rules on whether it gates the iOS submission. R10's U4 flash decision is KEEP.
+
+Regression signed off 2026-11-23; gating items R1-R11 PASS (R1 overtime steps and R2 waived, D-33)
 
 ## Submission
 

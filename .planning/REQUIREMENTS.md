@@ -24,11 +24,11 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 
 ### Client Bookings
 
-- [ ] **BOOK-01** [B1] **[major]**: After a booking request is sent, the user cannot go Back to the form and submit it again
-- [ ] **BOOK-02** [B2]: Changing month in the booking calendar never shows the previous month's availability
-- [ ] **BOOK-03** [B3]: The slots card shows a readable time-zone name, not a raw IANA id
-- [ ] **BOOK-04** [B4]: Slot and Today's Sessions times follow the device's locale (12/24-hour)
-- [ ] **BOOK-05** [B5]: The Request Sent screen's loading copy reads "Loading booking…"
+- [x] **BOOK-01** [B1] **[major]**: After a booking request is sent, the user cannot go Back to the form and submit it again *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truths 3 and 4 (code read: BookingRequestSentView hides Back, BookingRequestSentPopGestureLock; the table cites no test suite); swipe-lock device check (04-UAT test 6) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **BOOK-02** [B2]: Changing month in the booking calendar never shows the previous month's availability *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 7 (MakeABookingAvailabilityTests); month-change device check (04-UAT test 8) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **BOOK-03** [B3]: The slots card shows a readable time-zone name, not a raw IANA id *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 8 (SlotTimeFormatTests); zone-name device check (04-UAT test 9) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **BOOK-04** [B4]: Slot and Today's Sessions times follow the device's locale (12/24-hour) *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 8 (SlotTimeFormatTests); 12/24-hour device toggle (04-UAT test 10) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **BOOK-05** [B5]: The Request Sent screen's loading copy reads "Loading booking…" *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 5 (PaymentLifecycleVariantTests); loading and error device check (04-UAT test 7) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
 - [x] **BOOK-06** [B6] **[crit]**: Client can accept or decline an expert-proposed reschedule from the upcoming-booking flow
 - [x] **BOOK-07** [B7]: The client's cancellation comment is sent with the cancel request (depends on BACK-14 to be stored)
 - [x] **BOOK-08** [B8] **[major]**: The client cancel screen previews the refund the backend will actually give (24-hour rule; a held booking shows as a release) — policy per decision Q2
@@ -42,26 +42,26 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BOOK-16** [B16]: The reschedule picker excludes the booking being moved, returns to where the user started with a confirmation, and its copy is correct for held bookings
 - [x] **BOOK-17** [B17]: Leave a Review appears on the Booking Summary only for completed sessions
 - [x] **BOOK-18** [B18] **[major]**: A realtime `booking.update` with status `rescheduled` (or any unknown status) is decoded and applied, not dropped
-- [ ] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack
+- [x] **BOOK-19** [B19]: A booking started from Favorites or Search doesn't leave Request Sent stuck on that tab's stack *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 6 (HomeShellExitTests); source-tab exit device check (04-UAT test 6) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
 - [x] **BOOK-20** [new, user request 2026-11-10]: The client Booking Summary screen shows the booking ID, on both iOS and Android, in the same short-ID format as Upcoming Booking details (`ID: …`). Android has no ID on this screen today either, so both apps change
 
 ### Payments
 
-- [ ] **PAY-01** [P1] **[major]**: Closing the payment sheet without tapping pay never places a hold — behavior per decision Q4
-- [ ] **PAY-02** [P2] **[major]**: A confirm that times out and is retried sends the user to their pending booking, not "slot taken"
-- [ ] **PAY-03** [P3]: The payment lifecycle card describes what actually happened (hold vs charge), including older long-lead bookings
-- [ ] **PAY-04** [P5]: The stale `TODO(backend): stripe_account` comments are removed
+- [x] **PAY-01** [P1] **[major]**: Closing the payment sheet without tapping pay never places a hold — behavior per decision Q4 *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 1 (code read: MakeABookingStripePaymentSheet, PaymentSheetOutcome; the table cites no test suite); 04-UAT test 1 pass (D-11 step a, sheet close places no hold, 2026-11-12); 08-19-SUMMARY: no code finding)*
+- [x] **PAY-02** [P2] **[major]**: A confirm that times out and is retried sends the user to their pending booking, not "slot taken" *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED in code and unit tests, truths 2 and 19 (MakeABookingPaidFlowTests); 04-UAT test 1 pass (D-11 step d, timed-out confirm plus Try again landed on one booking and one hold, 2026-11-12); form-lock taps (truth 19) not run on device; covered by unit tests plus regression (D-01); R1 recorded no confirm timeout, so no regression item is cited (D-08); 08-19-SUMMARY: no code finding; 3DS retry (04-UAT test 2) not run on device; covered by unit tests only (user decision 2026-11-19): MakeABookingPaidFlowTests, The 3DS retry sends the topic and slot the payment was made for; A 3DS retry with no card left ends the attempt and sends no second confirm)*
+- [x] **PAY-03** [P3]: The payment lifecycle card describes what actually happened (hold vs charge), including older long-lead bookings *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 5 (PaymentLifecycleVariantTests); hold-card device check (04-UAT test 11) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **PAY-04** [P5]: The stale `TODO(backend): stripe_account` comments are removed *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 18 (grep for TODO(backend) returns 0; the table cites no test suite); 08-19-SUMMARY: no code finding)*
 - [x] **PAY-05** [P6]: Paid and free booking paths show the same slot-taken and meeting-link error copy
 
 ### Explore, Profile, Favorites, Reviews
 
-- [ ] **EXPL-01** [X1] **[major]**: An unavailable (404) expert profile shows "This profile isn't available", and network errors show a retry
-- [ ] **EXPL-02** [X2] (likely): Empty Expertise, Topics and Reviews sections are hidden, and zero reviews renders cleanly
-- [ ] **EXPL-03** [X3]: Featured topic cards show "Free" for free topics
-- [ ] **EXPL-04** [X4]: Search result tag pills show their full text
-- [ ] **EXPL-05** [X5] **[major]**: Favorites shows all favorites (paged), its empty-state buttons work, its copy is correct, and favorite state comes from the profile's `is_favorite`
-- [ ] **EXPL-06** [X6]: The full reviews list loads more than 20 reviews (paging)
-- [ ] **EXPL-07** **[major]**: Explore loads when the home feed has a free topic with no currency or one bad featured topic. The free topic shows "Free", a bad topic is dropped alone, a failed load shows readable text, and no stale Featured Topics sit beside section errors
+- [x] **EXPL-01** [X1] **[major]**: An unavailable (404) expert profile shows "This profile isn't available", and network errors show a retry *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 9 (code read: ExpertProfileViewModel 404 mapping; the table cites no test suite; its WR-02 caveat is superseded by WR-09, fixed in aed0c22, 04-REVIEW-DISPOSITION.md); load-error device check (04-UAT test 12) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **EXPL-02** [X2] (likely): Empty Expertise, Topics and Reviews sections are hidden, and zero reviews renders cleanly *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED in code, truth 10 (ExpertProfileSectionsTests); empty-sections device check (04-UAT test 13) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **EXPL-03** [X3]: Featured topic cards show "Free" for free topics *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 11 (ClientHomeFeedTests price rows); 04-UAT test 4 pass (2026-11-12); 08-19-SUMMARY: no code finding)*
+- [x] **EXPL-04** [X4]: Search result tag pills show their full text *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 12 (TopicsSetupFlowLayoutTests); tag-pill device check (04-UAT test 14) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **EXPL-05** [X5] **[major]**: Favorites shows all favorites (paged), its empty-state buttons work, its copy is correct, and favorite state comes from the profile's `is_favorite` *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truths 13 and 14 (the paging tests: FavoritesViewModelPagingTests; its WR-05 caveat is superseded by WR-11, fixed in 753da57, 04-REVIEW-DISPOSITION.md); Favorites device check (04-UAT test 15) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **EXPL-06** [X6]: The full reviews list loads more than 20 reviews (paging) *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md SATISFIED, truth 15 (the paging tests: ExpertReviewsViewModelPagingTests); reviews-paging device check (04-UAT test 16) not run on device; covered by unit tests plus regression (D-01); 08-19-SUMMARY: no code finding)*
+- [x] **EXPL-07** **[major]**: Explore loads when the home feed has a free topic with no currency or one bad featured topic. The free topic shows "Free", a bad topic is dropped alone, a failed load shows readable text, and no stale Featured Topics sit beside section errors *(Closed in Phase 8 under D-01, 2026-11-23: 04-VERIFICATION.md NEEDS HUMAN only for the device re-test, truths 16, 20 and 21 (ClientHomeFeedTests); 04-UAT test 5 pass (G-04-3 pull-to-refresh re-test, 2026-11-13), which resolves test 3's issue (gap G-04-3 resolved by 04-17); 08-19-SUMMARY: no code finding)*
 
 ### Signup and Mode Switch
 
@@ -131,8 +131,8 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BACK-03** [K3]: Expert booking detail and lists expose whether the client left a review (`has_review`)
 - [x] **BACK-04** [K4]: An expert can clear `meeting_url` (null or "")
 - [x] **BACK-05** [K5]: `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol
-- [ ] **BACK-06** [K6]: A lone saved card is made the default *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Closes on the Phase 8 regression evidence (D-06).)*
-- [ ] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Closes on the Phase 8 regression evidence (D-06).)*
+- [x] **BACK-06** [K6]: A lone saved card is made the default *(Closed by the Phase 8 regression (08-REGRESSION-CHECKLIST.md R4, 2026-11-23))*
+- [x] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone *(Closed by the Phase 8 regression (08-REGRESSION-CHECKLIST.md R5, 2026-11-23))*
 - [ ] **BACK-08** [K8]: A client account is never shown the Stripe tax-ID prompt *(Pending, not delivered: wave 3c dropped by user decision 2026-11-08. Code parked on backend branch `wave-3c`. BACK-08 is deferred past this release (D-07): its gate returns 403 on `GET /expert/tax-profile` for client-only accounts, and it ships with BACK-13 once build 6 and the current Android build no longer rely on implicit promotion; the reason is recorded under REL-02. Checkbox stays unticked.)*
 - [x] **BACK-09** [K9]: The join window matches the client rule in CALL-02, and `/bookings/:id/join` checks booking status
 - [x] **BACK-10** [K10]: `POST /bookings/request` validates `duration_minutes` and rejects a past `scheduled_start`
@@ -144,7 +144,7 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
 - [x] **BACK-17** [N1 backend half]: Push payloads carry the routing fields iOS needs (if decision Q6 picks the backend route)
 - [x] **BACK-18** [H7 backend half] **[major]**: Unread counts increment on send and reset on `message.read`
-- [ ] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule *(Pending on purpose: deployed at 3899d63, but the production smoke was not run by user decision on 2026-11-08. Closes on the Phase 8 regression's hold-release evidence plus the mocked captured-refund tests (D-27): a device cannot force a captured refund.)*
+- [x] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule *(Closed by the Phase 8 regression (08-REGRESSION-CHECKLIST.md R6, 2026-11-23); hold release on a device; captured refund on mocked tests, D-27)*
 
 ### Release
 
@@ -189,11 +189,11 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | CALL-08 | Phase 3 | Complete |
 | CALL-09 | Phase 2 | Complete |
 | CALL-10 | Phase 3 | Complete |
-| BOOK-01 | Phase 4 | Gaps Found |
-| BOOK-02 | Phase 4 | Gaps Found |
-| BOOK-03 | Phase 4 | Gaps Found |
-| BOOK-04 | Phase 4 | Gaps Found |
-| BOOK-05 | Phase 4 | Gaps Found |
+| BOOK-01 | Phase 4 | Complete |
+| BOOK-02 | Phase 4 | Complete |
+| BOOK-03 | Phase 4 | Complete |
+| BOOK-04 | Phase 4 | Complete |
+| BOOK-05 | Phase 4 | Complete |
 | BOOK-06 | Phase 3 | Complete |
 | BOOK-07 | Phase 3 | Complete |
 | BOOK-08 | Phase 3 | Complete |
@@ -207,20 +207,20 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BOOK-16 | Phase 3 | Complete |
 | BOOK-17 | Phase 3 | Complete |
 | BOOK-18 | Phase 2 | Complete |
-| BOOK-19 | Phase 4 | Gaps Found |
+| BOOK-19 | Phase 4 | Complete |
 | BOOK-20 | Phase 3 | Complete |
-| PAY-01 | Phase 4 | Gaps Found |
-| PAY-02 | Phase 4 | Gaps Found |
-| PAY-03 | Phase 4 | Gaps Found |
-| PAY-04 | Phase 4 | Gaps Found |
+| PAY-01 | Phase 4 | Complete |
+| PAY-02 | Phase 4 | Complete |
+| PAY-03 | Phase 4 | Complete |
+| PAY-04 | Phase 4 | Complete |
 | PAY-05 | Phase 2 | Complete |
-| EXPL-01 | Phase 4 | Gaps Found |
-| EXPL-02 | Phase 4 | Gaps Found |
-| EXPL-03 | Phase 4 | Pending |
-| EXPL-04 | Phase 4 | Gaps Found |
-| EXPL-05 | Phase 4 | Gaps Found |
-| EXPL-06 | Phase 4 | Gaps Found |
-| EXPL-07 | Phase 4 | Pending |
+| EXPL-01 | Phase 4 | Complete |
+| EXPL-02 | Phase 4 | Complete |
+| EXPL-03 | Phase 4 | Complete |
+| EXPL-04 | Phase 4 | Complete |
+| EXPL-05 | Phase 4 | Complete |
+| EXPL-06 | Phase 4 | Complete |
+| EXPL-07 | Phase 4 | Complete |
 | SIGN-01 | Phase 5 | Complete |
 | SIGN-02 | Phase 5 | Complete |
 | SIGN-03 | Phase 5 | Complete |
@@ -270,8 +270,8 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BACK-03 | Phase 1 | Complete |
 | BACK-04 | Phase 1 | Complete |
 | BACK-05 | Phase 1 | Complete |
-| BACK-06 | Phase 1 | Pending |
-| BACK-07 | Phase 1 | Pending |
+| BACK-06 | Phase 1 | Complete |
+| BACK-07 | Phase 1 | Complete |
 | BACK-08 | Phase 1 | Pending |
 | BACK-09 | Phase 1 | Complete |
 | BACK-10 | Phase 1 | Complete |
@@ -283,7 +283,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BACK-16 | Phase 1 | Complete |
 | BACK-17 | Phase 1 | Complete |
 | BACK-18 | Phase 1 | Complete |
-| BACK-19 | Phase 1 | Pending |
+| BACK-19 | Phase 1 | Complete |
 | REL-01 | Phase 8 | Pending |
 | REL-02 | Phase 8 | Pending |
 
@@ -294,4 +294,4 @@ Which phases cover which requirements. Filled in during roadmap creation.
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-22 — Phase 8 plan 08-15: REL-01 amended (D-01, user-approved 2026-11-19; VoiceOver removed per D-02); BACK-08 deferral reason recorded (D-07); BACK-15 closed on mock and unit-test evidence (D-08); BACK-19, BACK-06 and BACK-07 closing conditions set to the Phase 8 regression evidence (D-27, D-06). Previous: 2026-11-16 — Phase 6 planning: EXP-16 reworded to match 06-CONTEXT D-19 (user decision). Previous: 2026-11-13 — Phase 5: BACK-13 deferred past this release (D-04, reason under REL-02); S2 and T8 moved in (D-05 to D-07, D-14)*
+*Last updated: 2026-11-23 — Phase 8 plan 08-22: BACK-06, BACK-07 and BACK-19 closed on the signed-off 1.1 (7) regression (R4, R5, R6; D-06, D-27); the 17 Phase 4 rows closed under D-01 on their 04-VERIFICATION.md evidence (PAY-02's 3DS retry on unit tests only, user decision 2026-11-19); R1 overtime and R2 waived (D-33). Previous: 2026-11-22 — Phase 8 plan 08-15: REL-01 amended (D-01, user-approved 2026-11-19; VoiceOver removed per D-02); BACK-08 deferral reason recorded (D-07); BACK-15 closed on mock and unit-test evidence (D-08); BACK-19, BACK-06 and BACK-07 closing conditions set to the Phase 8 regression evidence (D-27, D-06). Previous: 2026-11-16 — Phase 6 planning: EXP-16 reworded to match 06-CONTEXT D-19 (user decision). Previous: 2026-11-13 — Phase 5: BACK-13 deferred past this release (D-04, reason under REL-02); S2 and T8 moved in (D-05 to D-07, D-14)*

@@ -243,7 +243,7 @@ Expected:
 - In both settings, the `Save` label and the back chevron on Availability are readable (not white on white).
 - In both settings, the back chevron and the `Booking Confirmed` title are readable.
 
-Result:
+Result: SKIPPED (2026-11-23): user chose to skip R9 ("R9 skipped", no reason given); Liquid Glass readability of Availability Save and the Booking Confirmed chevron and title not checked on build 7. Open for the 08-24 ruling
 
 ### R10. Resuming signup keeps the verified email ticked, and the flash on resume (D-28, SIGN-02, U4)
 
@@ -272,7 +272,7 @@ Fill one row per PaymentIntent placed in the whole run (R1, R6, and any orphan o
 |------|--------------------|-------------|--------------|----------------------|------|
 | R6 | 1ea3dac8 | VoLGAu | released (B cancel) | Canceled, nothing captured or refunded | 2026-11-23 |
 | R1 (S1) | c4c574b4 | QJ0AJ8 | captured once, session completed | Succeeded CA$5.00, no refund, only payment | 2026-11-23 |
-| Stray or orphan hold | | | | | |
+| Stray or orphan hold | none | - | - | none found | 2026-11-23 |
 
 Then run both of these in the Supabase SQL editor. They cover the whole account, so a row may be an older booking; say which in Result:
 
@@ -295,7 +295,7 @@ Expected:
 - No charge on your card other than S1's (a bank's pending line that later drops off is fine).
 - Saved cards are how you want them.
 
-Result:
+Result: PASS (2026-11-23); requires_capture count 0; refund_failed/requires_capture query returned no rows; Stripe: R6 ...VoLGAu Canceled, S1 ...QJ0AJ8 one Succeeded capture CA$5.00, nothing else; no other card charge; side bookings cancelled
 
 ## Android local-build checks (not gating the iOS submission)
 

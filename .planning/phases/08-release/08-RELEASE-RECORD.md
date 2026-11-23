@@ -114,6 +114,7 @@ The accessibility steps below were dropped from the device checklists at the use
 
 - **BACK-15** (D-08): closed on its mock and unit-test evidence. A phone cannot force a same-`booking_attempt_id` retry, so no device check can prove the confirm replay. PAY-02's iOS handling is covered by the regression run only if a timeout happens to occur (R1 records what the app did if one does).
 - **BACK-19, captured-refund branch** (D-27): the held-booking release is checked on a real PaymentIntent in the regression run (R6). The captured-refund branch is not exercised on a device, because a device cannot force a captured refund. It stays covered by the mocked captured-refund tests. BACK-19 closes on the hold-release evidence plus those mocked tests.
+- **R1 overtime steps and R2** (D-33, user decision 2026-11-23, verbatim: "Run short ones, waive overtime (Recommended)"): on build 1.1 (7), R1's end + 10, end + 55 notice, end + 60 auto-end and the Android teardown at the auto-end, and the whole of R2 (free in-app voice session), are waived, not run on device. Evidence in their place: `ClickMe2026Tests/Utils/CallOvertimePolicyTests.swift` plus code review, the Phase 2 device run (`02-UAT.md`: call still connected at end + 11), R1's PASS of the paid in-app path, and the overtime moving to 15 minutes in 1.2 (todo `2026-11-23-shorten-call-overtime-to-15-minutes`). R3's short run, without the end + 55 banner, is accepted under the same decision.
 
 ## Deferred with reason
 

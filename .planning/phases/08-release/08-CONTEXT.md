@@ -103,6 +103,10 @@ The phase starts from this state, as of 2026-11-19:
 - **D-31:** The reschedule-decline push (ITEM1C) goes to the proposer with `sub_category: 'reschedules'`, so iOS routes it to `bookingDetail`. Request declines keep `declines`. The regression run checks the route on a device.
 - **D-32:** For D-24 on Android, override only the currency symbol (`US$` / `CA$`) via `DecimalFormatSymbols`, and keep locale placement and grouping. Update the 6 `Locale.US` rows in `MoneyTest.kt`. Full iOS parity is logged as a follow-up.
 
+### Decisions made during the regression run (2026-11-23)
+- **D-33:** For build 1.1 (7), R1's overtime steps (end + 10, the end + 55 notice, the end + 60 auto-end, and the Android teardown at the auto-end) and R2 (the free in-app voice session) are **waived**. The user chose this option verbatim on 2026-11-23: "Run short ones, waive overtime (Recommended)". Evidence in their place: `ClickMe2026Tests/Utils/CallOvertimePolicyTests.swift` plus code review; the Phase 2 device run (`02-UAT.md`: call still connected at end + 11); R1's PASS of the paid in-app path (book, pay, hold, accept, join, two-way audio, one capture); and the overtime is being changed to 15 minutes in 1.2 (todo `2026-11-23-shorten-call-overtime-to-15-minutes`). R3's short run (no wait for the end + 55 banner) is accepted under the same decision. A Result line that starts with `WAIVED (D-33)` counts as passing for R1 and R2 only; every other gating item must still start with PASS, and FAIL or SKIPPED still routes to D-09. This amends D-04 and D-28 for build 1.1 (7) only.
+  - **Reversibility:** reversible: R1's overtime steps and R2 can still be run on build 7 or a later build.
+
 ### Claude's Discretion
 - How the remaining work is grouped into plans and waves:
   - the Phase 3 gaps: backend first, then iOS and Android display;

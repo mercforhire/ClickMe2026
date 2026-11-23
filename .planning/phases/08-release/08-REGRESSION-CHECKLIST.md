@@ -86,7 +86,7 @@ Expected:
 
 Write the Android `call.ended` observation as a note **inside** this item's one Result line, after the status, for example `PASS (2026-11-24); Android tore down at end + 61`. Do not add a second Result line.
 
-Result: SKIPPED in part (2026-11-23): booking, pay (no confirm alert), hold, accept, JOIN CALL, two-way audio and the single capture PASS (pi ...QJ0AJ8 Succeeded CA$5.00 = topic price, no refund, no second payment; Q1 completed/captured after the end + 15 sweep; Past shows completed); end + 10, end + 55 notice, end + 60 auto-end and the auto-end Android teardown NOT RUN: user ended the call at end + 2 (Android hung up when the call was ended by hand). Topic price had no cents (CA$5.00). Open for the 08-24 ruling: rerun on build 7 or accept CallOvertimePolicy unit tests (cutoff moves to 15 min in 1.2 by user decision 2026-11-23)
+Result: WAIVED (D-33); SKIPPED in part (2026-11-23): booking, pay (no confirm alert), hold, accept, JOIN CALL, two-way audio and the single capture PASS (pi ...QJ0AJ8 Succeeded CA$5.00 = topic price, no refund, no second payment; Q1 completed/captured after the end + 15 sweep; Past shows completed); end + 10, end + 55 notice, end + 60 auto-end and the auto-end Android teardown NOT RUN: user ended the call at end + 2 (Android hung up when the call was ended by hand). Topic price had no cents (CA$5.00). Open for the 08-24 ruling: rerun on build 7 or accept CallOvertimePolicy unit tests (cutoff moves to 15 min in 1.2 by user decision 2026-11-23)
 
 ### R2. S2: free in-app voice session, book, join, run past the end, finish (D-04, CALL-01)
 
@@ -104,7 +104,7 @@ Expected:
 - No payment sheet, no hold and no charge at any point. Q1 shows no PaymentIntent for the booking, and the Dashboard shows no new payment.
 - Join, the end + 55 notice and the end + 60 automatic end behave exactly as in R1.
 
-Result: SKIPPED (2026-11-23): user chose to skip R2 ("skip"); the free in-app voice path and the end + 55 / end + 60 overtime were not run on build 7. Open for the 08-24 ruling together with R1's overtime steps
+Result: WAIVED (D-33); SKIPPED (2026-11-23): user chose to skip R2 ("skip"); the free in-app voice path and the end + 55 / end + 60 overtime were not run on build 7. Open for the 08-24 ruling together with R1's overtime steps
 
 ### R3. S3: one Skype/Zoom session on a free topic, book, join, run past the end, finish (D-04, CALL-06, CALL-07, CALL-08)
 
@@ -123,7 +123,7 @@ Expected:
 - The `end + 55` banner shows, **Open in {provider}** opens B's meeting link, and **End Session** closes the screen.
 - Q1 and the Dashboard show no payment for this booking.
 
-Result: PASS (2026-11-23), short run by user decision (run the short items, waive overtime): free Skype/Zoom booking, accept, provider label, Open in {provider} opens the meeting link, elapsed/remaining time, no auto-end promise, End Session closes the screen and Join is gone; end + 55 banner not waited for (waived with the overtime steps). Earlier the same day: SKIPPED ("skip"), then run
+Result: PASS (2026-11-23), short run by user decision (run the short items, waive overtime): free Skype/Zoom booking, accept, provider label, Open in {provider} opens the meeting link, elapsed/remaining time, no auto-end promise, End Session closes the screen and Join is gone; end + 55 banner not waited for (waived with the overtime steps). Earlier the same day: SKIPPED ("skip"), then run; end + 55 banner waived (D-33)
 
 ### R4. BACK-06: one saved card becomes the default (D-06, BACK-06)
 

@@ -18,7 +18,6 @@ struct BookingSummaryView: View {
     /// `nil` is passed if the seed isn't ready yet (fetch pending or missing
     /// `expert.id`) — callers typically no-op in that case.
     var onBookAgain: (BookAgainSeed?) -> Void
-    var onMessageExpert: () -> Void
     /// Override for Leave a Review. `nil` means the screen pushes
     /// `HomeRoute.writeReview` on the tab's path, and hides the button in a
     /// shell that does not host the client flows. My Bookings passes its own.
@@ -32,6 +31,7 @@ struct BookingSummaryView: View {
 
     @Environment(\.homeNavigationPath) private var homeNavigationPath
     @Environment(\.hostsClientBookingFlows) private var hostsClientBookingFlows
+    @Environment(\.openChatThread) private var openChatThread
 
     @State private var showAcceptRescheduleConfirmation: Bool = false
     @State private var showDeclineReschedulePrompt: Bool = false
@@ -44,13 +44,11 @@ struct BookingSummaryView: View {
     init(
         bookingId: UUID,
         onBookAgain: @escaping (BookAgainSeed?) -> Void = { _ in },
-        onMessageExpert: @escaping () -> Void = {},
         onLeaveReview: (() -> Void)? = nil,
         onOpenPrivateNote: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: BookingSummaryViewModel(bookingId: bookingId))
         self.onBookAgain = onBookAgain
-        self.onMessageExpert = onMessageExpert
         self.onLeaveReview = onLeaveReview
         self.onOpenPrivateNote = onOpenPrivateNote
     }
@@ -59,13 +57,11 @@ struct BookingSummaryView: View {
     init(
         viewModel: BookingSummaryViewModel,
         onBookAgain: @escaping (BookAgainSeed?) -> Void = { _ in },
-        onMessageExpert: @escaping () -> Void = {},
         onLeaveReview: (() -> Void)? = nil,
         onOpenPrivateNote: @escaping () -> Void = {}
     ) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.onBookAgain = onBookAgain
-        self.onMessageExpert = onMessageExpert
         self.onLeaveReview = onLeaveReview
         self.onOpenPrivateNote = onOpenPrivateNote
     }
@@ -135,6 +131,18 @@ struct BookingSummaryView: View {
         } message: { message in
             Text(message)
         }
+        .alert(
+            "Couldn't start chat",
+            isPresented: Binding(
+                get: { viewModel.apiError != nil },
+                set: { if !$0 { viewModel.apiError = nil } }
+            ),
+            presenting: viewModel.apiError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
         .keyboardDismissToolbar()
     }
 
@@ -193,7 +201,8 @@ struct BookingSummaryView: View {
 
                 BookingSummaryActions(
                     onBookAgain: { onBookAgain(bookAgainSeed) },
-                    onMessageExpert: onMessageExpert
+                    onMessageExpert: messageExpertTapped,
+                    isMessageBusy: viewModel.isStartingChat
                 )
                 .padding(.top, 16)
 
@@ -293,6 +302,24 @@ struct BookingSummaryView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    /// Opens the chat with the booking's expert on the shell's Chats tab. The screen does this
+    /// itself because no caller ever wired the old message closure; going through the shell's
+    /// `openChatThread` action makes My Bookings Past and both shells' `HomeRoute.bookingSummary`
+    /// work with no call-site change. `initiateChat` is idempotent, so a repeat tap lands on the
+    /// same thread. A failure raises the alert through `viewModel.apiError`. Does nothing outside
+    /// a shell (previews), where no action is installed.
+    private func messageExpertTapped() {
+        guard let openChatThread else { return }
+        Task {
+            guard let threadId = await viewModel.startChat() else { return }
+            openChatThread(
+                threadId: threadId,
+                peerName: viewModel.expertName,
+                peerAvatarURL: viewModel.expertImageURL
+            )
+        }
     }
 
     /// Runs the caller's `onLeaveReview`, or pushes `HomeRoute.writeReview` on

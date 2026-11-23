@@ -4,6 +4,7 @@
 //
 //  BOOK-06: Booking Summary answers an expert-proposed reschedule through the
 //  shared `RescheduleResponder` (D-01) and updates in place (D-03).
+//  Message Expert opens the chat through POST /chats/initiate (quick 261122-r2o).
 //
 
 import Foundation
@@ -386,6 +387,161 @@ struct BookingSummaryViewModelTests {
             extraFields: #""decline_reason_code":"PRICING","decline_reason_text":"Too low""#
         )
         #expect(vm.declineNote == nil)
+    }
+
+    // MARK: Message Expert (quick 261122-r2o)
+
+    nonisolated private static let threadId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+
+    nonisolated private static var initiateSuccess: Data {
+        Data(#"{"status":"success","data":{"thread_id":"\#(threadId)","created_at":null}}"#.utf8)
+    }
+
+    private func initiatePosts() -> [URLRequest] {
+        MockURLProtocol.recordedRequests.filter {
+            $0.httpMethod == "POST" && $0.url?.path.hasSuffix("/chats/initiate") == true
+        }
+    }
+
+    /// Serves a cancelled booking's detail and review context, and hands every `POST /chats/initiate` to `onInitiate`.
+    private func messageAPI(
+        onInitiate: @escaping @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
+    ) -> ClickMeAPI {
+        let path = detailPath
+        let detail = Fixtures.detailJSON(status: "cancelled")
+        let review = Self.reviewContextJSON(hasSubmitted: false)
+        return APITestFactory.make { request in
+            let requestPath = request.url?.path ?? ""
+            if request.httpMethod == "POST", requestPath.hasSuffix("/chats/initiate") {
+                return try onInitiate(request)
+            }
+            if requestPath.hasSuffix("/reviews/context") {
+                return Fixtures.response(for: request, body: review)
+            }
+            if requestPath.hasSuffix(path) {
+                return Fixtures.response(for: request, body: detail)
+            }
+            return Fixtures.response(for: request, status: 404, body: Fixtures.errorBody(code: "NOT_FOUND"))
+        }
+    }
+
+    @Test("Message Expert sends one POST /chats/initiate with the expert's peer_id and returns the thread")
+    func messageExpertReturnsThread() async throws {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: messageAPI { request in
+                Fixtures.response(for: request, status: 201, body: Self.initiateSuccess)
+            }
+        )
+        await vm.load()
+
+        let thread = await vm.startChat()
+
+        #expect(thread == UUID(uuidString: Self.threadId))
+        #expect(vm.apiError == nil)
+        #expect(!vm.isStartingChat)
+        let posts = initiatePosts()
+        #expect(posts.count == 1)
+        let body = try #require(posts.first?.jsonBodyForTest())
+        #expect((body["peer_id"] as? String)?.lowercased() == Fixtures.expertId)
+    }
+
+    @Test("Message Expert shows the server's message when the request fails")
+    func messageExpertServerError() async {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: messageAPI { request in
+                Fixtures.response(
+                    for: request,
+                    status: 500,
+                    body: Fixtures.errorBody(code: "INTERNAL_ERROR", message: "Server exploded")
+                )
+            }
+        )
+        await vm.load()
+
+        let thread = await vm.startChat()
+
+        #expect(thread == nil)
+        #expect(vm.apiError == "Server exploded")
+        #expect(!vm.isStartingChat)
+    }
+
+    @Test("Message Expert reads a 404 NOT_FOUND as an unavailable user")
+    func messageExpertUnavailable() async {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: messageAPI { request in
+                Fixtures.response(
+                    for: request,
+                    status: 404,
+                    body: Fixtures.errorBody(code: "NOT_FOUND", message: "User not found.")
+                )
+            }
+        )
+        await vm.load()
+
+        let thread = await vm.startChat()
+
+        #expect(thread == nil)
+        #expect(vm.apiError == ExpertProfileBlockViewModel.unavailableMessage)
+    }
+
+    @Test("a second Message Expert tap while the first request runs sends no second POST")
+    func messageExpertIgnoresSecondTap() async {
+        let gate = RequestGate()
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: messageAPI { request in
+                gate.waitIfArmed()
+                return Fixtures.response(for: request, status: 201, body: Self.initiateSuccess)
+            }
+        )
+        await vm.load()
+
+        gate.arm()
+        let first = Task { await vm.startChat() }
+        await waitUntil("the POST /chats/initiate") { initiatePosts().count == 1 }
+        #expect(vm.isStartingChat)
+        let second = await vm.startChat()
+        #expect(second == nil)
+        gate.open()
+
+        let thread = await first.value
+        #expect(thread == UUID(uuidString: Self.threadId))
+        #expect(initiatePosts().count == 1)
+        #expect(!vm.isStartingChat)
+    }
+
+    @Test("Message Expert before the detail loads sends nothing and shows no alert")
+    func messageExpertWithoutExpertId() async {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: messageAPI { request in
+                Fixtures.response(for: request, status: 201, body: Self.initiateSuccess)
+            }
+        )
+
+        let thread = await vm.startChat()
+
+        #expect(thread == nil)
+        #expect(initiatePosts().isEmpty)
+        #expect(vm.apiError == nil)
+    }
+
+    @Test("a cancelled Message Expert request returns nil with no alert")
+    func messageExpertCancellationShowsNoAlert() async {
+        let vm = BookingSummaryViewModel(
+            bookingId: bookingUUID,
+            api: messageAPI { _ in throw URLError(.cancelled) }
+        )
+        await vm.load()
+
+        let thread = await vm.startChat()
+
+        #expect(thread == nil)
+        #expect(vm.apiError == nil)
+        #expect(!vm.isStartingChat)
     }
 
     // MARK: Preview seam

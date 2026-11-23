@@ -13,6 +13,8 @@ import SwiftUI
 struct BookingSummaryActions: View {
     let onBookAgain: () -> Void
     let onMessageExpert: () -> Void
+    /// True while the chat with the expert is being started: the button shows a spinner and is disabled.
+    var isMessageBusy: Bool = false
 
     var body: some View {
         VStack(spacing: 14) {
@@ -44,8 +46,13 @@ struct BookingSummaryActions: View {
     private var messageExpertButton: some View {
         Button(action: onMessageExpert) {
             HStack(spacing: 8) {
-                Image(systemName: "bubble.left")
-                    .font(.title3.weight(.regular))
+                if isMessageBusy {
+                    ProgressView()
+                        .tint(BookingSummaryBrand.brandGreen)
+                } else {
+                    Image(systemName: "bubble.left")
+                        .font(.title3.weight(.regular))
+                }
                 Text("Message Expert")
                     .font(.brand(.callout, weight: .bold))
             }
@@ -62,5 +69,6 @@ struct BookingSummaryActions: View {
             )
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(isMessageBusy)
     }
 }

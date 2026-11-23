@@ -398,6 +398,41 @@ final class BookingSummaryViewModel: ObservableObject {
         return "\(dateString) • \(startTime) - \(endTime)"
     }
 
-    // MARK: - Error mapping
+    // MARK: - Message Expert
 
+    /// True while `POST /chats/initiate` runs. The Message Expert button shows a
+    /// spinner and is disabled, and `startChat()` ignores repeat calls while it is set.
+    @Published private(set) var isStartingChat = false
+
+    /// Text for the "Couldn't start chat" alert; nil when there is no error. Separate
+    /// from `responder.apiError`, which drives the reschedule alert.
+    @Published var apiError: String?
+
+    /// Gets or creates the chat thread with this booking's expert (`POST /chats/initiate`).
+    /// The expert id comes from the loaded booking detail.
+    ///
+    /// - Returns: The thread id, or nil when there is nothing to open: the detail has not
+    ///   loaded or this is the preview seed (no expert id), a chat is already being started
+    ///   (this call does nothing), the call failed (`apiError` then holds the text for the
+    ///   alert), or the task was cancelled (the screen went away, which is not an error).
+    func startChat() async -> UUID? {
+        guard let expertId, !isStartingChat else { return nil }
+        isStartingChat = true
+        defer { isStartingChat = false }
+        apiError = nil
+        do {
+            return try await api.initiateChat(peerId: expertId).data.threadId
+        } catch {
+            guard !error.isCancellation else { return nil }
+            // The backend answers 404 for a new thread with a suspended or removed expert.
+            if case NetworkError.httpError(let statusCode, _) = error, statusCode == 404 {
+                apiError = ExpertProfileBlockViewModel.unavailableMessage
+            } else if BookingErrorMapper.code(for: error) == .notFound {
+                apiError = ExpertProfileBlockViewModel.unavailableMessage
+            } else {
+                apiError = error.userMessage
+            }
+            return nil
+        }
+    }
 }

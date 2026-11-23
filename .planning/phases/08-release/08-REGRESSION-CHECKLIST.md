@@ -211,7 +211,7 @@ Expected:
 - A declined reschedule reads **Reschedule Declined**, not **Booking Declined**.
 - Message Expert on a cancelled booking's Session Summary opens the chat with that expert.
 
-Result:
+Result: PASS (2026-11-23), steps 1-7 as reported by the user ("pass"); covers the blocked Phase 3 item 1 re-test (G-03-1-ITEM1, 1B, 1C) and Message Expert (quick 261122-r2o); Android half on the dev build
 
 ### R8. US$ and CA$ prices, and the saved-cards line on Delete Account (D-24, D-23)
 
@@ -227,7 +227,7 @@ Expected:
 - The USD price starts with `US$` and the CAD price starts with `CA$`, with the same digits as before and no other change to the amount.
 - The Delete Account confirmation step shows the line "Cards you added to pay for sessions are not deleted with your account." after the three groups, and says nothing that claims payment details or bookings are removed.
 
-Result:
+Result: PASS on iOS (2026-11-23): US$ and CA$ prices, Delete Account cards line; Android dev build FAIL on step 2: the same page shows US$ but the CAD price has no CA$ prefix (Android Money.pinnedSymbol path, todo 2026-11-23-android-cad-price-missing-ca-prefix); Android Delete Account (step 4) PASS. The Android fault is not in the iOS build; 08-24 to confirm it does not gate the iOS submission
 
 ### R9. Liquid Glass readability on iOS 26: Availability Save and the Booking Confirmed chevron and title (D-28, EXP-05, EXP-09)
 

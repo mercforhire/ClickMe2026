@@ -514,6 +514,7 @@ Captured todos:
 - [2026-11-16] [ui] Decide how USD renders: `$` (shipped Money table) or `US$` (backend doc and topic editor label) — [todo file](.planning/todos/pending/2026-11-16-usd-symbol-us-dollar-prefix.md)
 - [2026-11-23] [expert-payouts] Add an in-app guide before expert Stripe payout setup (next release, not 1.1) — [todo file](.planning/todos/pending/2026-11-23-add-an-in-app-guide-before-expert-stripe-payout-setup.md)
 - [2026-11-23] [calls] Shorten call overtime to 15 minutes (iOS and Android, 1.2; 1.1 ships with 60) — [todo file](.planning/todos/pending/2026-11-23-shorten-call-overtime-to-15-minutes.md)
+- [2026-11-23] [android] Android: CAD price shows no CA$ prefix on the dev build (08-22 R8) — [todo file](.planning/todos/pending/2026-11-23-android-cad-price-missing-ca-prefix.md)
 
 ### Blockers/Concerns
 

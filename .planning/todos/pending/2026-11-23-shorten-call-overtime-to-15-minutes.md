@@ -7,7 +7,8 @@ files:
   - ClickMe2026/Utils/CallOvertimePolicy.swift:34
   - ClickMe2026/Views/Screens/Call/Calling/MeetingCallViewModel.swift:382
   - ClickMe2026/Views/Screens/Call/Calling/MeetingCallView.swift:207
-  - ClickMe_Android app/src/test/java/com/uptrendinvestments/clickmeapp/managers/CallTimerTest.kt:91 (OVERTIME_CUTOFF_SECONDS)
+  - ClickMe_Android app/src/main/java/com/uptrendinvestments/clickmeapp/managers/CallTimer.kt:12 (OVERTIME_CUTOFF_SECONDS = 3600L)
+  - ClickMe_Android app/src/test/java/com/uptrendinvestments/clickmeapp/managers/CallTimerTest.kt:91
   - ../ClickMe2026 Backend/docs/ios/CALL-END-SEMANTICS.md
 ---
 

@@ -73,8 +73,9 @@ blocked: 1
 - gap_id: G-03-1-ITEM1
   truth: "When the expert proposes a new time, the client's push reads as a reschedule request awaiting their response, not as a completed reschedule"
   status: resolved
-  resolved_by: 08-02-PLAN.md
+  resolved_by: "08-02-PLAN.md, 08-08-PLAN.md"
   resolved_at: 2026-11-22
+  device_confirmed: "08-REGRESSION-CHECKLIST.md R7 PASS on 1.1 (7), 2026-11-23 (recorded by plan 08-24)"
   resolution_note: "Cross-phase: fixed by Phase 8 plan 08-02 (backend 162f1d7, proposal push reads Reschedule Requested), deployed to production 2026-11-20 in 08-08 (412f1aa). Recorded by user decision 2026-11-22."
   reason: "User reported: Note a bug for the backend. The notification received on phone A says \"booking has been rescheduled,\" but it should word it as a reschedule request of some sort."
   severity: minor
@@ -94,8 +95,9 @@ blocked: 1
     - "BOOKING_RESCHEDULED event_data has no proposed time"
     - "Reschedule decline with no reason is indistinguishable from a request decline (both BOOKING_DECLINED)"
   status: resolved
-  resolved_by: 08-07-PLAN.md
+  resolved_by: "08-02-PLAN.md, 08-07-PLAN.md, 08-03-PLAN.md"
   resolved_at: 2026-11-22
+  device_confirmed: "08-REGRESSION-CHECKLIST.md R7 PASS on 1.1 (7), 2026-11-23 (recorded by plan 08-24)"
   resolution_note: "Cross-phase: backend 94d659b (08-02, deployed 2026-11-20 in 08-08), iOS chat rows 08-07 (4ada6e7, a153d4c; ships in the Phase 8 build), Android 8aaee356. Recorded by user decision 2026-11-22."
   reason: "User reported: For step, the decline message of the emoji cannot be seen by the other user because the UI does not display the reason for the decline, nor is it added to the chat."
   severity: major
@@ -150,8 +152,9 @@ blocked: 1
 - gap_id: G-03-1-ITEM1C
   truth: "When a proposed new time is declined, the push goes to the party who proposed it (the non-decliner), never to the person who declined"
   status: resolved
-  resolved_by: 08-02-PLAN.md
+  resolved_by: "08-02-PLAN.md, 08-08-PLAN.md"
   resolved_at: 2026-11-22
+  device_confirmed: "08-REGRESSION-CHECKLIST.md R7 PASS on 1.1 (7), 2026-11-23 (recorded by plan 08-24)"
   resolution_note: "Cross-phase: fixed by Phase 8 plan 08-02 (backend 162f1d7, reschedule declines notify the proposer), deployed to production 2026-11-20 in 08-08. Recorded by user decision 2026-11-22."
   reason: "User reported: log the decline-push bug (found in backend code 2026-11-19 while fixing G-03-1-ITEM1B: a client declining the expert's proposed time gets the 'Booking Declined' push themselves; the expert gets nothing)"
   severity: major

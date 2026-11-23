@@ -276,3 +276,48 @@ Plan: reuse the App Review Information that passed for 1.0 in App Store Connect 
 6. Version Release: "Automatically release this version"; Phased Release off (D-21).
 7. Add for Review, then Submit. Do not add an external TestFlight group or use Beta App Review (D-20).
 8. Report the submission time and the status App Store Connect shows (for example "Waiting for Review").
+
+## Closeout
+
+Written by plan 08-24 on 2026-11-23, after the submission. Every tick below names the evidence it rests on. Nothing here records a not-run or removed item as passed.
+
+### Requirement ticks in Phase 8
+
+- **BACK-06** (lone saved card becomes the default): ticked by plan 08-22 on R4 PASS (2026-11-23) (D-06).
+- **BACK-07** (a deleted card's connected-account clone can no longer be charged): ticked by plan 08-22 on R5 PASS (2026-11-23); the in-use removal block was checked inside R6 (D-06).
+- **BACK-19** (expert cancel always refunds in full or releases the hold): ticked by plan 08-22 on R6 PASS (2026-11-23, hold released on a real PaymentIntent `...VoLGAu`); the captured-refund branch closes on the mocked captured-refund tests, not on a device (D-27).
+- **BACK-15** (same `booking_attempt_id` replays the original result): ticked by plan 08-15 on mock and unit-test evidence (D-08); a phone cannot force the retry.
+- **The 17 Phase 4 rows**, ticked by plan 08-22 under D-01 on their 04-VERIFICATION.md evidence plus the signed-off regression, each with a dated "Closed in Phase 8 under D-01, 2026-11-23" note in REQUIREMENTS.md and "08-19-SUMMARY: no code finding":
+  - BOOK-01 (truths 3 and 4, swipe lock not run on device), BOOK-02 (MakeABookingAvailabilityTests), BOOK-03 and BOOK-04 (SlotTimeFormatTests), BOOK-05 (PaymentLifecycleVariantTests), BOOK-19 (HomeShellExitTests)
+  - PAY-01 (04-UAT test 1 pass, D-11 step a, 2026-11-12), PAY-02 (MakeABookingPaidFlowTests; 04-UAT test 1 pass, D-11 step d; the 3DS retry, 04-UAT test 2, on unit tests only by user decision 2026-11-19), PAY-03 (PaymentLifecycleVariantTests), PAY-04 (grep for `TODO(backend)` returns 0)
+  - EXPL-01 (404 mapping, WR-09 fix `aed0c22`), EXPL-02 (ExpertProfileSectionsTests), EXPL-03 (04-UAT test 4 pass, 2026-11-12), EXPL-04 (TopicsSetupFlowLayoutTests), EXPL-05 (FavoritesViewModelPagingTests, WR-11 fix `753da57`), EXPL-06 (ExpertReviewsViewModelPagingTests), EXPL-07 (ClientHomeFeedTests; 04-UAT test 5 pass, the G-04-3 pull-to-refresh re-test on device, 2026-11-13)
+- **REL-01** (as amended by D-01): ticked by plan 08-24 on the regression sign-off line above ("Regression signed off 2026-11-23; gating items R1-R11 PASS (R1 overtime steps and R2 waived, D-33)").
+- **REL-02**: ticked by plan 08-24 on the submission above (1.1 (7), submitted 2026-11-23 18:41 EST, Waiting for Review), with backend X1 and X2 live before the cut and production frozen at `1d18aac`.
+
+### Phase 4 rows deferred under D-03
+
+None. All 17 Phase 4 rows were ticked by plan 08-22; no row was deferred, so no D-03 reason is needed.
+
+### Rulings recorded at closeout
+
+- **R1 overtime steps and R2** (D-33, user, 2026-11-23): waived for 1.1 (7), not run on device. Evidence in their place: `ClickMe2026Tests/Utils/CallOvertimePolicyTests.swift`, R1's PASS of the paid in-app path and the Phase 2 device run. The overtime moves to 15 minutes in 1.2 (todo `2026-11-23-shorten-call-overtime-to-15-minutes`). This answers the "open for the 08-24 ruling" note in the R1 and R2 Result lines.
+- **R8 Android CA$ fault**: Android-only (the Android `Money.pinnedSymbol` path on the dev build); iOS showed US$ and CA$ correctly and the fault is not in the iOS build, so it does not gate the iOS submission. It stays open as an Android follow-up, todo `2026-11-23-android-cad-price-missing-ca-prefix`.
+- **R10 U4 flash on resume**: user decision KEEP (2026-11-23). R10's slow-network pass was skipped and is not run; it is not recorded as passed.
+
+### Still open, and why
+
+- **BACK-08 and BACK-13**: deferred past this release (D-07, Phase 5 D-04); reasons under "Deferred with reason" above. Code parked on backend branch `wave-3c`.
+- **Open review infos** (Phase 3 IN-01 to IN-06, Phase 6 IN-08): deferred with the reasons in the table above (D-03 allows it for info findings).
+- **Other open review findings for Phases 2 and 5** (listed above with no reason): still open. No reason is invented here; each needs the user's decision (fix, defer with a reason, or accept).
+- **Phase 3 WR-01** (03-REVIEW.md: the Booking Summary PAID label on cancelled, declined or expired paid sessions): the user decided on 2026-11-22 that paid rows keep PAID; the review raised the never-charged statuses after that decision. Still open for the user's ruling (accept as is, or change in 1.2); it is not recorded as covered by the regression.
+- **Android local-build section (A1 to A17)**: not run in this regression and does not gate the iOS submission. The Android release is not part of this phase.
+- **Backlog 999.3** (a maximum topic price): stays in the backlog (see Backlog dispositions).
+- **1.2 todos**: `2026-11-23-shorten-call-overtime-to-15-minutes` and `2026-11-23-add-an-in-app-guide-before-expert-stripe-payout-setup`.
+- **Follow-up note, toolchain**: App Store Connect returned an ITMS-90725 warning on the build 7 upload. Builds uploaded from April 2027 must use Xcode 27 and the iOS 27 SDK, so the release workflow (`XCODE_VERSION: '26'`, `macos-26` runners) needs the upgrade before then. Recorded here as a note, not a todo.
+- **App Review**: Waiting for Review at the time of writing; the version is set to release automatically on approval with Phased Release off (D-21).
+
+### Release references
+
+- **Tag** `v1.1` (annotated, tag object `e5a92134f134e68799a94a54c3efd52ff1e4d738`, "ClickMe iOS 1.1 (7)") peels to `1fdcc26edd754d5f156bb8369c41fb2e5f0281f5`, the built commit and the `release/1.1` tip (plan 08-20).
+- **Backend merge commit** `e36da572b8f2559da5ef05c16942864cf4eb4dab` (plan 08-21, D-17): backend `master` takes `origin/main` at `1d18aac` with D-12, CR-02 and D-29; `master` is not pushed and not deployed.
+- **Production backend**: frozen at `1d18aac` (`1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594`), the X2 SHA; rollback branch `ios-p8-x2-rollback`.

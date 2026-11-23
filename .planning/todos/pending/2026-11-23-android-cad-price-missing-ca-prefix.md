@@ -11,7 +11,7 @@ files:
 
 ## Problem
 
-Found in the 08-22 TestFlight regression, R8 step 2 (2026-11-23), on the Android dev build at `e311a74c`. On the page where A sees B's USD and CAD topics (an expert profile or Explore), Android shows `US$` for the USD price, but the CAD price has **no `CA$` prefix**. iOS 1.1 (7) shows both correctly. The device locale wasn't recorded, so ask for it.
+Found in the 08-22 TestFlight regression, R8 step 2 (2026-11-23), on the Android dev build at `e311a74c`. On the page where A sees B's USD and CAD topics (an expert profile or Explore), Android shows `US$` for the USD price, but the CAD price has **no `CA$` prefix**. iOS 1.1 (7) shows both correctly. The Android phone's region is **Canada** (user, 2026-11-23), so CAD is the local currency there; this points at cause 3 below.
 
 `Money.format` is meant to pin `USD -> US$` and `CAD -> CA$` by overwriting `DecimalFormatSymbols.currencySymbol` on the `NumberFormat.getCurrencyInstance(locale)` result.
 

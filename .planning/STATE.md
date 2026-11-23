@@ -5,10 +5,10 @@ current_phase_name: Release
 current_plan: 14
 status: executing
 stopped_at: Completed 08-21-PLAN.md
-last_updated: "2026-11-23T01:42:51.770Z"
+last_updated: "2026-11-23T02:27:53.074Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: 1af04f1070fe0cf4a38461577065d028daa97bed
+state_head: 0f98b25e857939434f5f173afade6c5a382375b7
 progress:
   total_phases: 8
   completed_phases: 5
@@ -32,7 +32,7 @@ Phase: 08 (Release) — EXECUTING
 Current Plan: 14
 Total Plans in Phase: 31
 Status: Ready to execute
-Last activity: 2026-11-22 - Completed quick task 261122-r2o: Fix Session Summary Message Expert button doing nothing
+Last activity: 2026-11-22 - Completed quick task 261122-tcf: Fix Phase 3 review follow-ups (T-03-23, WR-10, 44pt buttons)
 
 Progress: [████████████████████] 124/124 plans ([██████░░░░] 63%); phases 3 and 4 await verification, Phase 8 not started
 
@@ -541,6 +541,7 @@ Captured todos:
 | 261117-1le | fix phase 06 review findings WR-01, IN-03, IN-07 per 06-REVIEW.md | 2026-11-17 | c0cbfff | [261117-1le-fix-phase-06-review-findings-wr-01-in-03](./quick/261117-1le-fix-phase-06-review-findings-wr-01-in-03/) |
 | 261118-in6 | IN-06 (phase 07): chat unavailable banner copy now says pull down to try again | 2026-11-18 | fa3bfb5 | — |
 | 261122-r2o | Fix Session Summary Message Expert button doing nothing | 2026-11-22 | 169a0a4 | [261122-r2o-fix-session-summary-message-expert-butto](./quick/261122-r2o-fix-session-summary-message-expert-butto/) |
+| 261122-tcf | Fix Phase 3 review follow-ups: decline status (T-03-23), expert Message Client errors (WR-10), 44pt buttons | 2026-11-22 | 0f98b25 | [261122-tcf-fix-phase-3-review-follow-ups-decline-st](./quick/261122-tcf-fix-phase-3-review-follow-ups-decline-st/) |
 
 ## Deferred Items
 

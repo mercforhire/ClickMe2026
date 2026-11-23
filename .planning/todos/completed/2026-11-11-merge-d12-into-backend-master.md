@@ -43,3 +43,21 @@ This needs a change in the backend repo, which the iOS plan did not make. In `/U
 5. The same ancestry checks are the gate on any future `master` push: if D-12 or the CR-02 commit (`28da165ebe66a973008560f689c469389279c25f`) is not an ancestor of the commit being pushed, do not push.
 
 The worktree `/Users/LeonChen/Documents/ClickMe2026 Backend D12` and the branches `ios-p4-d12` and `ios-p4-d12-rollback` stay until Phase 4 verification; removing them (`git worktree remove`, `git branch -d`) is later cleanup.
+
+## Resolution
+
+Closed by plan 08-21 (D-17) on 2026-11-22. Backend `master` took `origin/main` (1d18aac, the frozen X2 SHA) by a merge commit: `e36da572b8f2559da5ef05c16942864cf4eb4dab` (`git merge --no-ff origin/main`; master was 22b8967, 17 ahead and 7 behind origin/main, merge base 32fa6ec). master is not pushed and not deployed.
+
+The plan's "clean merge" premise was wrong. `git merge-tree` reported six conflicted files, one hunk each: `openapi/clickme-api.yaml`, `src/controllers/clientBooking.controller.js`, `src/controllers/expertBooking.controller.js`, `tests/clientBooking.test.js`, `tests/events.test.js`, `tests/expertBooking.test.js`. The plan's research ran merge-tree before origin/main gained G-03-1-ITEM1C (162f1d7), D-30 (0767cf4) and G-06-1-currency (412f1aa). master's 94d659b and origin/main's 5da3976 are the same patch (identical patch-id), so they merged cleanly, but the later origin/main commits add lines right next to it, and git sees two inserts at one spot. In every hunk master's side was empty, so each was resolved by hand by keeping origin/main's added lines plus the shared lines; nothing only master had was dropped. The result of each file equals origin/main for those hunks (openapi is byte-identical to origin/main). The D-12 and CR-02 files (`webhooks.controller.js`, `longLeadChargeSweep.js` and their tests) merged without conflict, so the todo's expected webhooks.controller.js conflict did not happen either.
+
+Results on merged master (local Redis running, `REDIS_URL=redis://localhost:6379`):
+
+- `describe('payment_method.detached (ios-p4 D-12)')`: 6 passed.
+- `describe('platform card check (ios-p4 D-12)')`: 11 passed.
+- `describe('transient platform-card error is retried on the next run (ios-p4 CR-02)')`: 4 passed.
+- `describe('transient error before the PaymentIntent is retried (ios-p8 D-29)')`: 17 passed.
+- Full suite: 153 suites passed, 3852 tests passed, 0 failed (redis.test.js passed too because Redis was available). `check-openapi-coverage` and `check-docs` both OK. The backend has no lint script.
+- Ancestry gates, all ancestors of master: `ae3ec1a` (D-12), `28da165` (CR-02), `ios-p8-x1`, `ios-p8-x2`, and `1d18aac`.
+- Nothing pushed: `git ls-remote origin main` is still 1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594 and origin/master is still 95b5d70.
+
+Standing rule for any future deploy of `master`: D-12 (`ae3ec1a`) and CR-02 (`28da165`) must both be ancestors of the commit being pushed, the full suite must pass, and `master` is never force-pushed or rebased. `supabase db push` runs only from `master` after this merge, never from `main` or the D12 worktree, so the master-only migrations (such as `20261113000100_drop_legacy_ledger.sql`) and the iOS-line changes are applied from one history.

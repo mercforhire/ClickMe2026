@@ -54,6 +54,7 @@ Expected:
 Result: FAIL (2026-11-19, backend) — the push A receives when B proposes a new time says "booking has been rescheduled"; it should read as a reschedule request. Source: backend `src/services/events.js` `BOOKING_RESCHEDULED` push (title "Booking Rescheduled", body "A booking has been rescheduled."). Gap G-03-1-ITEM1 in 03-UAT.md.
 FAIL (2026-11-19, step 3) — the decline with an emoji reason goes through, but B never sees the reason: no screen shows it and it is not added to the chat. Backend stores it in `decline_reason_text` but only exposes that column for `declined` bookings, and the reschedule-decline event carries no reason. Gap G-03-1-ITEM1B in 03-UAT.md.
 Rest of item 1 PASS (2026-11-19): accept, decline toast, payment-conversion disclosure, Booking Summary parity and in-place update, failed-accept alert.
+Re-test of the failed parts (push wording, decline reason in chat, decline push recipient; fixes 08-02/08-07, backend deployed 2026-11-20): BLOCKED (2026-11-23, user: "blocked"). Still to run on two devices with a build at or after 08-07.
 
 ### 2. BOOK-07 — cancellation comment is sent with the reason (03-10)
 

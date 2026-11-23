@@ -21,8 +21,12 @@ Production is an iOS-only line cherry-picked onto `origin/main` and pushed as fa
 | Wave | Commits | Pushed SHA | /health before | /health after | Rollback branch (SHA) | Smoke result |
 |------|---------|------------|----------------|---------------|-----------------------|--------------|
 | X1 | `5da3976` chat reasons in the chat event; `162f1d7` reschedule declines notify the proposer; `0767cf4` hand-written messages for empty profile names; `412f1aa` null, not an empty string, for a topic with no currency | `412f1aa649f5aa72fb853e40e87ab5e0998eb926` (pushed 2026-11-20T17:29:02Z) | `28da165` | `412f1aa` (live 2026-11-20T17:30:24Z) | `ios-p8-x1-rollback` (`28da165ebe66a973008560f689c469389279c25f`) | Plan 08-11, user-reported: log in, My Bookings, chat, reschedule proposal and decline, chat event rows, empty first name, expert Topics tab: all six lines PASS on App Store build 6 and the current Android build; no rollback |
-| X2 | `1d18aac` retry transient T-24h errors before the PaymentIntent, up to 6 h before the session (D-29) | `1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594` (pushed 2026-11-22T22:22:09Z, from `08-16-SUMMARY.md`) | `412f1aa` | `1d18aac` (live 2026-11-22T22:23:02Z) | `ios-p8-x2-rollback` (`412f1aa649f5aa72fb853e40e87ab5e0998eb926`) | to be filled by plan 08-18 |
-| Freeze | | frozen SHA to be filled by plan 08-18 | | | | |
+| X2 | `1d18aac` retry transient T-24h errors before the PaymentIntent, up to 6 h before the session (D-29) | `1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594` (pushed 2026-11-22T22:22:09Z, from `08-16-SUMMARY.md`) | `412f1aa` | `1d18aac` (live 2026-11-22T22:23:02Z) | `ios-p8-x2-rollback` (`412f1aa649f5aa72fb853e40e87ab5e0998eb926`) | Plan 08-18, user-reported 2026-11-22 ("x2 check pass"): step 1 app smoke PASS on App Store build 6 and the current Android build; step 2 sweep log PASS (no errors); step 3 stuck-rows query not run (optional; the 08-16 value was 0). No rollback. See the note below the table. |
+| Freeze | `1d18aac` (X2 is the last backend commit of this release) | `1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594` | `1d18aac` | `1d18aac` (/health re-read 2026-11-23T00:30Z, equal to the frozen SHA) | `ios-p8-x2-rollback` (`412f1aa649f5aa72fb853e40e87ab5e0998eb926`) | Frozen after the X2 smoke passed |
+
+Backend frozen at 1d18aac (1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594) on 2026-11-22; no backend push until the regression is signed off, except a D-09 fix (D-12).
+
+Found during the X2 smoke, not an X2 failure: the client Session Summary "Message Expert" button does nothing. It is a pre-existing iOS-only bug, present in App Store build 6 since before this release, not caused by deploy X2, and needs no backend change. It is being fixed as quick task 261122-r2o in the 1.1 (7) build, so it is not a reason to break the freeze.
 
 Backend `master` is not deployed by this phase (D-10). It takes the D-12 merge in plan 08-21 (D-17).
 

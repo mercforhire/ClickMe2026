@@ -417,7 +417,7 @@ Result: PASS (2026-11-22).
 
 ### 27. G-03-1-ITEM14 — Booking Summary price row reads Session fee · Free for a free session (03-18)
 
-**Status:** PENDING. Added by plan 03-18. Needs a build at or after the 03-18 commit, built and run from Xcode.
+**Status:** PASS (2026-11-23). Added by plan 03-18. Run on a device build from Xcode at or after 330afcc.
 
 Steps:
 1. As user A, open My Bookings, then Past, then a **free** session, to open its Booking Summary.
@@ -431,13 +431,13 @@ Expected:
 - After the Xcode build, ClickMe2026/Localizable.xcstrings has Free and Session fee entries (Xcode adds them on an IDE build). Leave the file unstaged: plan 08-20 commits the catalog.
 - A paid topic with no price from the server, which reads PAID · —, cannot be set up on a device and is covered by BookingSummaryViewModelTests.
 
-Result:
+Result: PASS (2026-11-23, user: "pass")
 
 ---
 
 ## Sign-off
 
-- [ ] All items above have a Result. (items 1-26 on 2026-11-22; item 27 added by 03-18, pending)
+- [x] All items above have a Result. (items 1-26 on 2026-11-22; item 27, added by 03-18, PASS on 2026-11-23)
 - [x] Item 16 notes the BACK-19 smoke result (still unrun).
 - [ ] Phase 2 `02-UAT.md` tests 6-17 run before Phase 8.
 - [ ] Failures logged as gaps for a `/gsd-plan-phase 3 --gaps` pass.

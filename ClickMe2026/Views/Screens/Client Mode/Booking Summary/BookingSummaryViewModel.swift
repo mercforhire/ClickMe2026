@@ -263,11 +263,20 @@ final class BookingSummaryViewModel: ObservableObject {
     /// Moves the screen to what the server now holds after a 2xx accept or
     /// decline, without waiting for the refetch (WR-01, WR-08). An accepted
     /// proposal's time becomes the booking's time; a decline leaves the time
-    /// alone. The card goes in both cases.
+    /// alone and applies the status the server returned (for example `completed`)
+    /// through `mapStatus`, or leaves the badge as it was when none came back.
+    /// The card goes in both cases.
     private func applyResolution(_ resolution: RescheduleResponder.Resolution) {
-        if resolution == .accepted, let proposal = reschedule {
-            dateTime = Self.formatDateTime(start: proposal.proposedStart, end: proposal.proposedEnd)
-            currentStartTime = proposal.proposedStart
+        switch resolution {
+        case .accepted:
+            if let proposal = reschedule {
+                dateTime = Self.formatDateTime(start: proposal.proposedStart, end: proposal.proposedEnd)
+                currentStartTime = proposal.proposedStart
+            }
+        case .declined(let restoredStatus):
+            if let restoredStatus {
+                status = Self.mapStatus(restoredStatus)
+            }
         }
         reschedule = nil
     }

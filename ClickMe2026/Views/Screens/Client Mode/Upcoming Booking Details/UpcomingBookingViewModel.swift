@@ -330,18 +330,29 @@ final class UpcomingBookingViewModel: ObservableObject {
     ///
     /// Accept: the proposed time becomes the booking's time and the status is
     /// `confirmed` (`acceptReschedule` in the backend). Decline: the backend
-    /// restores `reschedule_prev_status`, which the client payload does not carry,
-    /// so `confirmed` (the usual case) stands in until the refetch corrects it.
+    /// restores `reschedule_prev_status` and returns it as `data.status`, so that
+    /// status is shown, never a guessed `confirmed` (T-03-23). A status this
+    /// build does not know becomes `.unknown`, as on load. When the body carried
+    /// no status the status and `canJoin` stay as they were until the refetch.
     private func applyResolution(_ resolution: RescheduleResponder.Resolution) {
-        if resolution == .accepted, let proposal = reschedule {
-            startTime = proposal.proposedStart
-            endTime = proposal.proposedEnd
-            date = Self.dateString(proposal.proposedStart)
-            timeRange = Self.timeRangeString(from: proposal.proposedStart, to: proposal.proposedEnd)
+        switch resolution {
+        case .accepted:
+            if let proposal = reschedule {
+                startTime = proposal.proposedStart
+                endTime = proposal.proposedEnd
+                date = Self.dateString(proposal.proposedStart)
+                timeRange = Self.timeRangeString(from: proposal.proposedStart, to: proposal.proposedEnd)
+            }
+            bookingStatus = .confirmed
+            statusRaw = BookingStatus.confirmed.rawValue
+            canJoin = nil
+        case .declined(let restoredStatus):
+            if let restoredStatus {
+                bookingStatus = BookingStatus(rawValue: restoredStatus) ?? .unknown
+                statusRaw = restoredStatus
+                canJoin = nil
+            }
         }
-        bookingStatus = .confirmed
-        statusRaw = BookingStatus.confirmed.rawValue
-        canJoin = nil
         reschedule = nil
     }
 

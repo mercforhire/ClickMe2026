@@ -207,7 +207,11 @@ extension ClickMeAPI {
     /// reverts to its previous status (typically `confirmed`) and the
     /// proposed slot is discarded. `reason` is optional metadata for
     /// the expert's benefit.
-    func declineClientReschedule(id: UUID, reason: String? = nil) async throws -> SuccessMessageResponse {
+    ///
+    /// The 200 carries `data.status`: the restored `reschedule_prev_status` (or
+    /// `confirmed` for pre-migration rows), or the current status on the
+    /// idempotent 200. Android reads the same field.
+    func declineClientReschedule(id: UUID, reason: String? = nil) async throws -> RescheduleDeclineResponse {
         var params: [String: Any] = [:]
         if let reason { params["reason"] = reason }
         return try await service.httpRequest(

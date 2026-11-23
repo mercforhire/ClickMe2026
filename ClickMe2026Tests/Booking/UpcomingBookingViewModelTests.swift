@@ -325,15 +325,17 @@ struct UpcomingBookingViewModelTests {
     // MARK: Failed refetch after a 2xx (WR-01)
 
     /// First detail GET returns the expert's proposal, every later one a 500, except
-    /// the third when `thirdGetBody` is given. Both answer POSTs succeed. Anything
-    /// else is a 404.
-    private func failingRefetchAPI(thirdGetBody: Data? = nil) -> ClickMeAPI {
+    /// the third when `thirdGetBody` is given. Both answer POSTs succeed, the decline
+    /// with `declineBody`. Anything else is a 404.
+    private func failingRefetchAPI(thirdGetBody: Data? = nil, declineBody: Data = Fixtures.successMessage) -> ClickMeAPI {
         let path = detailPath
         let pending = pendingDetail(initiatedBy: "expert")
         return APITestFactory.make { request in
             let requestPath = request.url?.path ?? ""
-            if request.httpMethod == "POST",
-               requestPath.hasSuffix("/accept-reschedule") || requestPath.hasSuffix("/decline-reschedule") {
+            if request.httpMethod == "POST", requestPath.hasSuffix("/decline-reschedule") {
+                return Fixtures.response(for: request, body: declineBody)
+            }
+            if request.httpMethod == "POST", requestPath.hasSuffix("/accept-reschedule") {
                 return Fixtures.response(for: request, body: Fixtures.successMessage)
             }
             if request.httpMethod == "GET", requestPath.hasSuffix(path) {
@@ -391,8 +393,46 @@ struct UpcomingBookingViewModelTests {
         #expect(vm.responder.isSubmitting == false)
     }
 
-    @Test("decline whose follow-up detail GETs return 500 clears the proposal and the pending status")
-    func declineWithFailedRefetchClearsProposal() async {
+    @Test("decline returning pending_approval, with failing refetches, shows that status and clears the card (T-03-23)")
+    func declineAppliesReturnedStatus() async {
+        let api = failingRefetchAPI(declineBody: Fixtures.declineSuccess(restored: "pending_approval"))
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: api)
+        vm.refetchRetryDelay = .milliseconds(1)
+        await vm.load()
+        #expect(vm.pendingProposal != nil)
+        let originalStart = vm.startTime
+
+        await vm.responder.decline(reason: "No")
+
+        #expect(postCount(suffix: "/decline-reschedule") == 1)
+        #expect(detailGetCount() == 3)
+        #expect(vm.bookingStatus == .pendingApproval)
+        #expect(vm.statusRaw == "pending_approval")
+        #expect(vm.canJoin == nil)
+        #expect(vm.reschedule == nil)
+        #expect(vm.pendingProposal == nil)
+        #expect(vm.startTime == originalStart)
+        #expect(vm.state == .loaded)
+        #expect(vm.responder.apiError == nil)
+        #expect(vm.responder.isSubmitting == false)
+    }
+
+    @Test("decline returning completed shows Completed, not a guessed confirmed")
+    func declineAppliesCompleted() async {
+        let api = failingRefetchAPI(declineBody: Fixtures.declineSuccess(restored: "completed"))
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: api)
+        vm.refetchRetryDelay = .milliseconds(1)
+        await vm.load()
+
+        await vm.responder.decline(reason: nil)
+
+        #expect(vm.bookingStatus == .completed)
+        #expect(vm.statusRaw == "completed")
+        #expect(vm.pendingProposal == nil)
+    }
+
+    @Test("decline with no data in the body keeps the status, clears the card and sets no error")
+    func declineWithoutStatusLeavesStatus() async {
         let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
         vm.refetchRetryDelay = .milliseconds(1)
         await vm.load()
@@ -403,19 +443,34 @@ struct UpcomingBookingViewModelTests {
 
         #expect(postCount(suffix: "/decline-reschedule") == 1)
         #expect(detailGetCount() == 3)
-        #expect(vm.pendingProposal == nil)
+        // No status came back, so nothing is guessed until the refetch lands.
+        #expect(vm.bookingStatus == .pendingReschedule)
+        #expect(vm.statusRaw == "pending_reschedule")
         #expect(vm.reschedule == nil)
-        // WR-08: no "Pending reschedule" pill for a proposal the server dropped; the time is unchanged.
-        #expect(vm.bookingStatus != .pendingReschedule)
+        #expect(vm.pendingProposal == nil)
         #expect(vm.startTime == originalStart)
         #expect(vm.state == .loaded)
         #expect(vm.responder.apiError == nil)
         #expect(vm.responder.isSubmitting == false)
     }
 
-    @Test("a failed refetch is retried once, and the retry's answer replaces the local guess")
+    @Test("decline returning a status this build does not know shows .unknown and keeps the raw value")
+    func declineWithUnknownStatus() async {
+        let api = failingRefetchAPI(declineBody: Fixtures.declineSuccess(restored: "on_hold"))
+        let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: api)
+        vm.refetchRetryDelay = .milliseconds(1)
+        await vm.load()
+
+        await vm.responder.decline(reason: nil)
+
+        #expect(vm.bookingStatus == .unknown)
+        #expect(vm.statusRaw == "on_hold")
+        #expect(vm.pendingProposal == nil)
+    }
+
+    @Test("a failed refetch is retried once, and the retry's answer replaces what the screen held")
     func failedRefetchIsRetriedOnce() async {
-        // The decline restored a status other than the `confirmed` the screen assumed.
+        // The decline body carried no status, so the retried refetch is what supplies it.
         let restored = Fixtures.detailJSON(status: "pending_approval")
         let vm = UpcomingBookingViewModel(bookingId: bookingUUID, api: failingRefetchAPI(thirdGetBody: restored))
         vm.refetchRetryDelay = .milliseconds(1)

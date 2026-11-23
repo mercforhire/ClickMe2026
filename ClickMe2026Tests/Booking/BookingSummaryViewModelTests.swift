@@ -115,15 +115,18 @@ struct BookingSummaryViewModelTests {
     // MARK: Failed refetch after a 2xx (WR-01)
 
     /// First detail GET returns the expert's proposal, every later one a 500. Both answer
-    /// POSTs succeed and the review context answers. Anything else is a 404.
-    private func failingRefetchAPI() -> ClickMeAPI {
+    /// POSTs succeed (the decline with `declineBody`) and the review context answers.
+    /// Anything else is a 404.
+    private func failingRefetchAPI(declineBody: Data = Fixtures.successMessage) -> ClickMeAPI {
         let path = detailPath
         let pending = pendingDetail(initiatedBy: "expert")
         let review = Self.reviewContextJSON(hasSubmitted: false)
         return APITestFactory.make { request in
             let requestPath = request.url?.path ?? ""
-            if request.httpMethod == "POST",
-               requestPath.hasSuffix("/accept-reschedule") || requestPath.hasSuffix("/decline-reschedule") {
+            if request.httpMethod == "POST", requestPath.hasSuffix("/decline-reschedule") {
+                return Fixtures.response(for: request, body: declineBody)
+            }
+            if request.httpMethod == "POST", requestPath.hasSuffix("/accept-reschedule") {
                 return Fixtures.response(for: request, body: Fixtures.successMessage)
             }
             if requestPath.hasSuffix("/reviews/context") {
@@ -192,6 +195,38 @@ struct BookingSummaryViewModelTests {
         #expect(vm.reschedule == nil)
         #expect(vm.dateTime == oldDateTime)
         #expect(vm.loadState == .loaded)
+        #expect(vm.responder.apiError == nil)
+    }
+
+    @Test("decline returning completed shows the Completed badge and keeps the time (T-03-23)")
+    func declineAppliesReturnedStatus() async {
+        let api = failingRefetchAPI(declineBody: Fixtures.declineSuccess(restored: "completed"))
+        let vm = BookingSummaryViewModel(bookingId: bookingUUID, api: api)
+        vm.refetchRetryDelay = .milliseconds(1)
+        await vm.load()
+        let oldDateTime = vm.dateTime
+
+        await vm.responder.decline(reason: "No")
+
+        #expect(detailGetCount() == 3)
+        #expect(vm.status == .completed)
+        #expect(vm.dateTime == oldDateTime)
+        #expect(vm.reschedule == nil)
+        #expect(vm.responder.apiError == nil)
+    }
+
+    @Test("decline with no data in the body leaves the badge as it was and still clears the card")
+    func declineWithoutStatusLeavesBadge() async {
+        let vm = BookingSummaryViewModel(bookingId: bookingUUID, api: failingRefetchAPI())
+        vm.refetchRetryDelay = .milliseconds(1)
+        await vm.load()
+        // A pending_reschedule detail has no summary badge.
+        #expect(vm.status == nil)
+
+        await vm.responder.decline(reason: "No")
+
+        #expect(vm.status == nil)
+        #expect(vm.reschedule == nil)
         #expect(vm.responder.apiError == nil)
     }
 

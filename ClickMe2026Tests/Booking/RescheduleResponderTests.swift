@@ -386,7 +386,14 @@ struct RescheduleResponderTests {
     /// A responder whose two hooks append to a shared log.
     private func makeLoggingResponder(api: ClickMeAPI, log: CallLog) -> RescheduleResponder {
         let responder = RescheduleResponder(bookingId: bookingUUID, api: api)
-        responder.onResolved = { resolution in log.entries.append("resolved \(resolution)") }
+        responder.onResolved = { resolution in
+            switch resolution {
+            case .accepted:
+                log.entries.append("resolved accepted")
+            case .declined(let restoredStatus):
+                log.entries.append("resolved declined \(restoredStatus ?? "nil")")
+            }
+        }
         responder.refetch = { log.entries.append("refetch") }
         return responder
     }
@@ -440,7 +447,66 @@ struct RescheduleResponderTests {
 
         await responder.decline(reason: "No")
 
-        #expect(log.entries == ["resolved declined", "refetch"])
+        #expect(log.entries == ["resolved declined nil", "refetch"])
+    }
+
+    @Test("a decline 200 with data.status passes the restored status to onResolved, then refetches (T-03-23)")
+    func declineCarriesRestoredStatus() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: Fixtures.declineSuccess(restored: "pending_approval"))
+        }
+        let log = CallLog()
+        let responder = makeLoggingResponder(api: api, log: log)
+
+        await responder.decline(reason: "No")
+
+        #expect(log.entries == ["resolved declined pending_approval", "refetch"])
+        #expect(responder.apiError == nil)
+    }
+
+    @Test("a decline 200 with no data still succeeds: restored status nil, toast, one refetch, no error")
+    func declineWithoutDataStillSucceeds() async {
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: Fixtures.successMessage)
+        }
+        let toasts = ToastCenter()
+        let counter = RefetchCounter()
+        let responder = RescheduleResponder(bookingId: bookingUUID, api: api, toasts: toasts)
+        responder.refetch = { counter.count += 1 }
+        var resolutions: [RescheduleResponder.Resolution] = []
+        responder.onResolved = { resolutions.append($0) }
+
+        await responder.decline(reason: nil)
+
+        #expect(resolutions == [.declined(restoredStatus: nil)])
+        #expect(toasts.current?.message == "Reschedule declined")
+        #expect(counter.count == 1)
+        #expect(responder.apiError == nil)
+    }
+
+    @Test(
+        "a decline 200 with null data or an unusable status still succeeds with restored status nil",
+        arguments: [
+            #"{"status":"success","message":"ok","data":null}"#,
+            #"{"status":"success","message":"ok","data":"oops"}"#,
+            #"{"status":"success","message":"ok","data":{"booking_id":"x"}}"#,
+            #"{"status":"success","message":"ok","data":{"status":null}}"#,
+            #"{"status":"success","message":"ok","data":{"status":5}}"#,
+            #"{"status":"success","message":"ok","data":{"status":"  "}}"#,
+        ]
+    )
+    func declineWithUnusableStatusStillSucceeds(body: String) async {
+        let payload = Data(body.utf8)
+        let api = APITestFactory.make { request in
+            Fixtures.response(for: request, body: payload)
+        }
+        let log = CallLog()
+        let responder = makeLoggingResponder(api: api, log: log)
+
+        await responder.decline(reason: "No")
+
+        #expect(log.entries == ["resolved declined nil", "refetch"])
+        #expect(responder.apiError == nil)
     }
 
     @Test("a failed accept (409) calls neither hook")

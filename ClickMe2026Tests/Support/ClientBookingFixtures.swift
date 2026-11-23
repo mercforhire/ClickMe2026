@@ -113,4 +113,19 @@ enum ClientBookingFixtures {
     }
 
     static let successMessage = Data(#"{"status":"success","message":"ok"}"#.utf8)
+
+    /// `POST /client/bookings/:id/decline-reschedule` 200: the booking id and the
+    /// status the server restored.
+    /// - Parameter status: A raw JSON value for `data.status`, quoted when a string
+    ///   (for example `"\"pending_approval\""`), or `null`, `5` and so on for the unusable cases.
+    static func declineSuccess(status: String) -> Data {
+        Data(#"""
+        {"status":"success","message":"Reschedule declined; the original booking time stands.","data":{"booking_id":"\#(bookingId)","status":\#(status)}}
+        """#.utf8)
+    }
+
+    /// `declineSuccess` for a normal status string.
+    static func declineSuccess(restored status: String) -> Data {
+        declineSuccess(status: "\"\(status)\"")
+    }
 }

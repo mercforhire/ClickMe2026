@@ -30,10 +30,12 @@ final class RescheduleResponder {
     /// How the server settled the proposal, passed to `onResolved` so the owner
     /// can move its own fields to the state the server is now in (WR-08).
     enum Resolution: Equatable {
-        /// The proposed time is now the booking's time and the status is `confirmed`.
+        /// The server set the booking to `confirmed` at the proposed time.
         case accepted
-        /// The proposal is gone and the booking is back at its previous status.
-        case declined
+        /// The proposal is gone. Carries the status the server restored
+        /// (`data.status` of the decline response), or `nil` when the body did not
+        /// say, in which case the owner must leave its status alone until the refetch.
+        case declined(restoredStatus: String?)
     }
 
     // MARK: Limits
@@ -165,10 +167,10 @@ final class RescheduleResponder {
         let trimmed = reason?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let capped = UTF16Prefix.prefix(trimmed, limit: Self.declineReasonLimit)
         do {
-            _ = try await api.declineClientReschedule(id: bookingId, reason: capped.isEmpty ? nil : capped)
+            let response = try await api.declineClientReschedule(id: bookingId, reason: capped.isEmpty ? nil : capped)
             // Only after a 2xx: a failed decline never confirms (T-03-11).
             toasts.show("Reschedule declined")
-            onResolved?(.declined)
+            onResolved?(.declined(restoredStatus: response.restoredStatus))
             await refetch?()
         } catch {
             apiError = error.userMessage

@@ -474,7 +474,7 @@ Plans:
   3. Every backend change is deployed to production before the iOS build is submitted, and the current Android build still works against it.
   4. One new iOS build containing every fix builds cleanly with no new warnings, is on TestFlight, and is submitted to the App Store.
 
-**Plans**: 25/31 plans executed: 26 in 11 waves on three lanes, plus 5 Android gap-closure plans 08-27 to 08-31 (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
+**Plans**: 26/31 plans executed: 26 in 11 waves on three lanes, plus 5 Android gap-closure plans 08-27 to 08-31 (iOS lane sequential in this repo; backend lane sequential in the `ClickMe2026 Backend D12` worktree on an iOS-only line from `origin/main`; Android lane sequential in `../ClickMe_Android`, local commits only). Each backend deploy has a gate, a per-deploy user approval (D-14) and a live smoke (D-13); the backend freezes before the TestFlight regression (D-12).
 
 Plans:
 **Wave 1**
@@ -514,7 +514,7 @@ Plans:
 
 **Wave 8**
 - [ ] 08-20-PLAN.md — Release candidate 1.1 (7): version bump, full suite, no-new-warnings check, go/no-go, release/1.1 or Organizer tag (D-18, D-19) (checkpoint)
-- [ ] 08-21-PLAN.md — Backend master merges origin/main (D-17), not deployed
+- [x] 08-21-PLAN.md — Backend master merges origin/main (D-17), not deployed
 
 **Wave 9**
 - [ ] 08-22-PLAN.md — TestFlight regression run with real money and an Android peer (D-04, D-06, D-27, D-28, D-09); on sign-off, closes BACK-06/07/19 and the 17 Phase 4 rows on their evidence (D-01) (checkpoint)
@@ -551,7 +551,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |
 | 7. Chat | 9/9 | Complete    | 2026-11-18 |
-| 8. Release | 25/31 | In Progress | - |
+| 8. Release | 26/31 | In Progress | - |
 
 ---
 *Roadmap created: 2026-11-07*

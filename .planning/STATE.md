@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 13
+current_plan: 14
 status: executing
-stopped_at: Completed 08-18-PLAN.md
-last_updated: "2026-11-23T00:45:01.533Z"
+stopped_at: Completed 08-21-PLAN.md
+last_updated: "2026-11-23T01:42:51.770Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: 169a0a4a462d7aabe8aff8b745b9f62508230ccb
+state_head: 1af04f1070fe0cf4a38461577065d028daa97bed
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 155
-  completed_plans: 149
+  completed_plans: 150
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 13
+Current Plan: 14
 Total Plans in Phase: 31
 Status: Ready to execute
 Last activity: 2026-11-22 - Completed quick task 261122-r2o: Fix Session Summary Message Expert button doing nothing
@@ -205,6 +205,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P17 | 45min | 2 tasks | 9 files |
 | Phase 08 P15 | 40min | 3 tasks | 4 files |
 | Phase 08 P18 | 15min | 3 tasks | 1 files |
+| Phase 08 P21 | 40min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -448,6 +449,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-15: regression run order is R4, R6, R1, R2, R3, R5, R7, R8, R10, R9, R11 (R5 needs S1's clone and removes the card; R6 runs before S1 so only one hold is open at a time)
 - [Phase 08]: 08-15: R7 proposes reschedules only on free-topic side bookings and always declines them; Android half of R7 and R8 needs a dev build at or after e311a74c
 - [Phase 08]: 08-18: backend frozen at 1d18aac (X2) until the regression is signed off, except a D-09 fix (D-12)
+- [Phase 08]: 08-21: backend master merged origin/main (e36da57) with six hand-resolved hunks (user-approved); master not pushed or deployed; supabase db push only from master after this merge
 
 ### Pending Todos
 
@@ -550,6 +552,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-23T00:30:57.262Z
-Stopped at: Completed 08-18-PLAN.md
+Last session: 2026-11-23T01:42:50.278Z
+Stopped at: Completed 08-21-PLAN.md
 Resume file: None

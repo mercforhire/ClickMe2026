@@ -260,7 +260,7 @@ Expected:
 - The hub opens with Verify email ticked, and the progress ring includes it.
 - At most a brief moment of Verify email unticked before the status read returns (the accepted U4 flash), then ticked, with the ring updating to match.
 
-Result:
+Result: PASS (2026-11-23); Verify email ticked and counted in the ring after force-quit and relaunch; slow-network pass SKIPPED (not run); U4 flash decision: KEEP
 
 ### R11. End state: every hold released, one capture, nothing else charged (D-11, D-06, D-27)
 

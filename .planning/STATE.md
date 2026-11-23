@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 16
+current_plan: 17
 status: executing
-stopped_at: Completed 08-20-PLAN.md
-last_updated: "2026-11-23T17:33:06.040Z"
+stopped_at: Completed 08-22-PLAN.md
+last_updated: "2026-11-23T23:32:43.513Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: 2cd6935856d8835729f969a8f80a5b838b81879e
+state_head: 3259a6cadf4559222b5d54e37d2fc66a0434ec92
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 156
-  completed_plans: 153
+  completed_plans: 154
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 16
+Current Plan: 17
 Total Plans in Phase: 31
 Status: Ready to execute
 Last activity: 2026-11-22 - Completed quick task 261122-tcf: Fix Phase 3 review follow-ups (T-03-23, WR-10, 44pt buttons)
@@ -209,6 +209,7 @@ Progress: [████████████████████] 124/124
 | Phase 03 P18 | 5 min | 2 tasks | 7 files |
 | Phase 08 P19 | 30min | 3 tasks | 1 files |
 | Phase 08 P20 | 75min | 3 tasks | 3 files |
+| Phase 08 P22 | 30min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -457,6 +458,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-19: Phase 3 re-verified (f97e9f3, human_needed 18/22, none failed); every Phase 3 and 4 human item is device-only (D-01) or VoiceOver (D-02), zero code findings; 03 WR-01 PAID label needs its acceptance recorded in 08-24
 - [Phase 08]: 08-19: 330afcc (03-18), 208ee4f and cec4477 (quick 261122-tcf) are iOS app changes after a603a2a outside Phase 8; 08-20 must cut the RC from a HEAD with them and 08-22 should cover the Booking Summary free price row (device item 27)
 - [Phase 08]: Release candidate 1.1 (7) is 1fdcc26; tag v1.1, release/1.1 and the checked commit are the same SHA (user go 2026-11-23: go)
+- [Phase 08]: 08-22: D-33 (user 2026-11-23, Run short ones, waive overtime): R1 overtime steps and R2 waived for 1.1 (7); regression signed off 2026-11-23 with R3-R11 PASS; BACK-06/07/19 and the 17 Phase 4 rows closed, none deferred
 
 ### Pending Todos
 
@@ -564,6 +566,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-23T14:37:24.204Z
-Stopped at: Completed 08-20-PLAN.md
+Last session: 2026-11-23T23:32:42.977Z
+Stopped at: Completed 08-22-PLAN.md
 Resume file: None

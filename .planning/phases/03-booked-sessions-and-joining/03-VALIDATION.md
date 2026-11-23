@@ -78,6 +78,7 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | BOOK-08 / EXP-11 / WR-03 | Refund and hold lines built from the list price say "up to"; `CA$0.00` within-24 h line unchanged | unit | `CancelRefundPreviewTests`, `CancelToastMessageTests`, `ExpertCancelRefundLineTests` | review fix WR-03 | ✅ | ✅ green |
 | BOOK-13 / WR-04 | `canShowReschedule` mirrors backend `canReschedule`: per-status groups, end-time edge, nil end, exhaustive against the Cancel lists | unit | `UpcomingActionPolicyTests` | review fix WR-04 | ✅ | ✅ green |
 | EXP-13 / WR-07 | `submitRefusesFarSlot` uses a stubbed API and asserts zero requests | unit (stubbed API) | `ExpertRescheduleWindowTests` | review fix WR-07 | ✅ | ✅ green |
+| BOOK-20 / G-03-1-ITEM14 | Booking Summary price row: Session fee · Free for a free session (is_free wins over a price), PAID with the Money amount unchanged for a paid one, PAID with a dash when a paid topic has no price; nil only before the load | unit (stubbed API) | `BookingSummaryViewModelTests` | 03-18 | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -111,6 +112,7 @@ Requirement-to-suite map from `03-RESEARCH.md` § Validation Architecture, updat
 | Cancel and Leave a Review on push-opened screens | BOOK-13, BOOK-17 | Needs real push taps | `03-DEVICE-UAT-CHECKLIST.md` items 7, 9 |
 | JOIN CALL on every entry | CALL-03 | Needs a live booking from each entry point | `03-DEVICE-UAT-CHECKLIST.md` item 11 |
 | Android Booking Summary ID on device | BOOK-20 (Android) | Device check | `03-DEVICE-UAT-CHECKLIST.md` item 14 |
+| Booking Summary Session fee · Free price row on device | BOOK-20 | Visual; the Xcode IDE build adds the Free and Session fee keys to the catalog | `03-DEVICE-UAT-CHECKLIST.md` item 27 |
 | Teams label on the smallest iPhone | CALL-08 | Layout on small screen | `03-DEVICE-UAT-CHECKLIST.md` item 23 |
 | Expert shell chat-row item has no client actions | EXP-13 | Visual and navigation | `03-DEVICE-UAT-CHECKLIST.md` item 24 |
 | Reschedule accept/decline toast in the expert shell (WR-05) | BOOK-06 | Toast host wiring in `HomeExpertView` is view-level | Accept or decline a reschedule from the expert shell; the toast shows |

@@ -202,4 +202,71 @@ Regression signed off 2026-11-23; gating items R1-R11 PASS (R1 overtime steps an
 
 ## Submission
 
-To be filled by plan 08-23.
+**Status:** draft, awaiting the user's approval of the What's New text and the review notes (plan 08-23 Task 2, D-22). Not submitted.
+
+**Pre-submission gate** (plan 08-23 Task 1, 2026-11-23T23:35Z): PASS.
+
+- Regression sign-off line present: "Regression signed off 2026-11-23; gating items R1-R11 PASS (R1 overtime steps and R2 waived, D-33)".
+- Production /health commit = `1d18aac`, equal to the frozen SHA (`1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594`); no backend change since the regression (D-12).
+- iOS-line branch tips are ancestors of production: `ios-p8-x1` (`412f1aa`) and `ios-p8-x2` (`1d18aac`), read in the backend D12 worktree.
+- `ClickMe2026/PrivacyInfo.xcprivacy` is unchanged between `a48c664` (build 6) and `v1.1` (`1fdcc26`), and `ITSAppUsesNonExemptEncryption` is `false`, so the App Privacy answers and export compliance stay as for 1.0.
+
+### What's New
+
+This update makes booking, paying for and joining a session smoother and more reliable. Here's what's new:
+
+- Calls no longer cut off at the scheduled end time. If you're still talking, your call keeps going for up to an hour past the end.
+- Join your session from your booking details, whether it's an in-app call or a Skype or Zoom meeting, any time from an hour before it starts until it's due to end. Experts can join from the booking summary too.
+- Skype and Zoom sessions now show how long you've been talking and how much time is left.
+- When your expert suggests a new time, you can accept or decline it right from your booking. You'll also get a clear notification when a new time is suggested, or when the time you suggested is declined.
+- Before you cancel, you'll see the refund you'll actually get. If your expert cancels, you always get a full refund, or the hold on your card is released.
+- Prices now show cents and a clear CA$ or US$ sign, so you always know what you'll pay.
+- Messages show while they're sending, tell you if one didn't go through, and let you try again. Your chats list shows how many messages you haven't read.
+- When a booking is cancelled, declined or moved to a new time, the reason the other person gave now appears in your chat.
+- Booking is clearer: the calendar only shows times for the month you're viewing, times follow your phone's 12- or 24-hour setting with a readable time zone, and a request can't be sent twice by accident.
+- Your booking now says whether your card was held or charged, and closing the payment screen without paying never places a hold.
+- Expert profiles and Explore load more reliably, free topics are labelled Free, and Favorites and reviews now show the full list.
+- Signing up is smoother: a verified email stays verified when you come back to finish, and your profile photo is saved just as you cropped it.
+- Tapping a notification now opens the right screen, and after you log out you stop getting that account's notifications.
+- Delete Account explains clearly what is deleted and what is kept, including that saved cards are not removed.
+- For experts: set topic prices with cents in CAD or USD, reschedule from your upcoming bookings, and see the client's refund before you cancel.
+
+### Release note sources
+
+- Calls no longer cut off: CALL-01
+- Join your session from your booking details: CALL-02, CALL-03, CALL-08, CALL-10
+- Skype and Zoom sessions now show: CALL-07
+- When your expert suggests a new time: BOOK-06, G-03-1-ITEM1, D-31
+- Before you cancel: BOOK-08, BACK-19
+- Prices now show cents: BOOK-10, D-24
+- Messages show while they're sending: CHAT-01, CHAT-07, BACK-18
+- When a booking is cancelled, declined or moved: G-03-1-ITEM1B, BOOK-07, BACK-14
+- Booking is clearer: BOOK-01, BOOK-02, BOOK-03, BOOK-04
+- Your booking now says whether your card was held: PAY-01, PAY-03
+- Expert profiles and Explore load more reliably: EXPL-01, EXPL-03, EXPL-05, EXPL-06, EXPL-07
+- Signing up is smoother: SIGN-02, SIGN-05
+- Tapping a notification now opens the right screen: PUSH-01, PUSH-02, PUSH-04
+- Delete Account explains clearly: SET-06, D-23
+- For experts: EXP-02, EXP-17, EXP-13, EXP-11
+
+These lines stay in this record and are not pasted into App Store Connect. Every requirement cited is ticked `- [x]` in REQUIREMENTS.md; G-03-1-ITEM1 (reschedule-request push wording, backend X1 `162f1d7`), G-03-1-ITEM1B (reasons in chat, backend `94d659b` plus iOS 08-07) and D-23, D-24, D-31 are shipped fixes recorded in the 08 SUMMARYs. No bullet rests on BACK-08, BACK-13, an open requirement, or the 1.2 todos (15-minute overtime, Stripe payout guide). The read-state label is not claimed: CHAT-08 closed as not reproducible with no fix made.
+
+### App Review notes
+
+Plan: reuse the App Review Information that passed for 1.0 in App Store Connect (App Store Connect carries it into the new version), with one change.
+
+- Keep: contact name, phone and email; Sign-in required = Yes; the client and expert demo accounts; what ClickMe is (a marketplace for live sessions with human experts); why there is no In-App Purchase (real-world services, Guideline 3.1.5(a)); where account deletion is (Settings, Delete Account).
+- Remove: any Stripe test-card instruction (for example `4242 4242 4242 4242`). The app runs live Stripe, so a test card is declined and any real card is charged. `APP_STORE_REVIEW_CHECKLIST.md` section 3 still lists the test card (last updated 2026-10-17); it is stale and is not reused.
+- Check before submitting (checklist section 3): both demo accounts still sign in from a fresh install, and they still show seeded bookings and chat threads.
+- No attachment.
+
+### App Store Connect steps (Task 3, after approval)
+
+1. App Store Connect, ClickMe, + Version, 1.1.
+2. Build: select 1.1 (7), the internally tested build.
+3. What's New in This Version: paste the approved text under `### What's New` only, not the Release note sources.
+4. App Review Information: reuse the 1.0 notes, remove any Stripe test-card instruction, confirm the demo accounts.
+5. App Privacy and export compliance: unchanged from 1.0 (no new data collected; `ITSAppUsesNonExemptEncryption = false`).
+6. Version Release: "Automatically release this version"; Phased Release off (D-21).
+7. Add for Review, then Submit. Do not add an external TestFlight group or use Beta App Review (D-20).
+8. Report the submission time and the status App Store Connect shows (for example "Waiting for Review").

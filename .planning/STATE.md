@@ -5,15 +5,15 @@ current_phase_name: Release
 current_plan: 14
 status: executing
 stopped_at: Completed 08-21-PLAN.md
-last_updated: "2026-11-23T02:27:53.074Z"
+last_updated: "2026-11-23T04:12:59.453Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: 0f98b25e857939434f5f173afade6c5a382375b7
+state_head: 5347b0ab32435322ef0191917485648df3fa4cd2
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 155
-  completed_plans: 150
+  total_plans: 156
+  completed_plans: 151
   percent: 63
 ---
 
@@ -206,6 +206,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P15 | 40min | 3 tasks | 4 files |
 | Phase 08 P18 | 15min | 3 tasks | 1 files |
 | Phase 08 P21 | 40min | 2 tasks | 1 files |
+| Phase 03 P18 | 5 min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -450,6 +451,7 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-15: R7 proposes reschedules only on free-topic side bookings and always declines them; Android half of R7 and R8 needs a dev build at or after e311a74c
 - [Phase 08]: 08-18: backend frozen at 1d18aac (X2) until the regression is signed off, except a D-09 fix (D-12)
 - [Phase 08]: 08-21: backend master merged origin/main (e36da57) with six hand-resolved hunks (user-approved); master not pushed or deployed; supabase db push only from master after this merge
+- [Phase 03]: 03-18: Booking Summary free row reads Session fee · Free (user decision 2026-11-22); paid and missing-price rows keep PAID; missing price shows a dash
 
 ### Pending Todos
 

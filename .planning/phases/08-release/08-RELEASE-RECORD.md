@@ -9,8 +9,9 @@ What shipped, what ran on a device, and what did not. This record is written bef
 | Version and build | 1.1 (7): `MARKETING_VERSION = 1.1`, `CURRENT_PROJECT_VERSION = 7` for the app target (D-18). App Store build 6 (1.0) is the shipped baseline. |
 | Release path | `ci` (plan 08-04, user-reported green dry run of the "Deploy to TestFlight" workflow on `main` at `4bd63e7`, 2026-11-22). A pushed `release/1.1` branch builds, signs and uploads to TestFlight (D-19, D-25). |
 | Environment | `Environments.plist` stays on `Production` (P9, by design). |
-| Candidate SHA | to be filled by plan 08-20 |
-| TestFlight build number | to be filled by plan 08-20 (expected 1.1 (7)) |
+| Candidate SHA | `1fdcc26` (`1fdcc26edd754d5f156bb8369c41fb2e5f0281f5`), `chore(release): 1.1 (7)`, on top of `73b9800` `chore(08-20): refresh the string catalog`. Annotated tag `v1.1` (tag object `e5a92134f134e68799a94a54c3efd52ff1e4d738`, "ClickMe iOS 1.1 (7)") peels to `1fdcc26`; `release/1.1` tip on GitHub is `1fdcc26`; `main` on GitHub was `1fdcc26` at the cut (fast-forward from `4bd63e7`). Built commit, tag and branch tip are the same SHA (`git ls-remote origin`, 2026-11-23). Cut after the backend freeze: /health was `1d18aac`, equal to the frozen SHA. User go (plan 08-20 Task 2, 2026-11-23, verbatim): "go". |
+| Candidate checks | Full unit run on `1fdcc26`: "Test run with 1296 tests in 119 suites passed" (first run, no flake rerun). `scripts/release-build-check.sh` on `1fdcc26`: RELEASE CHECK PASSED, NEW WARNINGS: 0. D-25/D-26 history scans over `origin/main..HEAD` (61 commits, re-run immediately before the first push): no JWT-shaped string and no secret key; the working-tree `eyJhbGciOi` list outside `.planning` is exactly the two fake-JWT fixtures. |
+| TestFlight build number | 1.1 (7), uploaded by the "Deploy to TestFlight" workflow (`.github/workflows/build.yml`) triggered by the `release/1.1` push (2026-11-23, shortly before 14:35Z). Run ID not read at the cut: `gh` is not installed on this machine and the repo's Actions API is private. Runs: https://github.com/mercforhire/ClickMe2026/actions/workflows/build.yml?query=branch%3Arelease%2F1.1 . 08-22 starts after TestFlight shows 1.1 (7). |
 | Testers | internal TestFlight testers only (D-20) |
 | Regression checklist | `08-REGRESSION-CHECKLIST.md`, items R1 to R11 |
 
@@ -39,7 +40,7 @@ Measured by `scripts/release-build-check.sh` (plan 08-01): a clean-checkout Rele
 | Baseline (build 6, `a48c664`) | 4 |
 | Candidate at plan 08-01 | 4 |
 | New warnings | 0 |
-| Candidate at release (final diff) | to be filled by plan 08-20 |
+| Candidate at release (final diff) | `1fdcc26` (plan 08-20, 2026-11-23): BASELINE WARNINGS: 4, CANDIDATE WARNINGS: 4, NEW WARNINGS: 0, RELEASE CHECK PASSED |
 
 ## Not run on device (D-01)
 

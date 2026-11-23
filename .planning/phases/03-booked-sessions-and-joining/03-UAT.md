@@ -3,7 +3,7 @@ status: partial
 phase: 03-booked-sessions-and-joining
 source: [03-VERIFICATION.md]
 started: 2026-11-11T06:30:00Z
-updated: 2026-11-23T05:00:50.416Z
+updated: 2026-11-23T05:07:53.464Z
 ---
 
 ## Current Test
@@ -19,7 +19,7 @@ reported: "Note a bug for the backend. The notification received on phone A says
 severity: minor
 reported_2: "For step, the decline message of the emoji cannot be seen by the other user because the UI does not display the reason for the decline, nor is it added to the chat."
 severity_2: major
-note: "Device run resumed 2026-11-19 (previously blocked: physical-device). Per-item results are in 03-DEVICE-UAT-CHECKLIST.md. Paused 2026-11-19 by user after item 6: items 1 FAIL (3 backend gaps; rest passed), 2/3/5/6 PASS, 4 SKIPPED (no VoiceOver testing), 7-24 not run. User will not test VoiceOver steps. Resumed 2026-11-22 and finished: items 7-11, 13-16, 18-22 and 24-26 PASS; 12 (no Skype/Zoom app), 17 (55-minute wait) and 23 (no smallest iPhone or Teams/Meet booking) SKIPPED. Every item has a Result. Item 14 found gap G-03-1-ITEM14. 2026-11-23: item 27 (added by 03-18, the G-03-1-ITEM14 fix) PASS on device."
+note: "Device run resumed 2026-11-19 (previously blocked: physical-device). Per-item results are in 03-DEVICE-UAT-CHECKLIST.md. Paused 2026-11-19 by user after item 6: items 1 FAIL (3 backend gaps; rest passed), 2/3/5/6 PASS, 4 SKIPPED (no VoiceOver testing), 7-24 not run. User will not test VoiceOver steps. Resumed 2026-11-22 and finished: items 7-11, 13-16, 18-22 and 24-26 PASS; 12 (no Skype/Zoom app), 17 (55-minute wait) and 23 (no smallest iPhone or Teams/Meet booking) SKIPPED. Every item has a Result. Item 14 found gap G-03-1-ITEM14. 2026-11-23: item 27 (added by 03-18, the G-03-1-ITEM14 fix) PASS on device. 2026-11-23: re-test of item 1's failed parts (ITEM1/1B/1C, fixed in Phase 8) BLOCKED (user: \"blocked\"); still to run on two devices."
 reported_3: "log the decline-push bug"
 severity_3: major
 reported_4: "The iOS session summary screen does not have the price, whereas the Android version says the price or free." Then: "Yes, add \"free\" label to the iOS version."

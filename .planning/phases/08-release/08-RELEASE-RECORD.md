@@ -202,7 +202,13 @@ Regression signed off 2026-11-23; gating items R1-R11 PASS (R1 overtime steps an
 
 ## Submission
 
-**Status:** draft, awaiting the user's approval of the What's New text and the review notes (plan 08-23 Task 2, D-22). Not submitted.
+**Status:** Submitted for App Review, Waiting for Review.
+
+- **Submitted:** 2026-11-23 18:41 EST (2026-11-23T23:41Z), version 1.1 with build 1.1 (7), by the user in App Store Connect (plan 08-23 Task 3, D-20, D-21). User report, verbatim: "submitted 2026-11-23 18:41, status Waiting for Reviw" ("Reviw" is the user's typo; the App Store Connect status is "Waiting for Review").
+- **App Store Connect status at submission:** Waiting for Review.
+- **Release setting:** the plan's steps were "Automatically release this version" with Phased Release off (D-21) and no external TestFlight group or Beta App Review (D-20). The user's report covers the submission time and status only.
+- **Approval (Task 2, D-22):** the user approved the What's New text and the review notes unedited on 2026-11-23, verbatim: "approve". The approved text is the text under `### What's New` as drafted in `8a7e060`.
+- **Gate:** passed at 2026-11-23T23:35Z, before the submission (below).
 
 **Pre-submission gate** (plan 08-23 Task 1, 2026-11-23T23:35Z): PASS.
 

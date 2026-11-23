@@ -3,6 +3,46 @@ phase: 03
 review: 03-REVIEW.md
 titles: json
 findings:
+  - id: WR-10
+    severity: warning
+    disposition: open
+    title: "Message Client on the expert Booking Summary fails silently and can push the chat twice"
+  - id: WR-11
+    severity: warning
+    disposition: open
+    title: "`tickDuringRequestKeepsConfirmedCase` waits on a yield count, not on time, and blocks a thread on a semaphore"
+  - id: IN-01
+    severity: info
+    disposition: open
+    title: "`bannerFinalStretch` test cannot distinguish the final-stretch branch (carried forward, unchanged)"
+  - id: IN-03
+    severity: info
+    disposition: open
+    title: "Duplicate error-message helper (carried forward)"
+  - id: IN-04
+    severity: info
+    disposition: open
+    title: "The reschedule response card is not gated on booking status (carried forward, now on two screens)"
+  - id: IN-05
+    severity: info
+    disposition: open
+    title: "`startCall()` returns silently when join inputs are missing (carried forward)"
+  - id: IN-06
+    severity: info
+    disposition: open
+    title: "`.chargedNotRefundable` at server 0 still says \"No refund applies\" (carried forward)"
+  - id: IN-07
+    severity: info
+    disposition: open
+    title: "The confirm step shows a refund case that is only as fresh as the load, until the first 60 s tick"
+  - id: IN-08
+    severity: info
+    disposition: open
+    title: "`rescheduleListsAreExhaustive` claims exhaustiveness it does not check"
+  - id: IN-09
+    severity: info
+    disposition: open
+    title: "`rescheduleTimesRow` builds two throwaway `RescheduleProposal` values just to format a date"
   - id: WR-01
     severity: warning
     disposition: fixed
@@ -39,54 +79,39 @@ findings:
     severity: warning
     disposition: fixed
     title: "Post-cancel toast reads the refund case after the await, so the 60 s tick can change the case the user confirmed under"
-  - id: IN-01
-    severity: info
-    disposition: open
-    title: "`bannerFinalStretch` test cannot distinguish the final-stretch branch"
   - id: IN-02
     severity: info
     disposition: open
     title: "`HomeNavigationPathTests` do not cover the route wiring that makes `pop(2)` correct"
-  - id: IN-03
-    severity: info
-    disposition: open
-    title: "Duplicate error-message helper"
-  - id: IN-04
-    severity: info
-    disposition: open
-    title: "Booking Summary shows the response card without a status check"
-  - id: IN-05
-    severity: info
-    disposition: open
-    title: "`startCall()` returns silently when join inputs are missing"
-  - id: IN-06
-    severity: info
-    disposition: open
-    title: "`.chargedNotRefundable` at server 0 still states \"No refund applies\", the same ambiguity WR-02 removed for the refundable case"
-open: 6
-total: 15
-recorded: 2026-11-11T21:37:45.177Z
+open: 11
+total: 20
+recorded: 2026-11-23T01:47:38.698Z
 ---
 
 # Phase 03: Code Review Disposition
 
 | Finding | Severity | Disposition | Source |
 |---------|----------|-------------|--------|
-| WR-01 | warning | fixed | 03-16 (gap G-03-3-WR01) |
-| WR-02 | warning | fixed | 03-17 (gap G-03-3-WR02) |
-| WR-03 | warning | fixed | 03-REVIEW-FIX.md |
-| WR-04 | warning | fixed | 03-REVIEW-FIX.md |
-| WR-05 | warning | fixed | 03-REVIEW-FIX.md |
-| WR-06 | warning | fixed | 03-REVIEW-FIX.md |
-| WR-07 | warning | fixed | 03-REVIEW-FIX.md |
-| WR-08 | warning | fixed | 03-REVIEW-FIX.md |
-| WR-09 | warning | fixed | 03-REVIEW-FIX.md |
+| WR-10 | warning | open | - |
+| WR-11 | warning | open | - |
 | IN-01 | info | open | - |
-| IN-02 | info | open | - |
 | IN-03 | info | open | - |
 | IN-04 | info | open | - |
 | IN-05 | info | open | - |
 | IN-06 | info | open | - |
+| IN-07 | info | open | - |
+| IN-08 | info | open | - |
+| IN-09 | info | open | - |
+| WR-01 | warning | fixed | 03-16 (gap G-03-3-WR01) (not in the current review) |
+| WR-02 | warning | fixed | 03-17 (gap G-03-3-WR02) (not in the current review) |
+| WR-03 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
+| WR-04 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
+| WR-05 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
+| WR-06 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
+| WR-07 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
+| WR-08 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
+| WR-09 | warning | fixed | 03-REVIEW-FIX.md (not in the current review) |
+| IN-02 | info | open | - (not in the current review) |
 
 Dispositions: `open` (recorded, not yet triaged), `fixed`, `skipped`, `deferred`.
 Set `deferred` by hand and put the reason in the Source cell; both are preserved. A `|` in the reason is kept as prose and escaped on the next run.

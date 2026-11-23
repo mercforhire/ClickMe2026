@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 11
+current_plan: 12
 status: executing
-stopped_at: Completed 08-17-PLAN.md
-last_updated: "2026-11-22T23:57:38.409Z"
+stopped_at: Completed 08-15-PLAN.md
+last_updated: "2026-11-23T00:07:05.984Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: 18029f49963f425d57eea3ee7433f5d9272319b4
+state_head: 00b3724302978931c9b421b6a8bae0a761140f19
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 155
-  completed_plans: 147
+  completed_plans: 148
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 11
+Current Plan: 12
 Total Plans in Phase: 31
 Status: Ready to execute
 Last activity: 2026-11-22 — Phase 08 execution started
@@ -203,6 +203,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P10 | 15min | 3 tasks | 9 files |
 | Phase 08 P13 | 15min | 3 tasks | 5 files |
 | Phase 08 P17 | 45min | 2 tasks | 9 files |
+| Phase 08 P15 | 40min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -443,6 +444,8 @@ Recent decisions affecting current work:
 - [Phase 08]: D-23: disclose saved cards are not deleted with the account; final wording 'Cards you added to pay for sessions are not deleted with your account.' (user chose option-a)
 - [Phase 08]: 08-17: Android blocker table is an enum (AccountDeletionBlocker); the active mode is applied at render from the registering shell, so DeleteAccountViewModel keeps its constructor
 - [Phase 08]: 08-17: Android View My Bookings resets the Profile stack holding Delete Account, then opens the Bookings tab of the active mode (Android-only reset, as Request Sent)
+- [Phase 08]: 08-15: regression run order is R4, R6, R1, R2, R3, R5, R7, R8, R10, R9, R11 (R5 needs S1's clone and removes the card; R6 runs before S1 so only one hold is open at a time)
+- [Phase 08]: 08-15: R7 proposes reschedules only on free-topic side bookings and always declines them; Android half of R7 and R8 needs a dev build at or after e311a74c
 
 ### Pending Todos
 
@@ -544,6 +547,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-22T23:57:37.841Z
-Stopped at: Completed 08-17-PLAN.md
+Last session: 2026-11-23T00:06:53.246Z
+Stopped at: Completed 08-15-PLAN.md
 Resume file: None

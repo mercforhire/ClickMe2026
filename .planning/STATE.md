@@ -2,18 +2,18 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 14
+current_plan: 15
 status: executing
-stopped_at: Completed 08-21-PLAN.md
-last_updated: "2026-11-23T04:12:59.453Z"
+stopped_at: Completed 08-19-PLAN.md
+last_updated: "2026-11-23T05:56:10.679Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: 5347b0ab32435322ef0191917485648df3fa4cd2
+state_head: 08b977925772ac2677b4c8488ac1faceb7bbd1bf
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 156
-  completed_plans: 151
+  completed_plans: 152
   percent: 63
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 14
+Current Plan: 15
 Total Plans in Phase: 31
 Status: Ready to execute
 Last activity: 2026-11-22 - Completed quick task 261122-tcf: Fix Phase 3 review follow-ups (T-03-23, WR-10, 44pt buttons)
@@ -207,6 +207,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P18 | 15min | 3 tasks | 1 files |
 | Phase 08 P21 | 40min | 2 tasks | 1 files |
 | Phase 03 P18 | 5 min | 2 tasks | 7 files |
+| Phase 08 P19 | 30min | 3 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -452,6 +453,8 @@ Recent decisions affecting current work:
 - [Phase 08]: 08-18: backend frozen at 1d18aac (X2) until the regression is signed off, except a D-09 fix (D-12)
 - [Phase 08]: 08-21: backend master merged origin/main (e36da57) with six hand-resolved hunks (user-approved); master not pushed or deployed; supabase db push only from master after this merge
 - [Phase 03]: 03-18: Booking Summary free row reads Session fee · Free (user decision 2026-11-22); paid and missing-price rows keep PAID; missing price shows a dash
+- [Phase 08]: 08-19: Phase 3 re-verified (f97e9f3, human_needed 18/22, none failed); every Phase 3 and 4 human item is device-only (D-01) or VoiceOver (D-02), zero code findings; 03 WR-01 PAID label needs its acceptance recorded in 08-24
+- [Phase 08]: 08-19: 330afcc (03-18), 208ee4f and cec4477 (quick 261122-tcf) are iOS app changes after a603a2a outside Phase 8; 08-20 must cut the RC from a HEAD with them and 08-22 should cover the Booking Summary free price row (device item 27)
 
 ### Pending Todos
 
@@ -555,6 +558,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-23T01:42:50.278Z
-Stopped at: Completed 08-21-PLAN.md
+Last session: 2026-11-23T05:56:10.136Z
+Stopped at: Completed 08-19-PLAN.md
 Resume file: None

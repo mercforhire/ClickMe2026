@@ -115,6 +115,10 @@ struct RequestDecisionView: View {
     /// isolated tests) — in that case the Message tap silently no-ops.
     @Environment(\.openChatThread) private var openChatThread
 
+    /// Single-flight chat start for Message; its error raises the
+    /// "Couldn't start chat" alert (WR-10).
+    @State private var chatStarter = ChatStarter()
+
     /// Shell-injected Back to Home for Booking Confirmed (D-11). Nil outside
     /// a `HomeExpertView` shell, where the tap does nothing.
     @Environment(\.returnToDashboard) private var returnToDashboard
@@ -176,6 +180,18 @@ struct RequestDecisionView: View {
             }
         } message: { failure in
             Text(failure.message)
+        }
+        .alert(
+            "Couldn't start chat",
+            isPresented: Binding(
+                get: { chatStarter.apiError != nil },
+                set: { if !$0 { chatStarter.apiError = nil } }
+            ),
+            presenting: chatStarter.apiError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
         }
         .keyboardDismissToolbar()
     }
@@ -273,6 +289,8 @@ struct RequestDecisionView: View {
     /// Look up (or create) the chat thread with this request's client and
     /// hand off to the shell so the Chats tab opens on that conversation.
     /// `initiateChat` is idempotent — repeat calls return the existing thread.
+    /// A failure raises the "Couldn't start chat" alert, and a second tap while
+    /// one request runs is ignored (WR-10).
     /// No-ops when the client id hasn't loaded yet or when rendered outside
     /// a shell (previews, tests).
     private func handleMessage() {
@@ -280,10 +298,9 @@ struct RequestDecisionView: View {
         let peerName = viewModel.request.clientName
         let peerAvatarURL = viewModel.request.imageURL
         Task {
-            guard let response = try? await ClickMeAPI.shared.initiateChat(peerId: clientId)
-            else { return }
+            guard let threadId = await chatStarter.start(peerId: clientId) else { return }
             openChatThread(
-                threadId: response.data.threadId,
+                threadId: threadId,
                 peerName: peerName,
                 peerAvatarURL: peerAvatarURL
             )

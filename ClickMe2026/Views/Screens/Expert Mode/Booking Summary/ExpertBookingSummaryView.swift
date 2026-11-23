@@ -35,6 +35,10 @@ struct ExpertBookingSummaryView: View {
     @Environment(\.openChatThread) private var openChatThread
     @Environment(\.homeNavigationPath) private var homeNavigationPath
 
+    /// Single-flight chat start for Message Client; its error raises the
+    /// "Couldn't start chat" alert (WR-10).
+    @State private var chatStarter = ChatStarter()
+
     /// Observed for the join-failure and microphone alerts (CALL-10). The call
     /// surface itself is hosted by the shell.
     @ObservedObject private var callCenter = CallCenter.shared
@@ -148,6 +152,18 @@ struct ExpertBookingSummaryView: View {
                 set: { if !$0 { callCenter.joinError = nil } }
             ),
             presenting: callCenter.joinError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
+        .alert(
+            "Couldn't start chat",
+            isPresented: Binding(
+                get: { chatStarter.apiError != nil },
+                set: { if !$0 { chatStarter.apiError = nil } }
+            ),
+            presenting: chatStarter.apiError
         ) { _ in
             Button("OK", role: .cancel) {}
         } message: { message in
@@ -659,8 +675,7 @@ struct ExpertBookingSummaryView: View {
                 Text("Decline")
                     .font(.brand(.subheadline, weight: .semibold))
                     .foregroundColor(Color.red.opacity(0.95))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 42)
+                    .frame(maxWidth: .infinity, minHeight: 44)
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .fill(Color.red.opacity(0.10))
@@ -684,8 +699,7 @@ struct ExpertBookingSummaryView: View {
                         .font(.brand(.subheadline, weight: .semibold))
                 }
                 .foregroundColor(Brand.onPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 42)
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(Brand.primary)
@@ -783,8 +797,14 @@ struct ExpertBookingSummaryView: View {
             handleMessage(detail: detail)
         } label: {
             HStack(spacing: 8) {
-                Image(systemName: "bubble.left.fill")
-                    .font(.subheadline.weight(.semibold))
+                if chatStarter.isStarting {
+                    ProgressView()
+                        .tint(outlined ? Brand.primary : Brand.onPrimary)
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: "bubble.left.fill")
+                        .font(.subheadline.weight(.semibold))
+                }
                 Text("Message Client")
                     .font(.brand(.subheadline, weight: .semibold))
             }
@@ -803,6 +823,7 @@ struct ExpertBookingSummaryView: View {
             }
         }
         .buttonStyle(PressScaleButtonStyle())
+        .disabled(chatStarter.isStarting)
     }
 
     // MARK: - Join CTA
@@ -845,17 +866,18 @@ struct ExpertBookingSummaryView: View {
     }
 
     /// `initiateChat` is idempotent — repeat calls return the existing thread.
-    /// No-op when rendered outside a shell (previews).
+    /// A failure raises the "Couldn't start chat" alert, and a second tap while
+    /// one request runs is ignored (WR-10). No-op when rendered outside a shell
+    /// (previews).
     private func handleMessage(detail: ExpertBookingDetail) {
         guard let openChatThread else { return }
         let clientId = detail.client.id
         let peerName = detail.client.name ?? "Client"
         let peerAvatarURL = detail.client.avatarUrl ?? ""
         Task {
-            guard let response = try? await ClickMeAPI.shared.initiateChat(peerId: clientId)
-            else { return }
+            guard let threadId = await chatStarter.start(peerId: clientId) else { return }
             openChatThread(
-                threadId: response.data.threadId,
+                threadId: threadId,
                 peerName: peerName,
                 peerAvatarURL: peerAvatarURL
             )

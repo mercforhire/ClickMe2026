@@ -11,7 +11,7 @@ created: "2026-11-11"
 # Phase 03: Security
 
 > Per-phase security contract: threat register, accepted risks, and audit trail.
-> The register was written when the 17 plans were authored (`register_authored_at_plan_time: true`). The gsd-security-auditor checked every mitigation on 2026-11-11 (plans 01-15) and re-audited all 48 rows against the current code on 2026-11-22, after phases 04, 07 and 08 and quick task 261122-r2o, at ASVS L1 with `block_on: high`.
+> The register was written when the 18 plans were authored (`register_authored_at_plan_time: true`). The gsd-security-auditor checked every mitigation on 2026-11-11 (plans 01-15) and re-audited all 48 rows against the current code on 2026-11-22, after phases 04, 07 and 08 and quick task 261122-r2o, at ASVS L1 with `block_on: high`.
 
 ---
 
@@ -56,6 +56,7 @@ created: "2026-11-11"
 | T-03-24 | Information Disclosure | Android short ID; unrelated files in the commit | low | mitigate | Android `0f2e8cd` touches exactly 2 files and uses `shortBookingId` | closed |
 | T-03-28 | Tampering | Second accept or decline from a stale card after a 2xx and a failed refetch | medium | mitigate | `RescheduleResponder` calls `onResolved` before `refetch` on every 2xx (`:111-112`, `:138-139`, `:171-172`), never from a catch. Upcoming and Booking Summary set `reschedule = nil`. Call-order, no-hook-on-failure and 500-refetch tests | closed |
 | T-03-30 | Repudiation | Post-cancel toast naming a refund the server did not issue | medium | mitigate | `CancelToastMessage.swift:39-44` names an amount only for `serverRefundMajor > 0`, and the zero arm is neutral (`:51-52`). Tests `zeroChargedRefundable`, `zeroNeverNamesARefundAmount`, `zeroRefundUsesConfirmedCase`, `alreadyCancelledShowsNeutralLine` | closed |
+| T-03-32 | Repudiation | Booking Summary price row stating a money outcome the server did not report (03-18) | low | mitigate | `BookingSummaryPrice.swift:34-37`: `.free` (and the "Session fee" label, `:61`) only when `topic.is_free` is true; the amount comes only through `Money.format(minorUnits:currency:)`; a missing amount or currency returns `.unknown` (dash, `:36`). Tests `freeSessionShowsFree`, `freeFlagWinsOverPrice`, `paidSessionShowsAmount`, `paidWithoutPriceShowsDash` (green 2026-11-22) | closed |
 | T-03-12 | Information Disclosure | Toast read aloud by VoiceOver | low | accept | See the Accepted Risks Log | closed |
 | T-03-14 | Information Disclosure | Booking ID shown and selectable | low | accept | See the Accepted Risks Log | closed |
 | T-03-19 | Information Disclosure | Cancel comment visible to the expert | low | accept | See the Accepted Risks Log | closed |
@@ -63,7 +64,7 @@ created: "2026-11-11"
 | T-03-21 | Elevation of Privilege | Cancel or reschedule from a push for a booking the user does not own | low | accept | See the Accepted Risks Log | closed |
 | T-03-29 | Tampering | Local proposal cleared while the server still holds one | low | accept | See the Accepted Risks Log | closed |
 | T-03-31 | Tampering | Phone clock skew choosing the confirmed refund case | low | accept | See the Accepted Risks Log | closed |
-| T-03-SC-01 … SC-17 | Tampering | Package installs (one row per plan) | low | accept | No dependency manifest changed in iOS, backend `65bb2ed` or Android `0f2e8cd` | closed |
+| T-03-SC-01 … SC-18 | Tampering | Package installs (one row per plan) | low | accept | No dependency manifest changed in iOS, backend `65bb2ed` or Android `0f2e8cd` | closed |
 
 *Status: open · closed · open — below high threshold (non-blocking)*
 *Severity: critical > high > medium > low. Only open threats at or above workflow.security_block_on count toward threats_open*
@@ -80,7 +81,7 @@ created: "2026-11-11"
 | AR-03-03 | T-03-19 | The cancel comment is stored (BACK-14) and shown to the expert, and the app never logs it. The field does not tell the client the expert sees it, which is flagged in `03-DEVICE-UAT-CHECKLIST.md`. **2026-11-22 drift:** backend 5da3976 (quick-261119-miw) also copies the reason and comment into the chat event as `reason_text`, which iOS renders (`ChatItemMapper.swift:86`). The audience is still the booking's expert, but the text now also stays in chat. It is not sent in pushes | Plan-time threat model; auditor confirmed | 2026-11-11 |
 | AR-03-04 | T-03-20 | The app sends `exclude_booking_id` only for the booking being moved. The backend ignores a non-UUID value, and the id only filters the caller's month view. **Caveat:** the auditor found no slot-conflict hold (`holdSlotMulti` or a unique index) on the client reschedule or accept-reschedule paths, so expert approval is the visible gate. Do not rely on a server-side conflict check here | Plan-time threat model; auditor confirmed with caveat | 2026-11-11 |
 | AR-03-05 | T-03-21 | The new push routes add no endpoint or id source. The client endpoints scope by `client_id` and return 404 when the booking is not the caller's | Plan-time threat model; auditor confirmed | 2026-11-11 |
-| AR-03-06 | T-03-SC-01 … SC-17 | No packages were installed or upgraded in any plan. 03-16 (788be8c, c8a4504) and 03-17 (4cc7767) touch no manifest. The one later change to Package.resolved (eeb6c9e, the Agora repin) belongs to phase 08 | Plan-time threat model; auditor confirmed | 2026-11-11, extended 2026-11-22 |
+| AR-03-06 | T-03-SC-01 … SC-18 | No packages were installed or upgraded in any plan. 03-16 (788be8c, c8a4504), 03-17 (4cc7767) and 03-18 (330afcc, 5347b0a) touch no manifest. The one later change to Package.resolved (eeb6c9e, the Agora repin) belongs to phase 08 | Plan-time threat model; auditor confirmed | 2026-11-11, extended 2026-11-22 |
 | AR-03-07 | T-03-29 | The proposal is cleared only after a 2xx. The refetch takes a new `ReloadGeneration` token right after the clear, so an older fetch cannot write, and `apply` writes back any proposal the server still holds | Plan-time threat model; auditor confirmed | 2026-11-22 |
 | AR-03-08 | T-03-31 | At a refund of 0, the phone clock only picks wording, and neither case names an amount. The server stays the authority on the refund | Plan-time threat model; auditor confirmed | 2026-11-22 |
 
@@ -112,3 +113,11 @@ Notes (non-blocking):
 - [x] `status: verified` set in frontmatter
 
 **Approval:** verified 2026-11-11; re-verified 2026-11-22 with T-03-23 open and non-blocking, pending a user decision to fix it or accept it
+
+## Security Audit 2026-11-23
+
+| Metric | Count |
+|---|---|
+| Threats found | 2 |
+| Closed | 2 |
+| Open | 0 |

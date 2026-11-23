@@ -104,7 +104,7 @@ Expected:
 - No payment sheet, no hold and no charge at any point. Q1 shows no PaymentIntent for the booking, and the Dashboard shows no new payment.
 - Join, the end + 55 notice and the end + 60 automatic end behave exactly as in R1.
 
-Result:
+Result: SKIPPED (2026-11-23): user chose to skip R2 ("skip"); the free in-app voice path and the end + 55 / end + 60 overtime were not run on build 7. Open for the 08-24 ruling together with R1's overtime steps
 
 ### R3. S3: one Skype/Zoom session on a free topic, book, join, run past the end, finish (D-04, CALL-06, CALL-07, CALL-08)
 
@@ -123,7 +123,7 @@ Expected:
 - The `end + 55` banner shows, **Open in {provider}** opens B's meeting link, and **End Session** closes the screen.
 - Q1 and the Dashboard show no payment for this booking.
 
-Result:
+Result: SKIPPED (2026-11-23): user chose to skip R3 ("skip"); the Skype/Zoom layout (provider label, Open in {provider}, no auto-end promise, end + 55 banner, End Session) was not run on build 7. Open for the 08-24 ruling
 
 ### R4. BACK-06: one saved card becomes the default (D-06, BACK-06)
 
@@ -160,7 +160,7 @@ Expected:
 - The removal succeeds, the clone shows detached on the connected account and is not chargeable, and the count is 0.
 - No hold and no charge from this item.
 
-Result:
+Result: PASS (2026-11-23); Q2 returned the S1 clone row before removal, card removed, clone gone from the connected customer, count 0 afterwards; no hold or charge
 
 ### R6. BACK-19 hold release: B cancels a held booking and the PaymentIntent is released (D-06, D-27, BACK-19, BACK-07)
 

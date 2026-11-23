@@ -321,3 +321,22 @@ None. All 17 Phase 4 rows were ticked by plan 08-22; no row was deferred, so no 
 - **Tag** `v1.1` (annotated, tag object `e5a92134f134e68799a94a54c3efd52ff1e4d738`, "ClickMe iOS 1.1 (7)") peels to `1fdcc26edd754d5f156bb8369c41fb2e5f0281f5`, the built commit and the `release/1.1` tip (plan 08-20).
 - **Backend merge commit** `e36da572b8f2559da5ef05c16942864cf4eb4dab` (plan 08-21, D-17): backend `master` takes `origin/main` at `1d18aac` with D-12, CR-02 and D-29; `master` is not pushed and not deployed.
 - **Production backend**: frozen at `1d18aac` (`1d18aac740dd49c7e5b8b0ed2d59563c0d9a5594`), the X2 SHA; rollback branch `ios-p8-x2-rollback`.
+
+### Folded todos
+
+The 14 todo files folded into Phase 8 (08-CONTEXT.md, Folded Todos), one line each. A `completed` todo is in `.planning/todos/completed/` with a `## Resolution`; a `pending` one is still in `.planning/todos/pending/` with the reason. Every Android port the user requested in 08-26 (P1 to P6) has landed on ClickMe_Android `main` (08-31), so no parity todo is open on an unlanded port.
+
+- 2026-11-11-merge-d12-into-backend-master: completed (08-21, backend `master` took `origin/main` at `1d18aac` by merge commit `e36da57`; not pushed, not deployed)
+- 2026-11-12-long-lead-sweep-transient-errors-after-stamp: completed (08-14, D-29 retry of transient errors up to 6 h before the session, backend `1d18aac`, deployed in X2 by 08-16)
+- 2026-11-16-backend-null-topic-currency: completed (08-05, null instead of an empty string for a topic with no currency, backend `412f1aa`, deployed in X1 by 08-08)
+- 2026-11-14-backend-profile-name-validation: completed (08-05, D-30 hand-written messages for empty profile names, backend `0767cf4`, deployed in X1; the empty-last-name decisions stay product questions)
+- 2026-11-13-decide-saved-cards-on-account-deletion: completed (08-13, D-23 disclose it on Delete Account: "Cards you added to pay for sessions are not deleted with your account.")
+- 2026-11-16-usd-symbol-us-dollar-prefix: completed (08-10, D-24 USD renders as US$ and CAD as CA$ on iOS; the Android symbol override is 08-03)
+- 2026-11-16-android-phase-6-parity-follow-ups: completed (08-31, P1 off-grid stored time and P2 client hub online dot ported on ClickMe_Android `main`; device checks A12 and A13 not run)
+- 2026-11-13-android-phase-5-parity-check: completed (08-31, P3 to P6 ported on ClickMe_Android `main`, P7 closed by the user on 2026-11-20; device checks A10 and A14 to A17 not run)
+- 2026-11-13-android-cancellation-policy-link: completed (08-12, cancellation policy screen and link, Android `2ffb5d23`)
+- 2026-11-13-android-delete-account-copy-and-blockers: completed (08-17, truthful Delete Account copy and the 409 blocker alert, Android `2a65e7c7` and `e311a74c`)
+- 2026-11-13-android-remember-login-email: completed (08-09, remembered login email ported by hand, Android `adc3647a` and `e3676ef1`)
+- 2026-11-14-android-profile-settings-empty-name-save: completed (08-06, never send an empty profile name and name the fields on a 422, Android `9ce71b80` and `337f4c0c`)
+- 2026-11-15-android-expert-settings-clear-meeting-link: completed (08-06, clearing the meeting link sends `meeting_url: ""`, Android `ad190070`)
+- 2026-11-08-check-the-android-push-prompt-after-a-reinstall: pending - device check not run in Phase 8 (A11's Result is empty; the 08-12 source reading found no reinstall gap, which is not a device result)

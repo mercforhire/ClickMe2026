@@ -1,8 +1,8 @@
 ---
 phase: 03-booked-sessions-and-joining
-verified: 2026-11-23T01:56:24Z
+verified: 2026-11-23T05:10:00Z
 status: human_needed
-score: 8/19 must-haves verified (5/5 roadmap success criteria, both UAT gap truths and the 03-13 Booking Summary parity backstop on code, test and device evidence; 1 status-accuracy truth UNCERTAIN, awaiting a user decision; 10 UI-SPEC backstop truths insufficient_spec)
+score: 18/22 must-haves verified (5/5 roadmap success criteria, G1-G3, B1-B4 and all six 03-18 truths; 4 UI-SPEC backstop truths insufficient_spec; none failed)
 covered_files:
   - ".planning/phases/03-booked-sessions-and-joining/03-01-PLAN.md"
   - ".planning/phases/03-booked-sessions-and-joining/03-01-SUMMARY.md"
@@ -38,10 +38,13 @@ covered_files:
   - ".planning/phases/03-booked-sessions-and-joining/03-16-SUMMARY.md"
   - ".planning/phases/03-booked-sessions-and-joining/03-17-PLAN.md"
   - ".planning/phases/03-booked-sessions-and-joining/03-17-SUMMARY.md"
+  - ".planning/phases/03-booked-sessions-and-joining/03-18-PLAN.md"
+  - ".planning/phases/03-booked-sessions-and-joining/03-18-SUMMARY.md"
   - "ClickMe2026/Managers/ToastCenter.swift"
   - "ClickMe2026/Model/Responses/CancelBookingData.swift"
   - "ClickMe2026/Model/Responses/ClientBookingDetail.swift"
   - "ClickMe2026/Model/Responses/ExpertBookingDetail.swift"
+  - "ClickMe2026/Model/Responses/RescheduleDeclineResponse.swift"
   - "ClickMe2026/Network/ClickMeAPI+Availability.swift"
   - "ClickMe2026/Network/ClickMeAPI+Booking.swift"
   - "ClickMe2026/Utils/BookingShortID.swift"
@@ -60,6 +63,8 @@ covered_files:
   - "ClickMe2026/Views/Screens/Call/Calling/MeetingCallView.swift"
   - "ClickMe2026/Views/Screens/Call/Calling/MeetingCallViewModel.swift"
   - "ClickMe2026/Views/Screens/Call/Calling/Subviews/SkypeSessionHero.swift"
+  - "ClickMe2026/Views/Screens/Chat/ChatStarter.swift"
+  - "ClickMe2026/Views/Screens/Client Mode/Booking Summary/BookingSummaryPrice.swift"
   - "ClickMe2026/Views/Screens/Client Mode/Booking Summary/BookingSummaryView.swift"
   - "ClickMe2026/Views/Screens/Client Mode/Booking Summary/BookingSummaryViewModel.swift"
   - "ClickMe2026/Views/Screens/Client Mode/Booking Summary/RescheduleResponder.swift"
@@ -90,6 +95,7 @@ covered_files:
   - "ClickMe2026/Views/Screens/Expert Mode/Cancellation/Subviews/ExpertCancellationClientBox.swift"
   - "ClickMe2026/Views/Screens/Expert Mode/Cancellation/Subviews/ExpertCancellationMainCard.swift"
   - "ClickMe2026/Views/Screens/Expert Mode/Home/HomeExpertView.swift"
+  - "ClickMe2026/Views/Screens/Expert Mode/Request decision/RequestDecisionView.swift"
   - "ClickMe2026/Views/Screens/Expert Mode/Reschedule/ExpertRescheduleView.swift"
   - "ClickMe2026/Views/Screens/Expert Mode/Reschedule/ExpertRescheduleViewModel.swift"
   - "ClickMe2026/Views/Screens/Expert Mode/Upcoming Bookings/UpcomingBookingsView.swift"
@@ -103,6 +109,7 @@ covered_files:
   - "ClickMe2026Tests/Booking/UpcomingBookingViewModelTests.swift"
   - "ClickMe2026Tests/Calls/ExternalMeetingProviderTests.swift"
   - "ClickMe2026Tests/Calls/SkypeStatusTextTests.swift"
+  - "ClickMe2026Tests/Chat/ChatStarterTests.swift"
   - "ClickMe2026Tests/Support/ClientBookingFixtures.swift"
   - "ClickMe2026Tests/Support/URLRequest+Body.swift"
   - "ClickMe2026Tests/Utils/BookingShortIDTests.swift"
@@ -116,167 +123,193 @@ covered_files:
   - "ClickMe2026Tests/Utils/HomeNavigationPathTests.swift"
   - "ClickMe2026Tests/Utils/ToastCenterTests.swift"
   - "ClickMe2026Tests/Utils/UpcomingActionPolicyTests.swift"
-covered_digest: "v3:sha256:300f3bcd8c9d5eceee16527897be068442aa6ce1ed38926d4b476e42db6a9f26"
+covered_digest: "v3:sha256:179725ff539fff327f922daad63520db6c0bbce94d4cb81cf375e513a9f89be3"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
   previous_status: human_needed
-  previous_score: 7/18
-  gaps_closed: []
+  previous_score: 8/19
+  gaps_closed:
+    - "G3 / T-03-23: status after a reschedule decline now comes from the server's data.status (208ee4f), device item 25 PASS"
+    - "WR-10: expert Message errors and double push fixed (cec4477), device item 26 PASS"
+    - "G-03-1-ITEM14: Booking Summary price row shown for free sessions as Session fee · Free (330afcc), code and tests verified, device item 27 pending"
   gaps_remaining: []
-  regressions:
-    - "T-03-23 / WR-08 follow-on: the review fix 80f30d0 makes UpcomingBookingViewModel.applyResolution set status to confirmed after a decline, but the server restores reschedule_prev_status. Non-blocking, UNCERTAIN, needs a user decision (see Observable Truths row G3)"
+  regressions: []
 gaps: []
 deferred:
-  - truth: "A reschedule proposal push reads as a request, not a completed reschedule (G-03-1-ITEM1)"
+  - truth: "A reschedule proposal push reads as a request; reasons reach the other party's chat; a declined reschedule's push goes to the proposer (G-03-1-ITEM1, ITEM1B, ITEM1C)"
     addressed_in: "Phase 8"
-    evidence: "08-02 changes the proposal push to 'Reschedule Requested' (backend commit 162f1d7, on backend master). Device re-check is R7 in 08-REGRESSION-CHECKLIST.md, not yet run"
-  - truth: "A reason or note given with a cancel, reschedule proposal or reschedule decline reaches the other party in chat (G-03-1-ITEM1B)"
+    evidence: "03-UAT.md marks all three resolved: backend 162f1d7 and 94d659b, iOS chat rows a153d4c and 4ada6e7; deployed 2026-11-20. Device re-check is R7 in 08-REGRESSION-CHECKLIST.md"
+  - truth: "Skipped Phase 3 device items 4, 12, 17, 23 and VoiceOver steps"
     addressed_in: "Phase 8"
-    evidence: "08-07 iOS chat rows: ChatItemMapper.swift reads reschedule_decline, reason_text and reason_by (a153d4c, 4ada6e7); backend 94d659b. Device re-check is R7, not yet run"
-  - truth: "A declined reschedule's push goes to the proposer, not the decliner (G-03-1-ITEM1C)"
-    addressed_in: "Phase 8"
-    evidence: "08-02 events.js dispatches via notify_user_id with a reschedule_decline marker (162f1d7); clientBooking.controller.js sets notify_user_id to expert_id. Device re-check is R7, not yet run"
-  - truth: "Phase 3 device checklist items 7-24 are never run on a device"
-    addressed_in: "Phase 8"
-    evidence: "ROADMAP Phase 8 success criterion 1 (amended by Phase 8 D-01) covers them with unit tests, code review and one TestFlight regression run (R1-R11); 08-RELEASE-RECORD.md lists items 7-24 by number. The regression checklist has no Result recorded yet"
+    evidence: "ROADMAP Phase 8 success criterion 1 (amended by D-01, D-02): unit tests, code review and one TestFlight regression run; VoiceOver removed"
 advisory:
-  - finding: "T-03-23 (security audit, medium): after a client declines a reschedule, Upcoming details shows Confirmed and the Join card, though the server restores reschedule_prev_status (pending_approval, in_progress or completed are possible)"
+  - finding: "WR-01 (03-REVIEW.md): the Booking Summary price label is PAID for every non-free row regardless of booking outcome, and the new unknown case adds PAID with a dash on never-charged statuses"
     category: other
-    reason: "Corrected by the immediate refetch and one retry after 2 s in every case but two failed GETs in a row. The server refuses a Join on an unapproved booking and no money moves. The decline 200 already returns data.status (clientBooking.controller.js:793) and iOS discards it (declineClientReschedule returns SuccessMessageResponse), so a one-line fix is available"
-    evidence_status: "read in UpcomingBookingViewModel.swift:335-345 and clientBooking.controller.js:724; no test covers a pending_approval-origin decline with both fetches failing"
-  - finding: "WR-10 Message Client on the expert Booking Summary swallows initiateChat errors with try? and can push the thread twice"
+    reason: "Plan-mandated user decision; product question on a money screen, outside the five criteria"
+    evidence_status: "BookingSummaryPrice.swift:58-65 read by this verifier; 03-REVIEW.md"
+  - finding: "03-SECURITY.md row T-03-23 still reads open with the old guess description"
     category: other
-    reason: "Outside the five roadmap criteria but it is a silently dropped action, which the project core value rules out. Recorded open in 03-REVIEW-DISPOSITION.md"
-    evidence_status: "ExpertBookingSummaryView.swift:847-863 read by this verifier"
-  - finding: "WR-11 tickDuringRequestKeepsConfirmedCase waits on a yield count and blocks a thread on a semaphore"
+    reason: "Stale text; code (208ee4f) and device item 25 close it"
+    evidence_status: "UpcomingBookingViewModel.swift:349-355 read by this verifier"
+  - finding: "03-UAT.md still lists G-03-1-ITEM14 as failed"
     category: other
-    reason: "Test hygiene; the test passed in this verifier's run. Flake risk only"
-    evidence_status: "reported by the code review, not re-derived"
-  - finding: "UI review 17/24: expert reschedule Accept and Decline buttons are 42 pt, below the 44 pt minimum, and read 'Accept' and 'Decline' instead of the UI-SPEC labels; caption2 and medium weight outside the declared type set; toast uses a fixed 49 pt tab-bar offset"
+    reason: "verify-work reconciles from 03-18 gap_ids; not edited by the verifier"
+    evidence_status: "03-UAT.md:164-166"
+  - finding: "UI test ExampleUITests.testExample fails on a logged-out launch"
     category: other
-    reason: "Polish on a pre-existing expert panel and toast geometry; the actions work. Open in 03-UI-REVIEW.md"
-    evidence_status: "ExpertBookingSummaryView.swift:663 and :688 read by this verifier (frame(height: 42))"
-  - finding: "IN-01, IN-02, IN-03 to IN-09 remain open in 03-REVIEW-DISPOSITION.md (11 open of 20)"
-    category: other
-    reason: "Info-level, none fails a must-have"
-    evidence_status: "03-REVIEW-DISPOSITION.md"
+    reason: "Pre-existing, unchanged since 2026-10-15; user decided to continue (orchestrator gate)"
+    evidence_status: "orchestrator post-merge gate 2026-11-22"
 human_verification:
-  - test: "Decide on T-03-23. Either fix it (read data.status from the decline 200 and use it in applyResolution instead of assuming confirmed, plus a test for a pending_approval-origin decline with a failed refetch) or accept it and record the acceptance"
-    expected: "Fix: the pill after a decline matches the server's restored status with no refetch. Accept: recorded in 03-SECURITY.md and 03-REVIEW-DISPOSITION.md"
-    why_human: "Product trade-off on an edge path that touches the 'accurate status' half of the goal; the security audit left it open pending this decision"
-  - test: "Run the Phase 8 regression checklist (08-REGRESSION-CHECKLIST.md R1-R11) on a TestFlight build, in particular R7 (chat reasons and the reschedule-decline push) and R1-R3 (join, run past the end, Skype/Zoom)"
-    expected: "R7 confirms G-03-1-ITEM1, ITEM1B and ITEM1C on a device: the proposal push reads as a request, the decline reason shows in the other party's chat, the decline push goes to the proposer. R1-R3 cover Phase 3 items 7-24 for CALL-03, CALL-06, CALL-07, CALL-08 per Phase 8 D-01"
-    why_human: "Push, APNs, Agora, Stripe and the Skype/Zoom handoff need a real device and a second account. No Result line is filled in 08-REGRESSION-CHECKLIST.md yet; 03-UAT.md is still partial (UAT stopped after item 6 on 2026-11-19)"
-  - test: "UI-SPEC backstop truths with no device record: Dynamic Type L2 on the response card, cancel warning block, Skype block and status pill; L3 'Open in Microsoft Teams' on one line; D2 toast VoiceOver and 24 pt placement; D3 Skype handoff; D4 expert Join with two accounts; end + 55 notice. Checklist item 4 (BOOK-09 status pill) was skipped whole on 2026-11-19"
-    expected: "Text wraps without clipping at the largest accessibility size, both parties connect, the amber notice shows at end + 55. VoiceOver steps are out of scope by Phase 8 D-02"
-    why_human: "Declared verification: backstop in the plans; presence and wiring cannot qualify them. Items 7-24 are routed to Phase 8 by D-01, but L2 Dynamic Type and the pill visuals are not named in the R1-R11 steps"
-  - test: "Triage the open review findings WR-10, WR-11 and the UI review items (42 pt buttons, labels)"
-    expected: "Each is fixed, skipped or deferred with a reason in 03-REVIEW-DISPOSITION.md"
-    why_human: "WR-10 is a silent drop on a call-adjacent screen and the 42 pt buttons are on a money-adjacent decision; both need a product call"
-  - test: "BACK-19 production smoke (R6 in the Phase 8 checklist) and pushing Android commit 0f2e8cd (BOOK-20) with the Android release"
-    expected: "R6 passes, then the EXP-11 expert refund-or-release copy is device-confirmed. 0f2e8cd ships with the Android release"
+  - test: "Device check item 27: on a build at or after 330afcc, open a past free session's Booking Summary and a past paid CAD session's Booking Summary"
+    expected: "Free row reads Session fee · Free with Free in green; paid row reads PAID · CA$12.50 unchanged; Localizable.xcstrings gains Free and Session fee after the Xcode build (left unstaged for 08-20)"
+    why_human: "Visual check on a real iPhone; catalog keys arrive only on an Xcode IDE build"
+  - test: "Skipped backstop checks: status pill and Dynamic Type (item 4), end + 55 notice (item 17), Open in Microsoft Teams on one line (item 23), Open-in-meeting-app launch and Skype/Zoom copy (items 15 tail and 12)"
+    expected: "No clipping at the largest size; amber notice at end + 55; both parties connect"
+    why_human: "verification: backstop truths cannot be proven by presence or wiring; R1-R11 does not name the pill or the Teams label"
+  - test: "Decide whether the PAID label on cancelled, declined or expired paid sessions stays (WR-01)"
+    expected: "Either the label follows the payment outcome, or the acceptance is recorded"
+    why_human: "Product call on a money screen"
+  - test: "BACK-19 production smoke (R6) and pushing Android commit 0f2e8cd"
+    expected: "Expert refund-or-release copy device-confirmed; Android ID line ships"
     why_human: "Real-money production action; pushing is the user's call"
+  - test: "Phase 8 regression checklist R1-R11 on TestFlight, R7 first"
+    expected: "Device confirmation of G-03-1-ITEM1, 1B, 1C"
+    why_human: "Push, APNs, Agora and Stripe need a device and two accounts"
 ---
 
 # Phase 3: Booked Sessions and Joining Verification Report
 
 **Phase Goal:** Clients and experts can respond to, cancel, reschedule and join their booked sessions from every screen that offers those actions, with accurate status and refund information
-**Verified:** 2026-11-23T01:56:24Z
+**Verified:** 2026-11-23T05:10:00Z
 **Status:** human_needed
-**Re-verification:** Yes, after the previous report went stale (phases 04, 07 and 08, quick task a603a2a and the review fixes WR-03 to WR-09 changed the covered files)
+**Re-verification:** Yes, after gap-closure plan 03-18 (G-03-1-ITEM14) and the quick task 261122-tcf fixes (T-03-23, WR-10) changed the covered files
 
 ## Goal Achievement
 
-I started from the assumption that the goal was missed and tried to falsify each claim against the current code. All five roadmap success criteria hold in the code as it stands today, and no Swift file has changed since the full-suite run at 81b2bce (`git diff --stat 81b2bce..HEAD -- ClickMe2026 ClickMe2026Tests` is empty), so that run's 1278 passing tests describe the current tree. I found no stub, no unwired artifact and no unreferenced debt marker.
+I started from the assumption that the goal was missed and tried to falsify each claim against the code at HEAD (`ee8e6a9`). The five roadmap success criteria hold. Gap G-03-1-ITEM14 is closed in code: the price row is built by one factory, rendered for every loaded booking, and pinned by four tests that I ran myself. I found no stub, no unwired artifact and no unreferenced debt marker.
 
-The status is `human_needed`, not `passed`, for three reasons. One review fix (80f30d0) introduced a small status inaccuracy that needs a user decision (T-03-23, below). Ten UI-SPEC backstop truths have no device record. The device UAT stopped after item 6, and its three failed gaps are fixed in code by Phase 8 but not yet confirmed on a device.
+The status is `human_needed`, not `passed`, because of three groups of open human items, none of them a code failure:
 
-### T-03-23: does it undermine "accurate status"?
+- Device check item 27 (the 03-18 row on a real iPhone) is PENDING and needs a build at or after `330afcc`.
+- Four UI-SPEC backstop truths have no device record (the status pill, end + 55 notice, Teams label on the smallest iPhone, and the Skype/Zoom app handoff itself). The user skipped those checklist items, or the test phone lacked the app.
+- The BACK-19 production smoke is still unrun, so the EXP-11 expert refund-or-release copy is code-verified only.
 
-My judgment: it does not defeat the goal, and I do not fail the phase on it, but it is a real, reproducible inaccuracy and I am not calling it verified.
+### What changed since the previous report
 
-- **What the code does.** `UpcomingBookingViewModel.applyResolution` (`UpcomingBookingViewModel.swift:335-345`) sets `bookingStatus = .confirmed` and clears `canJoin` after any 2xx accept or decline. For an accept that is correct (`acceptReschedule` always ends in `confirmed`). For a decline the server restores `reschedule_prev_status` (`clientBooking.controller.js:724`, falling back to `confirmed`), and `reschedule.js:23-26` lets a reschedule start from `pending_approval`, `in_progress` and `completed` as well.
-- **How long it lasts.** `refetch` runs straight after `onResolved`, then retries once after 2 s (`refreshAfterResolution`). In every case but two failed GETs in a row, the pill is corrected within a round trip or two. The earlier behaviour (before 80f30d0) was also wrong in the double-failure case, because it left "Pending reschedule" on screen, so 80f30d0 swapped one wrong guess for a more likely right one.
-- **Harm.** Display only. The Join card needs the join window to be open to enable, the server refuses a Join on an unapproved booking, and no money moves. Booking Summary is not affected because its `applyResolution` (`BookingSummaryViewModel.swift:267-273`) never writes a status.
-- **Why I do not mark it VERIFIED.** The inaccuracy is deterministic in code, and no test pins a pending_approval-origin decline with both fetches failing. It is recorded as truth G3, UNCERTAIN, with a decision request.
-- **The cheap fix.** The decline 200 already returns `data.status` (`clientBooking.controller.js:793`, and the idempotent branches return the current status too). `declineClientReschedule` returns `SuccessMessageResponse`, so iOS throws that away. Decoding it and passing it into `applyResolution` removes the guess with no backend change.
+The previous report (`d781cf5`) carried three open items. Two are now closed in code and on a device; the third is new scope from 03-18:
+
+| Previous item | Now | Evidence |
+|---------------|-----|----------|
+| G3 / T-03-23: after a decline the pill guessed `confirmed` | Closed | `208ee4f`. `RescheduleDeclineResponse` decodes `data.status`; `declineClientReschedule` returns it (`ClickMeAPI+Booking.swift:214`); `RescheduleResponder.decline` passes `.declined(restoredStatus:)` to `onResolved` (`:173`); `UpcomingBookingViewModel.applyResolution` (`:349-355`) shows the server status and leaves the status alone when the body carried none. `UpcomingBookingViewModelTests` row "decline returning pending_approval, with failing refetches, shows that status and clears the card" (line 396), plus `completed` and `on_hold` rows, passes in my run. Device item 25 PASS 2026-11-22 |
+| WR-10: expert Message swallowed errors, double push | Closed | `cec4477`. `ChatStarter.swift` plus `ChatStarterTests` (in my run); device item 26 PASS 2026-11-22 |
+| 42 pt expert Accept/Decline buttons | Closed | `ExpertBookingSummaryView.swift:359` and `:384` now `.frame(height: 44)`; device item 26 step 4 PASS |
+| Device items 7-24 never run | Run 2026-11-22 | 03-DEVICE-UAT-CHECKLIST.md: 7-11, 13-16, 18-22, 24-26 PASS; 12, 17, 23 SKIPPED; 4 SKIPPED (VoiceOver) |
+
+### Gap G-03-1-ITEM14 (03-18): is it closed in code?
+
+Yes. Traced from the server field to the screen:
+
+1. `BookingSummaryViewModel.apply(detail:)` sets `price = BookingSummaryPrice.make(isFree: detail.topic.isFree, amount: detail.topic.price?.amount, currency: detail.topic.price?.currency)` (`BookingSummaryViewModel.swift:324-328`). The old `formatPrice` (which returned nil for a free topic, the root cause) and `pricePaid` are gone: `grep` for both finds no hit in `ClickMe2026/` or the tests apart from two unrelated `formatPrice` functions in Explore and Topics code.
+2. `BookingSummaryPrice.make` (`BookingSummaryPrice.swift:34-38`): `isFree` true returns `.free` first, so it wins over a price; a missing amount or currency returns `.unknown`; otherwise `.paid(Money.format(minorUnits:currency:))`.
+3. `label` is "Session fee" only for `.free` and "PAID" otherwise (`:56-65`). `text` is "Free", the formatted amount, or an em dash.
+4. `BookingSummaryExpertCard` renders the row whenever `price` is non-nil, with `Text(price.label)` in the old caption style and `Text(price.text)` in brand green when `price == .free` and onSurface otherwise (`:116-128`). The one call site passes `price: viewModel.price` (`BookingSummaryView.swift:184`). It is not hollow: nothing hard-codes a nil price at the call site, and `price` is nil only before the load (`:131`).
+5. Tests, run by me: `freeSessionShowsFree` (also asserts nil before load), `freeFlagWinsOverPrice`, `paidSessionShowsAmount` (`.paid("CA$45.50")`, label "PAID"), `paidWithoutPriceShowsDash` (`.unknown`, text em dash, label "PAID"). `Test run with 99 tests in 4 suites passed`, `** TEST SUCCEEDED **`.
+6. The Task 1 commit `330afcc` lists exactly the five task files; `Localizable.xcstrings` is not among them and is still only modified in the working tree, as the plan requires.
+
+What I cannot see from code: how the row looks on a real iPhone (green Free, caption spacing) and whether the catalog gains the Free and Session fee keys on an Xcode IDE build. That is device item 27, below.
 
 ### Observable Truths
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| SC1 | A client can accept or decline an expert-proposed reschedule from the upcoming-booking flow (BOOK-06) | VERIFIED | One `RescheduleResponder` serves Upcoming details and Booking Summary. `onResolved` fires only after a 2xx (`RescheduleResponder.swift:111`, `:138`, `:171`), never from a catch; both owners assign it (`UpcomingBookingViewModel.swift:131`, `BookingSummaryViewModel.swift:155`). `RescheduleResponderTests`, `UpcomingBookingViewModelTests` and `BookingSummaryViewModelTests` pass in my run. Device: UAT item 1 steps 1-6 accept, decline toast, payment-conversion disclosure, Booking Summary parity and failed-accept alert PASS on 2026-11-19 |
-| SC2 | Join works on every booking screen that offers it; both can open Skype/Zoom; the meeting screen shows a timer and no longer promises an automatic end (CALL-03, 06, 07, 08, 10) | VERIFIED (live calls device-pending) | Client: `UpcomingBookingViewModel.startCall()` (`:248-260`) goes through `CallCenter.shared.startCall`, and the view passes `onJoinCall ?? { viewModel.startCall() }` (`UpcomingBookingView.swift:243`); My Bookings calls `CallCenter.shared.startCall` (`MyBookingsView.swift:356`). Expert: `joinSessionButton` calls `CallCenter.shared.startCall` (`ExpertBookingSummaryView.swift:816`), gated by `ExpertJoinVisibility.shows` (`:280`). Skype: `skypeStatusText` always says "Tap End Session when you're done" (`MeetingCallViewModel.swift:398-407`), `SkypeSessionHero` takes `timerString`, the end + 55 notice text is at `:387`. `ExpertJoinVisibilityTests` and `UpcomingBookingViewModelTests` pass in my run. Not exercised on a device: real calls, the Skype handoff, expert Join with two accounts |
-| SC3 | Cancel screens on both sides state the refund the backend will give; the client's comment is sent and stored; Cancel is hidden once a session has ended (BOOK-07, 08, 13, EXP-11) | VERIFIED, with an accepted limitation | `CancelToastMessage` names an amount only when `serverRefundMajor > 0` (`:39`) and uses neutral wording otherwise (`:52`). `ClientCancellationViewModel` sends `CancelReasonComposer.reason(label:comment:)` (`:191`). `UpcomingActionPolicy.canShowCancel` returns false once `end <= now` (`:37-40`). Expert money line is fail-closed on `payment_action_required` / `payment_not_charged`; backend keys exist (`expertBooking.controller.js:413-416`, `scaRecovery.js:48`) and backend commit `65bb2ed` is in backend `HEAD`. Refund and hold lines are worded "up to" the list price (WR-03 interim fix; amount-paid needs a backend field that does not exist). Device: UAT items 2 and 3 PASS on 2026-11-19. BACK-19 smoke not run, so the EXP-11 refund-or-release copy is code-verified only |
-| SC4 | Reschedule works from both sides; expert card Reschedule opens the expert flow; the client picker excludes the booking being moved, returns one level with a confirmation, and has correct held-booking copy (BOOK-12, 16, EXP-13) | VERIFIED (device-pending) | `exclude_booking_id` sent when set (`ClickMeAPI+Availability.swift:49`). Keep Booking pops one (`HomeClientView.swift:401`), a confirmed cancel pops two (`:402`). Expert card pushes `HomeRoute.expertReschedule` (`UpcomingBookingsView.swift:330`), handled at `HomeExpertView.swift:327`. `ExpertRescheduleViewModel` applies the 6-day paid cap via `PaidBookingWindow`. `RescheduleAvailabilityTests` and `ExpertRescheduleWindowTests` are in the 03-VALIDATION full-suite run. Device: UAT item 6 (Keep Booking, one level) PASS on 2026-11-19. Item 8 (reschedule return and toast) not run |
-| SC5 | Booking screens show the real state: status pill, decline note, Past empty state, Keep Booking one level, Leave a Review only for completed (BOOK-09, 11, 12, 17, 20, BACK-02 iOS half) | VERIFIED, with one residual (G3) | `BookingStatusPill.make` has an exhaustive switch with `.unknown` neutral (`BookingStatusPill.swift:40-56`), `BookingStatusPillTests` pass in my run. `showsLeaveReview` is `status == .completed && !hasSubmittedReview` (`BookingSummaryViewModel.swift:57`). Decline note card is rendered (`BookingSummaryView.swift:190`). `showsPastEmptyState` is wired (`MyBookingsView.swift:303`). Booking ID uses `BookingShortID` on both screens; Android `BookingSummaryCard.kt:147` uses `shortBookingId` (commit `0f2e8cd`, unpushed). Device: UAT item 5 (Past empty state) PASS on 2026-11-19. Item 4 (status pill) SKIPPED whole |
-| G1 | After a successful accept or decline the Accept/Decline card disappears even if the refetch fails (G-03-3-WR01) | VERIFIED | `onResolved` before `refetch` on all three 2xx paths; `RescheduleResponderTests` and the two owner suites assert the card clears on a 500 refetch. Superseded in detail by WR-08, below |
-| G2 | The post-cancel toast never promises a refund the server did not issue (G-03-3-WR02) | VERIFIED | `CancelToastMessage.swift:39-52`; `alreadyCancelledShowsNeutralLine` drives the real call site. WR-09 now captures the refund case before the request, so the 60 s tick cannot change it mid-request. `ClientCancellationViewModelTests` and `CancelToastMessageTests` pass in my run |
-| G3 | After a client declines a reschedule, the displayed status matches the status the server restored, including when the follow-up GET fails | UNCERTAIN (WARNING, user decision requested) | Accept path correct. Decline path guesses `confirmed` (T-03-23, see above). Tests pin the retry replacing the local guess, but none covers a non-confirmed prior status with both GETs failing |
-| B1 | 03-13: accepting and declining from Booking Summary behaves exactly as on Upcoming details (backstop) | VERIFIED | Directly observed on a device: UAT item 1 "Booking Summary parity and in-place update" PASS 2026-11-19, plus the shared-responder unit rows |
-| B2-B11 | Ten UI-SPEC backstop truths: L2 Dynamic Type on the response card (03-01), cancel warning block (03-02), Skype block (03-03) and status pill (03-14); L2 on the multi-line money toast and D2 toast placement with VoiceOver (03-06); end + 55 notice on a device (03-03); D4 expert Join with two accounts (03-04); D3 Skype handoff and L3 Teams label (03-09) | UNCERTAIN (`insufficient_spec`) | Layout, VoiceOver and live-call behaviour cannot be proven by presence or wiring. The toast sitting above the tab bar was observed in UAT item 3 step 9 (PASS), but 24 pt, keyboard clearance and the VoiceOver half were not. VoiceOver steps are removed by Phase 8 D-02. Excluded from the verified score |
+| SC1 | A client can accept or decline an expert-proposed reschedule from the upcoming-booking flow (BOOK-06) | VERIFIED | One `RescheduleResponder` serves Upcoming details and Booking Summary. `onResolved` fires only after a 2xx (`RescheduleResponder.swift:113`, `:140`, `:173`), never from a catch. `RescheduleResponderTests`, `UpcomingBookingViewModelTests`, `BookingSummaryViewModelTests` pass in my run. Device: item 1 accept, decline toast, Booking Summary parity PASS 2026-11-19 |
+| SC2 | Join works on every booking screen that offers it; both can open Skype/Zoom; the meeting screen shows a timer and no longer promises an automatic end (CALL-03, 06, 07, 08, 10) | VERIFIED (Skype/Zoom app handoff device-unseen) | Client `UpcomingBookingViewModel.swift:250`, My Bookings `MyBookingsView.swift:356`, expert `ExpertBookingSummaryView.swift:837` all go through `CallCenter.shared.startCall`. `skypeStatusText` always says "Tap End Session when you're done" (`MeetingCallViewModel.swift:403-405`). Device: items 11 (join), 13 (timer), 19 (expert Join, two accounts), 15 (End Session) PASS 2026-11-22. Items 12 (copy on a real Skype/Zoom booking) and 17 (end + 55) SKIPPED; the Open-in-meeting-app tap was not run (no app on the phone) |
+| SC3 | Cancel screens on both sides state the refund the backend will give; the client's comment is sent and stored; Cancel is hidden once a session has ended (BOOK-07, 08, 13, EXP-11) | VERIFIED, with an accepted limitation | `CancelToastMessage.swift:39` names an amount only for `serverRefundMajor > 0`. `UpcomingActionPolicyTests` and `CancelToastMessageTests` pass in the orchestrator's full run. Expert money line fails closed on `payment_action_required` / `payment_not_charged`; backend `65bb2ed` is deployed. Refund and hold lines say "up to" the list price (WR-03 interim; amount-paid needs a backend field that does not exist). Device: items 2, 3, 7, 16 PASS. BACK-19 smoke unrun |
+| SC4 | Reschedule works from both sides; the expert card opens the expert flow; the client picker excludes the booking being moved, returns one level with a confirmation, and has correct held-booking copy (BOOK-12, 16, EXP-13) | VERIFIED | `exclude_booking_id` sent when set (`ClickMeAPI+Availability.swift:49`). Keep Booking pops one, a confirmed cancel pops two (`HomeClientView.swift:401-402`), reschedule returns one (`:410`). Expert card pushes `HomeRoute.expertReschedule` (`UpcomingBookingsView.swift:346`), handled at `HomeExpertView.swift:327`. Device: items 6, 8, 18 PASS |
+| SC5 | Booking screens show the real state: status pill, decline note, Past empty state, Keep Booking one level, Leave a Review only for completed (BOOK-09, 11, 12, 17, 20, BACK-02 iOS half) | VERIFIED (pill itself device-unseen) | `BookingStatusPill.make` has no default arm and maps unknown to `.unknown`. `showsLeaveReview` is `status == .completed && !hasSubmittedReview` (`BookingSummaryViewModel.swift:57`). Device: items 5, 6, 9, 10, 20 PASS. Item 4 (status pill) SKIPPED whole. The 03-18 price row is now part of this criterion and is covered below |
+| G1 | After a successful accept or decline the Accept/Decline card disappears even if the refetch fails (G-03-3-WR01) | VERIFIED | `onResolved` runs before `refetch` on all three 2xx paths; responder and owner suites assert the card clears on a failing refetch |
+| G2 | The post-cancel toast never promises a refund the server did not issue (G-03-3-WR02) | VERIFIED | `CancelToastMessage.swift:39-52`; `alreadyCancelledShowsNeutralLine`, `zeroNeverNamesARefundAmount` and related rows |
+| G3 | After a client declines a reschedule, the displayed status matches the status the server restored, including when the follow-up GET fails | VERIFIED | See the table above. State transition with named tests (`pending_approval`, `completed`, `on_hold` restores with both refetches failing), all passing in my run; device item 25 PASS |
+| B1 | 03-13: accept and decline from Booking Summary behave as on Upcoming details | VERIFIED | Device item 1 parity PASS 2026-11-19, plus the shared-responder rows |
+| B2 | L2 Dynamic Type at the largest size: response card, cancel warning block, Skype block, multi-line toast, Past empty state (03-01, 02, 03, 06, 11) | VERIFIED (device) | Device item 22 PASS 2026-11-22 |
+| B3 | D4 expert Join from Booking Summary across two accounts (03-04) | VERIFIED (device) | Device item 19 PASS 2026-11-22 |
+| B4 | D2 toast placement and dismissal (03-06) | VERIFIED (device), VoiceOver half out of scope | Item 21 PASS 2026-11-22. VoiceOver is removed and untested by Phase 8 D-02 |
+| B5 | L2 and real-status visuals of the status pill (03-14) | UNCERTAIN (`insufficient_spec`) | Item 4 SKIPPED whole, and item 22 does not list 03-14 |
+| B6 | end + 55 amber notice on the Skype/Zoom layout (03-03) | UNCERTAIN (`insufficient_spec`) | Item 17 SKIPPED (needs a session held 55 minutes past its end). Text is present in code only |
+| B7 | L3 "Open in Microsoft Teams" on one line on the smallest iPhone (03-09) | UNCERTAIN (`insufficient_spec`) | Item 23 SKIPPED |
+| B8 | D3 Open-in-meeting-app launches Skype/Zoom (03-09) | UNCERTAIN (`insufficient_spec`) | Item 15 PASS covers the two in-app taps only; the app launch was not run |
+| T18-1 | G-03-1-ITEM14: once loaded, the client Booking Summary always shows the price row; a free session reads "Session fee · Free" with Free in brand green | VERIFIED (code and tests; look device-pending) | Trace above. Four tests pass in my run. Colour logic read at `BookingSummaryExpertCard.swift:124-126`. On-device look is item 27 |
+| T18-2 | A paid session's row is unchanged: PAID plus the Money amount, cents kept | VERIFIED | `paidSessionShowsAmount` (`CA$45.50`, "PAID") |
+| T18-3 | `is_free` true wins over a present price; neither label nor Free appears when `is_free` is false | VERIFIED | `freeFlagWinsOverPrice`; `make` returns `.free` before reading amount. The two non-free tests assert `.paid` and `.unknown` with label "PAID" |
+| T18-4 | A paid topic missing amount or currency shows PAID · dash; no amount invented | VERIFIED | `paidWithoutPriceShowsDash` |
+| T18-5 | Session fee and Free are localizable literals, PAID resolves the same key, and the catalog is not hand-edited or staged | VERIFIED (extraction in the build's stringsdata not re-run by me) | `String(localized:)` with comments at `BookingSummaryPrice.swift:46,61`; `String(localized: "PAID")` at `:63`; `git show --name-only 330afcc` omits `Localizable.xcstrings`. The key extraction is claimed by the SUMMARY (`stringsdata` check, exit 0) and is not independently re-derived; the catalog still lacks both keys at HEAD, as designed (they arrive on an Xcode IDE build, committed by 08-20) |
+| T18-6 | Device check item 27 exists and tells the tester how to check the free and paid rows | VERIFIED | `03-DEVICE-UAT-CHECKLIST.md:418-434`, with an empty Result line; Sign-off line updated |
 
-**Score:** 8/19. Verified: SC1-SC5, G1, G2, B1. Uncertain: G3 and B2-B11 (10). None failed. `behavior_unverified` is 0, because every behavior-dependent truth (the `onResolved` ordering, the neutral toast, the captured refund case) has a passing named test.
+**Score:** 18/22. Verified: SC1-SC5, G1-G3, B1-B4, T18-1 to T18-6. Uncertain: B5-B8 (4). None failed. `behavior_unverified` is 0, because every behavior-dependent truth (the `onResolved` ordering, the neutral toast, the restored status after a decline, the price factory) has a passing named test.
+
+**Prohibition (BOOK-20, test tier):** "MUST NOT show Free or Session fee unless `topic.is_free` is true, and MUST NOT show an amount that did not come from `topic.price`." Enforcement is wired: `make` returns `.free` only on `isFree`, the amount path goes only through `Money.format`, and four tests assert both label and value. Not flagged.
 
 ### Deferred Items
 
 | # | Item | Addressed In | Evidence |
 |---|------|--------------|----------|
-| 1 | G-03-1-ITEM1: proposal push reads as a completed reschedule | Phase 8 (08-02) | Backend `162f1d7`: 'Reschedule Requested' |
-| 2 | G-03-1-ITEM1B: reasons and notes missing from the other party's chat | Phase 8 (08-02, 08-03, 08-07) | Backend `94d659b`; iOS `ChatItemMapper.swift` reads `reschedule_decline`, `reason_text`, `reason_by` |
-| 3 | G-03-1-ITEM1C: reschedule-decline push goes to the decliner | Phase 8 (08-02) | `clientBooking.controller.js` passes `notify_user_id: booking.expert_id` and `reschedule_decline: true` |
-| 4 | Phase 3 checklist items 7-24 never run on a device | Phase 8 (ROADMAP criterion 1, D-01) | Unit tests plus R1-R11; no R result recorded yet |
-
-These three UAT gaps are still marked `failed` in `03-UAT.md`, which is stale against the code. The code fixes are present, but the device confirmation (R7) has not happened, so I list them under human verification and not as closed.
+| 1 | G-03-1-ITEM1, 1B, 1C (reschedule push wording, reasons in chat, decline push recipient) | Phase 8 (08-02, 08-07) | `03-UAT.md` marks all three `resolved` (backend `162f1d7`, `94d659b`, iOS rows `a153d4c`, `4ada6e7`); deployed 2026-11-20. Device re-check is R7 in the Phase 8 checklist |
+| 2 | Skipped device items 4, 12, 17, 23 and the VoiceOver steps | Phase 8 (ROADMAP criterion 1, D-01, D-02) | Covered by unit tests, review and one TestFlight regression run; VoiceOver removed |
 
 ### Advisory (New Scope, Unevidenced)
 
 | # | Finding | Category | Why Advisory |
 |---|---------|----------|--------------|
-| 1 | T-03-23 status guess after a decline | other | Needs a pending_approval-origin proposal plus a double GET failure to persist; display only |
-| 2 | WR-10 Message Client swallows `initiateChat` errors and allows a double push (`ExpertBookingSummaryView.swift:847-863`) | other | Outside the five criteria; I read the code and the `try?` is there |
-| 3 | WR-11 yield-loop wait in `ClientCancellationViewModelTests` | other | Test hygiene; passed in my run |
-| 4 | UI review: expert reschedule buttons 42 pt (`ExpertBookingSummaryView.swift:663`, `:688`), labels "Accept"/"Decline", type and colour drift, fixed 49 pt toast offset | other | Pre-existing expert panel and geometry; actions work |
-| 5 | IN-01 to IN-09 open | other | Info-level |
+| 1 | WR-01 (03-REVIEW.md): the Booking Summary price label is "PAID" for every non-free row regardless of booking outcome (cancelled, declined, expired), and the new `.unknown` adds "PAID · —" on the same statuses. This was the pre-change behaviour for amounts and is a user decision in the plan ("paid rows keep PAID") | other | Product question on a money screen, outside the five criteria; no failing behaviour against any must-have. Raise with the product owner and Android before release, or record the acceptance |
+| 2 | The review's 3 info items on the 03-18 delta, and 03-REVIEW-DISPOSITION.md open WR and IN rows | other | Info level |
+| 3 | `03-SECURITY.md` row T-03-23 still reads "open" and describes the old guess | other | Stale text. `threats_open: 0` stands because the row was below the blocking threshold, and the code and device item 25 now close it. The row should be updated to closed |
+| 4 | `03-UAT.md` still lists G-03-1-ITEM14 as `failed` and the frontmatter as `partial` | other | verify-work reconciles from 03-18's `gap_ids`; not edited here |
+| 5 | UI test `ExampleUITests.testExample` fails (expects HomeView on launch, needs a logged-in state) | other | Orchestrator gate: unchanged since 2026-10-15, user decided to treat it as pre-existing |
 
 ### Required Artifacts
 
 | Artifact | Status | Details |
 |----------|--------|---------|
-| `verify.artifacts` over plans 03-01 to 03-17 | VERIFIED | 15 plans pass in full. 03-05 (backend) and 03-15 (Android) report "File not found" only because the checker cannot resolve the sibling repos' paths (one has a space in its name); I checked those files by hand: `payment_action_required` and `payment_not_charged` are in `expertBooking.controller.js` and `scaRecovery.js`, and `BookingSummaryCard.kt` plus `BookingSummaryScreenTest.kt` exist in the Android repo |
-| All 77 covered Swift source and test files | VERIFIED | All exist; no TBD, FIXME, XXX, TODO, HACK or PLACEHOLDER marker in any of them |
+| 03-18 `BookingSummaryPrice.swift` (contains `String(localized: "Session fee"`) | VERIFIED | Exists, substantive (66 lines), used by the view model and card |
+| 03-18 `BookingSummaryViewModel.swift` (contains `BookingSummaryPrice.make`) | VERIFIED | `:324` |
+| 03-18 `BookingSummaryExpertCard.swift` (contains `Text(price.label)`) | VERIFIED | `:118`, exactly one label view |
+| 03-18 `BookingSummaryViewModelTests.swift` (contains `func freeSessionShowsFree`) | VERIFIED | `:437` |
+| 03-18 `03-DEVICE-UAT-CHECKLIST.md` (contains `### 27. G-03-1-ITEM14`) | VERIFIED | `:418` |
+| All 83 covered Swift source and test files | VERIFIED | Each exists; no TBD, FIXME, XXX, TODO, HACK or PLACEHOLDER marker in any of them (scanned this run) |
+| Plans 03-01 to 03-17 artifacts | VERIFIED (regression) | Carried from the previous report; files exist and the key symbols re-checked above. 03-05 (backend) and 03-15 (Android) live in sibling repos |
 
 ### Key Link Verification
 
-`verify.key-links` returned "from must be a relative file path" for the 11 links whose `from` field carries a prose descriptor, and one genuine pattern miss on 03-09 (`CallCenter.shared.startCall` is not in `UpcomingBookingView.swift`; it is in the view model it calls). I verified each link by hand.
-
 | From | To | Status | Details |
 |------|----|--------|---------|
-| `RescheduleResponder.accept` / `decline` | `onResolved` then `refetch` | WIRED | `RescheduleResponder.swift:111-112`, `:138-139`, `:171-172` |
-| Upcoming and Booking Summary view models | `responder.onResolved` | WIRED | `:131` and `:155` |
-| `UpcomingBookingView` Join | `UpcomingBookingViewModel.startCall` then `CallCenter.shared.startCall` | WIRED | `UpcomingBookingView.swift:243`; `UpcomingBookingViewModel.swift:250` |
-| `ExpertBookingSummaryView` Join Session | `CallCenter.shared.startCall` | WIRED | `:816` |
-| Expert Upcoming card Reschedule | `HomeRoute.expertReschedule` then `HomeExpertView` | WIRED | `UpcomingBookingsView.swift:330`, `HomeExpertView.swift:327` |
-| `ClientCancellationViewModel.confirmCancellation` | `cancelClientBooking(reason:)` and `CancelToastMessage.text` | WIRED | `:189-191` |
-| `HomeClientView` Keep Booking and confirmed cancel | `nav.pop()` and `nav.pop(2)` | WIRED | `:401-402` |
+| `BookingSummaryViewModel.apply(detail:)` | `BookingSummaryPrice.make(isFree:amount:currency:)` | WIRED | `:324-328` from `detail.topic.isFree` and `.price?.amount/currency` |
+| `BookingSummaryView` card call | `BookingSummaryExpertCard(price:)` | WIRED | `BookingSummaryView.swift:184` |
+| Card price value | `BookingSummaryPrice.text` | WIRED | `Text(price.text)` at `:122` |
+| Card price label | `BookingSummaryPrice.label` | WIRED | `Text(price.label)` at `:118` |
+| `RescheduleResponder.decline` | `onResolved(.declined(restoredStatus:))` then `refetch` | WIRED | `:173` |
+| Upcoming and Booking Summary models | `responder.onResolved` | WIRED | `UpcomingBookingViewModel.swift:131`, `BookingSummaryViewModel.swift:155` |
+| Client, My Bookings and expert Join | `CallCenter.shared.startCall` | WIRED | `:250`, `:356`, `:837` |
+| Expert Upcoming card Reschedule | `HomeRoute.expertReschedule` then `HomeExpertView` | WIRED | `UpcomingBookingsView.swift:346`, `HomeExpertView.swift:327` |
 | `RescheduleViewModel.fetchAvailability` | `exclude_booking_id` | WIRED | `ClickMeAPI+Availability.swift:49` |
+| Keep Booking and confirmed cancel | `nav.pop()` and `nav.pop(2)` | WIRED | `HomeClientView.swift:401-402` |
 
 ### Data-Flow Trace (Level 4)
 
 | Artifact | Data | Source | Real data | Status |
 |----------|------|--------|-----------|--------|
-| Post-cancel toast | `response.data.refundAmount` | `POST /client/bookings/:id/cancel` 200 body | Yes | FLOWING |
-| Upcoming details pill | `bookingStatus` | `GET /client/bookings/:id`, then a local guess after accept/decline | Yes, with a guess for the first moments after a decline | FLOWING (see G3) |
-| Expert cancel money line | `payment_action_required`, `payment_not_charged` | `GET /expert/bookings/:id/details` | Yes | FLOWING (fails closed when keys are absent) |
+| Booking Summary price row | `viewModel.price` | `GET /client/bookings/:id` topic `is_free`, `price.amount`, `price.currency` through `make` | Yes; nil only before load; dash when the detail lacks a price | FLOWING |
+| Upcoming details pill after a decline | `bookingStatus` | `data.status` of the decline 200, then the refetch | Yes | FLOWING |
+| Post-cancel toast | `refundAmount` | `POST /client/bookings/:id/cancel` 200 | Yes | FLOWING |
+| Expert cancel money line | `payment_action_required`, `payment_not_charged` | `GET /expert/bookings/:id/details` | Yes; fails closed when absent | FLOWING |
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 |----------|---------|--------|--------|
-| 10 Phase 3 suites: `RescheduleResponderTests`, `UpcomingBookingViewModelTests`, `BookingSummaryViewModelTests`, `CancelToastMessageTests`, `ClientCancellationViewModelTests`, `UpcomingActionPolicyTests`, `ExpertCancelRefundLineTests`, `CancelRefundPreviewTests`, `ExpertJoinVisibilityTests`, `BookingStatusPillTests` | `xcodebuild test -project ClickMe.xcodeproj -scheme ClickMe2026 -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' -only-testing:...` | `Test run with 147 tests in 10 suites passed`, `** TEST SUCCEEDED **` | PASS |
-| Full unit target | Not re-run by me | 03-VALIDATION.md (commit 81b2bce): 1278 tests in 118 suites, 0 failures; no Swift change since | Accepted, not independently re-run |
-| Backend `tests/expertBooking.test.js` and Android `BookingSummaryScreenTest` | Not re-run by me | 162 passed; passed (03-VALIDATION.md, 2026-11-22) | Accepted, not independently re-run |
+| 03-18 price rows, decline-restored status, responder, expert chat starter | `xcodebuild test -project ClickMe.xcodeproj -scheme ClickMe2026 -destination 'platform=iPhone 17 simulator' -only-testing:ClickMe2026Tests/BookingSummaryViewModelTests -only-testing:.../RescheduleResponderTests -only-testing:.../UpcomingBookingViewModelTests -only-testing:.../ChatStarterTests` | `Test run with 99 tests in 4 suites passed`, `** TEST SUCCEEDED **` | PASS |
+| Full unit target | Not re-run by me | Orchestrator post-merge gate 2026-11-22: build succeeded, 1313 tests in 122 suites passed; only failure `ExampleUITests.testExample`, pre-existing | Accepted, not independently re-run |
+| Backend `expertBooking` tests, Android `BookingSummaryScreenTest` | Not re-run by me | 03-VALIDATION.md: 162 passed; passed | Accepted, not independently re-run |
 
 ### Probe Execution
 
@@ -284,74 +317,73 @@ Step 7c: SKIPPED. The phase declares no probe scripts.
 
 ### Requirements Coverage
 
-All 17 IDs appear in plan frontmatter (`requirements:` union across 03-01 to 03-17) and map to Phase 3 in REQUIREMENTS.md (17 rows). No orphans. EXP-18 is mapped to Phase 6, not here.
+The union of `requirements:` across plans 03-01 to 03-18 is exactly the 17 IDs in ROADMAP Phase 3 and in the 17 REQUIREMENTS.md rows mapped to Phase 3. No orphans, none missing.
 
 | Requirement | Source plan | Status | Evidence |
 |-------------|-------------|--------|----------|
-| BOOK-06 | 03-01, 03-06, 03-13, 03-16 | SATISFIED (G3 residual on the decline status) | SC1, G1, B1 |
-| BOOK-07 | 03-10 | SATISFIED | comment sent as `label: comment`; UAT item 2 PASS |
-| BOOK-08 | 03-02, 03-10, 03-17 | SATISFIED (list-price "up to" wording accepted) | SC3, G2; UAT item 3 PASS |
-| BOOK-09 | 03-14 | SATISFIED (device item 4 skipped) | exhaustive `BookingStatusPill` |
-| BOOK-11 | 03-11 | SATISFIED | `showsPastEmptyState`; UAT item 5 PASS |
-| BOOK-12 | 03-11, 03-12 | SATISFIED | one-level pop; UAT item 6 PASS |
-| BOOK-13 | 03-09 | SATISFIED | `UpcomingActionPolicy` |
-| BOOK-16 | 03-11, 03-12 | SATISFIED (device item 8 not run) | exclude id, pop, held copy |
-| BOOK-17 | 03-07, 03-12 | SATISFIED | `showsLeaveReview` |
-| BOOK-20 | 03-07, 03-14, 03-15 | SATISFIED | iOS `BookingShortID`; Android commit `0f2e8cd` not pushed |
-| CALL-03 | 03-09 | SATISFIED (device pending) | `startCall` through `CallCenter` |
-| CALL-06 | 03-03 | SATISFIED | `skypeStatusText` |
-| CALL-07 | 03-03 | SATISFIED (device pending) | `SkypeSessionHero` timer |
-| CALL-08 | 03-09 | SATISFIED (device pending) | `openButtonTitle` via `startCall` |
-| CALL-10 | 03-04 | SATISFIED (device pending) | `ExpertJoinVisibility`, `startCall` |
-| EXP-11 | 03-05, 03-08 | SATISFIED (BACK-19 smoke unrun) | backend keys live; fail-closed rule |
-| EXP-13 | 03-04 | SATISFIED | expert reschedule route and 6-day cap |
+| BOOK-06 | 03-01, 03-06, 03-13, 03-16 | SATISFIED | SC1, G1, G3, B1; device items 1 (bar the three backend gaps now fixed in Phase 8), 25 |
+| BOOK-07 | 03-10 | SATISFIED | comment sent as `label: comment`; item 2 PASS |
+| BOOK-08 | 03-02, 03-10, 03-17 | SATISFIED (list-price "up to" wording accepted) | SC3, G2; item 3 PASS |
+| BOOK-09 | 03-14 | SATISFIED (code and tests; device item 4 skipped) | exhaustive `BookingStatusPill`; B5 |
+| BOOK-11 | 03-11 | SATISFIED | item 5 PASS |
+| BOOK-12 | 03-11, 03-12 | SATISFIED | item 6 PASS |
+| BOOK-13 | 03-09 | SATISFIED | item 7 PASS |
+| BOOK-16 | 03-11, 03-12 | SATISFIED | item 8 PASS |
+| BOOK-17 | 03-07, 03-12 | SATISFIED | item 9 PASS |
+| BOOK-20 | 03-07, 03-14, 03-15, 03-18 | SATISFIED (item 27 pending; Android `0f2e8cd` unpushed) | `BookingShortID`; 03-18 price row; items 10, 14 PASS |
+| CALL-03 | 03-09 | SATISFIED | item 11 PASS |
+| CALL-06 | 03-03 | SATISFIED (item 12 skipped) | `skypeStatusText` |
+| CALL-07 | 03-03 | SATISFIED | item 13 PASS |
+| CALL-08 | 03-09 | SATISFIED (app launch not run) | item 15 PASS, B8 |
+| CALL-10 | 03-04 | SATISFIED | item 19 PASS |
+| EXP-11 | 03-05, 03-08 | SATISFIED (BACK-19 smoke unrun) | item 16 PASS; backend keys deployed |
+| EXP-13 | 03-04 | SATISFIED | item 18 PASS |
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 |------|------|---------|----------|--------|
-| `UpcomingBookingViewModel.swift` | 335-345 | Status assumed `confirmed` after a decline | Warning | T-03-23 / G3 |
-| `ExpertBookingSummaryView.swift` | 847-863 | `try?` on `initiateChat`, no in-flight guard | Warning | WR-10 |
-| `ExpertBookingSummaryView.swift` | 663, 688 | 42 pt tap targets on Accept and Decline | Warning | UI review |
-| `ClientCancellationViewModelTests.swift` | 245-257 | Yield-loop wait | Info | WR-11 |
+| `BookingSummaryPrice.swift` | 58-65 | "PAID" label on every non-free row | Warning | WR-01, product question, plan-mandated |
+
+No debt markers, no hollow props, no empty implementations in the files changed by this phase.
 
 ### Human Verification Required
 
-#### 1. Decide on T-03-23
+#### 1. Device check item 27 (03-18)
 
-**Test:** Fix it by decoding `data.status` from the decline 200 and passing it into `applyResolution`, or accept it and record why.
-**Expected:** After a decline the pill matches the server's restored status with no refetch, or the acceptance is written into 03-SECURITY.md and 03-REVIEW-DISPOSITION.md.
-**Why human:** Product trade-off on the "accurate status" half of the goal.
+**Test:** Build from Xcode at or after `330afcc`. As user A, open My Bookings, Past, then a free session's Booking Summary. Then open a past paid CAD session priced with cents.
+**Expected:** The free row reads "Session fee · Free" with Free in green above the ID line; the paid row reads "PAID · CA$12.50" exactly as before. After the Xcode build, `Localizable.xcstrings` has Free and Session fee entries (leave it unstaged; 08-20 commits it).
+**Why human:** Visual, and the catalog keys arrive only on an Xcode IDE build.
 
-#### 2. Phase 8 regression run, R7 first
+#### 2. Skipped backstop items
 
-**Test:** Run `08-REGRESSION-CHECKLIST.md` R1-R11 on TestFlight, with R7 for the reschedule push and chat reasons.
-**Expected:** G-03-1-ITEM1, ITEM1B and ITEM1C are confirmed fixed on a device; R1-R3 cover the join and Skype/Zoom items from Phase 3 items 7-24.
-**Why human:** Push, Agora, Stripe and the Skype handoff need a device. No result is recorded yet and `03-UAT.md` is still `partial`.
+**Test:** Status pill and its Dynamic Type (item 4), end + 55 notice (item 17), "Open in Microsoft Teams" on one line (item 23), Open-in-meeting-app launch (item 15 tail) and the Skype/Zoom copy on a real booking (item 12). Phase 8 R1-R3 cover the join and Skype/Zoom paths per D-01.
+**Expected:** No clipping at the largest size; the amber notice shows at end + 55; both parties connect.
+**Why human:** `verification: backstop` truths cannot be proven by presence or wiring. R1-R11 does not name the pill or the Teams label.
 
-#### 3. Backstop truths with no device record
+#### 3. Decide on the "PAID" label for never-charged bookings (WR-01)
 
-**Test:** L2 Dynamic Type on the new blocks, L3 Teams label, D2 toast placement, D3 Skype handoff, D4 expert Join, the end + 55 notice, and the skipped checklist item 4 (status pill).
-**Expected:** No clipping at the largest size, both parties connect, the amber notice shows.
-**Why human:** `verification: backstop` truths cannot be proven by presence or wiring. R1-R11 does not name the Dynamic Type or pill checks.
+**Test:** Look at a cancelled, declined or expired paid session's Booking Summary.
+**Expected:** Either the wording is changed to follow the payment outcome, or the acceptance is recorded in the UAT notes.
+**Why human:** Product call on a money screen; the plan fixed the wording by user decision.
 
-#### 4. Open review findings
+#### 4. BACK-19 smoke and the Android push
 
-**Test:** Triage WR-10, WR-11 and the UI review items.
-**Expected:** Each is fixed, skipped or deferred with a reason.
-**Why human:** WR-10 is a silently dropped action and the 42 pt buttons sit on a decision control.
-
-#### 5. BACK-19 smoke and the Android push
-
-**Test:** R6 in the Phase 8 checklist; push `0f2e8cd` with the Android release.
+**Test:** R6 in the Phase 8 checklist; push Android `0f2e8cd` with the Android release.
 **Expected:** The expert refund-or-release copy is device-confirmed; the Android ID line ships.
 **Why human:** Real-money production action; pushing is the user's call.
 
+#### 5. Phase 8 regression run, R7 first
+
+**Test:** Run `08-REGRESSION-CHECKLIST.md` R1-R11 on TestFlight.
+**Expected:** Device confirmation of G-03-1-ITEM1, 1B and 1C, which `03-UAT.md` already marks resolved.
+**Why human:** Push, APNs, Agora and Stripe need a device and two accounts.
+
 ### Gaps Summary
 
-There are no gaps that fail a must-have. The five roadmap criteria hold on the current code, the 10-suite run I did passed (147 tests), and nothing in Swift has changed since the 1278-test run. The open items are one user decision (T-03-23), device confirmation of fixes that exist only in code and tests, and ten backstop truths nobody has seen on a device.
+There are no gaps that fail a must-have. G-03-1-ITEM14 is closed in code and tests, the two items that were open in the previous report (T-03-23 and WR-10) are fixed and device-confirmed, and the five roadmap criteria hold on the current tree. What remains is device confirmation of the 03-18 row (item 27), four backstop checks nobody has seen on a device, one product question about the PAID label, and the BACK-19 smoke.
 
 ---
 
-_Verified: 2026-11-23T01:56:24Z_
+_Verified: 2026-11-23T05:10:00Z_
 _Verifier: Claude (gsd-verifier)_

@@ -86,7 +86,7 @@ Expected:
 
 Write the Android `call.ended` observation as a note **inside** this item's one Result line, after the status, for example `PASS (2026-11-24); Android tore down at end + 61`. Do not add a second Result line.
 
-Result:
+Result: SKIPPED in part (2026-11-23): booking, pay (no confirm alert), hold, accept, JOIN CALL, two-way audio and the single capture PASS (pi ...QJ0AJ8 Succeeded CA$5.00 = topic price, no refund, no second payment; Q1 completed/captured after the end + 15 sweep; Past shows completed); end + 10, end + 55 notice, end + 60 auto-end and the auto-end Android teardown NOT RUN: user ended the call at end + 2 (Android hung up when the call was ended by hand). Topic price had no cents (CA$5.00). Open for the 08-24 ruling: rerun on build 7 or accept CallOvertimePolicy unit tests (cutoff moves to 15 min in 1.2 by user decision 2026-11-23)
 
 ### R2. S2: free in-app voice session, book, join, run past the end, finish (D-04, CALL-01)
 
@@ -139,7 +139,7 @@ Expected:
 - A lone card is the default right after it is added.
 - After the default card is removed, the remaining card becomes the default.
 
-Result:
+Result: PASS (2026-11-23)
 
 ### R5. BACK-07: a removed card's clone is detached and cannot be charged (D-06, BACK-07)
 
@@ -182,7 +182,7 @@ Expected:
 - The hold is released by B's cancel: PaymentIntent Canceled, nothing captured, no charge on your card (a bank's pending line that later drops off is fine).
 - The captured-refund branch is not exercised (D-27).
 
-Result:
+Result: PASS (2026-11-23); pi ...VoLGAu Canceled on the connected account, nothing captured or refunded; in-use card removal blocked; cancel push arrived; captured-refund branch not exercised (D-27)
 
 ### R7. Chat reasons, the reschedule-request push and the reschedule-decline push (D-31, G-03-1-ITEM1, G-03-1-ITEM1B, G-03-1-ITEM1C)
 
@@ -270,8 +270,8 @@ Fill one row per PaymentIntent placed in the whole run (R1, R6, and any orphan o
 
 | Item | Booking (short id) | pi (last 6) | How it ended | Stripe state checked | Date |
 |------|--------------------|-------------|--------------|----------------------|------|
-| R6 | | | released (B cancel) | | |
-| R1 (S1) | | | captured once, session completed | | |
+| R6 | 1ea3dac8 | VoLGAu | released (B cancel) | Canceled, nothing captured or refunded | 2026-11-23 |
+| R1 (S1) | c4c574b4 | QJ0AJ8 | captured once, session completed | Succeeded CA$5.00, no refund, only payment | 2026-11-23 |
 | Stray or orphan hold | | | | | |
 
 Then run both of these in the Supabase SQL editor. They cover the whole account, so a row may be an older booking; say which in Result:

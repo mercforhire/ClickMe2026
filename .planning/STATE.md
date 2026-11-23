@@ -5,10 +5,10 @@ current_phase_name: Release
 current_plan: 16
 status: executing
 stopped_at: Completed 08-20-PLAN.md
-last_updated: "2026-11-23T14:37:24.753Z"
+last_updated: "2026-11-23T17:33:06.040Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: dc7bf95ecca3a90e7e7b872170290af8d750bbef
+state_head: 2cd6935856d8835729f969a8f80a5b838b81879e
 progress:
   total_phases: 8
   completed_phases: 5
@@ -549,6 +549,7 @@ Captured todos:
 | 261118-in6 | IN-06 (phase 07): chat unavailable banner copy now says pull down to try again | 2026-11-18 | fa3bfb5 | — |
 | 261122-r2o | Fix Session Summary Message Expert button doing nothing | 2026-11-22 | 169a0a4 | [261122-r2o-fix-session-summary-message-expert-butto](./quick/261122-r2o-fix-session-summary-message-expert-butto/) |
 | 261122-tcf | Fix Phase 3 review follow-ups: decline status (T-03-23), expert Message Client errors (WR-10), 44pt buttons | 2026-11-22 | 0f98b25 | [261122-tcf-fix-phase-3-review-follow-ups-decline-st](./quick/261122-tcf-fix-phase-3-review-follow-ups-decline-st/) |
+| 10 | Add the Reschedule Requested proposal-push check to R7 of the 08 regression checklist (G-03-1-ITEM1) | 2026-11-23 | 2cd6935 | — |
 
 ## Deferred Items
 

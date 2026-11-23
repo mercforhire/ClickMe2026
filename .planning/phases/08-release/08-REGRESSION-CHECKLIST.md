@@ -184,18 +184,18 @@ Expected:
 
 Result:
 
-### R7. Chat reasons and the reschedule-decline push (D-31, G-03-1-ITEM1B, G-03-1-ITEM1C)
+### R7. Chat reasons, the reschedule-request push and the reschedule-decline push (D-31, G-03-1-ITEM1, G-03-1-ITEM1B, G-03-1-ITEM1C)
 
-**Requirements and decisions:** REL-01, D-31, G-03-1-ITEM1B, G-03-1-ITEM1C. Use **free-topic** side bookings only, so there is no money in this item. Each booking starts 2 to 5 days out, on a slot that is none of S1 to S3 and not another side booking's slot.
+**Requirements and decisions:** REL-01, D-31, G-03-1-ITEM1, G-03-1-ITEM1B, G-03-1-ITEM1C. This item also stands in for the blocked Phase 3 device item 1 re-test (push wording, decline reason in chat, decline push recipient). Use **free-topic** side bookings only, so there is no money in this item. Each booking starts 2 to 5 days out, on a slot that is none of S1 to S3 and not another side booking's slot.
 
 Side booking SB1 (a free topic of B):
 1. As A, book it and, as B on Android, **accept** it.
-2. **Reschedule note, A proposes:** as A, propose a new time **with a note**. The chat row on both phones reads the note, labelled `Note from the client: {text}` (or `Note: {text}`).
+2. **Reschedule note, A proposes:** as A, propose a new time **with a note**. The chat row on both phones reads the note, labelled `Note from the client: {text}` (or `Note: {text}`). On Android, B gets a push titled **Reschedule Requested** ("A new time has been proposed for a booking. Open it to respond."), not **Booking Rescheduled**.
 3. **Reschedule decline, B declines:** as B, decline the proposal **with a reason**. On the iPhone, as the proposer, check that:
    - a push arrives titled **Reschedule Declined**,
    - tapping it opens the **booking detail** in the right mode on the iPhone (client mode for A),
    - the chat row reads **Reschedule Declined** with the reason, labelled `Reason from the expert: {text}`.
-4. **Reschedule decline, A declines (the other direction):** as B, propose a new time with a note, then as A on the iPhone **decline** it with a reason. The chat row reads **Reschedule Declined** with the reason, labelled `Reason from the client: {text}`, and B on Android is the one who gets it.
+4. **Reschedule decline, A declines (the other direction):** as B, propose a new time with a note. On the iPhone, A gets a push titled **Reschedule Requested** ("A new time has been proposed for a booking. Open it to respond."), not **Booking Rescheduled**. Then as A on the iPhone **decline** it with a reason. The chat row reads **Reschedule Declined** with the reason, labelled `Reason from the client: {text}`, and B on Android is the one who gets it.
 5. **Cancel reason:** as A, cancel SB1 **with a reason**. The chat row on both phones reads `Reason from the client: {text}` under the cancelled title.
 
 Side booking SB2 (another free topic slot of B):
@@ -206,6 +206,7 @@ For every row above, read it on the **iPhone** and on **Android** (see Setup for
 
 Expected:
 - All four row types show on both phones: cancel, reschedule note, reschedule decline, request decline.
+- A reschedule proposal's push reads **Reschedule Requested** on both phones, never **Booking Rescheduled** (G-03-1-ITEM1).
 - The reschedule-decline push reaches the proposer, and its tap opens the booking detail.
 - A declined reschedule reads **Reschedule Declined**, not **Booking Declined**.
 - Message Expert on a cancelled booking's Session Summary opens the chat with that expert.

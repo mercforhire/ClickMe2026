@@ -131,25 +131,25 @@ Each requirement cites its inventory ID in brackets. Evidence (file:line), sourc
 - [x] **BACK-03** [K3]: Expert booking detail and lists expose whether the client left a review (`has_review`)
 - [x] **BACK-04** [K4]: An expert can clear `meeting_url` (null or "")
 - [x] **BACK-05** [K5]: `potential_earnings` and `consultation_fee.label` use the booking currency's digits and symbol
-- [ ] **BACK-06** [K6]: A lone saved card is made the default *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Do not close until the 01-17 checklist has been run.)*
-- [ ] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Do not close until the 01-17 checklist has been run.)*
-- [ ] **BACK-08** [K8]: A client account is never shown the Stripe tax-ID prompt *(Pending, not delivered: wave 3c dropped by user decision 2026-11-08. Code parked on backend branch `wave-3c`. Needs a new decision.)*
+- [ ] **BACK-06** [K6]: A lone saved card is made the default *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Closes on the Phase 8 regression evidence (D-06).)*
+- [ ] **BACK-07** [K7] **[major]**: A deleted card can no longer be charged through its connected-account clone *(Pending on purpose: deployed at d356fdc, but the real-card smoke was not run by user decision on 2026-11-08. Closes on the Phase 8 regression evidence (D-06).)*
+- [ ] **BACK-08** [K8]: A client account is never shown the Stripe tax-ID prompt *(Pending, not delivered: wave 3c dropped by user decision 2026-11-08. Code parked on backend branch `wave-3c`. BACK-08 is deferred past this release (D-07): its gate returns 403 on `GET /expert/tax-profile` for client-only accounts, and it ships with BACK-13 once build 6 and the current Android build no longer rely on implicit promotion; the reason is recorded under REL-02. Checkbox stays unticked.)*
 - [x] **BACK-09** [K9]: The join window matches the client rule in CALL-02, and `/bookings/:id/join` checks booking status
 - [x] **BACK-10** [K10]: `POST /bookings/request` validates `duration_minutes` and rejects a past `scheduled_start`
 - [x] **BACK-11** [K11]: `price_amount` and the tag-replace list have upper bounds
 - [x] **BACK-12** [K12]: Client cancel is rejected after the session's end time
 - [ ] **BACK-13** [K13] **[major]**: A client is promoted to expert only by an explicit setup call, not any `/expert/*` call *(Deferred past this release by Phase 5 decision D-04, 2026-11-13; wave 3c was dropped by user decision 2026-11-08. The iOS Expert-mode gate (SIGN-06, plans 05-07, 05-10, 05-12 and 05-16) fixes the user-facing bug. The code stays parked on backend branch `wave-3c`. It can ship once App Store build 6 and the current Android build no longer rely on implicit promotion; the reason is recorded under REL-02. Checkbox stays unticked.)*
 - [x] **BACK-14** [K14]: The cancel `reason` is stored
-- [ ] **BACK-15** [K15]: A confirm retry with the same `booking_attempt_id` replays the original result *(Pending on purpose: deployed and verified with mocked tests; the device retry check with a real hold was deferred to Phase 4 payment UAT, backlog 999.2)*
+- [x] **BACK-15** [K15]: A confirm retry with the same `booking_attempt_id` replays the original result *(Closed on mock and unit-test evidence (Phase 8 D-08): a phone cannot force a same booking_attempt_id retry)*
 - [x] **BACK-16** [K16]: `GET /chats` shows empty threads, and `/feedback/submit` is rate-limited (the notification mark-read sub-item was dropped by D-15: NOTIF-07 time-based expiry deliberately has no read state)
 - [x] **BACK-17** [N1 backend half]: Push payloads carry the routing fields iOS needs (if decision Q6 picks the backend route)
 - [x] **BACK-18** [H7 backend half] **[major]**: Unread counts increment on send and reset on `message.read`
-- [ ] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule *(Pending on purpose: deployed at 3899d63, but the production smoke was not run by user decision on 2026-11-08. Do not close until the 01-19 checklist has been run.)*
+- [ ] **BACK-19** [Q2, D-17] **[major]**: An expert-initiated cancel always gives the client a full refund or releases the hold; a client-initiated cancel keeps the 24-hour rule *(Pending on purpose: deployed at 3899d63, but the production smoke was not run by user decision on 2026-11-08. Closes on the Phase 8 regression's hold-release evidence plus the mocked captured-refund tests (D-27): a device cannot force a captured refund.)*
 
 ### Release
 
-- [ ] **REL-01**: Every phase's fixes pass a device UAT checklist on a real iPhone
-- [ ] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first *(Note 2026-11-08: BACK-08 and BACK-13 are not deployed, because wave 3c was dropped by user decision. Scope unchanged. Update 2026-11-13: BACK-13 is deferred past this release (Phase 5 decision D-04). Reason: App Store build 6 and the current Android build rely on `ensureExpert`'s implicit client-to-expert promotion, so the explicit-promotion change would leave those clients unable to become experts. BACK-08 still needs a new decision before release: ship it, or defer it with a reason.)*
+- [ ] **REL-01**: Every phase's fixes are verified on a real iPhone: device UAT checklists where they were run, and for the items never run on a device (Phase 3 checklist items 7-24, Phase 4's skipped UAT tests) unit tests and code review plus one TestFlight regression run of the core paths (D-01, user-approved amendment 2026-11-19); VoiceOver steps are removed and untested (D-02)
+- [ ] **REL-02**: One new iOS build with all fixes is submitted to TestFlight and the App Store, with backend changes deployed first *(Note 2026-11-08: BACK-08 and BACK-13 are not deployed, because wave 3c was dropped by user decision. Scope unchanged. Update 2026-11-13: BACK-13 is deferred past this release (Phase 5 decision D-04). Reason: App Store build 6 and the current Android build rely on `ensureExpert`'s implicit client-to-expert promotion, so the explicit-promotion change would leave those clients unable to become experts. BACK-08 still needs a new decision before release: ship it, or defer it with a reason. Update (Phase 8): BACK-08 is deferred past this release (D-07). Reason: its gate returns 403 on `GET /expert/tax-profile` for client-only accounts, and it ships with BACK-13 once build 6 and the current Android build no longer rely on implicit promotion. The code stays parked on backend branch `wave-3c`.)*
 
 ## v2 Requirements
 
@@ -279,7 +279,7 @@ Which phases cover which requirements. Filled in during roadmap creation.
 | BACK-12 | Phase 1 | Complete |
 | BACK-13 | Phase 1 | Pending |
 | BACK-14 | Phase 1 | Complete |
-| BACK-15 | Phase 1 | Pending |
+| BACK-15 | Phase 1 | Complete |
 | BACK-16 | Phase 1 | Complete |
 | BACK-17 | Phase 1 | Complete |
 | BACK-18 | Phase 1 | Complete |
@@ -294,4 +294,4 @@ Which phases cover which requirements. Filled in during roadmap creation.
 
 ---
 *Requirements defined: 2026-11-07*
-*Last updated: 2026-11-16 — Phase 6 planning: EXP-16 reworded to match 06-CONTEXT D-19 (user decision). Previous: 2026-11-13 — Phase 5: BACK-13 deferred past this release (D-04, reason under REL-02); S2 and T8 moved in (D-05 to D-07, D-14)*
+*Last updated: 2026-11-22 — Phase 8 plan 08-15: REL-01 amended (D-01, user-approved 2026-11-19; VoiceOver removed per D-02); BACK-08 deferral reason recorded (D-07); BACK-15 closed on mock and unit-test evidence (D-08); BACK-19, BACK-06 and BACK-07 closing conditions set to the Phase 8 regression evidence (D-27, D-06). Previous: 2026-11-16 — Phase 6 planning: EXP-16 reworded to match 06-CONTEXT D-19 (user decision). Previous: 2026-11-13 — Phase 5: BACK-13 deferred past this release (D-04, reason under REL-02); S2 and T8 moved in (D-05 to D-07, D-14)*

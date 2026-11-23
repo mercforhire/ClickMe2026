@@ -469,7 +469,7 @@ Plans:
 **Depends on**: Phases 1, 2, 3, 4, 5, 6 and 7
 **Requirements**: REL-01, REL-02
 **Success Criteria** (what must be TRUE):
-  1. Every phase's UAT checklist (Phases 1–7) has passed on a real iPhone. The release candidate passes a regression run of the core paths: book, pay, join, run past the scheduled end, and finish.
+  1. Every phase's fixes are verified on a real iPhone: device UAT checklists where they were run, and for the items never run on a device (Phase 3 checklist items 7-24, Phase 4's skipped UAT tests) unit tests and code review plus one TestFlight regression run of the core paths (book, pay, join, run past the scheduled end, and finish); VoiceOver steps are removed and untested (D-02). Amended by Phase 8 D-01 (2026-11-19).
   2. Every in-scope inventory item is closed, closed as not reproducible (LIKELY items), or explicitly deferred with a reason.
   3. Every backend change is deployed to production before the iOS build is submitted, and the current Android build still works against it.
   4. One new iOS build containing every fix builds cleanly with no new warnings, is on TestFlight, and is submitted to the App Store.
@@ -565,6 +565,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-09 during /gsd-verify-work 01 session completion
 **Follow-ups:**
 - [ ] Test 1: defer (Run real-Stripe checklists 01-17 and 01-19 during Phase 4 payment UAT; the 01-19 checklist does not prove the failed-refund retry) (deferred 2026-11-09)
+- Phase 8 disposition: folded into the TestFlight regression run (D-06, D-27). The captured-refund branch and the failed-refund retry are not exercised on a device.
 
 ### Phase 999.2: Follow-up — Phase 01 deferred UAT follow-up: Test 4 (BACKLOG)
 
@@ -573,6 +574,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-09 during /gsd-verify-work 01 session completion
 **Follow-ups:**
 - [ ] Test 4: defer (Run BACK-15 with a real hold during Phase 4 payment UAT. A normal retry tap only proves one booking and one hold, not the confirm replay code; on iOS only the retry after 3D Secure calls confirm again) (deferred 2026-11-09)
+- Phase 8 disposition: closed by D-08. BACK-15 closes on its mock and unit-test evidence, because a phone cannot force a same booking_attempt_id retry.
 
 ### Phase 999.3: Follow-up — Phase 06 deferred UAT follow-up: Test 6 (BACKLOG)
 
@@ -581,6 +583,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-16 during /gsd-verify-work 06 session completion
 **Follow-ups:**
 - [ ] Test 6: Set a reasonable maximum topic price (iOS, Android and backend validation), which would also bound the WR-03 grouped-paste misread (deferred 2026-11-16)
+- Phase 8 disposition: stays in the backlog. It is a new limit across iOS, Android and the backend, outside this release.
 
 ### Phase 999.4: Follow-up — Phase 06 deferred UAT follow-up: Test 9 (BACKLOG)
 
@@ -589,6 +592,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-17 during /gsd-verify-work 06 session completion
 **Follow-ups:**
 - [ ] Test 9: Run the two iOS 26 Liquid Glass readability checks (checklist items 13 and 16: Availability Save, and the Booking Confirmed back chevron and title, with Reduce Transparency and Liquid Glass Tinted) before Phase 8. Item 12 (09:15 and 24:00 slot edges) is accepted on AvailabilitySlotRulesTests. (deferred 2026-11-17)
+- Phase 8 disposition: folded into the TestFlight regression run per D-28 (item R9 of 08-REGRESSION-CHECKLIST.md).
 
 ### Phase 999.5: Follow-up — Phase 07 deferred UAT follow-up: Test 4 (BACKLOG)
 
@@ -597,3 +601,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 **Deferred at:** 2026-11-19 during /gsd-verify-work 07 session completion
 **Follow-ups:**
 - [ ] Test 4: VoiceOver pass not run (checklist item 12, the VoiceOver parts of items 3 and 4, and the IN-04 check that a delivered bubble is not read as pending); run it on a device later. (deferred 2026-11-19)
+- Phase 8 disposition: removed per D-02. VoiceOver steps are dropped from the device checklists; they are listed as removed and untested in 08-RELEASE-RECORD.md.

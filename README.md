@@ -2,6 +2,8 @@
 
 ClickMe is a marketplace where clients book paid or free sessions with experts. The app is live on the App Store. A session runs as an in-app voice call or over an external Skype or Zoom meeting. The app is built in SwiftUI with Swift 6 strict concurrency and targets iOS 18 and later.
 
+**Download:** [App Store](https://apps.apple.com/app/id6806057145) · [Google Play](https://play.google.com/store/apps/details?id=com.uptrendinvestments.clickmeapp)
+
 ## Features
 
 **Clients**

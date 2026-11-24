@@ -1,9 +1,10 @@
 ---
-status: partial
+status: complete
 phase: 03-booked-sessions-and-joining
 source: [03-VERIFICATION.md]
 started: 2026-11-11T06:30:00Z
-updated: 2026-11-23T05:07:53.464Z
+updated: 2026-11-24T00:42:00Z
+note: "Remaining items closed under Phase 8 D-01 (regression) and D-02 (VoiceOver removed)"
 ---
 
 ## Current Test

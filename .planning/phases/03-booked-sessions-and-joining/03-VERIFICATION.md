@@ -1,7 +1,7 @@
 ---
 phase: 03-booked-sessions-and-joining
 verified: 2026-11-23T05:10:00Z
-status: human_needed
+status: passed
 score: 18/22 must-haves verified (5/5 roadmap success criteria, G1-G3, B1-B4 and all six 03-18 truths; 4 UI-SPEC backstop truths insufficient_spec; none failed)
 covered_files:
   - ".planning/phases/03-booked-sessions-and-joining/03-01-PLAN.md"
@@ -125,7 +125,7 @@ covered_files:
   - "ClickMe2026Tests/Utils/UpcomingActionPolicyTests.swift"
 covered_digest: "v3:sha256:179725ff539fff327f922daad63520db6c0bbce94d4cb81cf375e513a9f89be3"
 behavior_unverified: 0
-overrides_applied: 0
+overrides_applied: 6
 re_verification:
   previous_status: human_needed
   previous_score: 8/19
@@ -234,7 +234,7 @@ What I cannot see from code: how the row looks on a real iPhone (green Free, cap
 | B1 | 03-13: accept and decline from Booking Summary behave as on Upcoming details | VERIFIED | Device item 1 parity PASS 2026-11-19, plus the shared-responder rows |
 | B2 | L2 Dynamic Type at the largest size: response card, cancel warning block, Skype block, multi-line toast, Past empty state (03-01, 02, 03, 06, 11) | VERIFIED (device) | Device item 22 PASS 2026-11-22 |
 | B3 | D4 expert Join from Booking Summary across two accounts (03-04) | VERIFIED (device) | Device item 19 PASS 2026-11-22 |
-| B4 | D2 toast placement and dismissal (03-06) | VERIFIED (device), VoiceOver half out of scope | Item 21 PASS 2026-11-22. VoiceOver is removed and untested by Phase 8 D-02 |
+| B4 | D2 toast placement and dismissal (03-06) | VERIFIED (device), functional steps only | Item 21 PASS 2026-11-22 (functional steps). The VoiceOver half is removed and untested by Phase 8 D-02 |
 | B5 | L2 and real-status visuals of the status pill (03-14) | UNCERTAIN (`insufficient_spec`) | Item 4 SKIPPED whole, and item 22 does not list 03-14 |
 | B6 | end + 55 amber notice on the Skype/Zoom layout (03-03) | UNCERTAIN (`insufficient_spec`) | Item 17 SKIPPED (needs a session held 55 minutes past its end). Text is present in code only |
 | B7 | L3 "Open in Microsoft Teams" on one line on the smallest iPhone (03-09) | UNCERTAIN (`insufficient_spec`) | Item 23 SKIPPED |
@@ -382,6 +382,17 @@ No debt markers, no hollow props, no empty implementations in the files changed 
 ### Gaps Summary
 
 There are no gaps that fail a must-have. G-03-1-ITEM14 is closed in code and tests, the two items that were open in the previous report (T-03-23 and WR-10) are fixed and device-confirmed, and the five roadmap criteria hold on the current tree. What remains is device confirmation of the 03-18 row (item 27), four backstop checks nobody has seen on a device, one product question about the PAID label, and the BACK-19 smoke.
+
+## Overrides (Phase 8 D-01, D-02)
+
+Applied by plan 08-24 on 2026-11-23 under the user-approved D-01 amendment (2026-11-19) and D-02. The frontmatter `status` changed on these lines alone; the report text above is the verifier's, as of 2026-11-23T05:10:00Z. Plan 08-19 classified every human item below as device-only (D-01) or as an accessibility step dropped by D-02, with no code finding. One line per human item (6, equal to `overrides_applied`):
+
+- Device check item 27 (Booking Summary price rows, free and paid, on a build at or after 330afcc): run on device after this report was written, result pass on 2026-11-23 (db62591), so it closes on device evidence, not on the D-01 amendment
+- Skipped backstop checks (item 4 status pill and its largest-size look, item 12 Skype/Zoom copy, item 15 tail Open-in-meeting-app launch, item 17 end + 55 notice, item 23 Teams label on the smallest iPhone): not run on device; covered by unit tests plus regression (08-REGRESSION-CHECKLIST.md, signed off 2026-11-23). R3 ran the Skype/Zoom path on 1.1 (7) (Open in {provider} opened the meeting link, no auto-end promise); the end + 55 banner was waived with the overtime steps (D-33), so item 17 rests on unit tests and code review
+- WR-01 (03-REVIEW.md, the PAID label on cancelled, declined or expired paid sessions): accepted as is for 1.1 (7) by user ruling 2026-11-23, verbatim "Change it in 1.2 (Recommended)"; the change is todo 2026-11-23-paid-label-on-cancelled-declined-expired-rows, which replaces the 2026-11-22 "paid rows keep PAID" decision for those cases. A product decision, not a device result
+- BACK-19 production smoke and the Android commit 0f2e8cd: R6 PASS on 1.1 (7), 2026-11-23 (hold released on a real PaymentIntent, nothing captured or refunded); 0f2e8cd is on ClickMe_Android origin/main (read 2026-11-23)
+- Phase 8 regression R1-R11 on TestFlight, R7 first: signed off 2026-11-23 ("gating items R1-R11 PASS (R1 overtime steps and R2 waived, D-33)"); R7 PASS confirms G-03-1-ITEM1, ITEM1B and ITEM1C on device
+- The screen-reader steps of items 4, 11 and 21 and the L2 backstop readings: removed, untested on device (D-02)
 
 ---
 

@@ -301,18 +301,35 @@ None. All 17 Phase 4 rows were ticked by plan 08-22; no row was deferred, so no 
 ### Rulings recorded at closeout
 
 - **R1 overtime steps and R2** (D-33, user, 2026-11-23): waived for 1.1 (7), not run on device. Evidence in their place: `ClickMe2026Tests/Utils/CallOvertimePolicyTests.swift`, R1's PASS of the paid in-app path and the Phase 2 device run. The overtime moves to 15 minutes in 1.2 (todo `2026-11-23-shorten-call-overtime-to-15-minutes`). This answers the "open for the 08-24 ruling" note in the R1 and R2 Result lines.
-- **R8 Android CA$ fault**: Android-only (the Android `Money.pinnedSymbol` path on the dev build); iOS showed US$ and CA$ correctly and the fault is not in the iOS build, so it does not gate the iOS submission. It stays open as an Android follow-up, todo `2026-11-23-android-cad-price-missing-ca-prefix`.
+- **R8 Android CA$ fault**: Android-only (the Android `Money.pinnedSymbol` path on the dev build); iOS showed US$ and CA$ correctly and the fault is not in the iOS build, so it does not gate the iOS submission. It stays open as an Android follow-up, todo `2026-11-23-android-cad-price-missing-ca-prefix`. User confirmation of this ruling (2026-11-23), verbatim: "Yes, record that".
 - **R10 U4 flash on resume**: user decision KEEP (2026-11-23). R10's slow-network pass was skipped and is not run; it is not recorded as passed.
+- **Phase 3 WR-01** (03-REVIEW.md: the Booking Summary PAID label on cancelled, declined or expired paid sessions): user ruling 2026-11-23, verbatim: "Change it in 1.2 (Recommended)". The label is accepted as is for 1.1 (7). In 1.2 those rows show what happened to the money (for example Refunded, Released or Not charged) instead of PAID, iOS first and then Android, todo `2026-11-23-paid-label-on-cancelled-declined-expired-rows`. For those three cases this replaces the 2026-11-22 "paid rows keep PAID" decision. It is not recorded as covered by the regression.
+- **Open review findings for Phases 2 and 5**: user ruling 2026-11-23, verbatim: "Defer all to 1.2 (Recommended)". One triage todo covers them all: `2026-11-23-triage-phase-2-and-5-review-findings-for-1-2`.
+  - Phase 2 WR-03 (typed topic price always multiplied by 100): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 2 WR-04 (`PI_CURRENCY_MISMATCH` not handled in the paid-booking error path): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 2 IN-01 (dead helper and stale "hide" wording): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 2 IN-03 (currency symbol in the price label and the hint): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 WR-01 (reload overwrites the field and baseline from a stale cached profile): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 WR-02 (a 422 on the meeting link shows the generic message): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 WR-03 (overlapping auto-saves are not serialised): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 IN-01 (`meetingLinkBody` trims the baseline redundantly): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 IN-02 (the `forceLoad` wiring is untested): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 IN-03 (leftover dead section and prior info items): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 PRIOR-WR-03 (a push-initiated Expert switch clears the "Not now" deferral): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 PRIOR-WR-04 (a wrong password on `delete-request` triggers a refresh and a second request): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 PRIOR-WR-05 (`loadExistingAvatarIfNeeded` can overwrite a picked photo): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 PRIOR-WR-06 (flipping a notification toggle back during a save skips the resave): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
+  - Phase 5 PRIOR-IN-04 (`RememberedLoginEmailTests` mutates the real Keychain): deferred to 1.2: not release-blocking, build 7 frozen (user decision 2026-11-23)
 
 ### Still open, and why
 
 - **BACK-08 and BACK-13**: deferred past this release (D-07, Phase 5 D-04); reasons under "Deferred with reason" above. Code parked on backend branch `wave-3c`.
 - **Open review infos** (Phase 3 IN-01 to IN-06, Phase 6 IN-08): deferred with the reasons in the table above (D-03 allows it for info findings).
-- **Other open review findings for Phases 2 and 5** (listed above with no reason): still open. No reason is invented here; each needs the user's decision (fix, defer with a reason, or accept).
-- **Phase 3 WR-01** (03-REVIEW.md: the Booking Summary PAID label on cancelled, declined or expired paid sessions): the user decided on 2026-11-22 that paid rows keep PAID; the review raised the never-charged statuses after that decision. Still open for the user's ruling (accept as is, or change in 1.2); it is not recorded as covered by the regression.
+- **Other open review findings for Phases 2 and 5**: deferred to 1.2 by the user (see "Rulings recorded at closeout"), todo `2026-11-23-triage-phase-2-and-5-review-findings-for-1-2`.
+- **Phase 3 WR-01 PAID label**: accepted for 1.1 and changed in 1.2 by the user (see "Rulings recorded at closeout"), todo `2026-11-23-paid-label-on-cancelled-declined-expired-rows`.
 - **Android local-build section (A1 to A17)**: not run in this regression and does not gate the iOS submission. The Android release is not part of this phase.
 - **Backlog 999.3** (a maximum topic price): stays in the backlog (see Backlog dispositions).
-- **1.2 todos**: `2026-11-23-shorten-call-overtime-to-15-minutes` and `2026-11-23-add-an-in-app-guide-before-expert-stripe-payout-setup`.
+- **1.2 todos**: `2026-11-23-shorten-call-overtime-to-15-minutes`, `2026-11-23-add-an-in-app-guide-before-expert-stripe-payout-setup`, `2026-11-23-paid-label-on-cancelled-declined-expired-rows` and `2026-11-23-triage-phase-2-and-5-review-findings-for-1-2`.
 - **Follow-up note, toolchain**: App Store Connect returned an ITMS-90725 warning on the build 7 upload. Builds uploaded from April 2027 must use Xcode 27 and the iOS 27 SDK, so the release workflow (`XCODE_VERSION: '26'`, `macos-26` runners) needs the upgrade before then. Recorded here as a note, not a todo.
 - **App Review**: Waiting for Review at the time of writing; the version is set to release automatically on approval with Phased Release off (D-21).
 

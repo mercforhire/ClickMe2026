@@ -519,6 +519,8 @@ Captured todos:
 - [2026-11-23] [expert-payouts] Add an in-app guide before expert Stripe payout setup (next release, not 1.1) — [todo file](.planning/todos/pending/2026-11-23-add-an-in-app-guide-before-expert-stripe-payout-setup.md)
 - [2026-11-23] [calls] Shorten call overtime to 15 minutes (iOS and Android, 1.2; 1.1 ships with 60) — [todo file](.planning/todos/pending/2026-11-23-shorten-call-overtime-to-15-minutes.md)
 - [2026-11-23] [android] Android: CAD price shows no CA$ prefix on the dev build (08-22 R8) — [todo file](.planning/todos/pending/2026-11-23-android-cad-price-missing-ca-prefix.md)
+- [2026-11-23] [booking] Booking Summary: show Refunded / Released / Not charged instead of PAID on cancelled, declined or expired paid rows (Phase 3 WR-01, 1.2, iOS then Android) — [todo file](.planning/todos/pending/2026-11-23-paid-label-on-cancelled-declined-expired-rows.md)
+- [2026-11-23] [general] Triage the 15 open Phase 2 and Phase 5 code-review findings for 1.2 (deferred by user decision 2026-11-23) — [todo file](.planning/todos/pending/2026-11-23-triage-phase-2-and-5-review-findings-for-1-2.md)
 
 ### Blockers/Concerns
 

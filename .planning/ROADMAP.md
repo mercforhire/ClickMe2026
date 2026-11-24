@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Backend Fixes** - Production backend validates, stores and returns what the iOS fixes need, without breaking current Android (completed 2026-11-09)
 - [x] **Phase 2: Shared iOS Plumbing** - Call timing, join window, money formatting, status decoding, error codes and push routing are correct in one place (completed 2026-11-16)
-- [ ] **Phase 3: Booked Sessions and Joining** - Clients and experts can respond to, cancel, reschedule and join booked sessions from every screen that offers it
+- [x] **Phase 3: Booked Sessions and Joining** - Clients and experts can respond to, cancel, reschedule and join booked sessions from every screen that offers it (completed 2026-11-23)
 - [x] **Phase 4: Booking, Payment and Discovery** - Clients can find an expert, book and pay without resubmits, unintended holds or misleading errors (completed 2026-11-23)
 - [x] **Phase 5: Signup, Mode Switch and Account** - Signup, becoming an expert and account settings save correctly and tell the truth (completed 2026-11-15)
 - [x] **Phase 6: Expert Mode** - Experts can price, schedule and run their bookings without wrong amounts or dead ends (completed 2026-11-17)
@@ -549,7 +549,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Backend Fixes | 26/26 | Complete    | 2026-11-09 |
 | 2. Shared iOS Plumbing | 15/15 | Complete    | 2026-11-16 |
-| 3. Booked Sessions and Joining | 18/18 | In Progress | - |
+| 3. Booked Sessions and Joining | 18/18 | Complete    | 2026-11-23 |
 | 4. Booking, Payment and Discovery | 17/17 | Complete    | 2026-11-23 |
 | 5. Signup, Mode Switch and Account | 22/22 | Complete    | 2026-11-15 |
 | 6. Expert Mode | 18/18 | Complete    | 2026-11-17 |

@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 current_phase: 08
 current_phase_name: Release
-current_plan: 18
+current_plan: 19
 status: executing
-stopped_at: Completed 08-23-PLAN.md
-last_updated: "2026-11-23T23:43:37.892Z"
+stopped_at: Completed 08-24-PLAN.md
+last_updated: "2026-11-24T00:45:09.485Z"
 last_activity: 2026-11-22
 last_activity_desc: Phase 08 execution started
-state_head: faf7643ab585aef7c1c3cba3232321cb36a88dd4
+state_head: b06e6418503920146ed272b7625f5061a6302f4b
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 7
   total_plans: 156
-  completed_plans: 155
-  percent: 63
+  completed_plans: 156
+  percent: 88
 ---
 
 # Project State
@@ -29,12 +29,12 @@ See: .planning/PROJECT.md (updated 2026-11-19)
 ## Current Position
 
 Phase: 08 (Release) — EXECUTING
-Current Plan: 18
+Current Plan: 19
 Total Plans in Phase: 31
 Status: Ready to execute
 Last activity: 2026-11-22 - Completed quick task 261122-tcf: Fix Phase 3 review follow-ups (T-03-23, WR-10, 44pt buttons)
 
-Progress: [████████████████████] 124/124 plans ([██████░░░░] 63%); phases 3 and 4 await verification, Phase 8 not started
+Progress: [████████████████████] 124/124 plans ([█████████░] 88%); phases 3 and 4 closed under D-01 on 2026-11-23 (08-24); Phase 8 has 31/31 plans executed and awaits phase verification
 
 ## Performance Metrics
 
@@ -211,6 +211,7 @@ Progress: [████████████████████] 124/124
 | Phase 08 P20 | 75min | 3 tasks | 3 files |
 | Phase 08 P22 | 30min | 3 tasks | 5 files |
 | Phase 08 P23 | 15min | 3 tasks | 1 files |
+| Phase 08 P24 | 60min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -461,6 +462,9 @@ Recent decisions affecting current work:
 - [Phase 08]: Release candidate 1.1 (7) is 1fdcc26; tag v1.1, release/1.1 and the checked commit are the same SHA (user go 2026-11-23: go)
 - [Phase 08]: 08-22: D-33 (user 2026-11-23, Run short ones, waive overtime): R1 overtime steps and R2 waived for 1.1 (7); regression signed off 2026-11-23 with R3-R11 PASS; BACK-06/07/19 and the 17 Phase 4 rows closed, none deferred
 - [Phase 08]: 08-23: What's New for 1.1 approved unedited (user 2026-11-23: approve); 1.1 (7) submitted for App Review 2026-11-23 18:41 EST, status Waiting for Review; 08-24 can run now (no wait for review)
+- [Phase 08]: 08-24: Phase 3 WR-01 PAID label accepted for 1.1 (7) and changed in 1.2 (user, 2026-11-23: "Change it in 1.2 (Recommended)"; todo 2026-11-23-paid-label-on-cancelled-declined-expired-rows)
+- [Phase 08]: 08-24: the 15 open Phase 2 and Phase 5 review findings deferred to 1.2 (user, 2026-11-23: "Defer all to 1.2 (Recommended)"; todo 2026-11-23-triage-phase-2-and-5-review-findings-for-1-2)
+- [Phase 08]: 08-24: R8 Android CA$ fault is Android-only and does not gate the iOS submission; open Android follow-up (user, 2026-11-23: "Yes, record that")
 
 ### Pending Todos
 
@@ -570,6 +574,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-11-23T23:43:36.087Z
-Stopped at: Completed 08-23-PLAN.md
+Last session: 2026-11-24T00:45:08.958Z
+Stopped at: Completed 08-24-PLAN.md
 Resume file: None

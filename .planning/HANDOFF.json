@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-11-24T01:49:17.771Z",
+  "phase": "08",
+  "phase_name": "release",
+  "phase_dir": ".planning/phases/08-release",
+  "plan": 24,
+  "task": 3,
+  "total_tasks": 3,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 1, "name": "All 31 Phase 8 plans executed (last: 08-24 closeout)", "status": "done", "commit": "1c4401f"},
+    {"id": 2, "name": "Phase 8 code review (15 findings, ledger all open)", "status": "done", "commit": "9839483"},
+    {"id": 3, "name": "Phase 8 verification (human_needed) + 08-UAT.md", "status": "done", "commit": "1645e9f"}
+  ],
+  "remaining_tasks": [
+    {"id": 4, "name": "When Apple approves 1.1 (7): /gsd-verify-work 08 to walk 08-UAT.md and mark Phase 8 complete", "status": "not_started"},
+    {"id": 5, "name": "/gsd-secure-phase 08 (security_enforcement on, no 08-SECURITY.md yet)", "status": "not_started"},
+    {"id": 6, "name": "Rule on the 15 open 08-REVIEW findings (08-REVIEW-DISPOSITION.md)", "status": "not_started"}
+  ],
+  "blockers": [
+    {"description": "App Store review of 1.1 (7), submitted 2026-11-23 18:41 EST, Waiting for Review, auto-release on", "type": "external", "workaround": "none; if rejected, answer in Resolution Center or resubmit"}
+  ],
+  "async_jobs": [],
+  "human_actions_pending": [
+    {"action": "Watch App Store Connect for the 1.1 (7) review outcome", "context": "08-UAT.md test 1; phase goal needs Ready for Sale", "blocking": true},
+    {"action": "Optional: run R1 overtime steps on 1.1 (7) (end+55 notice, end+60 auto-end, Android teardown)", "context": "Waived by D-33; 08-UAT.md test 2", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "D-33: R1 overtime steps and R2 waived for 1.1 (7)", "rationale": "CallOvertimePolicyTests; overtime moves to 15 min in 1.2", "phase": "08"},
+    {"decision": "Phase 3 WR-01 PAID label accepted for 1.1, change in 1.2", "rationale": "user choice 2026-11-23", "phase": "08"},
+    {"decision": "15 Phase 2/5 review findings deferred to 1.2", "rationale": "not release-blocking, build 7 frozen", "phase": "08"},
+    {"decision": "Android CA$ bug (R8) non-gating for iOS", "rationale": "Android-only", "phase": "08"},
+    {"decision": "Stripe payout guide and 15-min overtime go in 1.2, not 1.1", "rationale": "build 7 frozen; build 8 would need a full rerun", "phase": "08"}
+  ],
+  "uncommitted_files": [" M .DS_Store", " M .planning/config.json", "?? .github/.DS_Store", "?? .planning/milestone.lock", "?? .planning/state.json", "?? ClickMe2026/.DS_Store", "?? ClickMe2026Tests/.DS_Store", "?? ClickMe2026UITests/.DS_Store"],
+  "next_action": "Check App Store Connect for the 1.1 (7) status; if Ready for Sale, run /gsd-verify-work 08. Meanwhile /gsd-secure-phase 08 can run.",
+  "context_notes": "Local main is 3 docs commits ahead of GitHub main (9839483, 1645e9f, da042fe) plus this pause commit; push needs the D-25 JWT/secret scan and user approval. da042fe (Android CAD todo completed) was made by another session at 20:48. Backend frozen at 1d18aac; never push backend master (D-17). Unrelated working-tree files are intentionally uncommitted; never stage them."
+}

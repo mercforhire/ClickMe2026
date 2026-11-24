@@ -24,3 +24,14 @@ Not diagnosed. Possible causes to check:
 3. **Android ICU differs from the JVM.** On a device in en_CA, where CAD is the local currency, the `currencySymbol` override may be ignored or reset, while JVM unit tests pass.
 
 Reproduce on the device first. Add a test that reproduces the cause (a Robolectric or instrumented test if it's ICU). Android only, local commits. It doesn't affect the iOS 1.1 build.
+
+## Resolution
+
+Fixed in Android commit `3e478ba1` (fix(ios-p8): write the US$ and CA$ symbol into the pattern, not into DecimalFormatSymbols), pushed to `ClickMe_Android` `origin/main` on 2026-11-23. Debug session: `ClickMe_Android/.planning/debug/resolved/cad-price-missing-ca-prefix.md`.
+
+- **Cause:** cause 3. On the Samsung SM-A075F (Android 16, region Canada), the `DecimalFormatSymbols.currencySymbol` override did not take effect in Android's ICU-backed `DecimalFormat`, so en_CA printed CAD as a bare `$`. This is inferred from the fix result; the old failure was not observed on Android 16. Causes 1 and 2 were ruled out: every topic price goes through `Money.format`, and a null or empty currency cannot produce a formatted bare `$`.
+- **Fix:** `Money.currencyFormat` writes `US$` or `CA$` into the locale's own currency pattern as quoted literal text. Placement, grouping and separators still follow the locale.
+- **Test:** `MoneyTest.pinnedSymbol_survivesTheFormatterSymbolsBeingReset` fails on the old code.
+- **Device check:** PASS on the Samsung with a fresh devDebug build (user, 2026-11-23).
+
+The R8 Result line in `08-REGRESSION-CHECKLIST.md` and `08-RELEASE-RECORD.md` keeps its Android FAIL as recorded (D-09); this todo records the fix.
